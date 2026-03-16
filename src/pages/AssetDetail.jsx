@@ -264,6 +264,7 @@ export default function AssetDetail() {
 
       <AssetFormDialog open={editOpen} onOpenChange={setEditOpen} asset={asset} onSave={(data) => updateAsset.mutate(data)} />
       <ChildFormDialog open={childFormOpen} onOpenChange={setChildFormOpen} child={editingChild} parentAssetId={assetId} onSave={handleChildSave} />
+      <MoveChildDialog open={moveDialogOpen} onOpenChange={setMoveDialogOpen} child={childToMove} assets={allAssets} currentAssetId={assetId} onMove={handleMoveChild} />
     </div>
   );
 }
