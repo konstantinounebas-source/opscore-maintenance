@@ -6,7 +6,7 @@ import TopHeader from "@/components/layout/TopHeader";
 import StatCard from "@/components/shared/StatCard";
 import DataTable from "@/components/shared/DataTable";
 import StatusBadge from "@/components/shared/StatusBadge";
-import AssetFormDialog from "@/components/assets/AssetFormDialog.jsx";
+import AssetFormDialog from "@/components/assets/AssetFormDialog";
 import { Button } from "@/components/ui/button";
 import { Box, Activity, Link2, AlertTriangle, Wrench, Plus, Download, Upload } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
