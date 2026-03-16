@@ -44,7 +44,8 @@ const emptyForm = {
   structural_warranty_end_date: "", preventive_inspection_date: "",
   next_inspection_date: "", notes: "",
   latitude: "", longitude: "",
-  evidence_types: [], description: ""
+  evidence_types: [], description: "",
+  attachments: []
 };
 
 export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
