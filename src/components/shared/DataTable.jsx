@@ -2,13 +2,15 @@ import React, { useState, useMemo } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, ArrowUpDown, ChevronLeft, ChevronRight } from "lucide-react";
 
-export default function DataTable({ columns, data, onRowClick, searchPlaceholder = "Search...", pageSize = 15 }) {
+export default function DataTable({ columns, data, onRowClick, searchPlaceholder = "Search...", pageSize = 20 }) {
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState(null);
   const [sortDir, setSortDir] = useState("asc");
   const [page, setPage] = useState(0);
+  const [currentPageSize, setCurrentPageSize] = useState(pageSize);
 
   const filtered = useMemo(() => {
     if (!search.trim()) return data;
@@ -34,8 +36,8 @@ export default function DataTable({ columns, data, onRowClick, searchPlaceholder
     });
   }, [filtered, sortKey, sortDir, columns]);
 
-  const totalPages = Math.ceil(sorted.length / pageSize);
-  const paged = sorted.slice(page * pageSize, (page + 1) * pageSize);
+  const totalPages = Math.ceil(sorted.length / currentPageSize);
+  const paged = sorted.slice(page * currentPageSize, (page + 1) * currentPageSize);
 
   const handleSort = (key) => {
     if (sortKey === key) {
@@ -102,17 +104,34 @@ export default function DataTable({ columns, data, onRowClick, searchPlaceholder
           </TableBody>
         </Table>
       </div>
-      {totalPages > 1 && (
+      {sorted.length > 0 && (
         <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100 text-sm text-slate-500">
-          <span>Showing {page * pageSize + 1}–{Math.min((page + 1) * pageSize, sorted.length)} of {sorted.length}</span>
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="sm" disabled={page === 0} onClick={() => setPage(p => p - 1)}>
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <Button variant="ghost" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>
-              <ChevronRight className="w-4 h-4" />
-            </Button>
+          <div className="flex items-center gap-2">
+            <span>Show</span>
+            <Select value={String(currentPageSize)} onValueChange={(val) => { setCurrentPageSize(parseInt(val)); setPage(0); }}>
+              <SelectTrigger className="w-16 h-8 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+                <SelectItem value="100">100</SelectItem>
+              </SelectContent>
+            </Select>
+            <span>items</span>
           </div>
+          <span>Showing {page * currentPageSize + 1}–{Math.min((page + 1) * currentPageSize, sorted.length)} of {sorted.length}</span>
+          {totalPages > 1 && (
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="sm" disabled={page === 0} onClick={() => setPage(p => p - 1)}>
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <Button variant="ghost" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>
