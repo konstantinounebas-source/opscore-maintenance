@@ -7,6 +7,7 @@ import StatusBadge from "@/components/shared/StatusBadge";
 import ChildFormDialog from "@/components/childs/ChildFormDialog";
 import AssignChildDialog from "@/components/childs/AssignChildDialog";
 import ShipmentDialog from "@/components/childs/ShipmentDialog";
+import ImportChildsDialog from "@/components/childs/ImportChildsDialog";
 import { Button } from "@/components/ui/button";
 import { Plus, Download, Upload } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
@@ -17,6 +18,7 @@ export default function Childs() {
   const [formOpen, setFormOpen] = useState(false);
   const [assignOpen, setAssignOpen] = useState(false);
   const [shipmentOpen, setShipmentOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [editingChild, setEditingChild] = useState(null);
   const [selectedChild, setSelectedChild] = useState(null);
 
@@ -100,9 +102,9 @@ export default function Childs() {
   const unassignedCount = childAssets.length - assignedCount;
 
   const exportCSV = () => {
-    const headers = ["Child ID", "Parent Asset", "Category", "Serial Number", "Installation Date", "Type"];
-    const rows = childAssets.map(c => [c.child_id, getParentAssetName(c.parent_asset_id), c.category, c.serial_number, c.installation_date, c.child_type]);
-    const csv = [headers, ...rows].map(r => r.map(v => `"${v || ""}"`).join(",")).join("\n");
+    const headers = ["child_id", "parent_asset_id", "category", "serial_number", "installation_date", "child_type"];
+    const rows = childAssets.map(c => [c.child_id, c.parent_asset_id || "", c.category || "", c.serial_number || "", c.installation_date || "", c.child_type || ""]);
+    const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -112,35 +114,26 @@ export default function Childs() {
     URL.revokeObjectURL(url);
   };
 
-  const handleImportCSV = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleImportFile = async (file) => {
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
     const result = await base44.integrations.Core.ExtractDataFromUploadedFile({
       file_url,
       json_schema: {
         type: "object",
         properties: {
-          items: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                child_id: { type: "string" },
-                parent_asset_id: { type: "string" },
-                category: { type: "string" },
-                serial_number: { type: "string" },
-                installation_date: { type: "string" },
-                child_type: { type: "string" },
-              }
-            }
-          }
+          child_id: { type: "string" },
+          parent_asset_id: { type: "string" },
+          category: { type: "string" },
+          serial_number: { type: "string" },
+          installation_date: { type: "string" },
+          child_type: { type: "string" },
         }
       }
     });
-    if (result.status === "success" && result.output?.items) {
+    if (result.status === "success" && result.output) {
+      const items = Array.isArray(result.output) ? result.output : [result.output];
       const existingIds = new Set(childAssets.map(c => c.child_id));
-      const newItems = result.output.items.filter(item => item.child_id && !existingIds.has(item.child_id));
+      const newItems = items.filter(item => item.child_id && !existingIds.has(item.child_id));
       if (newItems.length > 0) {
         await base44.entities.ChildAssets.bulkCreate(newItems);
         queryClient.invalidateQueries({ queryKey: ["childAssets"] });
@@ -151,7 +144,6 @@ export default function Childs() {
     } else {
       toast({ title: "Import failed", variant: "destructive" });
     }
-    e.target.value = "";
   };
 
   const columns = [
@@ -176,12 +168,9 @@ export default function Childs() {
         title="Child Assets"
         actions={
           <div className="flex items-center gap-2">
-            <label>
-              <input type="file" accept=".csv,.xlsx" className="hidden" onChange={handleImportCSV} />
-              <Button variant="outline" size="sm" className="gap-1.5" asChild>
-                <span><Upload className="w-3.5 h-3.5" /> Import</span>
-              </Button>
-            </label>
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setImportOpen(true)}>
+              <Upload className="w-3.5 h-3.5" /> Import
+            </Button>
             <Button variant="outline" size="sm" className="gap-1.5" onClick={exportCSV}>
               <Download className="w-3.5 h-3.5" /> Export
             </Button>
@@ -240,6 +229,11 @@ export default function Childs() {
         child={selectedChild}
         parentAssets={parentAssets}
         onShipment={handleShipment}
+      />
+      <ImportChildsDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onImport={handleImportFile}
       />
     </div>
   );
