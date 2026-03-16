@@ -40,7 +40,6 @@ export default function Configuration() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["configLists"] });
       setNewValue("");
-      toast({ title: "Item added" });
     },
   });
 
