@@ -129,16 +129,8 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
 
           {/* ── HARD FIELDS ── */}
           <SectionHeader title="Core Information" color="slate" />
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label className="text-xs">Asset ID *</Label>
-              <Input value={form.asset_id} onChange={e => set("asset_id", e.target.value)} required disabled={!!asset} placeholder="e.g. AST-001" />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Asset Name *</Label>
-              <Input value={form.asset_name} onChange={e => set("asset_name", e.target.value)} required />
-            </div>
-          </div>
+          {/* Hidden required fields - kept for data integrity */}
+          <input type="hidden" value={form.asset_id} />
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs">Active Shelter ID</Label>
