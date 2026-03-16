@@ -26,7 +26,8 @@ export default function AssetDetail() {
   const [editOpen, setEditOpen] = useState(false);
   const [childFormOpen, setChildFormOpen] = useState(false);
   const [editingChild, setEditingChild] = useState(null);
-  const [moveMenuOpen, setMoveMenuOpen] = useState(null);
+  const [moveDialogOpen, setMoveDialogOpen] = useState(false);
+  const [childToMove, setChildToMove] = useState(null);
 
   const { data: asset } = useQuery({ queryKey: ["asset", assetId], queryFn: () => base44.entities.Assets.filter({ id: assetId }).then(r => r[0]), enabled: !!assetId });
   const { data: children = [] } = useQuery({ queryKey: ["childAssets", assetId], queryFn: () => base44.entities.ChildAssets.filter({ parent_asset_id: assetId }), enabled: !!assetId });
