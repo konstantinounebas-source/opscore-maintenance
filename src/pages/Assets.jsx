@@ -7,6 +7,7 @@ import StatCard from "@/components/shared/StatCard";
 import DataTable from "@/components/shared/DataTable";
 import StatusBadge from "@/components/shared/StatusBadge";
 import AssetFormDialog from "@/components/assets/AssetFormDialog";
+import ImportAssetsDialog from "@/components/assets/ImportAssetsDialog";
 import { Button } from "@/components/ui/button";
 import { Box, Activity, Link2, AlertTriangle, Wrench, Plus, Download, Upload } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
@@ -79,9 +80,9 @@ export default function Assets() {
   const assetsWithOpenWO = assets.filter(a => getOpenWorkOrders(a.id) > 0).length;
 
   const exportCSV = () => {
-    const headers = ["Asset ID", "Asset Name", "Category", "Type", "Status", "Installation Date", "Location"];
-    const rows = assets.map(a => [a.asset_id, a.asset_name, a.category, a.asset_type, a.status, a.installation_date, a.location]);
-    const csv = [headers, ...rows].map(r => r.map(v => `"${v || ""}"`).join(",")).join("\n");
+    const headers = ["asset_id", "asset_name", "active_shelter_id", "location_address", "city", "shelter_type", "status", "installation_date", "delivery_date", "delivery_year"];
+    const rows = assets.map(a => [a.asset_id, a.asset_name, a.active_shelter_id || "", a.location_address || "", a.city || "", a.shelter_type || "", a.status || "", a.installation_date || "", a.delivery_date || "", a.delivery_year || ""]);
+    const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -91,48 +92,40 @@ export default function Assets() {
     URL.revokeObjectURL(url);
   };
 
-  const handleImportCSV = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleImportFile = async (file) => {
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
     const result = await base44.integrations.Core.ExtractDataFromUploadedFile({
       file_url,
       json_schema: {
         type: "object",
         properties: {
-          items: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                asset_id: { type: "string" },
-                asset_name: { type: "string" },
-                category: { type: "string" },
-                asset_type: { type: "string" },
-                status: { type: "string" },
-                installation_date: { type: "string" },
-                location: { type: "string" },
-                description: { type: "string" },
-              }
-            }
-          }
+          asset_id: { type: "string" },
+          asset_name: { type: "string" },
+          active_shelter_id: { type: "string" },
+          location_address: { type: "string" },
+          city: { type: "string" },
+          shelter_type: { type: "string" },
+          status: { type: "string" },
+          installation_date: { type: "string" },
+          delivery_date: { type: "string" },
+          delivery_year: { type: "number" },
         }
       }
     });
-    if (result.status === "success" && result.output?.items) {
+    if (result.status === "success" && result.output) {
+      const items = Array.isArray(result.output) ? result.output : [result.output];
       const existingIds = new Set(assets.map(a => a.asset_id));
-      const newItems = result.output.items.filter(item => item.asset_id && !existingIds.has(item.asset_id));
+      const newItems = items.filter(item => item.asset_id && !existingIds.has(item.asset_id));
       if (newItems.length > 0) {
         await base44.entities.Assets.bulkCreate(newItems);
         queryClient.invalidateQueries({ queryKey: ["assets"] });
         toast({ title: `Imported ${newItems.length} assets` });
       } else {
-        toast({ title: "No new assets to import", description: "All asset IDs already exist or are empty." });
+        toast({ title: "No new assets to import" });
       }
     } else {
-      toast({ title: "Import failed", description: result.details || "Could not parse file", variant: "destructive" });
+      toast({ title: "Import failed", variant: "destructive" });
     }
-    e.target.value = "";
   };
 
   const columns = [
@@ -153,12 +146,9 @@ export default function Assets() {
         title="Assets"
         actions={
           <div className="flex items-center gap-2">
-            <label>
-              <input type="file" accept=".csv,.xlsx" className="hidden" onChange={handleImportCSV} />
-              <Button variant="outline" size="sm" className="gap-1.5" asChild>
-                <span><Upload className="w-3.5 h-3.5" /> Import</span>
-              </Button>
-            </label>
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setImportOpen(true)}>
+              <Upload className="w-3.5 h-3.5" /> Import
+            </Button>
             <Button variant="outline" size="sm" className="gap-1.5" onClick={exportCSV}>
               <Download className="w-3.5 h-3.5" /> Export
             </Button>
@@ -188,6 +178,11 @@ export default function Assets() {
         onOpenChange={setFormOpen}
         asset={editingAsset}
         onSave={handleSave}
+      />
+      <ImportAssetsDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onImport={handleImportFile}
       />
     </div>
   );
