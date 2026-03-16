@@ -1,6 +1,6 @@
 import React from "react";
 import { format } from "date-fns";
-import { Clock, User } from "lucide-react";
+import { Clock, User, FileText, Image } from "lucide-react";
 
 export default function AuditLog({ entries }) {
   if (!entries || entries.length === 0) {
