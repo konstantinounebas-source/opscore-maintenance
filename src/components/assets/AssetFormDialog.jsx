@@ -64,6 +64,7 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
         latitude: asset.latitude ?? "",
         longitude: asset.longitude ?? "",
         evidence_types: asset.evidence_types || [],
+        attachments: asset.attachments || [],
       });
     } else {
       setForm(emptyForm);
