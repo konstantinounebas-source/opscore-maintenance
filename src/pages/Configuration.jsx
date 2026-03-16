@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Trash2 } from "lucide-react";
 
-const LIST_TYPES = [
+const INCIDENT_LIST_TYPES = [
   { key: "Provinces", label: "Provinces" },
   { key: "Municipalities", label: "Municipalities" },
   { key: "Incident Sources", label: "Incident Sources" },
@@ -24,6 +24,15 @@ const LIST_TYPES = [
   { key: "Asset Province", label: "Asset Province" },
   { key: "Asset Municipality", label: "Asset Municipality" },
   { key: "Asset Address", label: "Asset Address" },
+];
+
+const ASSET_LIST_TYPES = [
+  { key: "Asset Cities", label: "Cities" },
+  { key: "Asset Shelter Types", label: "Shelter Types" },
+  { key: "Asset Child Categories", label: "Child Categories" },
+  { key: "Asset Child Subcategories", label: "Child Subcategories" },
+  { key: "Asset Status", label: "Status" },
+  { key: "Asset Evidence Types", label: "Evidence Types" },
 ];
 
 export default function Configuration() {
