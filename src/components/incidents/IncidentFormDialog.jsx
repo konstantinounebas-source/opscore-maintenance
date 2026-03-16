@@ -85,6 +85,7 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
     } else {
       const f = emptyForm();
       f.reported_date = new Date().toISOString().split("T")[0];
+      f.incident_id = generateIncidentId(allIncidents);
       if (defaultAssetId) {
         f.related_asset_id = defaultAssetId;
         const asset = assets.find(a => a.id === defaultAssetId);
@@ -92,12 +93,13 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
           f.active_shelter_id = asset.asset_id || "";
           f.province = asset.category || "";
           f.location_address = asset.location || "";
+          f.title = `${asset.asset_name} - ${f.issue_date}`;
         }
       }
       setForm(f);
     }
     setErrors({});
-  }, [incident, open, defaultAssetId]);
+  }, [incident, open, defaultAssetId, allIncidents.length]);
 
   const set = (key, value) => setForm(f => ({ ...f, [key]: value }));
 
