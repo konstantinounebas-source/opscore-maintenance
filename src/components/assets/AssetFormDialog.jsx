@@ -203,15 +203,9 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
 
           {/* ── MAINTENANCE + WARRANTY ── */}
           <SectionHeader title="Maintenance & Warranty" color="green" />
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label className="text-xs">Warranty Base Year</Label>
-              <Input type="number" value={form.warranty_base_year} onChange={e => set("warranty_base_year", e.target.value)} placeholder="e.g. 2023" min="2000" max="2100" />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Software Warranty End Date (3 Years)</Label>
-              <Input type="date" value={form.software_warranty_end_date} onChange={e => set("software_warranty_end_date", e.target.value)} />
-            </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Software Warranty End Date (3 Years)</Label>
+            <Input type="date" value={form.software_warranty_end_date} onChange={e => set("software_warranty_end_date", e.target.value)} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
