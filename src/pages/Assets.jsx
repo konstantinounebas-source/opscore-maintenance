@@ -47,11 +47,25 @@ export default function Assets() {
     },
   });
 
-  const handleSave = (formData) => {
+  const handleSave = async (formData, attachments = []) => {
     if (editingAsset) {
       updateMutation.mutate({ id: editingAsset.id, data: formData });
     } else {
-      createMutation.mutate(formData);
+      const newAsset = await createMutation.mutateAsync(formData);
+      // Save attachments after asset is created
+      if (attachments.length > 0 && newAsset?.id) {
+        for (const file of attachments) {
+          await base44.entities.AssetAttachments.create({
+            asset_id: newAsset.id,
+            file_name: file.file_name,
+            file_url: file.file_url,
+            file_type: file.file_type,
+            file_size: file.file_size,
+            uploaded_by: (await base44.auth.me())?.email
+          });
+        }
+        queryClient.invalidateQueries({ queryKey: ["assets"] });
+      }
     }
   };
 
