@@ -236,7 +236,7 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
               <Input type="date" value={form.preventive_inspection_date} onChange={e => set("preventive_inspection_date", e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Next Inspection Date</Label>
+              <Label className="text-xs">Next Inspection</Label>
               <Input type="date" value={form.next_inspection_date} onChange={e => set("next_inspection_date", e.target.value)} />
             </div>
           </div>
