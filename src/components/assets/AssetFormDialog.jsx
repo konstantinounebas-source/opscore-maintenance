@@ -178,19 +178,12 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
           <SectionHeader title="Manual Inputs" color="blue" />
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-xs">Status</Label>
-              <Select value={form.status} onValueChange={v => set("status", v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {(statuses.length ? statuses : ["Active", "Under Maintenance", "Inactive", "Transferred", "Replaced", "Retired"]).map(s => (
-                    <SelectItem key={s} value={s}>{s}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
               <Label className="text-xs">Delivery Year</Label>
               <Input type="number" value={form.delivery_year} onChange={e => set("delivery_year", e.target.value)} placeholder="e.g. 2023" min="2000" max="2100" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Warranty Base Year</Label>
+              <Input type="number" value={form.warranty_base_year} onChange={e => set("warranty_base_year", e.target.value)} placeholder="e.g. 2023" min="2000" max="2100" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
