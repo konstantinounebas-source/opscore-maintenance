@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
-import { ArrowLeft, Pencil, Plus, AlertTriangle, Wrench, Download, FileText, Image, ExternalLink } from "lucide-react";
+import { ArrowLeft, Pencil, Plus, AlertTriangle, Wrench, Download, FileText, Image, ExternalLink, Send } from "lucide-react";
 
 export default function AssetDetail() {
   const params = new URLSearchParams(window.location.search);
@@ -25,6 +25,7 @@ export default function AssetDetail() {
   const [editOpen, setEditOpen] = useState(false);
   const [childFormOpen, setChildFormOpen] = useState(false);
   const [editingChild, setEditingChild] = useState(null);
+  const [moveMenuOpen, setMoveMenuOpen] = useState(null);
 
   const { data: asset } = useQuery({ queryKey: ["asset", assetId], queryFn: () => base44.entities.Assets.filter({ id: assetId }).then(r => r[0]), enabled: !!assetId });
   const { data: children = [] } = useQuery({ queryKey: ["childAssets", assetId], queryFn: () => base44.entities.ChildAssets.filter({ parent_asset_id: assetId }), enabled: !!assetId });
@@ -33,6 +34,7 @@ export default function AssetDetail() {
   const { data: attachments = [] } = useQuery({ queryKey: ["assetAttachments", assetId], queryFn: () => base44.entities.AssetAttachments.filter({ asset_id: assetId }), enabled: !!assetId });
   const { data: transactions = [] } = useQuery({ queryKey: ["assetTransactions", assetId], queryFn: () => base44.entities.AssetTransactions.filter({ asset_id: assetId }), enabled: !!assetId });
   const { data: shipments = [] } = useQuery({ queryKey: ["assetShipments", assetId], queryFn: () => base44.entities.Shipments.filter({ parent_asset_id: assetId }), enabled: !!assetId });
+  const { data: allAssets = [] } = useQuery({ queryKey: ["allAssets"], queryFn: () => base44.entities.Assets.list() });
 
   const updateAsset = useMutation({
     mutationFn: (data) => base44.entities.Assets.update(assetId, data),
@@ -89,6 +91,23 @@ export default function AssetDetail() {
     }
   };
 
+  const handleMoveChild = async (child, destinationAssetId) => {
+    const user = await base44.auth.me();
+    if (destinationAssetId === "inventory") {
+      await base44.entities.ChildAssets.update(child.id, { parent_asset_id: null });
+      await base44.entities.Shipments.create({ child_asset_id: child.id, parent_asset_id: assetId, status: "Returned", details: "Returned to inventory" });
+      await base44.entities.AssetTransactions.create({ asset_id: assetId, action: "Child Moved to Inventory", details: `${child.child_id} returned to inventory`, user: user?.email });
+    } else {
+      await base44.entities.ChildAssets.update(child.id, { parent_asset_id: destinationAssetId });
+      await base44.entities.Shipments.create({ child_asset_id: child.id, parent_asset_id: destinationAssetId, status: "Delivered", details: `Moved from ${assetId}` });
+      await base44.entities.AssetTransactions.create({ asset_id: assetId, action: "Child Moved", details: `${child.child_id} moved to ${destinationAssetId}`, user: user?.email });
+    }
+    queryClient.invalidateQueries({ queryKey: ["childAssets", assetId] });
+    queryClient.invalidateQueries({ queryKey: ["assetTransactions", assetId] });
+    setMoveMenuOpen(null);
+    toast({ title: "Child asset moved" });
+  };
+
   const exportAssetDetails = () => {
     if (!asset) return;
     const lines = [`Asset ID,${asset.asset_id}`, `Name,${asset.asset_name}`, `Category,${asset.category}`, `Type,${asset.asset_type}`, `Status,${asset.status}`, `Location,${asset.location}`, `Installation Date,${asset.installation_date}`, `Description,"${asset.description || ""}"`];
@@ -107,6 +126,41 @@ export default function AssetDetail() {
     { key: "serial_number", label: "Serial Number" },
     { key: "installation_date", label: "Install Date" },
     { key: "child_type", label: "Type" },
+    {
+      key: "move",
+      label: "",
+      render: (child) => (
+        <div className="relative">
+          <button
+            onClick={() => setMoveMenuOpen(moveMenuOpen === child.id ? null : child.id)}
+            className="p-1 hover:bg-slate-100 rounded transition-colors"
+            title="Move to another asset or inventory"
+          >
+            <Send className="w-4 h-4 text-indigo-600" />
+          </button>
+          {moveMenuOpen === child.id && (
+            <div className="absolute right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-50 min-w-48">
+              <button
+                onClick={() => handleMoveChild(child, "inventory")}
+                className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 border-b border-slate-100 text-slate-700 font-medium"
+              >
+                → Return to Inventory
+              </button>
+              <div className="text-xs text-slate-500 px-3 py-1.5 font-medium">Move to Asset:</div>
+              {allAssets.filter(a => a.id !== assetId).map(a => (
+                <button
+                  key={a.id}
+                  onClick={() => handleMoveChild(child, a.id)}
+                  className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 text-slate-700"
+                >
+                  → {a.asset_name} ({a.asset_id})
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      ),
+    },
   ];
 
   const incidentColumns = [
