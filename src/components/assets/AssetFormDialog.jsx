@@ -262,18 +262,48 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
 
           {/* ── ATTACHED DOCUMENTS ── */}
           <SectionHeader title="Attached Documents and Photos" color="rose" />
-          <div className="space-y-2">
-            <Label className="text-xs">Attached Documents and Photos</Label>
-            <div className="grid grid-cols-2 gap-2">
-              {(evidenceOptions.length ? evidenceOptions : ["Installation Photos", "Delivery Note", "Signed Install Form", "Handover Form", "Warranty Document", "Other"]).map(opt => (
-                <label key={opt} className="flex items-center gap-2 text-sm cursor-pointer">
-                  <Checkbox
-                    checked={(form.evidence_types || []).includes(opt)}
-                    onCheckedChange={() => toggleEvidence(opt)}
-                  />
-                  {opt}
-                </label>
-              ))}
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <Label className="text-xs">Document/Photo Types</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {(evidenceOptions.length ? evidenceOptions : ["Installation Photos", "Delivery Note", "Signed Install Form", "Handover Form", "Warranty Document", "Other"]).map(opt => (
+                  <label key={opt} className="flex items-center gap-2 text-sm cursor-pointer">
+                    <Checkbox
+                      checked={(form.evidence_types || []).includes(opt)}
+                      onCheckedChange={() => toggleEvidence(opt)}
+                    />
+                    {opt}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs">Upload Files</Label>
+                <FileUploader onUpload={handleFileUpload} label="Add File" />
+              </div>
+              {(form.attachments || []).length > 0 && (
+                <div className="space-y-2 mt-2">
+                  {form.attachments.map((file, idx) => (
+                    <div key={idx} className="flex items-center justify-between px-3 py-2 bg-slate-50 rounded border border-slate-200">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-slate-700 truncate">{file.file_name}</p>
+                        <p className="text-xs text-slate-500">{file.file_size}</p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeAttachment(idx)}
+                        className="ml-2 text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
