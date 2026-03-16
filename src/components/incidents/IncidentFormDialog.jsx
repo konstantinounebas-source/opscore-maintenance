@@ -71,8 +71,8 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
   const probableCauses = useConfigLists("Πιθανή Αιτία");
   const evidenceTypes = useConfigLists("Τύπος Αποδεικτικών");
   const initialPriorities = useConfigLists("Αρχική Προτεραιότητα");
-  const provinces = useConfigLists("Asset Category");
-  const municipalities = useConfigLists("Asset Type");
+  const provinces = useConfigLists("Provinces");
+  const municipalities = useConfigLists("Municipalities");
 
   const { data: assets = [] } = useQuery({ queryKey: ["assets"], queryFn: () => base44.entities.Assets.list() });
   const { data: workOrders = [] } = useQuery({ queryKey: ["workOrders"], queryFn: () => base44.entities.WorkOrders.list() });

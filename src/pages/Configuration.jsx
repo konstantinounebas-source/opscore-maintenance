@@ -10,9 +10,21 @@ import { Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 const LIST_TYPES = [
-  "Asset Category", "Asset Type", "Asset Status",
-  "Child Category", "Child Type",
-  "Incident Status", "Incident Priority", "Incident Category"
+  { key: "Provinces", label: "Provinces" },
+  { key: "Municipalities", label: "Municipalities" },
+  { key: "Incident Sources", label: "Incident Sources" },
+  { key: "Structural Issues", label: "Structural Issues" },
+  { key: "Electrical Issues", label: "Electrical Issues" },
+  { key: "Electronic Issues", label: "Electronic Issues" },
+  { key: "Probable Causes", label: "Probable Causes" },
+  { key: "Evidence Types", label: "Evidence Types" },
+  { key: "Priority", label: "Priority" },
+  { key: "OWR / Make-Safe", label: "OWR / Make-Safe" },
+  { key: "Yes / No", label: "Yes / No" },
+  { key: "Asset ID", label: "Asset ID" },
+  { key: "Asset Province", label: "Asset Province" },
+  { key: "Asset Municipality", label: "Asset Municipality" },
+  { key: "Asset Address", label: "Asset Address" },
 ];
 
 export default function Configuration() {
