@@ -15,17 +15,29 @@ export default function AuditLog({ entries }) {
             <Clock className="w-3.5 h-3.5 text-slate-500" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm text-slate-900 font-medium">{entry.action}</p>
-            {entry.details && <p className="text-xs text-slate-500 mt-0.5">{entry.details}</p>}
-            {entry.note && <p className="text-xs text-slate-500 mt-0.5 italic">{entry.note}</p>}
-            <div className="flex items-center gap-3 mt-1.5 text-xs text-slate-400">
-              <span className="flex items-center gap-1">
-                <User className="w-3 h-3" />
-                {entry.user || entry.created_by || "System"}
-              </span>
-              <span>{entry.created_date ? format(new Date(entry.created_date), "MMM d, yyyy HH:mm") : "—"}</span>
-            </div>
-          </div>
+             <p className="text-sm text-slate-900 font-medium">{entry.action}</p>
+             {entry.details && <p className="text-xs text-slate-500 mt-0.5">{entry.details}</p>}
+             {entry.note && <p className="text-xs text-slate-500 mt-0.5 italic">{entry.note}</p>}
+             {entry.file_url && (
+               <div className="flex items-center gap-2 mt-1.5 text-xs">
+                 {entry.file_type === "Photo" ? (
+                   <Image className="w-3 h-3 text-indigo-500" />
+                 ) : (
+                   <FileText className="w-3 h-3 text-slate-500" />
+                 )}
+                 <a href={entry.file_url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline truncate">
+                   {entry.file_name || "Attachment"}
+                 </a>
+               </div>
+             )}
+             <div className="flex items-center gap-3 mt-1.5 text-xs text-slate-400">
+               <span className="flex items-center gap-1">
+                 <User className="w-3 h-3" />
+                 {entry.user || entry.created_by || "System"}
+               </span>
+               <span>{entry.created_date ? format(new Date(entry.created_date), "MMM d, yyyy HH:mm") : "—"}</span>
+             </div>
+           </div>
         </div>
       ))}
     </div>
