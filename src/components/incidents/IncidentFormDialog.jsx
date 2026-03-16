@@ -74,6 +74,7 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
 
   const { data: assets = [] } = useQuery({ queryKey: ["assets"], queryFn: () => base44.entities.Assets.list() });
   const { data: workOrders = [] } = useQuery({ queryKey: ["workOrders"], queryFn: () => base44.entities.WorkOrders.list() });
+  const { data: allIncidents = [] } = useQuery({ queryKey: ["incidents"], queryFn: () => base44.entities.Incidents.list() });
 
   const [form, setForm] = useState(emptyForm());
   const [errors, setErrors] = useState({});
