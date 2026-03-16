@@ -30,7 +30,7 @@ const LIST_TYPES = [
 export default function Configuration() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [selectedType, setSelectedType] = useState("Asset Category");
+  const [selectedType, setSelectedType] = useState("Provinces");
   const [newValue, setNewValue] = useState("");
 
   const { data: allItems = [] } = useQuery({ queryKey: ["configLists"], queryFn: () => base44.entities.ConfigLists.list() });
@@ -71,7 +71,7 @@ export default function Configuration() {
             <Select value={selectedType} onValueChange={setSelectedType}>
               <SelectTrigger className="w-64"><SelectValue /></SelectTrigger>
               <SelectContent>
-                {LIST_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                {LIST_TYPES.map(t => <SelectItem key={t.key} value={t.key}>{t.label}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
