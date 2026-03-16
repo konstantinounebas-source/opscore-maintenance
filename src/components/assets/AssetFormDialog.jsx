@@ -249,7 +249,7 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
               <Input type="date" value={form.electronics_warranty_end_date} onChange={e => set("electronics_warranty_end_date", e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Materials Warranty End <span className="text-slate-400">(10 yrs)</span></Label>
+              <Label className="text-xs">Acrylic/Plastics/Seals/Paint Warranty End Date (10 Years)</Label>
               <Input type="date" value={form.materials_warranty_end_date} onChange={e => set("materials_warranty_end_date", e.target.value)} />
             </div>
           </div>
