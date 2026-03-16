@@ -204,7 +204,7 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
           <div className="grid grid-cols-2 gap-4">
             <SectionTitle>2. Στοιχεία Στάσης</SectionTitle>
 
-            <Field label="Αριθμός Στάσης (Asset)" required colSpan={2}>
+            <Field label="Αριθμός Στάσης" required colSpan={2}>
               <Select value={form.related_asset_id} onValueChange={handleAssetChange}>
                 <SelectTrigger><SelectValue placeholder="Επιλογή asset..." /></SelectTrigger>
                 <SelectContent>
