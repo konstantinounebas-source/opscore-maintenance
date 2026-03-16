@@ -216,10 +216,16 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
             </Field>
 
             <Field label="Επαρχία">
-              <Input value={form.province} onChange={e => set("province", e.target.value)} placeholder="Αυτόματη συμπλήρωση..." />
+              <Select value={form.province} onValueChange={v => set("province", v)}>
+                <SelectTrigger><SelectValue placeholder="Επιλογή επαρχίας..." /></SelectTrigger>
+                <SelectContent>{provinces.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+              </Select>
             </Field>
             <Field label="Δήμος">
-              <Input value={form.municipality} onChange={e => set("municipality", e.target.value)} placeholder="Αυτόματη συμπλήρωση..." />
+              <Select value={form.municipality} onValueChange={v => set("municipality", v)}>
+                <SelectTrigger><SelectValue placeholder="Επιλογή δήμου..." /></SelectTrigger>
+                <SelectContent>{municipalities.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
+              </Select>
             </Field>
 
             <Field label="Διεύθυνση Στάσης" colSpan={2}>
