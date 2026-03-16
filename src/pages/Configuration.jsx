@@ -28,7 +28,6 @@ const LIST_TYPES = [
 
 export default function Configuration() {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
   const [selectedType, setSelectedType] = useState("Provinces");
   const [newValue, setNewValue] = useState("");
 
