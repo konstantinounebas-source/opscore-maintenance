@@ -1,16 +1,24 @@
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
-// Add page imports here
+
+import AppLayout from '@/components/layout/AppLayout';
+import Dashboard from '@/pages/Dashboard';
+import Assets from '@/pages/Assets';
+import AssetDetail from '@/pages/AssetDetail';
+import Incidents from '@/pages/Incidents';
+import IncidentDetail from '@/pages/IncidentDetail';
+import IncidentForm from '@/pages/IncidentForm';
+import WorkOrders from '@/pages/WorkOrders';
+import Configuration from '@/pages/Configuration';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
 
-  // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
       <div className="fixed inset-0 flex items-center justify-center">
@@ -19,29 +27,34 @@ const AuthenticatedApp = () => {
     );
   }
 
-  // Handle authentication errors
   if (authError) {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {
-      // Redirect to login automatically
       navigateToLogin();
       return null;
     }
   }
 
-  // Render the main app
   return (
     <Routes>
-      {/* Add your page Route elements here */}
+      <Route path="/" element={<Navigate to="/Dashboard" replace />} />
+      <Route element={<AppLayout />}>
+        <Route path="/Dashboard" element={<Dashboard />} />
+        <Route path="/Assets" element={<Assets />} />
+        <Route path="/AssetDetail" element={<AssetDetail />} />
+        <Route path="/Incidents" element={<Incidents />} />
+        <Route path="/IncidentDetail" element={<IncidentDetail />} />
+        <Route path="/IncidentForm" element={<IncidentForm />} />
+        <Route path="/WorkOrders" element={<WorkOrders />} />
+        <Route path="/Configuration" element={<Configuration />} />
+      </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
 };
 
-
 function App() {
-
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
