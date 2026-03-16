@@ -176,9 +176,19 @@ export default function IncidentDetail() {
               <Input value={assignee} onChange={e => setAssignee(e.target.value)} placeholder="Assign to..." className="h-8 text-xs w-36" />
               <Button size="sm" variant="outline" className="h-8 text-xs" onClick={handleAssign}><UserPlus className="w-3.5 h-3.5" /></Button>
             </div>
-            <Button size="sm" variant="outline" className="h-8 text-xs gap-1" onClick={handleEscalate}><ArrowUpRight className="w-3.5 h-3.5" />Escalate</Button>
+            <Select value={priorityAction} onValueChange={(v) => { setPriorityAction(v); handlePriority(v); }}>
+              <SelectTrigger className="w-32 h-8 text-xs"><SelectValue placeholder="Priority" /></SelectTrigger>
+              <SelectContent>
+                {["High", "Medium", "Low"].map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+              </SelectContent>
+            </Select>
             <Button size="sm" variant="outline" className="h-8 text-xs gap-1" onClick={() => handleStatusChange("Closed")}><XCircle className="w-3.5 h-3.5" />Close</Button>
             <FileUploader onUpload={handleUpload} label="Attach" />
+            {Object.keys(pendingChanges).length > 0 && (
+              <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 h-8 text-xs gap-1 ml-auto" onClick={handleConfirmChanges}>
+                <CheckCircle className="w-3.5 h-3.5" />Confirm Changes
+              </Button>
+            )}
           </div>
         </div>
 
