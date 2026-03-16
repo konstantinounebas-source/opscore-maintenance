@@ -175,11 +175,9 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-xs">Latitude</Label>
-              <Input type="number" step="any" value={form.latitude} onChange={e => set("latitude", e.target.value)} placeholder="e.g. 35.1856" />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Longitude</Label>
+              <Label className="text-xs">Coordinates (Latitude)</Label>
+...
+            <Label className="text-xs">Coordinates (Longitude)</Label>
               <Input type="number" step="any" value={form.longitude} onChange={e => set("longitude", e.target.value)} placeholder="e.g. 33.3823" />
             </div>
           </div>
