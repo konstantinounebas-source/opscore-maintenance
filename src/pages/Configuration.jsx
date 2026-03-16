@@ -60,7 +60,7 @@ export default function Configuration() {
       <TopHeader title="Configuration" />
       <div className="p-6 space-y-6">
         <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <h2 className="text-sm font-semibold text-slate-900 mb-4">Manage Dropdown Lists</h2>
+          <h2 className="text-sm font-semibold text-slate-900 mb-4">Manage Dropdown Lists of Incident</h2>
           <p className="text-xs text-slate-500 mb-6">Configure the dropdown values used across the application. These lists power category, type, status, and priority fields.</p>
 
           <div className="flex items-center gap-4 mb-6">
