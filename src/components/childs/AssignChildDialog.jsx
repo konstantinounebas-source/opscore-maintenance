@@ -25,14 +25,14 @@ export default function AssignChildDialog({ open, onOpenChange, child, parentAss
             <p><strong>Current Assignment:</strong> {child?.parent_asset_id ? parentAssets.find(a => a.id === child.parent_asset_id)?.asset_name : "Unassigned"}</p>
           </div>
           <div className="space-y-2">
-            <Label className="text-xs">Assign to Asset</Label>
+            <Label className="text-xs">Assign to Asset ID</Label>
             <Select value={selectedAsset} onValueChange={setSelectedAsset}>
               <SelectTrigger>
                 <SelectValue placeholder="Select asset" />
               </SelectTrigger>
               <SelectContent>
                 {parentAssets.map(a => (
-                  <SelectItem key={a.id} value={a.id}>{a.asset_name}</SelectItem>
+                  <SelectItem key={a.id} value={a.id}>{a.asset_id} - {a.asset_name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
