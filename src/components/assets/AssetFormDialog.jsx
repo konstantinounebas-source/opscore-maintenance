@@ -158,7 +158,7 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-xs">Location / Address</Label>
+              <Label className="text-xs">Location/Address</Label>
               <Input value={form.location_address} onChange={e => set("location_address", e.target.value)} />
             </div>
             <div className="space-y-1.5">
