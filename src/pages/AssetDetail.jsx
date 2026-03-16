@@ -9,6 +9,7 @@ import AuditLog from "@/components/shared/AuditLog";
 import FileUploader from "@/components/shared/FileUploader";
 import AssetFormDialog from "@/components/assets/AssetFormDialog";
 import ChildFormDialog from "@/components/assets/ChildFormDialog";
+import MoveChildDialog from "@/components/childs/MoveChildDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
