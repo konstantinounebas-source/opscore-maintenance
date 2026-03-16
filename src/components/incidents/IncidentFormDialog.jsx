@@ -128,8 +128,6 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
 
   const validate = () => {
     const e = {};
-    if (!form.incident_id) e.incident_id = true;
-    if (!form.title) e.title = true;
     if (!form.issue_date) e.issue_date = true;
     if (!form.reported_by_name) e.reported_by_name = true;
     if (form.phone_available && !form.reported_by_phone) e.reported_by_phone = true;
