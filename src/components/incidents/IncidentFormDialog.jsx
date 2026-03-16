@@ -64,13 +64,13 @@ const emptyForm = () => ({
 });
 
 export default function IncidentFormDialog({ open, onOpenChange, incident, onSave, defaultAssetId }) {
-  const incidentSources = useConfigLists("Προέλευση Αναφοράς");
-  const structuralIssues = useConfigLists("Δομικό Υποκατηγορία");
-  const electricalIssues = useConfigLists("Ηλεκτρολογικό Υποκατηγορία");
-  const electronicIssues = useConfigLists("Ηλεκτρονικό Υποκατηγορία");
-  const probableCauses = useConfigLists("Πιθανή Αιτία");
-  const evidenceTypes = useConfigLists("Τύπος Αποδεικτικών");
-  const initialPriorities = useConfigLists("Αρχική Προτεραιότητα");
+  const incidentSources = useConfigLists("Incident Sources");
+  const structuralIssues = useConfigLists("Structural Issues");
+  const electricalIssues = useConfigLists("Electrical Issues");
+  const electronicIssues = useConfigLists("Electronic Issues");
+  const probableCauses = useConfigLists("Probable Causes");
+  const evidenceTypes = useConfigLists("Evidence Types");
+  const initialPriorities = useConfigLists("Priority");
   const provinces = useConfigLists("Provinces");
   const municipalities = useConfigLists("Municipalities");
 
