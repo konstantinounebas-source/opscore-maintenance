@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useConfigLists } from "@/components/shared/useConfigLists";
+import FileUploader from "@/components/shared/FileUploader";
+import { Trash2 } from "lucide-react";
 
 const CONTRACT_BASE_YEAR = 2023;
 
