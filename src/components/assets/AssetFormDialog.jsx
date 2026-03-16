@@ -108,6 +108,14 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     const payload = { ...form };
+    // Auto-generate asset_id if not set (new asset)
+    if (!payload.asset_id) {
+      payload.asset_id = payload.active_shelter_id || `AST-${Date.now()}`;
+    }
+    // Use active_shelter_id as asset_name if not set
+    if (!payload.asset_name) {
+      payload.asset_name = payload.active_shelter_id || payload.asset_id;
+    }
     if (payload.latitude !== "") payload.latitude = parseFloat(payload.latitude);
     else delete payload.latitude;
     if (payload.longitude !== "") payload.longitude = parseFloat(payload.longitude);
