@@ -10,6 +10,7 @@ import AppLayout from '@/components/layout/AppLayout';
 import Dashboard from '@/pages/Dashboard';
 import Assets from '@/pages/Assets';
 import AssetDetail from '@/pages/AssetDetail';
+import Childs from '@/pages/Childs';
 import Incidents from '@/pages/Incidents';
 import IncidentDetail from '@/pages/IncidentDetail';
 import IncidentForm from '@/pages/IncidentForm';
@@ -43,6 +44,7 @@ const AuthenticatedApp = () => {
         <Route path="/Dashboard" element={<Dashboard />} />
         <Route path="/Assets" element={<Assets />} />
         <Route path="/AssetDetail" element={<AssetDetail />} />
+        <Route path="/Childs" element={<Childs />} />
         <Route path="/Incidents" element={<Incidents />} />
         <Route path="/IncidentDetail" element={<IncidentDetail />} />
         <Route path="/IncidentForm" element={<IncidentForm />} />
