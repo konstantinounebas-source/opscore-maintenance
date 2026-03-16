@@ -124,7 +124,7 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const payload = { ...form };
     // Auto-generate asset_id if not set (new asset)
@@ -143,7 +143,13 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
     else delete payload.delivery_year;
     if (payload.warranty_base_year !== "") payload.warranty_base_year = parseInt(payload.warranty_base_year);
     else delete payload.warranty_base_year;
-    onSave(payload);
+    
+    // Separate attachments from payload
+    const attachments = payload.attachments || [];
+    delete payload.attachments;
+    
+    // Call onSave with the asset payload
+    await onSave(payload);
   };
 
   return (
