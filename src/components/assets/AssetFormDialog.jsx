@@ -232,7 +232,7 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-xs">Preventive Inspection Date <span className="text-slate-400">(6 yrs from 2023)</span></Label>
+              <Label className="text-xs">Preventive Inspection (6 years after 2023 contract)</Label>
               <Input type="date" value={form.preventive_inspection_date} onChange={e => set("preventive_inspection_date", e.target.value)} />
             </div>
             <div className="space-y-1.5">
