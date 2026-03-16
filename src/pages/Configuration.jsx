@@ -35,12 +35,9 @@ const ASSET_LIST_TYPES = [
   { key: "Asset Evidence Types", label: "Evidence Types" },
 ];
 
-export default function Configuration() {
-  const queryClient = useQueryClient();
-  const [selectedType, setSelectedType] = useState("Provinces");
+function ListManager({ listTypes, allItems, queryClient }) {
+  const [selectedType, setSelectedType] = useState(listTypes[0].key);
   const [newValue, setNewValue] = useState("");
-
-  const { data: allItems = [] } = useQuery({ queryKey: ["configLists"], queryFn: () => base44.entities.ConfigLists.list() });
 
   const items = allItems.filter(i => i.list_type === selectedType).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
 
@@ -65,40 +62,57 @@ export default function Configuration() {
   };
 
   return (
+    <>
+      <div className="flex items-center gap-4 mb-6">
+        <Select value={selectedType} onValueChange={setSelectedType}>
+          <SelectTrigger className="w-64"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {listTypes.map(t => <SelectItem key={t.key} value={t.key}>{t.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2 mb-4">
+        {items.length === 0 && <p className="text-sm text-slate-400 py-4">No items configured. Add values below.</p>}
+        {items.map(item => (
+          <div key={item.id} className="flex items-center justify-between px-4 py-2.5 bg-slate-50 rounded-lg">
+            <span className="text-sm text-slate-700">{item.value}</span>
+            <Button variant="ghost" size="sm" onClick={() => deleteMutation.mutate(item.id)}>
+              <Trash2 className="w-3.5 h-3.5 text-red-500" />
+            </Button>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex gap-2">
+        <Input value={newValue} onChange={e => setNewValue(e.target.value)} placeholder={`Add new value...`} className="max-w-sm" onKeyDown={e => e.key === "Enter" && handleAdd()} />
+        <Button className="bg-indigo-600 hover:bg-indigo-700 gap-1.5" onClick={handleAdd}>
+          <Plus className="w-3.5 h-3.5" /> Add
+        </Button>
+      </div>
+    </>
+  );
+}
+
+export default function Configuration() {
+  const queryClient = useQueryClient();
+
+  const { data: allItems = [] } = useQuery({ queryKey: ["configLists"], queryFn: () => base44.entities.ConfigLists.list() });
+
+  return (
     <div>
       <TopHeader title="Configuration" />
       <div className="p-6 space-y-6">
         <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <h2 className="text-sm font-semibold text-slate-900 mb-4">Manage Dropdown Lists of Incident</h2>
+          <h2 className="text-sm font-semibold text-slate-900 mb-1">Manage Dropdown Lists of Incident</h2>
           <p className="text-xs text-slate-500 mb-6">Configure the dropdown values used across the application. These lists power category, type, status, and priority fields.</p>
+          <ListManager listTypes={INCIDENT_LIST_TYPES} allItems={allItems} queryClient={queryClient} />
+        </div>
 
-          <div className="flex items-center gap-4 mb-6">
-            <Select value={selectedType} onValueChange={setSelectedType}>
-              <SelectTrigger className="w-64"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {LIST_TYPES.map(t => <SelectItem key={t.key} value={t.key}>{t.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2 mb-4">
-            {items.length === 0 && <p className="text-sm text-slate-400 py-4">No items configured. Add values below.</p>}
-            {items.map(item => (
-              <div key={item.id} className="flex items-center justify-between px-4 py-2.5 bg-slate-50 rounded-lg">
-                <span className="text-sm text-slate-700">{item.value}</span>
-                <Button variant="ghost" size="sm" onClick={() => deleteMutation.mutate(item.id)}>
-                  <Trash2 className="w-3.5 h-3.5 text-red-500" />
-                </Button>
-              </div>
-            ))}
-          </div>
-
-          <div className="flex gap-2">
-            <Input value={newValue} onChange={e => setNewValue(e.target.value)} placeholder={`Add new ${selectedType} value...`} className="max-w-sm" onKeyDown={e => e.key === "Enter" && handleAdd()} />
-            <Button className="bg-indigo-600 hover:bg-indigo-700 gap-1.5" onClick={handleAdd}>
-              <Plus className="w-3.5 h-3.5" /> Add
-            </Button>
-          </div>
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <h2 className="text-sm font-semibold text-slate-900 mb-1">Manage Dropdown Lists for Assets</h2>
+          <p className="text-xs text-slate-500 mb-6">Configure the dropdown values used in asset management. These lists power shelter types, cities, child categories, and status fields.</p>
+          <ListManager listTypes={ASSET_LIST_TYPES} allItems={allItems} queryClient={queryClient} />
         </div>
       </div>
     </div>
