@@ -380,9 +380,6 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
             <Field label="Εκπρόσωπος Αναθέτουσας Αρχής">
               <Input value={form.authority_representative} onChange={e => set("authority_representative", e.target.value)} />
             </Field>
-            <Field label="Ανατέθηκε σε">
-              <Input value={form.assigned_to} onChange={e => set("assigned_to", e.target.value)} />
-            </Field>
           </div>
 
           <div className="flex justify-end gap-2 pt-2 border-t">
