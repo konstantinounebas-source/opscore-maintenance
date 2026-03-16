@@ -113,6 +113,7 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
       province: asset?.category || "",
       municipality: asset?.asset_type || "",
       location_address: asset?.location || "",
+      title: asset ? `${asset.asset_name} - ${f.issue_date}` : f.title,
     }));
   };
 
