@@ -11,7 +11,13 @@ import { base44 } from "@/api/base44Client";
 import { useConfigLists } from "@/components/shared/useConfigLists";
 import FileUploader from "@/components/shared/FileUploader";
 
-const defaultStatuses = ["Open", "In Progress", "On Hold", "Resolved", "Closed"];
+const generateIncidentId = (incidents) => {
+  const nums = incidents
+    .map(i => parseInt((i.incident_id || "").replace(/\D/g, ""), 10))
+    .filter(n => !isNaN(n));
+  const next = nums.length ? Math.max(...nums) + 1 : 1;
+  return `INC-${String(next).padStart(3, "0")}`;
+};
 
 const SectionTitle = ({ children }) => (
   <div className="col-span-2 border-b pb-1 mb-1">
