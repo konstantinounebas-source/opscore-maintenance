@@ -257,9 +257,9 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
           </div>
 
           {/* ── ATTACHED DOCUMENTS ── */}
-          <SectionHeader title="Attached Documents & Photos" color="rose" />
+          <SectionHeader title="Attached Documents and Photos" color="rose" />
           <div className="space-y-2">
-            <Label className="text-xs">Evidence Types</Label>
+            <Label className="text-xs">Attached Documents and Photos</Label>
             <div className="grid grid-cols-2 gap-2">
               {(evidenceOptions.length ? evidenceOptions : ["Installation Photos", "Delivery Note", "Signed Install Form", "Handover Form", "Warranty Document", "Other"]).map(opt => (
                 <label key={opt} className="flex items-center gap-2 text-sm cursor-pointer">
