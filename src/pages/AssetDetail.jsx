@@ -132,35 +132,13 @@ export default function AssetDetail() {
       key: "move",
       label: "",
       render: (child) => (
-        <div className="relative" onClick={(e) => e.stopPropagation()}>
-          <button
-            onClick={(e) => { e.stopPropagation(); setMoveMenuOpen(moveMenuOpen === child.id ? null : child.id); }}
-            className="p-1 hover:bg-slate-100 rounded transition-colors"
-            title="Move to another asset or inventory"
-          >
-            <Send className="w-4 h-4 text-indigo-600" />
-          </button>
-          {moveMenuOpen === child.id && (
-            <div className="absolute right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-50 min-w-48">
-              <button
-                onClick={(e) => { e.stopPropagation(); handleMoveChild(child, "inventory"); }}
-                className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 border-b border-slate-100 text-slate-700 font-medium"
-              >
-                → Return to Inventory
-              </button>
-              <div className="text-xs text-slate-500 px-3 py-1.5 font-medium">Move to Asset:</div>
-              {allAssets.filter(a => a.id !== assetId).map(a => (
-                <button
-                  key={a.id}
-                  onClick={(e) => { e.stopPropagation(); handleMoveChild(child, a.id); }}
-                  className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 text-slate-700"
-                >
-                  → {a.asset_name} ({a.asset_id})
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        <button
+          onClick={(e) => { e.stopPropagation(); setChildToMove(child); setMoveDialogOpen(true); }}
+          className="p-1 hover:bg-slate-100 rounded transition-colors"
+          title="Move to another asset or inventory"
+        >
+          <Send className="w-4 h-4 text-indigo-600" />
+        </button>
       ),
     },
   ];
