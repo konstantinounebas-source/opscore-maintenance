@@ -109,6 +109,20 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
     });
   };
 
+  const handleFileUpload = (fileData) => {
+    setForm(f => ({
+      ...f,
+      attachments: [...(f.attachments || []), fileData]
+    }));
+  };
+
+  const removeAttachment = (idx) => {
+    setForm(f => ({
+      ...f,
+      attachments: (f.attachments || []).filter((_, i) => i !== idx)
+    }));
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     const payload = { ...form };
