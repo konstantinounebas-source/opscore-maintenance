@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useConfigLists } from "@/components/shared/useConfigLists";
 import FileUploader from "@/components/shared/FileUploader";
 import { Trash2 } from "lucide-react";
+import { base44 } from "@/api/base44Client";
 
 const CONTRACT_BASE_YEAR = 2023;
 
