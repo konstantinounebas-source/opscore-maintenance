@@ -2,14 +2,16 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
   LayoutDashboard, Box, AlertTriangle, Settings, 
-  ChevronLeft, ChevronRight, Wrench
+  ChevronLeft, ChevronRight, Wrench, Package
 } from "lucide-react";
 
 const navItems = [
   { path: "/Dashboard", label: "Dashboard", icon: LayoutDashboard },
   { path: "/Assets", label: "Assets", icon: Box },
   { path: "/Incidents", label: "Incidents", icon: AlertTriangle },
-  { path: "/WorkOrders", label: "Work Orders", icon: Wrench },
+  { path: "/WorkOrders", label: "Work Orders", icon: Wrench, submenu: [
+    { path: "/Childs", label: "Child Assets", icon: Package }
+  ]},
   { path: "/Configuration", label: "Configuration", icon: Settings },
 ];
 
@@ -38,20 +40,44 @@ export default function Sidebar({ collapsed, onToggle }) {
         {navItems.map((item) => {
           const isActive = location.pathname.startsWith(item.path);
           const Icon = item.icon;
+          const submenu = item.submenu || [];
           return (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                isActive
-                  ? "bg-indigo-500/20 text-indigo-300"
-                  : "text-slate-400 hover:text-white hover:bg-slate-800"
-              }`}
-              title={collapsed ? item.label : undefined}
-            >
-              <Icon className="w-5 h-5 flex-shrink-0" />
-              {!collapsed && <span>{item.label}</span>}
-            </Link>
+            <div key={item.path}>
+              <Link
+                to={item.path}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                  isActive
+                    ? "bg-indigo-500/20 text-indigo-300"
+                    : "text-slate-400 hover:text-white hover:bg-slate-800"
+                }`}
+                title={collapsed ? item.label : undefined}
+              >
+                <Icon className="w-5 h-5 flex-shrink-0" />
+                {!collapsed && <span>{item.label}</span>}
+              </Link>
+              {!collapsed && submenu.length > 0 && (
+                <div className="ml-4 space-y-1 mt-1">
+                  {submenu.map((subitem) => {
+                    const isSubActive = location.pathname === subitem.path;
+                    const SubIcon = subitem.icon;
+                    return (
+                      <Link
+                        key={subitem.path}
+                        to={subitem.path}
+                        className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                          isSubActive
+                            ? "bg-indigo-500/30 text-indigo-200"
+                            : "text-slate-500 hover:text-slate-300 hover:bg-slate-800/50"
+                        }`}
+                      >
+                        <SubIcon className="w-4 h-4 flex-shrink-0" />
+                        <span>{subitem.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           );
         })}
       </nav>
