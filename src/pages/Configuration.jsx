@@ -47,7 +47,6 @@ export default function Configuration() {
     mutationFn: (id) => base44.entities.ConfigLists.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["configLists"] });
-      toast({ title: "Item removed" });
     },
   });
 
