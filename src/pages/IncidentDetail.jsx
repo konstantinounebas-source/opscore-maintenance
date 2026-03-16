@@ -60,7 +60,7 @@ export default function IncidentDetail() {
     if (!comment.trim()) return;
     const user = await base44.auth.me();
     await base44.entities.IncidentComments.create({ incident_id: incidentId, content: comment, comment_type: commentType, author: user?.email });
-    await addAuditEntry(`${commentType} Added`, comment.substring(0, 100));
+    await base44.entities.IncidentAuditTrail.create({ incident_id: incidentId, action: `${commentType} Added`, details: comment.substring(0, 100), user: user?.email });
     setComment("");
     invalidateAll();
     toast({ title: `${commentType} added` });
@@ -69,7 +69,8 @@ export default function IncidentDetail() {
   const handleStatusChange = async (newStatus) => {
     const oldStatus = incident?.status;
     await base44.entities.Incidents.update(incidentId, { status: newStatus });
-    await addAuditEntry("Status Changed", `${oldStatus} → ${newStatus}`);
+    const user = await base44.auth.me();
+    await base44.entities.IncidentAuditTrail.create({ incident_id: incidentId, action: "Status Changed", details: `${oldStatus} → ${newStatus}`, user: user?.email });
     invalidateAll();
     toast({ title: `Status changed to ${newStatus}` });
   };
@@ -77,7 +78,8 @@ export default function IncidentDetail() {
   const handleAssign = async () => {
     if (!assignee.trim()) return;
     await base44.entities.Incidents.update(incidentId, { assigned_to: assignee });
-    await addAuditEntry("Assigned", `Assigned to ${assignee}`);
+    const user = await base44.auth.me();
+    await base44.entities.IncidentAuditTrail.create({ incident_id: incidentId, action: "Assigned", details: `Assigned to ${assignee}`, user: user?.email });
     setAssignee("");
     invalidateAll();
     toast({ title: `Assigned to ${assignee}` });
@@ -85,8 +87,10 @@ export default function IncidentDetail() {
 
   const handleEscalate = async () => {
     const newPriority = incident?.priority === "Critical" ? "Critical" : incident?.priority === "High" ? "Critical" : incident?.priority === "Medium" ? "High" : "Medium";
+    const oldPriority = incident?.priority;
     await base44.entities.Incidents.update(incidentId, { priority: newPriority });
-    await addAuditEntry("Escalated", `Priority escalated to ${newPriority}`);
+    const user = await base44.auth.me();
+    await base44.entities.IncidentAuditTrail.create({ incident_id: incidentId, action: "Priority Escalated", details: `${oldPriority} → ${newPriority}`, user: user?.email });
     invalidateAll();
     toast({ title: `Escalated to ${newPriority}` });
   };
@@ -94,7 +98,7 @@ export default function IncidentDetail() {
   const handleUpload = async (fileData) => {
     const user = await base44.auth.me();
     await base44.entities.IncidentAttachments.create({ ...fileData, incident_id: incidentId, uploaded_by: user?.email });
-    await addAuditEntry("Attachment Uploaded", fileData.file_name);
+    await base44.entities.IncidentAuditTrail.create({ incident_id: incidentId, action: "Attachment Uploaded", details: `${fileData.file_type || "File"}: ${fileData.file_name}`, user: user?.email });
     invalidateAll();
     toast({ title: "File uploaded" });
   };
