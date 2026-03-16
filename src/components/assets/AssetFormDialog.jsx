@@ -245,7 +245,7 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
           <SectionHeader title="Child Component Warranty Dates" color="amber" />
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-xs">Electronics Warranty End <span className="text-slate-400">(5 yrs)</span></Label>
+              <Label className="text-xs">Refurbish &amp; Electronic Equipment Warranty End Date (5 Years)</Label>
               <Input type="date" value={form.electronics_warranty_end_date} onChange={e => set("electronics_warranty_end_date", e.target.value)} />
             </div>
             <div className="space-y-1.5">
