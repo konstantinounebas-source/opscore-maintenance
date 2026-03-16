@@ -36,10 +36,12 @@ export default function AssetDetail() {
 
   const updateAsset = useMutation({
     mutationFn: (data) => base44.entities.Assets.update(assetId, data),
-    onSuccess: async () => {
+    onSuccess: async (_, data) => {
       const user = await base44.auth.me();
-      await base44.entities.AssetTransactions.create({ asset_id: assetId, action: "Asset Updated", user: user?.email });
+      const changes = Object.entries(data).filter(([key, val]) => asset[key] !== val).map(([key, val]) => `${key}: ${asset[key]} → ${val}`).join(", ");
+      await base44.entities.AssetTransactions.create({ asset_id: assetId, action: "Asset Updated", details: changes || "Asset information modified", user: user?.email });
       queryClient.invalidateQueries({ queryKey: ["asset", assetId] });
+      queryClient.invalidateQueries({ queryKey: ["assetTransactions", assetId] });
       setEditOpen(false);
       toast({ title: "Asset updated" });
     },
@@ -58,8 +60,12 @@ export default function AssetDetail() {
 
   const updateChild = useMutation({
     mutationFn: ({ id, data }) => base44.entities.ChildAssets.update(id, data),
-    onSuccess: () => {
+    onSuccess: async (_, { id, data }) => {
+      const user = await base44.auth.me();
+      const changes = Object.entries(data).filter(([key, val]) => editingChild[key] !== val).map(([key, val]) => `${key}: ${editingChild[key]} → ${val}`).join(", ");
+      await base44.entities.AssetTransactions.create({ asset_id: assetId, action: "Child Asset Updated", details: changes || `Child ${data.child_id} modified`, user: user?.email });
       queryClient.invalidateQueries({ queryKey: ["childAssets", assetId] });
+      queryClient.invalidateQueries({ queryKey: ["assetTransactions", assetId] });
       setChildFormOpen(false);
       setEditingChild(null);
       toast({ title: "Child updated" });
@@ -69,7 +75,7 @@ export default function AssetDetail() {
   const uploadAttachment = async (fileData) => {
     const user = await base44.auth.me();
     await base44.entities.AssetAttachments.create({ ...fileData, asset_id: assetId, uploaded_by: user?.email });
-    await base44.entities.AssetTransactions.create({ asset_id: assetId, action: "Document Uploaded", details: fileData.file_name, user: user?.email });
+    await base44.entities.AssetTransactions.create({ asset_id: assetId, action: "Document Uploaded", details: `${fileData.file_type || "Document"}: ${fileData.file_name}`, user: user?.email });
     queryClient.invalidateQueries({ queryKey: ["assetAttachments", assetId] });
     queryClient.invalidateQueries({ queryKey: ["assetTransactions", assetId] });
     toast({ title: "File uploaded" });
