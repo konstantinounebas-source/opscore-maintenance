@@ -64,7 +64,7 @@ export default function Incidents() {
               <Download className="w-3.5 h-3.5" /> Export
             </Button>
             <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 gap-1.5" onClick={() => setFormOpen(true)}>
-              <Plus className="w-3.5 h-3.5" /> New Incident
+              <Plus className="w-3.5 h-3.5" /> Create Incident
             </Button>
           </div>
         }
