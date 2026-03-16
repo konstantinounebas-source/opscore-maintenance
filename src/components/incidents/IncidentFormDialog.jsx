@@ -173,21 +173,8 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
           <div className="grid grid-cols-2 gap-4">
             <SectionTitle>1. Βασικά Στοιχεία</SectionTitle>
 
-            <Field label="Κωδικός Συμβάντος" required>
-              <Input className={err("incident_id")} value={form.incident_id} onChange={e => set("incident_id", e.target.value)} disabled={!!incident} />
-            </Field>
-            <Field label="Τίτλος" required>
-              <Input className={err("title")} value={form.title} onChange={e => set("title", e.target.value)} />
-            </Field>
-
-            <Field label="Ημερομηνία Έκδοσης" required>
+            <Field label="Ημερομηνία Έκδοσης" required colSpan={2}>
               <Input type="date" className={err("issue_date")} value={form.issue_date} onChange={e => set("issue_date", e.target.value)} />
-            </Field>
-            <Field label="Κατάσταση">
-              <Select value={form.status} onValueChange={v => set("status", v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{defaultStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-              </Select>
             </Field>
 
             <Field label="Αναφέρων" required colSpan={2}>
