@@ -7,7 +7,7 @@ import StatusBadge from "@/components/shared/StatusBadge";
 import DataTable from "@/components/shared/DataTable";
 import AuditLog from "@/components/shared/AuditLog";
 import FileUploader from "@/components/shared/FileUploader";
-import AssetFormDialog from "@/components/assets/AssetFormDialog";
+import AssetFormDialog from "@/components/assets/AssetFormDialog.jsx";
 import ChildFormDialog from "@/components/assets/ChildFormDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
