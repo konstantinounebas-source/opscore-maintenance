@@ -222,7 +222,7 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
           <SectionHeader title="Maintenance & Warranty" color="green" />
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-xs">Warranty Base Year <span className="text-slate-400">(auto from Delivery Year)</span></Label>
+              <Label className="text-xs">Warranty Base Year</Label>
               <Input type="number" value={form.warranty_base_year} onChange={e => set("warranty_base_year", e.target.value)} placeholder="e.g. 2023" min="2000" max="2100" />
             </div>
             <div className="space-y-1.5">
