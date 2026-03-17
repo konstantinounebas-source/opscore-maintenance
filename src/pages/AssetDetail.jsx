@@ -196,22 +196,45 @@ export default function AssetDetail() {
       <div className="p-6 space-y-6">
         {/* Overview Card */}
         <div className="bg-white rounded-xl border border-slate-200 p-6">
+          {/* Always-visible fields */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div><p className="text-xs text-slate-500 font-medium">Asset ID</p><p className="text-sm font-semibold mt-1">{asset.asset_id}</p></div>
-            <div><p className="text-xs text-slate-500 font-medium">Category</p><p className="text-sm font-semibold mt-1">{asset.category || "—"}</p></div>
-            <div><p className="text-xs text-slate-500 font-medium">Type</p><p className="text-sm font-semibold mt-1">{asset.asset_type || "—"}</p></div>
-            <div><p className="text-xs text-slate-500 font-medium">Status</p><div className="mt-1"><StatusBadge status={asset.status} /></div></div>
-            <div><p className="text-xs text-slate-500 font-medium">Location</p><p className="text-sm font-semibold mt-1">{asset.location || "—"}</p></div>
-            <div><p className="text-xs text-slate-500 font-medium">Installation Date</p><p className="text-sm font-semibold mt-1">{asset.installation_date || "—"}</p></div>
-            <div><p className="text-xs text-slate-500 font-medium">Childs</p><p className="text-sm font-semibold mt-1">{children.length}</p></div>
-            <div><p className="text-xs text-slate-500 font-medium">Open Incidents</p><p className="text-sm font-semibold mt-1">{incidents.filter(i => i.status !== "Closed" && i.status !== "Resolved").length}</p></div>
+            <Field label="Asset ID" value={asset.asset_id} />
+            <Field label="Active Shelter ID" value={asset.active_shelter_id} />
+            <Field label="Asset Name" value={asset.asset_name} />
+            <Field label="Status"><StatusBadge status={asset.status} /></Field>
+            <Field label="City" value={asset.city} />
+            <Field label="Shelter Type" value={asset.shelter_type} />
+            <Field label="Location / Address" value={asset.location_address} />
+            <Field label="Installation Date" value={asset.installation_date} />
           </div>
-          {asset.description && (
-            <div className="mt-4 pt-4 border-t border-slate-100">
-              <p className="text-xs text-slate-500 font-medium mb-1">Description</p>
-              <p className="text-sm text-slate-700">{asset.description}</p>
+
+          {/* Expandable extra fields */}
+          {showMore && (
+            <div className="mt-6 pt-5 border-t border-slate-100 grid grid-cols-2 md:grid-cols-4 gap-6">
+              <Field label="Delivery Date" value={asset.delivery_date} />
+              <Field label="Delivery Year" value={asset.delivery_year} />
+              <Field label="Warranty Base Year" value={asset.warranty_base_year} />
+              <Field label="Software Warranty End" value={asset.software_warranty_end_date} />
+              <Field label="Electronics Warranty End" value={asset.electronics_warranty_end_date} />
+              <Field label="Materials Warranty End" value={asset.materials_warranty_end_date} />
+              <Field label="Structural Warranty End" value={asset.structural_warranty_end_date} />
+              <Field label="Preventive Inspection" value={asset.preventive_inspection_date} />
+              <Field label="Next Inspection" value={asset.next_inspection_date} />
+              <Field label="Latitude" value={asset.latitude} />
+              <Field label="Longitude" value={asset.longitude} />
+              <Field label="Childs" value={children.length} />
+              <Field label="Open Incidents" value={incidents.filter(i => i.status !== "Closed" && i.status !== "Resolved").length} />
+              {asset.notes && <div className="col-span-2 md:col-span-4"><Field label="Notes" value={asset.notes} /></div>}
+              {asset.description && <div className="col-span-2 md:col-span-4"><Field label="Description" value={asset.description} /></div>}
             </div>
           )}
+
+          <button
+            onClick={() => setShowMore(v => !v)}
+            className="mt-5 flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+          >
+            {showMore ? <><ChevronUp className="w-3.5 h-3.5" /> Show Less</> : <><ChevronDown className="w-3.5 h-3.5" /> Show More Info</>}
+          </button>
         </div>
 
         <Tabs defaultValue="childs" className="space-y-4">
