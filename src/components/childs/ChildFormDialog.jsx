@@ -70,6 +70,23 @@ export default function ChildFormDialog({ open, onOpenChange, child, onSave, par
             <Input type="date" value={form.installation_date} onChange={e => set("installation_date", e.target.value)} />
           </div>
           <div className="space-y-1.5">
+            <Label className="text-xs">Status</Label>
+            <Select value={form.status} onValueChange={v => set("status", v)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                {statusOptions.length > 0
+                  ? statusOptions.map(s => <SelectItem key={s.id} value={s.value}>{s.value}</SelectItem>)
+                  : <>
+                      <SelectItem value="Assigned">Assigned</SelectItem>
+                      <SelectItem value="Un-Assigned">Un-Assigned</SelectItem>
+                    </>
+                }
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
             <Label className="text-xs">Parent Asset</Label>
             <Select value={form.parent_asset_id} onValueChange={v => set("parent_asset_id", v)}>
               <SelectTrigger>
