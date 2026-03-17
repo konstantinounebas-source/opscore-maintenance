@@ -33,16 +33,54 @@ function StepDot({ completed, active }) {
 }
 
 // Generic modal for steps that need a simple form
-function StepModal({ open, onOpenChange, title, onConfirm, children }) {
+function StepModal({ open, onOpenChange, title, onConfirm, children, showPersonSelect = true, personList = [] }) {
+  const [personInputType, setPersonInputType] = useState("manual");
+  const [person, setPerson] = useState("");
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
         <div className="space-y-4 mt-2">
           {children}
+          
+          {showPersonSelect && (
+            <div className="space-y-2 border-t pt-4">
+              <Label className="text-xs font-semibold">Person Responsible</Label>
+              <Tabs value={personInputType} onValueChange={setPersonInputType}>
+                <TabsList className="grid w-full grid-cols-2 h-8">
+                  <TabsTrigger value="manual" className="text-xs">Manual Entry</TabsTrigger>
+                  <TabsTrigger value="select" className="text-xs">From List</TabsTrigger>
+                </TabsList>
+                <TabsContent value="manual" className="mt-2">
+                  <Input
+                    placeholder="Enter person name..."
+                    value={person}
+                    onChange={e => setPerson(e.target.value)}
+                    className="text-sm"
+                  />
+                </TabsContent>
+                <TabsContent value="select" className="mt-2">
+                  <Select value={person} onValueChange={setPerson}>
+                    <SelectTrigger><SelectValue placeholder="Select person" /></SelectTrigger>
+                    <SelectContent>
+                      {personList.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </TabsContent>
+              </Tabs>
+            </div>
+          )}
+
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button className="bg-indigo-600 hover:bg-indigo-700" onClick={onConfirm}>Confirm</Button>
+            <Button variant="outline" onClick={() => { onOpenChange(false); setPerson(""); setPersonInputType("manual"); }}>Cancel</Button>
+            <Button 
+              className="bg-indigo-600 hover:bg-indigo-700" 
+              onClick={() => { onConfirm(person); setPerson(""); setPersonInputType("manual"); }}
+              disabled={showPersonSelect && !person.trim()}
+            >
+              Confirm
+            </Button>
           </div>
         </div>
       </DialogContent>
