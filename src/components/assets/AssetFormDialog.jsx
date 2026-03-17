@@ -71,6 +71,7 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
     } else {
       setForm(emptyForm);
     }
+    setErrors({});
   }, [asset, open]);
 
   // Auto-calculate warranty dates when warranty_base_year changes
