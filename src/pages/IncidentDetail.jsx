@@ -24,6 +24,7 @@ export default function IncidentDetail() {
   const { toast } = useToast();
 
   const [editOpen, setEditOpen] = useState(false);
+  const [showMore, setShowMore] = useState(false);
   const [comment, setComment] = useState("");
   const [commentType, setCommentType] = useState("Comment");
 
