@@ -87,7 +87,15 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
   const handleAttachUpload = async (fileData, auditLabel) => {
     const user = await base44.auth.me();
     await base44.entities.IncidentAttachments.create({ ...fileData, incident_id: incidentId, uploaded_by: user?.email });
-    await addAudit(`${auditLabel} Uploaded`, fileData.file_name);
+    // Store the file URL directly on the audit entry so it shows in the timeline
+    await base44.entities.IncidentAuditTrail.create({
+      incident_id: incidentId,
+      action: `${auditLabel} Uploaded`,
+      details: fileData.file_name,
+      user: user?.email,
+      attachments: [fileData.file_url],
+      attachment_names: [fileData.file_name],
+    });
     queryClient.invalidateQueries({ queryKey: ["incidentAttachments", incidentId] });
     queryClient.invalidateQueries({ queryKey: ["incidentAudit", incidentId] });
     onRefresh();
