@@ -118,9 +118,10 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
   const [activeModal, setActiveModal] = useState(null);
   const [formData, setFormData] = useState({});
 
-  const addAudit = async (action, details, extra = {}) => {
+  const addAudit = async (action, details, extra = {}, person = "") => {
     const user = await base44.auth.me();
-    await base44.entities.IncidentAuditTrail.create({ incident_id: incidentId, action, details, user: user?.email, ...extra });
+    const auditUser = person || user?.email;
+    await base44.entities.IncidentAuditTrail.create({ incident_id: incidentId, action, details, user: auditUser, ...extra });
   };
 
   const updateIncidentFlag = async (flagKey, auditAction, auditDetails, auditExtra = {}) => {
