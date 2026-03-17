@@ -480,7 +480,7 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
       </StepModal>
 
       {/* Revisit */}
-      <StepModal open={activeModal === "revisit"} onOpenChange={(o) => !o && setActiveModal(null)} title="Need Revisit?" onConfirm={handleRevisit}>
+      <StepModal open={activeModal === "revisit"} onOpenChange={(o) => !o && setActiveModal(null)} title="Need Revisit?" onConfirm={(person) => { setFormData(f => ({ ...f, person })); handleRevisit(); }} showPersonSelect personList={personList}>
         <div className="space-y-1.5">
           <Label className="text-xs">Does this incident require a revisit?</Label>
           <Select value={formData.needs_revisit || ""} onValueChange={v => setFormData(f => ({ ...f, needs_revisit: v }))}>
