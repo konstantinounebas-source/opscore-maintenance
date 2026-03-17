@@ -7,6 +7,7 @@ import StatusBadge from "@/components/shared/StatusBadge";
 import AuditLog from "@/components/shared/AuditLog";
 import FileUploader from "@/components/shared/FileUploader";
 import IncidentFormDialog from "@/components/incidents/IncidentFormDialog";
+import IncidentWorkflow from "@/components/incidents/IncidentWorkflow";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
