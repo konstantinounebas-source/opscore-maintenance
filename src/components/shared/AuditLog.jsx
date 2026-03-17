@@ -121,9 +121,9 @@ function AuditEntry({ entry: initialEntry, queryKey }) {
             {entry.created_date && (
               <span>{format(new Date(entry.created_date), "MMM d, yyyy HH:mm")}</span>
             )}
-            {hasComment && (
+            {hasComments && (
               <span className="flex items-center gap-1 text-indigo-500">
-                <MessageSquare className="h-3 w-3" /> Comment
+                <MessageSquare className="h-3 w-3" /> {entry.comments.length} comment{entry.comments.length > 1 ? "s" : ""}
               </span>
             )}
             {hasAttachments && (
