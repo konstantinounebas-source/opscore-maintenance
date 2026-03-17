@@ -7,11 +7,11 @@ import {
 
 const navItems = [
   { path: "/Dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { path: "/Assets", label: "Assets", icon: Box },
-  { path: "/Incidents", label: "Incidents", icon: AlertTriangle },
-  { path: "/WorkOrders", label: "Work Orders", icon: Wrench, submenu: [
+  { path: "/Assets", label: "Assets", icon: Box, submenu: [
     { path: "/Childs", label: "Child Assets", icon: Package }
   ]},
+  { path: "/Incidents", label: "Incidents", icon: AlertTriangle },
+  { path: "/WorkOrders", label: "Work Orders", icon: Wrench },
   { path: "/Configuration", label: "Configuration", icon: Settings },
 ];
 
