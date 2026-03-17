@@ -317,7 +317,7 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs">Upload Inspection Form</Label>
-          <FileUploader onUpload={(fd) => handleAttachUpload(fd, "Inspection Form")} label="Upload Form" />
+          <FileUploader onUpload={(fd) => setFormData(f => ({ ...f, inspectionFile: fd }))} label="Upload Form" />
         </div>
       </StepModal>
 
