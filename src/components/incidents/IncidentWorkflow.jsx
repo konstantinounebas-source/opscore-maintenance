@@ -381,7 +381,7 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
       </StepModal>
 
       {/* Make Safe */}
-      <StepModal open={activeModal === "make_safe"} onOpenChange={(o) => !o && setActiveModal(null)} title="Create Make Safe Work Order" onConfirm={handleMakeSafe}>
+      <StepModal open={activeModal === "make_safe"} onOpenChange={(o) => !o && setActiveModal(null)} title="Create Make Safe Work Order" onConfirm={(person) => { setFormData(f => ({ ...f, person })); handleMakeSafe(); }} showPersonSelect personList={personList}>
         <div className="p-3 bg-red-50 rounded-lg border border-red-200 text-xs text-red-700">
           <strong>SLA:</strong> 24 hours from Confirmation of Receipt
         </div>
