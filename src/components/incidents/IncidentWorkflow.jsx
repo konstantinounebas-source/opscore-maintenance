@@ -255,9 +255,9 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
         priority: incident.priority || "Medium",
         description: formData.notes || "Revisit required",
       });
-      await addAudit("Revisit WO Created", formData.notes || "Additional corrective WO created for revisit");
+      await addAudit("Revisit WO Created", formData.notes || "Additional corrective WO created for revisit", {}, formData.person);
     } else {
-      await addAudit("No Revisit Required", "Proceeding to finalise FMPI");
+      await addAudit("No Revisit Required", "Proceeding to finalise FMPI", {}, formData.person);
     }
     await base44.entities.Incidents.update(incidentId, { revisit_done: true });
     queryClient.invalidateQueries({ queryKey: ["incident", incidentId] });
