@@ -31,7 +31,7 @@ export default function MoveChildDialog({ open, onOpenChange, child, assets, cur
                 <SelectValue placeholder="Select destination" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="inventory">← Return to Inventory (Unassigned)</SelectItem>
+                <SelectItem value="unassigned">← Set as Un-Assigned</SelectItem>
                 <SelectItem disabled>━━ Assets ━━</SelectItem>
                 {assets.filter(a => a.id !== currentAssetId).map(a => (
                   <SelectItem key={a.id} value={a.id}>

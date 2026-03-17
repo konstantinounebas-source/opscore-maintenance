@@ -95,10 +95,10 @@ export default function AssetDetail() {
 
   const handleMoveChild = async (child, destinationAssetId) => {
     const user = await base44.auth.me();
-    if (destinationAssetId === "inventory") {
-      await base44.entities.ChildAssets.update(child.id, { parent_asset_id: "" });
-      await base44.entities.Shipments.create({ shipment_id: `SHP-${Date.now()}`, child_asset_id: child.id, parent_asset_id: assetId, status: "Returned", details: "Returned to inventory" });
-      await base44.entities.AssetTransactions.create({ asset_id: assetId, action: "Child Moved to Inventory", details: `${child.child_id} returned to inventory`, user: user?.email });
+    if (destinationAssetId === "unassigned") {
+      await base44.entities.ChildAssets.update(child.id, { parent_asset_id: "", status: "Un-Assigned" });
+      await base44.entities.Shipments.create({ shipment_id: `SHP-${Date.now()}`, child_asset_id: child.id, parent_asset_id: assetId, status: "Returned", details: "Set as Un-Assigned" });
+      await base44.entities.AssetTransactions.create({ asset_id: assetId, action: "Child Set Un-Assigned", details: `${child.child_id} set as Un-Assigned`, user: user?.email });
     } else {
       await base44.entities.ChildAssets.update(child.id, { parent_asset_id: destinationAssetId });
       await base44.entities.Shipments.create({ shipment_id: `SHP-${Date.now()}`, child_asset_id: child.id, parent_asset_id: destinationAssetId, status: "Delivered", details: `Moved from ${assetId}` });
