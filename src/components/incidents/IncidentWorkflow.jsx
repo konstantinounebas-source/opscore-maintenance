@@ -373,15 +373,30 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
         <DialogContent className="sm:max-w-md">
           <DialogHeader><DialogTitle>Upload WO Checklist</DialogTitle></DialogHeader>
           <div className="space-y-4 mt-2">
-            <FileUploader onUpload={async (fd) => {
-              await handleAttachUpload(fd, "WO Checklist");
-              await base44.entities.Incidents.update(incidentId, { checklist_done: true });
-              queryClient.invalidateQueries({ queryKey: ["incident", incidentId] });
-              onRefresh();
-              setActiveModal(null);
-            }} label="Upload Checklist" />
-            <div className="flex justify-end">
-              <Button variant="outline" onClick={() => setActiveModal(null)}>Close</Button>
+            <FileUploader onUpload={(fd) => setFormData(f => ({ ...f, checklistFile: fd }))} label="Upload Checklist" />
+            {formData.checklistFile && (
+              <p className="text-xs text-green-600 font-medium">✓ File ready: {formData.checklistFile.file_name}</p>
+            )}
+            <div className="space-y-1.5">
+              <Label className="text-xs">Notes (optional)</Label>
+              <Textarea placeholder="Checklist notes..." rows={2} value={formData.notes || ""} onChange={e => setFormData(f => ({ ...f, notes: e.target.value }))} />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => setActiveModal(null)}>Cancel</Button>
+              <Button
+                className="bg-indigo-600 hover:bg-indigo-700"
+                disabled={!formData.checklistFile}
+                onClick={async () => {
+                  if (formData.checklistFile) {
+                    await handleAttachUpload(formData.checklistFile, "WO Checklist");
+                  }
+                  await updateIncidentFlag("checklist_done", "WO Checklist Uploaded", formData.notes || `Checklist uploaded: ${formData.checklistFile?.file_name || ""}`);
+                  setActiveModal(null);
+                  setFormData({});
+                }}
+              >
+                Confirm
+              </Button>
             </div>
           </div>
         </DialogContent>
