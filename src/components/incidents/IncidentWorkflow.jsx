@@ -271,7 +271,6 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
   const activeStepId = visibleSteps.find(s => !isCompleted(s.id))?.id;
 
   const handleStepClick = (stepId) => {
-    if (isCompleted(stepId)) return; // already done
     setFormData({});
     setActiveModal(stepId);
   };
