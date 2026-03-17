@@ -158,76 +158,36 @@ export default function IncidentDetail() {
         {/* Workflow */}
         <IncidentWorkflow incident={incident} incidentId={incidentId} onRefresh={invalidateAll} />
 
-        <Tabs defaultValue="comments" className="space-y-4">
-          <TabsList className="bg-slate-100">
-            <TabsTrigger value="comments">Comments / Notes ({comments.length})</TabsTrigger>
-            <TabsTrigger value="attachments">Attachments ({attachments.length})</TabsTrigger>
-            <TabsTrigger value="audit">Audit Trail ({auditTrail.length})</TabsTrigger>
-          </TabsList>
+        {/* Unified Activity Feed */}
+        <div className="bg-white rounded-xl border border-slate-200 p-5">
+          <div className="flex items-center justify-between mb-5">
+            <h3 className="text-sm font-semibold text-slate-700">Activity & Audit Trail</h3>
+            <span className="text-xs text-slate-400">{auditTrail.length + comments.length + attachments.length} entries</span>
+          </div>
 
-          <TabsContent value="comments">
-            <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
-              <div className="flex gap-2">
-                <Select value={commentType} onValueChange={setCommentType}>
-                  <SelectTrigger className="w-28 h-9 text-xs"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Comment">Comment</SelectItem>
-                    <SelectItem value="Note">Note</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Textarea value={comment} onChange={e => setComment(e.target.value)} placeholder="Write a comment or note..." className="flex-1 min-h-[40px] text-sm" rows={2} />
-                <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 self-end" onClick={handleAddComment}>
-                  <Send className="w-4 h-4" />
-                </Button>
-              </div>
-              <div className="space-y-3 pt-2">
-                {sortedComments.length === 0 && <p className="text-sm text-slate-400 text-center py-4">No comments yet</p>}
-                {sortedComments.map(c => (
-                  <div key={c.id} className="flex gap-3 py-3 border-b border-slate-100 last:border-0">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${c.comment_type === "Note" ? "bg-amber-100" : "bg-indigo-100"}`}>
-                      {c.comment_type === "Note" ? <StickyNote className="w-3.5 h-3.5 text-amber-600" /> : <MessageSquare className="w-3.5 h-3.5 text-indigo-600" />}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-semibold text-slate-700">{c.author || c.created_by || "Unknown"}</span>
-                        <span className={`text-xs px-1.5 py-0.5 rounded ${c.comment_type === "Note" ? "bg-amber-50 text-amber-600" : "bg-indigo-50 text-indigo-600"}`}>{c.comment_type}</span>
-                        <span className="text-xs text-slate-400">{c.created_date ? format(new Date(c.created_date), "MMM d, yyyy HH:mm") : ""}</span>
-                      </div>
-                      <p className="text-sm text-slate-700">{c.content}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+          {/* Add comment / attach file */}
+          <div className="flex gap-2 mb-6 pb-5 border-b border-slate-100">
+            <Select value={commentType} onValueChange={setCommentType}>
+              <SelectTrigger className="w-28 h-9 text-xs shrink-0"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Comment">Comment</SelectItem>
+                <SelectItem value="Note">Note</SelectItem>
+              </SelectContent>
+            </Select>
+            <Textarea value={comment} onChange={e => setComment(e.target.value)} placeholder="Write a comment or note..." className="flex-1 min-h-[40px] text-sm" rows={2} />
+            <div className="flex flex-col gap-1.5 self-end">
+              <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 h-9" onClick={handleAddComment}>
+                <Send className="w-4 h-4" />
+              </Button>
+              <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileUpload} />
+              <Button size="sm" variant="outline" className="h-9" disabled={uploading} onClick={() => fileInputRef.current?.click()} title="Attach file">
+                {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
+              </Button>
             </div>
-          </TabsContent>
+          </div>
 
-          <TabsContent value="attachments">
-            <div className="flex justify-end mb-3">
-              <FileUploader onUpload={handleUpload} label="Upload Attachment" />
-            </div>
-            <div className="bg-white rounded-xl border border-slate-200 divide-y">
-              {attachments.length === 0 && <p className="text-sm text-slate-400 py-8 text-center">No attachments</p>}
-              {attachments.map(att => (
-                <div key={att.id} className="flex items-center justify-between px-5 py-3">
-                  <div className="flex items-center gap-3">
-                    {att.file_type === "Photo" ? <Image className="w-4 h-4 text-indigo-500" /> : <FileText className="w-4 h-4 text-slate-500" />}
-                    <div>
-                      <p className="text-sm font-medium text-slate-900">{att.file_name}</p>
-                      <p className="text-xs text-slate-400">{att.uploaded_by || "—"} · {att.created_date ? format(new Date(att.created_date), "MMM d, yyyy") : "—"}</p>
-                    </div>
-                  </div>
-                  <a href={att.file_url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-700"><ExternalLink className="w-4 h-4" /></a>
-                </div>
-              ))}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="audit">
-            <div className="bg-white rounded-xl border border-slate-200 p-5">
-              <AuditLog entries={sortedAudit} queryKey={["incidentAudit", incidentId]} />
-            </div>
-          </TabsContent>
-        </Tabs>
+          <AuditLog entries={sortedAudit} queryKey={["incidentAudit", incidentId]} />
+        </div>
       </div>
       <IncidentFormDialog open={editOpen} onOpenChange={setEditOpen} incident={incident} onSave={handleEditSave} />
     </div>
