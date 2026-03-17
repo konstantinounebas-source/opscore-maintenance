@@ -105,7 +105,11 @@ export default function Childs() {
 
   const exportCSV = () => {
     const headers = ["child_id", "parent_asset_id", "category", "serial_number", "installation_date", "child_type"];
-    const rows = childAssets.map(c => [c.child_id, c.parent_asset_id || "", c.category || "", c.serial_number || "", c.installation_date || "", c.child_type || ""]);
+    const rows = childAssets.map(c => {
+      const parentAsset = parentAssets.find(a => a.id === c.parent_asset_id);
+      const parentAssetId = parentAsset?.asset_id || c.parent_asset_id || "";
+      return [c.child_id, parentAssetId, c.category || "", c.serial_number || "", c.installation_date || "", c.child_type || ""];
+    });
     const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
