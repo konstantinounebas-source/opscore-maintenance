@@ -77,11 +77,14 @@ function AuditEntry({ entry: initialEntry, queryKey }) {
     setSaving(true);
     const user = await base44.auth.me();
     const existingComments = entry.comments || [];
+    const commentAuthor = commentPerson || user?.email;
+    const commentAuthorName = commentPerson || user?.full_name;
+    
     await base44.entities.IncidentAuditTrail.update(entry.id, {
       comments: [...existingComments, {
         text: commentText,
-        author: user?.email,
-        author_name: user?.full_name,
+        author: commentAuthor,
+        author_name: commentAuthorName,
         created_at: new Date().toISOString(),
       }],
     });
@@ -89,6 +92,8 @@ function AuditEntry({ entry: initialEntry, queryKey }) {
     setSaving(false);
     setEditingComment(false);
     setCommentText("");
+    setCommentPerson("");
+    setCommentPersonInputType("manual");
   };
 
   const handleFileUpload = async (e) => {
