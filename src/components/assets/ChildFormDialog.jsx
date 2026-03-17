@@ -38,24 +38,26 @@ export default function ChildFormDialog({ open, onOpenChange, child, parentAsset
     }
   }, [child, open]);
 
+  const [selectedRecordId, setSelectedRecordId] = useState(null);
+
   const handleChildSelect = (childId) => {
     const selected = allChildAssets.find(c => c.child_id === childId);
     if (selected) {
+      setSelectedRecordId(selected.id);
       setForm({
         child_id: selected.child_id,
         category: selected.category || "",
         serial_number: selected.serial_number || "",
         installation_date: selected.installation_date || "",
         child_type: selected.child_type || "",
-        _recordId: selected.id,
       });
     }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const { _recordId, ...payload } = form;
-    onSave({ ...payload, parent_asset_id: parentAssetId }, _recordId);
+    if (!child && !selectedRecordId) return; // no child selected
+    onSave({ ...form, parent_asset_id: parentAssetId }, selectedRecordId);
   };
 
   return (
