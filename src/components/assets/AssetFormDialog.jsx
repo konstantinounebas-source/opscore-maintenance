@@ -199,6 +199,17 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
             </div>
           </div>
           <div className="space-y-1.5">
+            <Label className="text-xs">Status</Label>
+            <Select value={form.status} onValueChange={v => set("status", v)}>
+              <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+              <SelectContent>
+                {(statuses.length ? statuses : ["Active", "Inactive", "Under Maintenance", "Decommissioned"]).map(s => (
+                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
             <Label className="text-xs">Coordinates (Latitude/Longitude)</Label>
             <div className="grid grid-cols-2 gap-4">
               <Input type="number" step="any" value={form.latitude} onChange={e => set("latitude", e.target.value)} placeholder="Latitude e.g. 35.1234" />
