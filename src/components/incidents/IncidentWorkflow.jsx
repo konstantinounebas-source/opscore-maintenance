@@ -119,17 +119,11 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
       priority: "High",
       description: formData.notes || "Inspection required",
     });
-    const user = await base44.auth.me();
-    const extra = { comment: formData.notes || "" };
+    const extra = {};
     if (formData.inspectionFile) {
       await handleAttachUpload(formData.inspectionFile);
-      extra.attachment_metadata = [{
-        url: formData.inspectionFile.file_url,
-        name: formData.inspectionFile.file_name,
-        author: user?.email,
-        author_name: user?.full_name,
-        created_at: new Date().toISOString(),
-      }];
+      extra.attachments = [formData.inspectionFile.file_url];
+      extra.attachment_names = [formData.inspectionFile.file_name];
     }
     await updateIncidentFlag("inspection_done", "Inspection WO Created", "Inspection Work Order created", extra);
     setActiveModal(null);
