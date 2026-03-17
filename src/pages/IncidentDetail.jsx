@@ -25,6 +25,8 @@ export default function IncidentDetail() {
   const [showMore, setShowMore] = useState(false);
   const [comment, setComment] = useState("");
   const [commentType, setCommentType] = useState("Comment");
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef();
 
   const { data: incident } = useQuery({ queryKey: ["incident", incidentId], queryFn: () => base44.entities.Incidents.filter({ id: incidentId }).then(r => r[0]), enabled: !!incidentId });
   const { data: comments = [] } = useQuery({ queryKey: ["incidentComments", incidentId], queryFn: () => base44.entities.IncidentComments.filter({ incident_id: incidentId }), enabled: !!incidentId });
@@ -63,11 +65,16 @@ export default function IncidentDetail() {
     toast({ title: `${commentType} added` });
   };
 
-
-  const handleUpload = async (fileData) => {
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
     const user = await base44.auth.me();
-    await base44.entities.IncidentAttachments.create({ ...fileData, incident_id: incidentId, uploaded_by: user?.email });
-    await base44.entities.IncidentAuditTrail.create({ incident_id: incidentId, action: "Attachment Uploaded", details: `${fileData.file_type || "File"}: ${fileData.file_name}`, user: user?.email });
+    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    await base44.entities.IncidentAttachments.create({ file_url, file_name: file.name, file_type: file.type.startsWith("image/") ? "Photo" : "Document", incident_id: incidentId, uploaded_by: user?.email });
+    await base44.entities.IncidentAuditTrail.create({ incident_id: incidentId, action: "Attachment Uploaded", details: file.name, user: user?.email, attachments: [file_url], attachment_names: [file.name] });
+    setUploading(false);
+    e.target.value = "";
     invalidateAll();
     toast({ title: "File uploaded" });
   };
