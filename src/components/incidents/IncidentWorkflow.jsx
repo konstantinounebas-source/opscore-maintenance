@@ -195,7 +195,7 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
       extra.attachments = [formData.makeSafeFile.file_url];
       extra.attachment_names = [formData.makeSafeFile.file_name];
     }
-    await updateIncidentFlag("make_safe_done", "Make Safe WO Created", "SLA: 24h from Confirmation of Receipt", extra);
+    await updateIncidentFlag("make_safe_done", "Make Safe WO Created", "SLA: 24h from Confirmation of Receipt", extra, formData.person);
     setActiveModal(null);
     setFormData({});
   };
