@@ -172,35 +172,46 @@ function AuditEntry({ entry: initialEntry, queryKey }) {
             )}
           </div>
 
-          {/* Comment section */}
+          {/* Comments section */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Comment</span>
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Comments</span>
               {!editingComment && (
                 <Button variant="ghost" size="sm" className="h-7 text-xs"
-                  onClick={() => { setCommentText(entry.comment || ""); setEditingComment(true); }}>
-                  {hasComment ? "Edit" : "Add Comment"}
+                  onClick={() => { setEditingComment(true); }}>
+                  Add Comment
                 </Button>
               )}
             </div>
             {editingComment ? (
-              <div className="space-y-2">
+              <div className="space-y-2 mb-3">
                 <Textarea value={commentText} onChange={e => setCommentText(e.target.value)}
                   placeholder="Write a comment about this workflow step..."
                   className="text-sm min-h-[80px]" autoFocus />
                 <div className="flex gap-2 justify-end">
-                  <Button variant="outline" size="sm" onClick={() => setEditingComment(false)}>Cancel</Button>
-                  <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700" onClick={handleSaveComment} disabled={saving}>
+                  <Button variant="outline" size="sm" onClick={() => { setEditingComment(false); setCommentText(""); }}>Cancel</Button>
+                  <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700" onClick={handleSaveComment} disabled={saving || !commentText.trim()}>
                     {saving && <Loader2 className="h-3 w-3 animate-spin mr-1" />}
                     {saving ? "Saving..." : "Save"}
                   </Button>
                 </div>
               </div>
-            ) : hasComment ? (
-              <p className="text-sm text-slate-700 bg-slate-50 rounded-lg px-3 py-2 whitespace-pre-wrap">{entry.comment}</p>
-            ) : (
-              <p className="text-xs text-slate-400">No comment yet.</p>
-            )}
+            ) : null}
+            {hasComments ? (
+              <div className="space-y-2">
+                {entry.comments.map((cmt, i) => (
+                  <div key={i} className="bg-slate-50 rounded-lg px-3 py-2">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-medium text-slate-600">{cmt.author_name || cmt.author}</span>
+                      <span className="text-xs text-slate-400">{format(new Date(cmt.created_at), "MMM d, HH:mm")}</span>
+                    </div>
+                    <p className="text-sm text-slate-700 whitespace-pre-wrap">{cmt.text}</p>
+                  </div>
+                ))}
+              </div>
+            ) : !editingComment ? (
+              <p className="text-xs text-slate-400">No comments yet.</p>
+            ) : null}
           </div>
         </div>
       )}
