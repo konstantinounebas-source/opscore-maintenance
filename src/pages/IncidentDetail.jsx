@@ -59,7 +59,7 @@ export default function IncidentDetail() {
     if (!comment.trim()) return;
     const user = await base44.auth.me();
     await base44.entities.IncidentComments.create({ incident_id: incidentId, content: comment, comment_type: commentType, author: user?.email });
-    await base44.entities.IncidentAuditTrail.create({ incident_id: incidentId, action: `${commentType} Added`, details: comment.substring(0, 100), user: user?.email });
+    await base44.entities.IncidentAuditTrail.create({ incident_id: incidentId, action: `${commentType} Added`, details: comment.substring(0, 100), comment: comment, user: user?.email });
     setComment("");
     invalidateAll();
     toast({ title: `${commentType} added` });
