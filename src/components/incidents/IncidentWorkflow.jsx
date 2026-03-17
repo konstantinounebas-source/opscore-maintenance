@@ -467,7 +467,7 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
       </Dialog>
 
       {/* Update Status */}
-      <StepModal open={activeModal === "status"} onOpenChange={(o) => !o && setActiveModal(null)} title="Update Incident Status" onConfirm={handleUpdateStatus}>
+      <StepModal open={activeModal === "status"} onOpenChange={(o) => !o && setActiveModal(null)} title="Update Incident Status" onConfirm={(person) => { setFormData(f => ({ ...f, person })); handleUpdateStatus(); }} showPersonSelect personList={personList}>
         <div className="space-y-1.5">
           <Label className="text-xs">New Status</Label>
           <Select value={formData.status || ""} onValueChange={v => setFormData(f => ({ ...f, status: v }))}>
