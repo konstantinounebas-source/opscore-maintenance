@@ -385,9 +385,17 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
                 disabled={!formData.checklistFile}
                 onClick={async () => {
                   if (formData.checklistFile) {
-                    await handleAttachUpload(formData.checklistFile, "WO Checklist");
+                    await handleAttachUpload(formData.checklistFile);
+                    await base44.entities.Incidents.update(incidentId, { checklist_done: true });
+                    await addAudit("WO Checklist Uploaded", formData.notes || `Checklist uploaded: ${formData.checklistFile?.file_name || ""}`, {
+                      attachments: [formData.checklistFile.file_url],
+                      attachment_names: [formData.checklistFile.file_name],
+                    });
+                    queryClient.invalidateQueries({ queryKey: ["incident", incidentId] });
+                    queryClient.invalidateQueries({ queryKey: ["incidentAudit", incidentId] });
+                    onRefresh();
+                    toast({ title: "WO Checklist Uploaded" });
                   }
-                  await updateIncidentFlag("checklist_done", "WO Checklist Uploaded", formData.notes || `Checklist uploaded: ${formData.checklistFile?.file_name || ""}`);
                   setActiveModal(null);
                   setFormData({});
                 }}
