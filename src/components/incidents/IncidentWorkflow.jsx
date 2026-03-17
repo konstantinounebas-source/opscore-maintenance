@@ -230,7 +230,7 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
 
   const handleClose = async () => {
     await base44.entities.Incidents.update(incidentId, { status: "Closed" });
-    await addAudit("Incident Closed", formData.notes || "Incident closed");
+    await addAudit("Incident Closed", "Incident closed", { comment: formData.notes || "" });
     queryClient.invalidateQueries({ queryKey: ["incident", incidentId] });
     queryClient.invalidateQueries({ queryKey: ["incidentAudit", incidentId] });
     onRefresh();
