@@ -269,9 +269,9 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
   };
 
   const handleFinalise = async () => {
-    await updateIncidentFlag("finalise_done", "FMPI Finalised", "FMPI finalised and ready for closure", { comment: formData.notes || "" });
+    await updateIncidentFlag("finalise_done", "FMPI Finalised", "FMPI finalised and ready for closure", { comment: formData.notes || "" }, formData.person);
     if (incident.is_owr) {
-      await addAudit("CA Approval Required", "OWR incident — CA Approval needed before closure");
+      await addAudit("CA Approval Required", "OWR incident — CA Approval needed before closure", {}, formData.person);
     }
     setActiveModal(null);
     setFormData({});
