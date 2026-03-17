@@ -17,6 +17,7 @@ import IncidentForm from '@/pages/IncidentForm';
 import WorkOrders from '@/pages/WorkOrders';
 import ChildDetail from '@/pages/ChildDetail';
 import Configuration from '@/pages/Configuration';
+import Assistant from '@/pages/Assistant';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
