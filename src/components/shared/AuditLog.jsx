@@ -157,9 +157,14 @@ function AuditEntry({ entry: initialEntry, queryKey }) {
               </div>
             </div>
             {hasAttachments ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {entry.attachments.map((url, i) => (
-                  <AttachmentItem key={i} url={url} name={entry.attachment_names?.[i]} />
+              <div className="space-y-2">
+                {entry.attachment_metadata.map((meta, i) => (
+                  <div key={i} className="space-y-1">
+                    <AttachmentItem url={meta.url} name={meta.name} />
+                    <div className="text-xs text-slate-400 ml-1">
+                      {meta.author_name || meta.author} • {meta.created_at ? format(new Date(meta.created_at), "MMM d, HH:mm") : ""}
+                    </div>
+                  </div>
                 ))}
               </div>
             ) : (
