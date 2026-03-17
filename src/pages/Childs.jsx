@@ -200,10 +200,7 @@ export default function Childs() {
         <DataTable
           columns={columns}
           data={childAssets}
-          onRowClick={(row) => {
-            setSelectedChild(row);
-            setAssignOpen(true);
-          }}
+          onRowClick={(row) => navigate(`/ChildDetail?id=${row.id}`)}
           searchPlaceholder="Search child assets..."
         />
       </div>
