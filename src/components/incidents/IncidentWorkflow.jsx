@@ -54,6 +54,15 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
+  // Fetch person names from config lists
+  const { data: personList = [] } = useQuery({
+    queryKey: ["configList", "incident_person"],
+    queryFn: async () => {
+      const items = await base44.entities.ConfigLists.filter({ list_type: "incident_person" });
+      return items.map(item => item.value);
+    },
+  });
+
   // workflow flags stored on incident
   const flags = {
     ompi_done:        !!incident.ompi_done,
