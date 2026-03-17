@@ -407,7 +407,7 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
       </StepModal>
 
       {/* Corrective WO */}
-      <StepModal open={activeModal === "corrective"} onOpenChange={(o) => !o && setActiveModal(null)} title="Create Corrective Work Order" onConfirm={handleCorrective}>
+      <StepModal open={activeModal === "corrective"} onOpenChange={(o) => !o && setActiveModal(null)} title="Create Corrective Work Order" onConfirm={(person) => { setFormData(f => ({ ...f, person })); handleCorrective(); }} showPersonSelect personList={personList}>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <Label className="text-xs">Assigned To</Label>
