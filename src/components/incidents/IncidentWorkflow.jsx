@@ -513,7 +513,7 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
       </StepModal>
 
       {/* Close Incident */}
-      <StepModal open={activeModal === "close"} onOpenChange={(o) => !o && setActiveModal(null)} title="Close Incident" onConfirm={handleClose}>
+      <StepModal open={activeModal === "close"} onOpenChange={(o) => !o && setActiveModal(null)} title="Close Incident" onConfirm={(person) => { setFormData(f => ({ ...f, person })); handleClose(); }} showPersonSelect personList={personList}>
         {incident.is_owr && !flags.owr_fmpi_done && (
           <div className="p-3 bg-amber-50 rounded-lg border border-amber-200 text-xs text-amber-700">
             ⚠ OWR Incident — ensure CA Approval has been obtained before closing.
