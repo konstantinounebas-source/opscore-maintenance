@@ -175,14 +175,20 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-5 mt-2">
 
+          {Object.keys(errors).length > 0 && (
+            <div className="bg-red-50 border border-red-200 rounded-md px-3 py-2 text-xs text-red-600">
+              Please fill in all required fields marked with <span className="font-bold">*</span>
+            </div>
+          )}
+
           {/* ── HARD FIELDS ── */}
           <SectionHeader title="Core Information" color="slate" />
-          {/* Hidden required fields - kept for data integrity */}
           <input type="hidden" value={form.asset_id} />
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-xs">Active Shelter ID</Label>
-              <Input value={form.active_shelter_id} onChange={e => set("active_shelter_id", e.target.value)} placeholder="e.g. SH-001" />
+              <Label className="text-xs">Active Shelter ID <span className="text-red-500">*</span></Label>
+              <Input className={err("active_shelter_id")} value={form.active_shelter_id} onChange={e => set("active_shelter_id", e.target.value)} placeholder="e.g. SH-001" />
+              {errors.active_shelter_id && <p className="text-xs text-red-500">Required</p>}
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Shelter Type</Label>
@@ -202,27 +208,29 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
               <Input value={form.location_address} onChange={e => set("location_address", e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">City</Label>
+              <Label className="text-xs">City <span className="text-red-500">*</span></Label>
               <Select value={form.city} onValueChange={v => set("city", v)}>
-                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectTrigger className={err("city")}><SelectValue placeholder="Select" /></SelectTrigger>
                 <SelectContent>
                   {(cities.length ? cities : ["Nicosia", "Limassol", "Larnaca", "Paphos", "Famagusta"]).map(c => (
                     <SelectItem key={c} value={c}>{c}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {errors.city && <p className="text-xs text-red-500">Required</p>}
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs">Status</Label>
+            <Label className="text-xs">Status <span className="text-red-500">*</span></Label>
             <Select value={form.status} onValueChange={v => set("status", v)}>
-              <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+              <SelectTrigger className={err("status")}><SelectValue placeholder="Select" /></SelectTrigger>
               <SelectContent>
                 {(statuses.length ? statuses : ["Active", "Inactive", "Under Maintenance", "Decommissioned"]).map(s => (
                   <SelectItem key={s} value={s}>{s}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {errors.status && <p className="text-xs text-red-500">Required</p>}
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs">Coordinates (Latitude/Longitude)</Label>
