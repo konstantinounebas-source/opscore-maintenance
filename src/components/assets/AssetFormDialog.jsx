@@ -106,10 +106,14 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
     }
   }, [open]);
 
-  // Auto-fill fields when Active Shelter ID matches an existing asset (edit mode)
+  // Auto-fill fields when Active Shelter ID matches an existing asset
   useEffect(() => {
-    if (!form.active_shelter_id || asset) return; // only for new assets
-    const match = allAssets.find(a => a.active_shelter_id === form.active_shelter_id || a.asset_id === form.active_shelter_id);
+    if (!form.active_shelter_id || allAssets.length === 0) return;
+    // Skip if we're editing this exact asset (don't overwrite with itself)
+    const match = allAssets.find(
+      a => (a.active_shelter_id === form.active_shelter_id || a.asset_id === form.active_shelter_id)
+        && a.id !== asset?.id
+    );
     if (match) {
       setForm(f => ({
         ...f,
@@ -121,7 +125,7 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
         city: match.city || f.city,
       }));
     }
-  }, [form.active_shelter_id]);
+  }, [form.active_shelter_id, allAssets.length]);
 
   const set = (field, value) => setForm(f => ({ ...f, [field]: value }));
 
