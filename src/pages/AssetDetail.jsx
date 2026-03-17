@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
-import { ArrowLeft, Pencil, Plus, AlertTriangle, Wrench, Download, FileText, Image, ExternalLink, Send } from "lucide-react";
+import { ArrowLeft, Pencil, Plus, AlertTriangle, Wrench, Download, FileText, Image, ExternalLink, Send, ChevronDown, ChevronUp } from "lucide-react";
 
 export default function AssetDetail() {
   const params = new URLSearchParams(window.location.search);
