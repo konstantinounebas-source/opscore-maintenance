@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +14,7 @@ const emptyForm = {
   serial_number: "",
   installation_date: "",
   child_type: "",
+  status: "",
 };
 
 export default function ChildFormDialog({ open, onOpenChange, child, onSave, parentAssets }) {
