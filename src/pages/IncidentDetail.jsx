@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
-import { ArrowLeft, Pencil, FileText, Image, ExternalLink, Send, MessageSquare, StickyNote, ArrowUpRight, CheckCircle, XCircle, UserPlus } from "lucide-react";
+import { ArrowLeft, Pencil, FileText, Image, ExternalLink, Send, MessageSquare, StickyNote } from "lucide-react";
 
 export default function IncidentDetail() {
   const params = new URLSearchParams(window.location.search);
