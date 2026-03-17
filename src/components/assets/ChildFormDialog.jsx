@@ -17,8 +17,8 @@ export default function ChildFormDialog({ open, onOpenChange, child, parentAsset
     queryFn: () => base44.entities.ChildAssets.list(),
   });
 
-  // Show unassigned children OR children already assigned to this asset
-  const availableChildren = allChildAssets.filter(c => !c.parent_asset_id || c.parent_asset_id === parentAssetId);
+  // Show only truly unassigned children (no parent), exclude those already in this asset
+  const availableChildren = allChildAssets.filter(c => !c.parent_asset_id);
 
   const [form, setForm] = useState({
     child_id: "", category: "", serial_number: "", installation_date: "", child_type: ""
