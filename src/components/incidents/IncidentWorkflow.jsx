@@ -227,7 +227,7 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
       due_date: formData.due_date || "",
       assigned_to: formData.assigned_to || "",
     });
-    await updateIncidentFlag("corrective_done", "Corrective WO Created", "Corrective Work Order created", { comment: formData.notes || "" });
+    await updateIncidentFlag("corrective_done", "Corrective WO Created", "Corrective Work Order created", { comment: formData.notes || "" }, formData.person);
     setActiveModal(null);
     setFormData({});
   };
