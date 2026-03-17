@@ -26,6 +26,13 @@ const INCIDENT_LIST_TYPES = [
   { key: "Asset Address", label: "Asset Address" },
 ];
 
+const CHILD_LIST_TYPES = [
+  { key: "Child Category", label: "Category" },
+  { key: "Child Type", label: "Child Type" },
+  { key: "Child Parent Asset", label: "Parent Asset" },
+  { key: "Child Status", label: "Status" },
+];
+
 const ASSET_LIST_TYPES = [
   { key: "Asset Cities", label: "Cities" },
   { key: "Asset Shelter Types", label: "Shelter Types" },
