@@ -396,16 +396,10 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
                 onClick={async () => {
                   if (formData.checklistFile) {
                     await handleAttachUpload(formData.checklistFile);
-                    const user = await base44.auth.me();
                     await base44.entities.Incidents.update(incidentId, { checklist_done: true });
                     await addAudit("WO Checklist Uploaded", formData.notes || `Checklist uploaded: ${formData.checklistFile?.file_name || ""}`, {
-                      attachment_metadata: [{
-                        url: formData.checklistFile.file_url,
-                        name: formData.checklistFile.file_name,
-                        author: user?.email,
-                        author_name: user?.full_name,
-                        created_at: new Date().toISOString(),
-                      }],
+                      attachments: [formData.checklistFile.file_url],
+                      attachment_names: [formData.checklistFile.file_name],
                     });
                     queryClient.invalidateQueries({ queryKey: ["incident", incidentId] });
                     queryClient.invalidateQueries({ queryKey: ["incidentAudit", incidentId] });
