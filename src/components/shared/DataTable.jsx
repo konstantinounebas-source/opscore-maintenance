@@ -120,7 +120,7 @@ export default function DataTable({ columns, data, onRowClick, searchPlaceholder
           </TableBody>
         </Table>
       </div>
-      {totalPages > 1 && (
+      {totalPages > 1 && currentPageSize !== 0 && (
         <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100 text-sm text-slate-500">
           <span>Showing {page * currentPageSize + 1}–{Math.min((page + 1) * currentPageSize, sorted.length)} of {sorted.length}</span>
           <div className="flex items-center gap-1">
