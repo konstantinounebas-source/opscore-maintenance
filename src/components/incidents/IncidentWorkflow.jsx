@@ -140,7 +140,7 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
       priority: "Critical",
       description: `Make Safe. SLA: 24h from Confirmation of Receipt. ${formData.notes || ""}`,
     });
-    const extra = {};
+    const extra = { comment: formData.notes || "" };
     if (formData.makeSafeFile) {
       await handleAttachUpload(formData.makeSafeFile);
       extra.attachments = [formData.makeSafeFile.file_url];
