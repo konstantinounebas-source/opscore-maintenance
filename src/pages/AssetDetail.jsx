@@ -106,7 +106,8 @@ export default function AssetDetail() {
     }
     queryClient.invalidateQueries({ queryKey: ["childAssets", assetId] });
     queryClient.invalidateQueries({ queryKey: ["assetTransactions", assetId] });
-    setMoveMenuOpen(null);
+    setMoveDialogOpen(false);
+    setChildToMove(null);
     toast({ title: "Child asset moved" });
   };
 
