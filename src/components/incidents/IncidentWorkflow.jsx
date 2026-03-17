@@ -358,7 +358,7 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
       {/* ── Modals ── */}
 
       {/* OMPI */}
-      <StepModal open={activeModal === "ompi"} onOpenChange={(o) => !o && setActiveModal(null)} title="Create OMPI / Confirmation of Receipt" onConfirm={handleOMPI}>
+      <StepModal open={activeModal === "ompi"} onOpenChange={(o) => !o && setActiveModal(null)} title="Create OMPI / Confirmation of Receipt" onConfirm={(person) => { setFormData(f => ({ ...f, person })); handleOMPI(); }} showPersonSelect personList={personList}>
         <div className="p-3 bg-amber-50 rounded-lg border border-amber-200 text-xs text-amber-700">
           <strong>SLA:</strong> P1 — 24h from next working day &nbsp;|&nbsp; P2 — Same working day
         </div>
