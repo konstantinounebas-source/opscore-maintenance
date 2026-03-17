@@ -106,6 +106,23 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
     }
   }, [open]);
 
+  // Auto-fill fields when Active Shelter ID matches an existing asset (edit mode)
+  useEffect(() => {
+    if (!form.active_shelter_id || asset) return; // only for new assets
+    const match = allAssets.find(a => a.active_shelter_id === form.active_shelter_id || a.asset_id === form.active_shelter_id);
+    if (match) {
+      setForm(f => ({
+        ...f,
+        location_address: match.location_address || f.location_address,
+        shelter_type: match.shelter_type || f.shelter_type,
+        status: match.status || f.status,
+        latitude: match.latitude ?? f.latitude,
+        longitude: match.longitude ?? f.longitude,
+        city: match.city || f.city,
+      }));
+    }
+  }, [form.active_shelter_id]);
+
   const set = (field, value) => setForm(f => ({ ...f, [field]: value }));
 
   const toggleEvidence = (val) => {
