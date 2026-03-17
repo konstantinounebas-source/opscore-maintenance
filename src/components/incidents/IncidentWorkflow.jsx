@@ -210,7 +210,7 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
       priority: "High",
       description: `FMPI created (OWR). CA Approval required. ${formData.notes || ""}`,
     });
-    await updateIncidentFlag("owr_fmpi_done", "FMPI Created (OWR)", "CA Approval required");
+    await updateIncidentFlag("owr_fmpi_done", "FMPI Created (OWR)", "CA Approval required", {}, formData.person);
     setActiveModal(null);
     setFormData({});
   };
