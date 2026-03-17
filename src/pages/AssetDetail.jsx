@@ -24,6 +24,7 @@ export default function AssetDetail() {
   const { toast } = useToast();
 
   const [editOpen, setEditOpen] = useState(false);
+  const [showMore, setShowMore] = useState(false);
   const [childFormOpen, setChildFormOpen] = useState(false);
   const [editingChild, setEditingChild] = useState(null);
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
