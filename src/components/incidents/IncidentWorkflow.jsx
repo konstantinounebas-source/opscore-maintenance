@@ -235,7 +235,7 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
   const handleUpdateStatus = async () => {
     const newStatus = formData.status || "In Progress";
     await base44.entities.Incidents.update(incidentId, { status: newStatus });
-    await addAudit("Status Updated", `Status changed to ${newStatus}`);
+    await addAudit("Status Updated", `Status changed to ${newStatus}`, {}, formData.person);
     queryClient.invalidateQueries({ queryKey: ["incident", incidentId] });
     queryClient.invalidateQueries({ queryKey: ["incidentAudit", incidentId] });
     onRefresh();
