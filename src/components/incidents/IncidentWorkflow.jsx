@@ -289,9 +289,8 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
             <div key={step.id}>
               <button
                 onClick={() => handleStepClick(step.id)}
-                disabled={completed}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left
-                  ${completed ? "opacity-60 cursor-default" : active ? "bg-indigo-50 hover:bg-indigo-100 cursor-pointer" : "hover:bg-slate-50 cursor-pointer opacity-50"}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left cursor-pointer
+                  ${active ? "bg-indigo-50 hover:bg-indigo-100" : "hover:bg-slate-50"}
                 `}
               >
                 <StepDot completed={completed} active={active} />
