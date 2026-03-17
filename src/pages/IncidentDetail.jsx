@@ -81,7 +81,6 @@ export default function IncidentDetail() {
 
   if (!incident) return <div className="flex items-center justify-center h-screen"><div className="w-8 h-8 border-4 border-slate-200 border-t-indigo-600 rounded-full animate-spin" /></div>;
 
-  const sortedComments = [...comments].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
   const sortedAudit = [...auditTrail].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
 
   return (
