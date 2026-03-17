@@ -97,7 +97,7 @@ export default function AssetDetail() {
     const user = await base44.auth.me();
     if (destinationAssetId === "inventory") {
       await base44.entities.ChildAssets.update(child.id, { parent_asset_id: "" });
-      await base44.entities.Shipments.create({ child_asset_id: child.id, parent_asset_id: assetId, status: "Returned", details: "Returned to inventory" });
+      await base44.entities.Shipments.create({ shipment_id: `SHP-${Date.now()}`, child_asset_id: child.id, parent_asset_id: assetId, status: "Returned", details: "Returned to inventory" });
       await base44.entities.AssetTransactions.create({ asset_id: assetId, action: "Child Moved to Inventory", details: `${child.child_id} returned to inventory`, user: user?.email });
     } else {
       await base44.entities.ChildAssets.update(child.id, { parent_asset_id: destinationAssetId });
