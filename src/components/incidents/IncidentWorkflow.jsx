@@ -174,7 +174,7 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
       extra.attachments = [formData.inspectionFile.file_url];
       extra.attachment_names = [formData.inspectionFile.file_name];
     }
-    await updateIncidentFlag("inspection_done", "Inspection WO Created", "Inspection Work Order created", extra);
+    await updateIncidentFlag("inspection_done", "Inspection WO Created", "Inspection Work Order created", extra, formData.person);
     setActiveModal(null);
     setFormData({});
   };
