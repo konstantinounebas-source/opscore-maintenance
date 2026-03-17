@@ -63,7 +63,7 @@ export default function DataTable({ columns, data, onRowClick, searchPlaceholder
         <div className="flex items-center gap-2 text-sm text-slate-600">
           <span>Show</span>
           <Select value={String(currentPageSize)} onValueChange={(val) => { setCurrentPageSize(parseInt(val)); setPage(0); }}>
-            <SelectTrigger className="w-16 h-8 text-sm">
+            <SelectTrigger className="w-20 h-8 text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -71,6 +71,7 @@ export default function DataTable({ columns, data, onRowClick, searchPlaceholder
               <SelectItem value="20">20</SelectItem>
               <SelectItem value="50">50</SelectItem>
               <SelectItem value="100">100</SelectItem>
+              <SelectItem value="0">All</SelectItem>
             </SelectContent>
           </Select>
           <span>items</span>
