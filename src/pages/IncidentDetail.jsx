@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
-import { ArrowLeft, Pencil, FileText, Image, ExternalLink, Send, MessageSquare, StickyNote } from "lucide-react";
+import { ArrowLeft, Pencil, FileText, Image, ExternalLink, Send, MessageSquare, StickyNote, ChevronDown, ChevronUp } from "lucide-react";
 
 export default function IncidentDetail() {
   const params = new URLSearchParams(window.location.search);
