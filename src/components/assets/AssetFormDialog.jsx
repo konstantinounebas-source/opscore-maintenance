@@ -10,6 +10,7 @@ import { useConfigLists } from "@/components/shared/useConfigLists";
 import FileUploader from "@/components/shared/FileUploader";
 import { Trash2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { useQuery } from "@tanstack/react-query";
 
 const CONTRACT_BASE_YEAR = 2023;
 
