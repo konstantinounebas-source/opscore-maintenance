@@ -153,7 +153,7 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
       priority: incident.initial_priority === "P1" ? "High" : "Medium",
       description: `Response/Confirmation of Receipt. SLA: ${sla}. ${formData.notes || ""}`,
     });
-    await updateIncidentFlag("ompi_done", "OMPI Created", `Confirmation of Receipt created. SLA: ${sla}`);
+    await updateIncidentFlag("ompi_done", "OMPI Created", `Confirmation of Receipt created. SLA: ${sla}`, {}, formData.person);
     setActiveModal(null);
     setFormData({});
   };
