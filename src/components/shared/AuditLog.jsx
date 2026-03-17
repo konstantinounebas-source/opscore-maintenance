@@ -26,16 +26,21 @@ function AttachmentItem({ url, name }) {
 function AuditEntry({ entry, queryKey }) {
   const queryClient = useQueryClient();
   const [expanded, setExpanded] = useState(false);
+  // Use local state seeded from prop, but sync when entry changes (after refetch)
   const [comment, setComment] = useState(entry.comment || "");
   const [editing, setEditing] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const fileInputRef = React.useRef();
+  const fileInputRef = useRef();
+
+  // Keep comment textarea in sync if parent re-fetches updated data
+  React.useEffect(() => {
+    if (!editing) setComment(entry.comment || "");
+  }, [entry.comment, editing]);
 
   const updateEntry = useMutation({
     mutationFn: (data) => base44.entities.IncidentAuditTrail.update(entry.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
-      queryClient.invalidateQueries({ queryKey: ["auditTrail"] });
       setEditing(false);
     }
   });
@@ -49,12 +54,14 @@ function AuditEntry({ entry, queryKey }) {
     if (!file) return;
     setUploading(true);
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    // Use the latest entry data from the prop (updated after previous refetch)
     const existingUrls = entry.attachments || [];
     const existingNames = entry.attachment_names || [];
-    updateEntry.mutate({
+    await base44.entities.IncidentAuditTrail.update(entry.id, {
       attachments: [...existingUrls, file_url],
       attachment_names: [...existingNames, file.name]
     });
+    queryClient.invalidateQueries({ queryKey });
     setUploading(false);
     e.target.value = "";
   };
