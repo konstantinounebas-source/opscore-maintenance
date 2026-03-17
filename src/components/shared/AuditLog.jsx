@@ -46,8 +46,8 @@ function AuditEntry({ entry: initialEntry, queryKey }) {
     setCommentText("");
   }, [initialEntry]);
 
-  const hasAttachments = Array.isArray(entry.attachments) && entry.attachments.length > 0;
-  const hasComment = entry.comment && entry.comment.trim() !== "";
+  const hasAttachments = Array.isArray(entry.attachment_metadata) && entry.attachment_metadata.length > 0;
+  const hasComments = Array.isArray(entry.comments) && entry.comments.length > 0;
 
   const refreshEntry = async () => {
     // Re-fetch just this entry directly from the API
