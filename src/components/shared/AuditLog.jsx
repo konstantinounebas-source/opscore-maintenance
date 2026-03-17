@@ -216,9 +216,36 @@ function AuditEntry({ entry: initialEntry, queryKey }) {
                 <Textarea value={commentText} onChange={e => setCommentText(e.target.value)}
                   placeholder="Write a comment about this workflow step..."
                   className="text-sm min-h-[80px]" autoFocus />
+                
+                <div className="space-y-2 border-t pt-2">
+                  <Label className="text-xs font-semibold">Comment Author</Label>
+                  <Tabs value={commentPersonInputType} onValueChange={setCommentPersonInputType}>
+                    <TabsList className="grid w-full grid-cols-2 h-7">
+                      <TabsTrigger value="manual" className="text-xs">Manual Entry</TabsTrigger>
+                      <TabsTrigger value="select" className="text-xs">From List</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="manual" className="mt-2">
+                      <Input
+                        placeholder="Enter person name..."
+                        value={commentPerson}
+                        onChange={e => setCommentPerson(e.target.value)}
+                        className="text-sm"
+                      />
+                    </TabsContent>
+                    <TabsContent value="select" className="mt-2">
+                      <Select value={commentPerson} onValueChange={setCommentPerson}>
+                        <SelectTrigger><SelectValue placeholder="Select person" /></SelectTrigger>
+                        <SelectContent>
+                          {personList.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </TabsContent>
+                  </Tabs>
+                </div>
+
                 <div className="flex gap-2 justify-end">
-                  <Button variant="outline" size="sm" onClick={() => { setEditingComment(false); setCommentText(""); }}>Cancel</Button>
-                  <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700" onClick={handleSaveComment} disabled={saving || !commentText.trim()}>
+                  <Button variant="outline" size="sm" onClick={() => { setEditingComment(false); setCommentText(""); setCommentPerson(""); setCommentPersonInputType("manual"); }}>Cancel</Button>
+                  <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700" onClick={handleSaveComment} disabled={saving || !commentText.trim() || !commentPerson.trim()}>
                     {saving && <Loader2 className="h-3 w-3 animate-spin mr-1" />}
                     {saving ? "Saving..." : "Save"}
                   </Button>
