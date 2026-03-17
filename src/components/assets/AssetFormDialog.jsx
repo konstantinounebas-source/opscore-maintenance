@@ -126,8 +126,21 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
     }));
   };
 
+  const validate = () => {
+    const e = {};
+    if (!form.active_shelter_id?.trim()) e.active_shelter_id = true;
+    if (!form.asset_name?.trim() && !form.active_shelter_id?.trim()) e.asset_name = true;
+    if (!form.city) e.city = true;
+    if (!form.status) e.status = true;
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const err = (key) => errors[key] ? "border-red-400 focus-visible:ring-red-400" : "";
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validate()) return;
     const payload = { ...form };
     // Auto-generate asset_id if not set (new asset)
     if (!payload.asset_id) {
