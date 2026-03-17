@@ -46,7 +46,7 @@ function AuditEntry({ entry: initialEntry, queryKey }) {
     setCommentText("");
   }, [initialEntry]);
 
-  const hasAttachments = Array.isArray(entry.attachment_metadata) && entry.attachment_metadata.length > 0;
+  const hasAttachments = (Array.isArray(entry.attachment_metadata) && entry.attachment_metadata.length > 0) || (Array.isArray(entry.attachments) && entry.attachments.length > 0);
   const hasComments = Array.isArray(entry.comments) && entry.comments.length > 0;
 
   const refreshEntry = async () => {
