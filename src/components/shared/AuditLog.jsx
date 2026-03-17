@@ -35,6 +35,7 @@ function AuditEntry({ entry, queryKey }) {
     mutationFn: (data) => base44.entities.IncidentAuditTrail.update(entry.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
+      queryClient.invalidateQueries({ queryKey: ["auditTrail"] });
       setEditing(false);
     }
   });
