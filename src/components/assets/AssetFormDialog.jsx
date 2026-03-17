@@ -56,6 +56,7 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
   const evidenceOptions = useConfigLists("Asset Evidence Types");
 
   const [form, setForm] = useState(emptyForm);
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (asset) {
