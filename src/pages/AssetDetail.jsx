@@ -39,12 +39,24 @@ export default function AssetDetail() {
   const { data: allAssets = [] } = useQuery({ queryKey: ["allAssets"], queryFn: () => base44.entities.Assets.list() });
 
   const updateAsset = useMutation({
-    mutationFn: (data) => base44.entities.Assets.update(assetId, data),
-    onSuccess: async (_, data) => {
+    mutationFn: ({ data }) => base44.entities.Assets.update(assetId, data),
+    onSuccess: async (_, { data, attachments = [] }) => {
       const user = await base44.auth.me();
+      // Save any new attachments added in the edit form
+      for (const file of attachments) {
+        await base44.entities.AssetAttachments.create({
+          asset_id: assetId,
+          file_name: file.file_name,
+          file_url: file.file_url,
+          file_type: file.file_type,
+          file_size: file.file_size,
+          uploaded_by: user?.email,
+        });
+      }
       const changes = Object.entries(data).filter(([key, val]) => asset[key] !== val).map(([key, val]) => `${key}: ${asset[key]} → ${val}`).join(", ");
       await base44.entities.AssetTransactions.create({ asset_id: assetId, action: "Asset Updated", details: changes || "Asset information modified", user: user?.email });
       queryClient.invalidateQueries({ queryKey: ["asset", assetId] });
+      queryClient.invalidateQueries({ queryKey: ["assetAttachments", assetId] });
       queryClient.invalidateQueries({ queryKey: ["assetTransactions", assetId] });
       setEditOpen(false);
       toast({ title: "Asset updated" });
@@ -263,7 +275,7 @@ export default function AssetDetail() {
         </Tabs>
       </div>
 
-      <AssetFormDialog open={editOpen} onOpenChange={setEditOpen} asset={asset} onSave={(data) => updateAsset.mutate(data)} />
+      <AssetFormDialog open={editOpen} onOpenChange={setEditOpen} asset={asset} onSave={(data, attachments) => updateAsset.mutate({ data, attachments })} />
       <ChildFormDialog open={childFormOpen} onOpenChange={setChildFormOpen} child={editingChild} parentAssetId={assetId} onSave={handleChildSave} />
       <MoveChildDialog open={moveDialogOpen} onOpenChange={setMoveDialogOpen} child={childToMove} assets={allAssets} currentAssetId={assetId} onMove={handleMoveChild} />
     </div>
