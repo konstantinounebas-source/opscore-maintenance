@@ -33,7 +33,7 @@ function AuditEntry({ entry, queryKey }) {
   const fileInputRef = useRef();
 
   // Keep comment textarea in sync if parent re-fetches updated data
-  React.useEffect(() => {
+  useEffect(() => {
     if (!editing) setComment(entry.comment || "");
   }, [entry.comment, editing]);
 
