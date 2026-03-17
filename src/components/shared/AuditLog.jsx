@@ -1,6 +1,6 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Clock, User, MessageSquare, Paperclip, Download, ChevronDown, ChevronUp, FileText, ImageIcon, Eye, Loader2 } from "lucide-react";
@@ -10,28 +10,19 @@ function AttachmentItem({ url, name }) {
   const isImage = /\.(png|jpg|jpeg|gif|webp)$/i.test(name || url);
   const displayName = name || url.split("/").pop() || "Attachment";
   return (
-    <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-sm text-slate-700">
+    <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 bg-slate-50">
       {isImage
         ? <ImageIcon className="h-3.5 w-3.5 text-slate-400 shrink-0" />
         : <FileText className="h-3.5 w-3.5 text-slate-400 shrink-0" />
       }
-      <span className="truncate max-w-[140px] text-xs">{displayName}</span>
+      <span className="truncate max-w-[160px] text-xs text-slate-700">{displayName}</span>
       <div className="flex items-center gap-1 ml-auto">
-        <a
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          title="View"
-          className="p-1 rounded hover:bg-indigo-100 text-slate-400 hover:text-indigo-600 transition-colors"
-        >
+        <a href={url} target="_blank" rel="noopener noreferrer" title="View"
+          className="p-1 rounded hover:bg-indigo-100 text-slate-400 hover:text-indigo-600 transition-colors">
           <Eye className="h-3.5 w-3.5" />
         </a>
-        <a
-          href={url}
-          download={name}
-          title="Download"
-          className="p-1 rounded hover:bg-indigo-100 text-slate-400 hover:text-indigo-600 transition-colors"
-        >
+        <a href={url} download={name} title="Download"
+          className="p-1 rounded hover:bg-indigo-100 text-slate-400 hover:text-indigo-600 transition-colors">
           <Download className="h-3.5 w-3.5" />
         </a>
       </div>
@@ -39,41 +30,38 @@ function AttachmentItem({ url, name }) {
   );
 }
 
-function AuditEntry({ entryId, queryKey }) {
+function AuditEntry({ entry: initialEntry, queryKey }) {
   const queryClient = useQueryClient();
+  const [entry, setEntry] = useState(initialEntry);
   const [expanded, setExpanded] = useState(false);
   const [editingComment, setEditingComment] = useState(false);
-  const [commentText, setCommentText] = useState("");
+  const [commentText, setCommentText] = useState(initialEntry.comment || "");
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef();
 
-  // Fetch this specific entry live so we always have fresh data
-  const { data: entry } = useQuery({
-    queryKey: ["auditEntry", entryId],
-    queryFn: () => base44.entities.IncidentAuditTrail.filter({ id: entryId }).then(r => r[0]),
-    enabled: !!entryId,
-  });
-
-  if (!entry) return null;
+  // Keep local entry in sync when parent re-fetches (entry prop changes)
+  useEffect(() => {
+    setEntry(initialEntry);
+    if (!editingComment) setCommentText(initialEntry.comment || "");
+  }, [initialEntry]);
 
   const hasAttachments = Array.isArray(entry.attachments) && entry.attachments.length > 0;
   const hasComment = entry.comment && entry.comment.trim() !== "";
 
-  const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ["auditEntry", entryId] });
+  const refreshEntry = async () => {
+    // Re-fetch just this entry directly from the API
+    const updated = await base44.entities.IncidentAuditTrail.filter({ incident_id: entry.incident_id });
+    const fresh = updated.find(e => e.id === entry.id);
+    if (fresh) setEntry(fresh);
+    // Also invalidate parent list
     queryClient.invalidateQueries({ queryKey });
-  };
-
-  const handleOpenEdit = () => {
-    setCommentText(entry.comment || "");
-    setEditingComment(true);
   };
 
   const handleSaveComment = async () => {
     setSaving(true);
-    await base44.entities.IncidentAuditTrail.update(entryId, { comment: commentText });
-    invalidate();
+    await base44.entities.IncidentAuditTrail.update(entry.id, { comment: commentText });
+    await refreshEntry();
     setSaving(false);
     setEditingComment(false);
   };
@@ -85,18 +73,18 @@ function AuditEntry({ entryId, queryKey }) {
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
     const existingUrls = entry.attachments || [];
     const existingNames = entry.attachment_names || [];
-    await base44.entities.IncidentAuditTrail.update(entryId, {
+    await base44.entities.IncidentAuditTrail.update(entry.id, {
       attachments: [...existingUrls, file_url],
       attachment_names: [...existingNames, file.name],
     });
-    invalidate();
+    await refreshEntry();
     setUploading(false);
     e.target.value = "";
   };
 
   return (
     <div className="border border-slate-200 rounded-lg bg-white overflow-hidden">
-      {/* Header */}
+      {/* Header row — always visible */}
       <div
         className="flex items-start gap-3 p-4 cursor-pointer hover:bg-slate-50 transition-colors"
         onClick={() => setExpanded(v => !v)}
@@ -140,19 +128,14 @@ function AuditEntry({ entryId, queryKey }) {
       {expanded && (
         <div className="border-t border-slate-100 px-4 pb-4 pt-3 space-y-4">
 
-          {/* Attachments */}
+          {/* Attachments section */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Attachments</span>
               <div>
                 <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileUpload} />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 text-xs gap-1"
-                  disabled={uploading}
-                  onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
-                >
+                <Button variant="outline" size="sm" className="h-7 text-xs gap-1" disabled={uploading}
+                  onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}>
                   {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Paperclip className="h-3 w-3" />}
                   {uploading ? "Uploading..." : "Attach File"}
                 </Button>
@@ -169,29 +152,26 @@ function AuditEntry({ entryId, queryKey }) {
             )}
           </div>
 
-          {/* Comment */}
+          {/* Comment section */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Comment</span>
               {!editingComment && (
-                <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={handleOpenEdit}>
+                <Button variant="ghost" size="sm" className="h-7 text-xs"
+                  onClick={() => { setCommentText(entry.comment || ""); setEditingComment(true); }}>
                   {hasComment ? "Edit" : "Add Comment"}
                 </Button>
               )}
             </div>
             {editingComment ? (
               <div className="space-y-2">
-                <Textarea
-                  value={commentText}
-                  onChange={e => setCommentText(e.target.value)}
+                <Textarea value={commentText} onChange={e => setCommentText(e.target.value)}
                   placeholder="Write a comment about this workflow step..."
-                  className="text-sm min-h-[80px]"
-                  autoFocus
-                />
+                  className="text-sm min-h-[80px]" autoFocus />
                 <div className="flex gap-2 justify-end">
                   <Button variant="outline" size="sm" onClick={() => setEditingComment(false)}>Cancel</Button>
                   <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700" onClick={handleSaveComment} disabled={saving}>
-                    {saving ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                    {saving && <Loader2 className="h-3 w-3 animate-spin mr-1" />}
                     {saving ? "Saving..." : "Save"}
                   </Button>
                 </div>
@@ -221,7 +201,7 @@ export default function AuditLog({ entries = [], queryKey = ["auditTrail"] }) {
   return (
     <div className="space-y-2">
       {entries.map((entry) => (
-        <AuditEntry key={entry.id} entryId={entry.id} queryKey={queryKey} />
+        <AuditEntry key={entry.id} entry={entry} queryKey={queryKey} />
       ))}
     </div>
   );
