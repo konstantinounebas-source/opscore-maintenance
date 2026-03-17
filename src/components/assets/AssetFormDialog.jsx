@@ -56,6 +56,8 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
   const statuses = useConfigLists("Asset Status");
   const evidenceOptions = useConfigLists("Asset Evidence Types");
 
+  const { data: allAssets = [] } = useQuery({ queryKey: ["assets"], queryFn: () => base44.entities.Assets.list() });
+
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState({});
 
