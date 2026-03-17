@@ -109,6 +109,7 @@ export default function IncidentDetail() {
           {showMore && (
             <div className="mt-6 pt-5 border-t border-slate-100 grid grid-cols-2 md:grid-cols-4 gap-6">
               <IField label="Issue Date" value={incident.issue_date} />
+              <IField label="Τρόπος Αναφοράς" value={incident.incident_reporting_method} />
               <IField label="Reported By" value={incident.reported_by_name} />
               <IField label="Reporter Phone" value={incident.reported_by_phone} />
               <IField label="Reporter Email" value={incident.reported_by_email} />
