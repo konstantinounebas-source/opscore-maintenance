@@ -500,7 +500,7 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
       </StepModal>
 
       {/* Finalise FMPI */}
-      <StepModal open={activeModal === "finalise"} onOpenChange={(o) => !o && setActiveModal(null)} title="Finalise FMPI" onConfirm={handleFinalise}>
+      <StepModal open={activeModal === "finalise"} onOpenChange={(o) => !o && setActiveModal(null)} title="Finalise FMPI" onConfirm={(person) => { setFormData(f => ({ ...f, person })); handleFinalise(); }} showPersonSelect personList={personList}>
         {incident.is_owr && (
           <div className="p-3 bg-purple-50 rounded-lg border border-purple-200 text-xs text-purple-700">
             OWR Incident — CA Approval will be required before closure.
