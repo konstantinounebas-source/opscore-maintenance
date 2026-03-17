@@ -163,35 +163,8 @@ export default function IncidentDetail() {
           )}
         </div>
 
-        {/* Quick Actions */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Quick Actions</p>
-          <div className="flex flex-wrap gap-2">
-            <Select value={statusAction} onValueChange={(v) => { setStatusAction(v); handleStatusChange(v); }}>
-              <SelectTrigger className="w-40 h-8 text-xs"><SelectValue placeholder="Change Status" /></SelectTrigger>
-              <SelectContent>
-                {["Open", "In Progress", "On Hold", "Resolved", "Closed"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <div className="flex items-center gap-1">
-              <Input value={assignee} onChange={e => setAssignee(e.target.value)} placeholder="Assign to..." className="h-8 text-xs w-36" />
-              <Button size="sm" variant="outline" className="h-8 text-xs" onClick={handleAssign}><UserPlus className="w-3.5 h-3.5" /></Button>
-            </div>
-            <Select value={priorityAction} onValueChange={(v) => { setPriorityAction(v); handlePriority(v); }}>
-              <SelectTrigger className="w-32 h-8 text-xs"><SelectValue placeholder="Priority" /></SelectTrigger>
-              <SelectContent>
-                {["High", "Medium", "Low"].map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Button size="sm" variant="outline" className="h-8 text-xs gap-1" onClick={() => handleStatusChange("Closed")}><XCircle className="w-3.5 h-3.5" />Close</Button>
-            <FileUploader onUpload={handleUpload} label="Attach" />
-            {Object.keys(pendingChanges).length > 0 && (
-              <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 h-8 text-xs gap-1 ml-auto" onClick={handleConfirmChanges}>
-                <CheckCircle className="w-3.5 h-3.5" />Confirm Changes
-              </Button>
-            )}
-          </div>
-        </div>
+        {/* Workflow */}
+        <IncidentWorkflow incident={incident} incidentId={incidentId} onRefresh={invalidateAll} />
 
         <Tabs defaultValue="comments" className="space-y-4">
           <TabsList className="bg-slate-100">
