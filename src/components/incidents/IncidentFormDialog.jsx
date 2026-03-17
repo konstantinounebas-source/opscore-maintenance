@@ -73,6 +73,10 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
   const initialPriorities = useConfigLists("Priority");
   const provinces = useConfigLists("Provinces");
   const municipalities = useConfigLists("Municipalities");
+  const reporterNames = useConfigLists("Reporter Names");
+  const reporterPhones = useConfigLists("Reporter Phones");
+  const reporterEmails = useConfigLists("Reporter Emails");
+  const reportingMethods = useConfigLists("Τρόποι Αναφοράς");
 
   const { data: assets = [] } = useQuery({ queryKey: ["assets"], queryFn: () => base44.entities.Assets.list() });
   const { data: workOrders = [] } = useQuery({ queryKey: ["workOrders"], queryFn: () => base44.entities.WorkOrders.list() });
