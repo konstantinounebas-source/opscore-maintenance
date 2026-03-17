@@ -396,7 +396,7 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
       </StepModal>
 
       {/* OWR FMPI */}
-      <StepModal open={activeModal === "owr_fmpi"} onOpenChange={(o) => !o && setActiveModal(null)} title="Create FMPI (OWR)" onConfirm={handleOWRFMPI}>
+      <StepModal open={activeModal === "owr_fmpi"} onOpenChange={(o) => !o && setActiveModal(null)} title="Create FMPI (OWR)" onConfirm={(person) => { setFormData(f => ({ ...f, person })); handleOWRFMPI(); }} showPersonSelect personList={personList}>
         <div className="p-3 bg-purple-50 rounded-lg border border-purple-200 text-xs text-purple-700">
           CA Approval will be required after FMPI creation.
         </div>
