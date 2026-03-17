@@ -101,7 +101,7 @@ export default function AssetDetail() {
       await base44.entities.AssetTransactions.create({ asset_id: assetId, action: "Child Moved to Inventory", details: `${child.child_id} returned to inventory`, user: user?.email });
     } else {
       await base44.entities.ChildAssets.update(child.id, { parent_asset_id: destinationAssetId });
-      await base44.entities.Shipments.create({ child_asset_id: child.id, parent_asset_id: destinationAssetId, status: "Delivered", details: `Moved from ${assetId}` });
+      await base44.entities.Shipments.create({ shipment_id: `SHP-${Date.now()}`, child_asset_id: child.id, parent_asset_id: destinationAssetId, status: "Delivered", details: `Moved from ${assetId}` });
       await base44.entities.AssetTransactions.create({ asset_id: assetId, action: "Child Moved", details: `${child.child_id} moved to ${destinationAssetId}`, user: user?.email });
     }
     queryClient.invalidateQueries({ queryKey: ["childAssets", assetId] });
