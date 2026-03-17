@@ -35,6 +35,7 @@ export default function ChildFormDialog({ open, onOpenChange, child, parentAsset
       });
     } else {
       setForm({ child_id: "", category: "", serial_number: "", installation_date: "", child_type: "" });
+      setSelectedRecordId(null);
     }
   }, [child, open]);
 
