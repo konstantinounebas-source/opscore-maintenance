@@ -369,7 +369,7 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
       </StepModal>
 
       {/* Inspection */}
-      <StepModal open={activeModal === "inspection"} onOpenChange={(o) => !o && setActiveModal(null)} title="Create Inspection Work Order" onConfirm={handleInspection}>
+      <StepModal open={activeModal === "inspection"} onOpenChange={(o) => !o && setActiveModal(null)} title="Create Inspection Work Order" onConfirm={(person) => { setFormData(f => ({ ...f, person })); handleInspection(); }} showPersonSelect personList={personList}>
         <div className="space-y-1.5">
           <Label className="text-xs">Inspection Notes / WO Field</Label>
           <Textarea placeholder="Describe inspection scope..." rows={3} value={formData.notes || ""} onChange={e => setFormData(f => ({ ...f, notes: e.target.value }))} />
