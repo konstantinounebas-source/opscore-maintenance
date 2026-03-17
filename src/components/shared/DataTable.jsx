@@ -36,8 +36,8 @@ export default function DataTable({ columns, data, onRowClick, searchPlaceholder
     });
   }, [filtered, sortKey, sortDir, columns]);
 
-  const totalPages = Math.ceil(sorted.length / currentPageSize);
-  const paged = sorted.slice(page * currentPageSize, (page + 1) * currentPageSize);
+  const totalPages = currentPageSize === 0 ? 1 : Math.ceil(sorted.length / currentPageSize);
+  const paged = currentPageSize === 0 ? sorted : sorted.slice(page * currentPageSize, (page + 1) * currentPageSize);
 
   const handleSort = (key) => {
     if (sortKey === key) {
