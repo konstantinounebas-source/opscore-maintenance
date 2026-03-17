@@ -24,6 +24,10 @@ const INCIDENT_LIST_TYPES = [
   { key: "Asset Province", label: "Asset Province" },
   { key: "Asset Municipality", label: "Asset Municipality" },
   { key: "Asset Address", label: "Asset Address" },
+  { key: "Reporter Names", label: "Ονόματα Αναφερόντων" },
+  { key: "Reporter Phones", label: "Τηλέφωνα Αναφερόντων" },
+  { key: "Reporter Emails", label: "Emails Αναφερόντων" },
+  { key: "Τρόποι Αναφοράς", label: "Τρόποι Αναφοράς" },
 ];
 
 const CHILD_LIST_TYPES = [
