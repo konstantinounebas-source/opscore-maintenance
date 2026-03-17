@@ -27,10 +27,6 @@ export default function IncidentDetail() {
   const [editOpen, setEditOpen] = useState(false);
   const [comment, setComment] = useState("");
   const [commentType, setCommentType] = useState("Comment");
-  const [statusAction, setStatusAction] = useState("");
-  const [assignee, setAssignee] = useState("");
-  const [pendingChanges, setPendingChanges] = useState({});
-  const [priorityAction, setPriorityAction] = useState("");
 
   const { data: incident } = useQuery({ queryKey: ["incident", incidentId], queryFn: () => base44.entities.Incidents.filter({ id: incidentId }).then(r => r[0]), enabled: !!incidentId });
   const { data: comments = [] } = useQuery({ queryKey: ["incidentComments", incidentId], queryFn: () => base44.entities.IncidentComments.filter({ incident_id: incidentId }), enabled: !!incidentId });
