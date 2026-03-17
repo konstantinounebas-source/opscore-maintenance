@@ -20,6 +20,13 @@ const emptyForm = {
 export default function ChildFormDialog({ open, onOpenChange, child, onSave, parentAssets }) {
   const [form, setForm] = useState(emptyForm);
 
+  const { data: configLists = [] } = useQuery({
+    queryKey: ["configLists"],
+    queryFn: () => base44.entities.ConfigLists.list(),
+  });
+
+  const statusOptions = configLists.filter(i => i.list_type === "Child Status" && i.is_active);
+
   useEffect(() => {
     if (child) {
       setForm(child);
