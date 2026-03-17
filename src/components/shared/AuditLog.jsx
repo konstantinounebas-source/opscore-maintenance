@@ -60,10 +60,20 @@ function AuditEntry({ entry: initialEntry, queryKey }) {
 
   const handleSaveComment = async () => {
     setSaving(true);
-    await base44.entities.IncidentAuditTrail.update(entry.id, { comment: commentText });
+    const user = await base44.auth.me();
+    const existingComments = entry.comments || [];
+    await base44.entities.IncidentAuditTrail.update(entry.id, {
+      comments: [...existingComments, {
+        text: commentText,
+        author: user?.email,
+        author_name: user?.full_name,
+        created_at: new Date().toISOString(),
+      }],
+    });
     await refreshEntry();
     setSaving(false);
     setEditingComment(false);
+    setCommentText("");
   };
 
   const handleFileUpload = async (e) => {
