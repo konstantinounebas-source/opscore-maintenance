@@ -52,6 +52,19 @@ export default function Assets() {
     if (editingAsset) {
       updateMutation.mutate({ id: editingAsset.id, data: formData });
     } else {
+      // Check for duplicate asset_id or active_shelter_id
+      const dupId = formData.asset_id && assets.some(a => a.asset_id === formData.asset_id);
+      const dupShelter = formData.active_shelter_id && assets.some(a => a.active_shelter_id === formData.active_shelter_id);
+      if (dupId || dupShelter) {
+        toast({
+          title: "Duplicate asset",
+          description: dupShelter
+            ? `An asset with Active Shelter ID "${formData.active_shelter_id}" already exists.`
+            : `An asset with Asset ID "${formData.asset_id}" already exists.`,
+          variant: "destructive",
+        });
+        return;
+      }
       const newAsset = await createMutation.mutateAsync(formData);
       // Save attachments after asset is created
       if (attachments.length > 0 && newAsset?.id) {
@@ -114,14 +127,24 @@ export default function Assets() {
     });
     if (result.status === "success" && result.output) {
       const items = Array.isArray(result.output) ? result.output : [result.output];
-      const existingIds = new Set(assets.map(a => a.asset_id));
-      const newItems = items.filter(item => item.asset_id && !existingIds.has(item.asset_id));
+      const existingAssetIds = new Set(assets.map(a => a.asset_id).filter(Boolean));
+      const existingShelterIds = new Set(assets.map(a => a.active_shelter_id).filter(Boolean));
+      const newItems = items.filter(item => {
+        if (!item.asset_id && !item.active_shelter_id) return false;
+        if (item.asset_id && existingAssetIds.has(item.asset_id)) return false;
+        if (item.active_shelter_id && existingShelterIds.has(item.active_shelter_id)) return false;
+        return true;
+      });
+      const skipped = items.length - newItems.length;
       if (newItems.length > 0) {
         await base44.entities.Assets.bulkCreate(newItems);
         queryClient.invalidateQueries({ queryKey: ["assets"] });
-        toast({ title: `Imported ${newItems.length} assets` });
+        toast({
+          title: `Imported ${newItems.length} asset${newItems.length !== 1 ? "s" : ""}`,
+          description: skipped > 0 ? `${skipped} duplicate(s) were skipped.` : undefined,
+        });
       } else {
-        toast({ title: "No new assets to import" });
+        toast({ title: "No new assets to import", description: "All records already exist in the system.", variant: "destructive" });
       }
     } else {
       toast({ title: "Import failed", variant: "destructive" });
