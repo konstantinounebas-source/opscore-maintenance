@@ -65,54 +65,6 @@ export default function IncidentDetail() {
     toast({ title: `${commentType} added` });
   };
 
-  const handleStatusChange = (newStatus) => {
-    setPendingChanges(prev => ({ ...prev, status: newStatus }));
-    setStatusAction("");
-  };
-
-  const handleAssign = async () => {
-    if (!assignee.trim()) return;
-    setPendingChanges(prev => ({ ...prev, assigned_to: assignee }));
-    setAssignee("");
-  };
-
-  const handlePriority = (newPriority) => {
-    setPendingChanges(prev => ({ ...prev, priority: newPriority }));
-    setPriorityAction("");
-  };
-
-  const handleConfirmChanges = async () => {
-    if (Object.keys(pendingChanges).length === 0) {
-      toast({ title: "No changes to save" });
-      return;
-    }
-
-    const user = await base44.auth.me();
-    const updates = {};
-    const auditEntries = [];
-
-    for (const [key, newValue] of Object.entries(pendingChanges)) {
-      const oldValue = incident[key];
-      updates[key] = newValue;
-
-      if (key === "status") {
-        auditEntries.push({ action: "Status Changed", details: `${oldValue} → ${newValue}` });
-      } else if (key === "assigned_to") {
-        auditEntries.push({ action: "Assigned", details: `Assigned to ${newValue}` });
-      } else if (key === "priority") {
-        auditEntries.push({ action: "Priority Changed", details: `${oldValue} → ${newValue}` });
-      }
-    }
-
-    await base44.entities.Incidents.update(incidentId, updates);
-    for (const entry of auditEntries) {
-      await base44.entities.IncidentAuditTrail.create({ incident_id: incidentId, action: entry.action, details: entry.details, user: user?.email });
-    }
-
-    setPendingChanges({});
-    invalidateAll();
-    toast({ title: "Changes confirmed and logged" });
-  };
 
   const handleUpload = async (fileData) => {
     const user = await base44.auth.me();
