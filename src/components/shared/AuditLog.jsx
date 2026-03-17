@@ -43,7 +43,7 @@ function AuditEntry({ entry: initialEntry, queryKey }) {
   // Keep local entry in sync when parent re-fetches (entry prop changes)
   useEffect(() => {
     setEntry(initialEntry);
-    if (!editingComment) setCommentText(initialEntry.comment || "");
+    setCommentText("");
   }, [initialEntry]);
 
   const hasAttachments = Array.isArray(entry.attachments) && entry.attachments.length > 0;
