@@ -300,6 +300,7 @@ export default function AssetDetail() {
       </div>
 
       <AssetFormDialog open={editOpen} onOpenChange={setEditOpen} asset={asset} onSave={(data, attachments) => updateAsset.mutate({ data, attachments })} />
+
       <ChildFormDialog open={childFormOpen} onOpenChange={setChildFormOpen} child={editingChild} parentAssetId={assetId} onSave={handleChildSave} />
       <MoveChildDialog open={moveDialogOpen} onOpenChange={setMoveDialogOpen} child={childToMove} assets={allAssets} currentAssetId={assetId} onMove={handleMoveChild} />
     </div>
