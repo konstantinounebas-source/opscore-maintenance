@@ -128,7 +128,7 @@ function AuditEntry({ entry: initialEntry, queryKey }) {
             )}
             {hasAttachments && (
               <span className="flex items-center gap-1 text-indigo-500">
-                <Paperclip className="h-3 w-3" /> {entry.attachment_metadata.length} file{entry.attachment_metadata.length > 1 ? "s" : ""}
+                <Paperclip className="h-3 w-3" /> {(entry.attachment_metadata?.length || 0) + (entry.attachments?.length || 0)} file{((entry.attachment_metadata?.length || 0) + (entry.attachments?.length || 0)) > 1 ? "s" : ""}
               </span>
             )}
           </div>
