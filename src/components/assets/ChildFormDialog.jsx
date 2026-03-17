@@ -5,10 +5,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useConfigLists } from "@/components/shared/useConfigLists";
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 
 export default function ChildFormDialog({ open, onOpenChange, child, parentAssetId, onSave }) {
   const categories = useConfigLists("Child Category");
   const types = useConfigLists("Child Type");
+
+  const { data: allChildAssets = [] } = useQuery({
+    queryKey: ["childAssets"],
+    queryFn: () => base44.entities.ChildAssets.list(),
+  });
+
+  // Only show unassigned children (no parent) when creating
+  const availableChildren = allChildAssets.filter(c => !c.parent_asset_id);
 
   const [form, setForm] = useState({
     child_id: "", category: "", serial_number: "", installation_date: "", child_type: ""
@@ -28,9 +38,24 @@ export default function ChildFormDialog({ open, onOpenChange, child, parentAsset
     }
   }, [child, open]);
 
+  const handleChildSelect = (childId) => {
+    const selected = allChildAssets.find(c => c.child_id === childId);
+    if (selected) {
+      setForm({
+        child_id: selected.child_id,
+        category: selected.category || "",
+        serial_number: selected.serial_number || "",
+        installation_date: selected.installation_date || "",
+        child_type: selected.child_type || "",
+        _recordId: selected.id,
+      });
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave({ ...form, parent_asset_id: parentAssetId });
+    const { _recordId, ...payload } = form;
+    onSave({ ...payload, parent_asset_id: parentAssetId }, _recordId);
   };
 
   return (
@@ -43,7 +68,20 @@ export default function ChildFormDialog({ open, onOpenChange, child, parentAsset
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs">Child ID *</Label>
-              <Input value={form.child_id} onChange={e => setForm(f => ({ ...f, child_id: e.target.value }))} required disabled={!!child} />
+              {child ? (
+                <Input value={form.child_id} disabled />
+              ) : (
+                <Select value={form.child_id} onValueChange={handleChildSelect} required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select child..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableChildren.map(c => (
+                      <SelectItem key={c.child_id} value={c.child_id}>{c.child_id}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Serial Number *</Label>
@@ -80,7 +118,7 @@ export default function ChildFormDialog({ open, onOpenChange, child, parentAsset
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700">{child ? "Update" : "Create"}</Button>
+            <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700">{child ? "Update" : "Add"}</Button>
           </div>
         </form>
       </DialogContent>
