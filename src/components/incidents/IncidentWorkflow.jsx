@@ -119,7 +119,13 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
       priority: "High",
       description: formData.notes || "Inspection required",
     });
-    await updateIncidentFlag("inspection_done", "Inspection WO Created", formData.notes || "Inspection Work Order created");
+    const extra = {};
+    if (formData.inspectionFile) {
+      await handleAttachUpload(formData.inspectionFile);
+      extra.attachments = [formData.inspectionFile.file_url];
+      extra.attachment_names = [formData.inspectionFile.file_name];
+    }
+    await updateIncidentFlag("inspection_done", "Inspection WO Created", formData.notes || "Inspection Work Order created", extra);
     setActiveModal(null);
     setFormData({});
   };
