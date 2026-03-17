@@ -220,7 +220,7 @@ export default function IncidentDetail() {
 
           <TabsContent value="audit">
             <div className="bg-white rounded-xl border border-slate-200 p-5">
-              <AuditLog entries={sortedAudit} />
+              <AuditLog entries={sortedAudit} queryKey={["incidentAudit", incidentId]} />
             </div>
           </TabsContent>
         </Tabs>
