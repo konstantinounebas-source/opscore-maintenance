@@ -93,22 +93,61 @@ export default function IncidentDetail() {
       <div className="p-6 space-y-6">
         {/* Overview */}
         <div className="bg-white rounded-xl border border-slate-200 p-6">
+          {/* Always-visible fields */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div><p className="text-xs text-slate-500 font-medium">Incident ID</p><p className="text-sm font-semibold mt-1">{incident.incident_id}</p></div>
-            <div><p className="text-xs text-slate-500 font-medium">Related Asset</p><p className="text-sm font-semibold mt-1">{incident.related_asset_name || "—"}</p></div>
-            <div><p className="text-xs text-slate-500 font-medium">Status</p><div className="mt-1"><StatusBadge status={incident.status} /></div></div>
-            <div><p className="text-xs text-slate-500 font-medium">Priority</p><div className="mt-1"><StatusBadge status={incident.priority} /></div></div>
-            <div><p className="text-xs text-slate-500 font-medium">Category</p><p className="text-sm font-semibold mt-1">{incident.category || "—"}</p></div>
-            <div><p className="text-xs text-slate-500 font-medium">Reported Date</p><p className="text-sm font-semibold mt-1">{incident.reported_date || "—"}</p></div>
-            <div><p className="text-xs text-slate-500 font-medium">Assigned To</p><p className="text-sm font-semibold mt-1">{incident.assigned_to || "—"}</p></div>
-            <div><p className="text-xs text-slate-500 font-medium">Created</p><p className="text-sm font-semibold mt-1">{incident.created_date ? format(new Date(incident.created_date), "MMM d, yyyy") : "—"}</p></div>
+            <IField label="Incident ID" value={incident.incident_id} />
+            <IField label="Related Asset" value={incident.related_asset_name} />
+            <IField label="Status"><StatusBadge status={incident.status} /></IField>
+            <IField label="Priority"><StatusBadge status={incident.priority} /></IField>
+            <IField label="Category" value={incident.category} />
+            <IField label="Reported Date" value={incident.reported_date} />
+            <IField label="Assigned To" value={incident.assigned_to} />
+            <IField label="Created" value={incident.created_date ? format(new Date(incident.created_date), "MMM d, yyyy") : null} />
           </div>
-          {incident.description && (
+
+          {/* Expandable extra fields */}
+          {showMore && (
+            <div className="mt-6 pt-5 border-t border-slate-100 grid grid-cols-2 md:grid-cols-4 gap-6">
+              <IField label="Issue Date" value={incident.issue_date} />
+              <IField label="Reported By" value={incident.reported_by_name} />
+              <IField label="Reporter Phone" value={incident.reported_by_phone} />
+              <IField label="Reporter Email" value={incident.reported_by_email} />
+              <IField label="Province" value={incident.province} />
+              <IField label="Municipality" value={incident.municipality} />
+              <IField label="Shelter ID" value={incident.active_shelter_id} />
+              <IField label="Location Address" value={incident.location_address} />
+              <IField label="First Report Date" value={incident.first_report_date} />
+              <IField label="Detection Time" value={incident.detection_time} />
+              <IField label="Incident Source" value={incident.incident_source} />
+              <IField label="Work Order Ref" value={incident.work_order_reference} />
+              <IField label="Initial Priority" value={incident.initial_priority} />
+              <IField label="OWR" value={incident.is_owr ? "Yes" : incident.is_owr === false ? "No" : null} />
+              <IField label="Requires Make-Safe" value={incident.requires_make_safe ? "Yes" : incident.requires_make_safe === false ? "No" : null} />
+              <IField label="Approval Date" value={incident.approval_date} />
+              <IField label="Authority Representative" value={incident.authority_representative} />
+              {incident.subsystem_structural_selected && <IField label="Structural Issue" value={incident.subsystem_structural_issue} />}
+              {incident.subsystem_electrical_selected && <IField label="Electrical Issue" value={incident.subsystem_electrical_issue} />}
+              {incident.subsystem_electronic_selected && <IField label="Electronic Issue" value={incident.subsystem_electronic_issue} />}
+              {incident.probable_cause && <IField label="Probable Cause" value={incident.probable_cause} />}
+              {incident.damage_description && <div className="col-span-2 md:col-span-4"><IField label="Damage Description" value={incident.damage_description} /></div>}
+              {incident.description && <div className="col-span-2 md:col-span-4"><IField label="Description" value={incident.description} /></div>}
+            </div>
+          )}
+
+          {/* Description always shown if present and showMore is off */}
+          {!showMore && incident.description && (
             <div className="mt-4 pt-4 border-t border-slate-100">
               <p className="text-xs text-slate-500 font-medium mb-1">Description</p>
               <p className="text-sm text-slate-700">{incident.description}</p>
             </div>
           )}
+
+          <button
+            onClick={() => setShowMore(v => !v)}
+            className="mt-5 flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+          >
+            {showMore ? <><ChevronUp className="w-3.5 h-3.5" /> Show Less</> : <><ChevronDown className="w-3.5 h-3.5" /> Show More Info</>}
+          </button>
         </div>
 
         {/* Workflow */}
