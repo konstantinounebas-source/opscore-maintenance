@@ -10,6 +10,7 @@ import ShipmentDialog from "@/components/childs/ShipmentDialog";
 import ImportChildsDialog from "@/components/childs/ImportChildsDialog";
 import { Button } from "@/components/ui/button";
 import { Plus, Download, Upload } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function Childs() {

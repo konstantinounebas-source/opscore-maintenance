@@ -15,6 +15,7 @@ import Incidents from '@/pages/Incidents';
 import IncidentDetail from '@/pages/IncidentDetail';
 import IncidentForm from '@/pages/IncidentForm';
 import WorkOrders from '@/pages/WorkOrders';
+import ChildDetail from '@/pages/ChildDetail';
 import Configuration from '@/pages/Configuration';
 
 const AuthenticatedApp = () => {
@@ -45,6 +46,7 @@ const AuthenticatedApp = () => {
         <Route path="/Assets" element={<Assets />} />
         <Route path="/AssetDetail" element={<AssetDetail />} />
         <Route path="/Childs" element={<Childs />} />
+        <Route path="/ChildDetail" element={<ChildDetail />} />
         <Route path="/Incidents" element={<Incidents />} />
         <Route path="/IncidentDetail" element={<IncidentDetail />} />
         <Route path="/IncidentForm" element={<IncidentForm />} />
