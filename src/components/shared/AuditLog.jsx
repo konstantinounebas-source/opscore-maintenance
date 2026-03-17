@@ -40,9 +40,20 @@ function AuditEntry({ entry: initialEntry, queryKey }) {
   const [expanded, setExpanded] = useState(false);
   const [editingComment, setEditingComment] = useState(false);
   const [commentText, setCommentText] = useState(initialEntry.comment || "");
+  const [commentPersonInputType, setCommentPersonInputType] = useState("manual");
+  const [commentPerson, setCommentPerson] = useState("");
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef();
+
+  // Fetch person names from config lists
+  const { data: personList = [] } = useQuery({
+    queryKey: ["configList", "incident_person"],
+    queryFn: async () => {
+      const items = await base44.entities.ConfigLists.filter({ list_type: "incident_person" });
+      return items.map(item => item.value);
+    },
+  });
 
   // Keep local entry in sync when parent re-fetches (entry prop changes)
   useEffect(() => {
