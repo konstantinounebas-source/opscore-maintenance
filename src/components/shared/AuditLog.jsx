@@ -70,12 +70,17 @@ function AuditEntry({ entry: initialEntry, queryKey }) {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
+    const user = await base44.auth.me();
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    const existingUrls = entry.attachments || [];
-    const existingNames = entry.attachment_names || [];
+    const existingMeta = entry.attachment_metadata || [];
     await base44.entities.IncidentAuditTrail.update(entry.id, {
-      attachments: [...existingUrls, file_url],
-      attachment_names: [...existingNames, file.name],
+      attachment_metadata: [...existingMeta, {
+        url: file_url,
+        name: file.name,
+        author: user?.email,
+        author_name: user?.full_name,
+        created_at: new Date().toISOString(),
+      }],
     });
     await refreshEntry();
     setUploading(false);
