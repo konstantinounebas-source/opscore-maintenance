@@ -1,20 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useNavigate } from "react-router-dom";
 import TopHeader from "@/components/layout/TopHeader";
 import StatusBadge from "@/components/shared/StatusBadge";
 import AuditLog from "@/components/shared/AuditLog";
-import FileUploader from "@/components/shared/FileUploader";
 import IncidentFormDialog from "@/components/incidents/IncidentFormDialog";
 import IncidentWorkflow from "@/components/incidents/IncidentWorkflow";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
-import { ArrowLeft, Pencil, FileText, Image, ExternalLink, Send, MessageSquare, StickyNote, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, Pencil, Send, MessageSquare, StickyNote, ChevronDown, ChevronUp, Paperclip, Loader2 } from "lucide-react";
 
 export default function IncidentDetail() {
   const params = new URLSearchParams(window.location.search);
