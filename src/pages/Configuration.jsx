@@ -121,6 +121,12 @@ export default function Configuration() {
           <p className="text-xs text-slate-500 mb-6">Configure the dropdown values used in asset management. These lists power shelter types, cities, child categories, and status fields.</p>
           <ListManager listTypes={ASSET_LIST_TYPES} allItems={allItems} queryClient={queryClient} />
         </div>
+
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <h2 className="text-sm font-semibold text-slate-900 mb-1">Manage Dropdown Lists for Childs</h2>
+          <p className="text-xs text-slate-500 mb-6">Configure the dropdown values used in child asset management. These lists power category, type, parent asset, and status fields.</p>
+          <ListManager listTypes={CHILD_LIST_TYPES} allItems={allItems} queryClient={queryClient} />
+        </div>
       </div>
     </div>
   );
