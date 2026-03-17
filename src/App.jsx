@@ -53,6 +53,7 @@ const AuthenticatedApp = () => {
         <Route path="/IncidentForm" element={<IncidentForm />} />
         <Route path="/WorkOrders" element={<WorkOrders />} />
         <Route path="/Configuration" element={<Configuration />} />
+        <Route path="/Assistant" element={<Assistant />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
