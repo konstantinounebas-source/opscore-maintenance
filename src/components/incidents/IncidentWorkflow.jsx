@@ -140,17 +140,11 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
       priority: "Critical",
       description: `Make Safe. SLA: 24h from Confirmation of Receipt. ${formData.notes || ""}`,
     });
-    const user = await base44.auth.me();
-    const extra = { comment: formData.notes || "" };
+    const extra = {};
     if (formData.makeSafeFile) {
       await handleAttachUpload(formData.makeSafeFile);
-      extra.attachment_metadata = [{
-        url: formData.makeSafeFile.file_url,
-        name: formData.makeSafeFile.file_name,
-        author: user?.email,
-        author_name: user?.full_name,
-        created_at: new Date().toISOString(),
-      }];
+      extra.attachments = [formData.makeSafeFile.file_url];
+      extra.attachment_names = [formData.makeSafeFile.file_name];
     }
     await updateIncidentFlag("make_safe_done", "Make Safe WO Created", "SLA: 24h from Confirmation of Receipt", extra);
     setActiveModal(null);
