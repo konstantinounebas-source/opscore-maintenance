@@ -228,3 +228,14 @@ export default function IncidentDetail() {
     </div>
   );
 }
+
+function IField({ label, value, children }) {
+  return (
+    <div>
+      <p className="text-xs text-slate-500 font-medium">{label}</p>
+      <div className="text-sm font-semibold mt-1 text-slate-800">
+        {children ?? (value !== undefined && value !== null && value !== "" ? String(value) : "—")}
+      </div>
+    </div>
+  );
+}
