@@ -10,7 +10,7 @@ export default function DataTable({ columns, data, onRowClick, searchPlaceholder
   const [sortKey, setSortKey] = useState(null);
   const [sortDir, setSortDir] = useState("asc");
   const [page, setPage] = useState(0);
-  const [currentPageSize, setCurrentPageSize] = useState(pageSize);
+  const [currentPageSize, setCurrentPageSize] = useState(pageSize); // 0 = All
 
   const filtered = useMemo(() => {
     if (!search.trim()) return data;
