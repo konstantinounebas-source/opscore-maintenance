@@ -75,9 +75,9 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
     await base44.entities.IncidentAuditTrail.create({ incident_id: incidentId, action, details, user: user?.email, ...extra });
   };
 
-  const updateIncidentFlag = async (flagKey, auditAction, auditDetails, extra = {}) => {
-    await base44.entities.Incidents.update(incidentId, { [flagKey]: true, ...extra });
-    await addAudit(auditAction, auditDetails);
+  const updateIncidentFlag = async (flagKey, auditAction, auditDetails, auditExtra = {}) => {
+    await base44.entities.Incidents.update(incidentId, { [flagKey]: true });
+    await addAudit(auditAction, auditDetails, auditExtra);
     queryClient.invalidateQueries({ queryKey: ["incident", incidentId] });
     queryClient.invalidateQueries({ queryKey: ["incidentAudit", incidentId] });
     onRefresh();
