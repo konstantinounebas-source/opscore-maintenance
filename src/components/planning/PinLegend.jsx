@@ -1,12 +1,15 @@
 import React from "react";
+import { PIN_COLORS } from "./planningUtils";
 
 const LEGEND_ITEMS = [
-  { color: "#EF4444", label: "P1 / Critical" },
-  { color: "#F97316", label: "P2 / High" },
-  { color: "#3B82F6", label: "Medium" },
-  { color: "#22C55E", label: "Low / Completed" },
-  { color: "#A78BFA", label: "Deferred" },
-  { color: "#9CA3AF", label: "Cancelled / Unassigned" },
+  { color: PIN_COLORS.p1,         label: "P1 / Critical" },
+  { color: PIN_COLORS.p2,         label: "P2 / High" },
+  { color: PIN_COLORS.medium,     label: "Medium" },
+  { color: PIN_COLORS.low,        label: "Low" },
+  { color: PIN_COLORS.completed,  label: "Completed" },
+  { color: PIN_COLORS.deferred,   label: "Deferred" },
+  { color: PIN_COLORS.cancelled,  label: "Cancelled" },
+  { color: PIN_COLORS.unassigned, label: "Unassigned" },
 ];
 
 export default function PinLegend() {
