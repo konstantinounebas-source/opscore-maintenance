@@ -14,18 +14,30 @@ export function computePriorityBucket(incident, workOrder) {
   return "Medium";
 }
 
+// Pin color constants — single source of truth used by map, legend, and table dot
+export const PIN_COLORS = {
+  completed:  "#22C55E",  // green
+  cancelled:  "#9CA3AF",  // grey
+  deferred:   "#A78BFA",  // purple
+  p1:         "#EF4444",  // red
+  p2:         "#F97316",  // orange
+  medium:     "#3B82F6",  // blue
+  low:        "#84CC16",  // lime (distinct from completed green)
+  unassigned: "#CBD5E1",  // light slate
+};
+
 export function computePinColor(priorityBucket, assignmentStatus) {
-  if (assignmentStatus === "Completed") return "#22C55E";
-  if (assignmentStatus === "Cancelled") return "#9CA3AF";
-  if (assignmentStatus === "Deferred") return "#A78BFA";
+  if (assignmentStatus === "Completed") return PIN_COLORS.completed;
+  if (assignmentStatus === "Cancelled") return PIN_COLORS.cancelled;
+  if (assignmentStatus === "Deferred")  return PIN_COLORS.deferred;
   switch (priorityBucket) {
     case "P1":
-    case "Critical": return "#EF4444";
+    case "Critical": return PIN_COLORS.p1;
     case "P2":
-    case "High":     return "#F97316";
-    case "Medium":   return "#3B82F6";
-    case "Low":      return "#22C55E";
-    default:         return "#3B82F6";
+    case "High":     return PIN_COLORS.p2;
+    case "Medium":   return PIN_COLORS.medium;
+    case "Low":      return PIN_COLORS.low;
+    default:         return PIN_COLORS.medium;
   }
 }
 
