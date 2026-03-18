@@ -407,7 +407,11 @@ export default function Planning() {
 
             <PlanningFilters
               filters={filters}
-              onChange={setFilters}
+              onChange={(updated) => {
+                setFilters(updated);
+                // search applies live; dropdown filters require Apply button
+                if (updated.search !== filters.search) setAppliedFilters(prev => ({ ...prev, search: updated.search }));
+              }}
               onApply={() => setAppliedFilters({ ...filters })}
               onReset={() => { setFilters(EMPTY_FILTERS); setAppliedFilters(EMPTY_FILTERS); setSelectedViewId(null); }}
               assets={assets}
