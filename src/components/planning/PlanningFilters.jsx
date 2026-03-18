@@ -19,7 +19,12 @@ export default function PlanningFilters({ filters, onChange, onApply, onReset, a
   const zones         = [...new Set(assignments.map(a => a.route_zone).filter(Boolean))].sort();
   const assignees     = [...new Set(assignments.map(a => a.assigned_to).filter(Boolean))].sort();
 
-  const set = (k, v) => onChange({ ...filters, [k]: v });
+  // Search applies live; all other filters require "Apply"
+  const set = (k, v) => {
+    const updated = { ...filters, [k]: v };
+    onChange(updated);
+    if (k === "search") onApply && onApply(updated); // live search
+  };
   const activeCount = countActiveFilters(filters);
 
   return (
