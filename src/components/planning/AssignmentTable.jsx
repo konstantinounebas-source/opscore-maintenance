@@ -136,7 +136,7 @@ export default function AssignmentTable({ assignments, assetsMap, onSelect, sele
           </thead>
           <tbody className="divide-y divide-slate-100">
             {sorted.length === 0 && (
-              <tr><td colSpan={11} className="text-center py-10 text-slate-400 text-sm">No assignments match current filters.</td></tr>
+              <tr><td colSpan={12} className="text-center py-10 text-slate-400 text-sm">No assignments match current filters.</td></tr>
             )}
             {sorted.map(a => {
               const isSelected = a.id === selectedId;
