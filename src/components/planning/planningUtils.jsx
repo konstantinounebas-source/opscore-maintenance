@@ -108,16 +108,18 @@ export function mapViewToFilters(view) {
 
 export function filtersToMapView(filters) {
   return {
-    filter_city: filters.city || "",
-    filter_shelter_type: filters.shelter_type || "",
-    filter_asset_status: filters.asset_status || "",
+    filter_city:              filters.city              || "",
+    filter_shelter_type:      filters.shelter_type      || "",
+    filter_asset_status:      filters.asset_status      || "",
     filter_assignment_status: filters.assignment_status || "",
-    filter_assignment_type: filters.assignment_type || "",
-    filter_priority_bucket: filters.priority_bucket || "",
-    filter_team_name: filters.team_name || "",
-    filter_route_zone: filters.route_zone || "",
-    filter_has_incident: filters.has_incident || false,
-    filter_has_work_order: filters.has_work_order || false,
+    filter_assignment_type:   filters.assignment_type   || "",
+    filter_priority_bucket:   filters.priority_bucket   || "",
+    filter_team_name:         filters.team_name         || "",
+    filter_route_zone:        filters.route_zone        || "",
+    filter_has_incident:      filters.has_incident      || false,
+    filter_has_work_order:    filters.has_work_order    || false,
+    // show_unassigned_only is signalled by view_type="Custom" with no assignment filters
+    // No extra field needed — the handleSelectView logic reads it from view_type
   };
 }
 
