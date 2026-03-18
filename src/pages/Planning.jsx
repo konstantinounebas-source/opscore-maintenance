@@ -199,15 +199,19 @@ export default function Planning() {
   // ── Bulk Operations ───────────────────────────────────────────────────────────
   const handleBulkUpdate = async (ids, data) => {
     setBulkSaving(true);
-    const targets = allAssignments.filter(a => ids.includes(a.id));
-    for (const a of targets) {
+    const idSet = new Set(ids);
+    const targets = allAssignments.filter(a => idSet.has(a.id));
+    // Recompute pin_color when status or priority changes
+    const needsColorRecompute = data.assignment_status || data.priority_bucket;
+    await Promise.all(targets.map(a => {
       const updated = { ...data };
-      // Recompute pin_color if status changed
-      if (data.assignment_status) {
-        updated.pin_color = computePinColor(a.priority_bucket, data.assignment_status);
+      if (needsColorRecompute) {
+        const newStatus   = data.assignment_status || a.assignment_status;
+        const newPriority = data.priority_bucket   || a.priority_bucket;
+        updated.pin_color = computePinColor(newPriority, newStatus);
       }
-      await base44.entities.PlanningAssignments.update(a.id, updated);
-    }
+      return base44.entities.PlanningAssignments.update(a.id, updated);
+    }));
     queryClient.invalidateQueries({ queryKey: ["planningAssignments"] });
     setSelectedAssignmentIds([]);
     setBulkSaving(false);
