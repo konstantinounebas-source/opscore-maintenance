@@ -40,11 +40,11 @@ export function buildRouteSequence(assignments, assetsMap) {
     return bHigh - aHigh;
   });
 
-  // Flatten and assign stop_order
+  // Flatten, assign stop_order, and strip the private _asset field
   const ordered = [];
   let seq = 1;
   sortedGroups.forEach(([, group]) => {
-    group.forEach(a => {
+    group.forEach(({ _asset, ...a }) => {
       ordered.push({ ...a, _stop_order: seq++ });
     });
   });
