@@ -40,17 +40,30 @@ export function findMatchingRule(assignment, incident, slaRules) {
 
 /**
  * Compute SLA risk level from due date.
+ * Thresholds: overdue or ≤2d → Critical, ≤7d → High, ≤14d → Medium, else Low.
+ * Optionally pass maxResolutionDays from the matched rule to make thresholds proportional.
  */
-export function computeSLARiskLevel(slaDueDate) {
+export function computeSLARiskLevel(slaDueDate, maxResolutionDays) {
   if (!slaDueDate) return null;
 
   const now = new Date();
   const due = new Date(slaDueDate);
   const diffDays = Math.ceil((due - now) / (1000 * 60 * 60 * 24));
 
-  if (diffDays < 0)  return "Critical"; // overdue
-  if (diffDays <= 2) return "Critical";
-  if (diffDays <= 7) return "High";
+  if (diffDays < 0) return "Critical"; // overdue
+
+  // If we have context from the rule, use proportional thresholds
+  if (maxResolutionDays && maxResolutionDays > 0) {
+    const pct = diffDays / maxResolutionDays;
+    if (pct <= 0.1)  return "Critical";
+    if (pct <= 0.25) return "High";
+    if (pct <= 0.5)  return "Medium";
+    return "Low";
+  }
+
+  // Fallback to absolute thresholds
+  if (diffDays <= 2)  return "Critical";
+  if (diffDays <= 7)  return "High";
   if (diffDays <= 14) return "Medium";
   return "Low";
 }
