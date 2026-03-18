@@ -164,8 +164,7 @@ export default function Planning() {
   const saveAssignmentMutation = useMutation({
     mutationFn: async ({ formData, existingId }) => {
       if (existingId) return base44.entities.PlanningAssignments.update(existingId, formData);
-      const dupe = weekAssignments.find(a => a.asset_id === formData.asset_id);
-      if (dupe) throw new Error("This asset is already assigned to this week.");
+      if (assignmentByAssetId[formData.asset_id]) throw new Error("This asset is already assigned to this week.");
       return base44.entities.PlanningAssignments.create(formData);
     },
     onSuccess: () => {
