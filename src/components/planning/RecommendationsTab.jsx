@@ -36,9 +36,11 @@ export default function RecommendationsTab({
 
   const filteredRecs = useMemo(() => {
     let r = weekRecs;
+    // Filter out capacity balancing recs with synthetic crew: asset_ids from main display
+    // (they show crew-level info correctly but asset name would be blank)
     if (filterType) r = r.filter(x => x.recommendation_type === filterType);
     if (filterStatus) r = r.filter(x => x.status === filterStatus);
-    return r.sort((a, b) => (b.recommendation_score || 0) - (a.recommendation_score || 0));
+    return [...r].sort((a, b) => (b.recommendation_score || 0) - (a.recommendation_score || 0));
   }, [weekRecs, filterType, filterStatus]);
 
   const handleGenerate = async () => {
