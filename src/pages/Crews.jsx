@@ -224,7 +224,7 @@ export default function Crews() {
     <div className="flex flex-col h-screen overflow-hidden">
       <TopHeader
         title="Crews"
-        subtitle="Manage maintenance crews and members"
+        subtitle={activeWeek ? `Workload shown for active week: ${activeWeek.week_code} — ${activeWeek.week_name}` : "Manage maintenance crews and members"}
         actions={
           <Button size="sm" className="gap-1.5" onClick={() => { setEditingCrew(null); setCrewDialogOpen(true); }}>
             <Plus className="w-3.5 h-3.5" /> New Crew
