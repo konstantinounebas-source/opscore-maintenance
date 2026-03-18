@@ -173,25 +173,22 @@ export function generateRecommendations({ weekId, assignments, assetsMap, incide
       }
     }
 
-    // Crew over-capacity
-    if (assignment.crew_id) {
-      const crew = crewsMap[assignment.crew_id];
-      const taskCount = crewTaskCount[assignment.crew_id] || 0;
-      if (crew?.capacity_per_week && taskCount > crew.capacity_per_week) {
-        recs.push({
-          planning_week_id: weekId,
-          asset_id: assignment.asset_id,
-          planning_assignment_id: assignment.id,
-          recommended_crew_id: assignment.crew_id,
-          recommendation_type: "Capacity Balancing",
-          recommendation_score: 60,
-          recommendation_reason: `Crew ${crew.crew_name} has ${taskCount} tasks (capacity: ${crew.capacity_per_week}/week)`,
-          suggested_action: "Reassign some tasks to another crew or defer",
-          status: "Open",
-          created_by_engine: true,
-        });
-      }
-    }
+  });
+
+  // Crew over-capacity — one recommendation per overloaded crew, not per assignment
+  Object.entries(crewOverloaded).forEach(([crewId, { crew, count }]) => {
+    recs.push({
+      planning_week_id: weekId,
+      // Use a sentinel asset_id derived from the crew so dedup key is per-crew
+      asset_id: `crew:${crewId}`,
+      recommended_crew_id: crewId,
+      recommendation_type: "Capacity Balancing",
+      recommendation_score: 60,
+      recommendation_reason: `Crew ${crew.crew_name} has ${count} tasks assigned (capacity: ${crew.capacity_per_week}/week)`,
+      suggested_action: "Reassign some tasks to another crew or defer lower-priority items",
+      status: "Open",
+      created_by_engine: true,
+    });
   });
 
   // Deduplicate by asset + type
