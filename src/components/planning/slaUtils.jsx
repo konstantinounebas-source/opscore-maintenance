@@ -96,8 +96,8 @@ export function computeSchedulingScore({ priorityBucket, slaRiskLevel, assignmen
     else if (daysUntilInspection <= 30) score += 5;
   }
 
-  // Overdue SLA bonus
-  if (slaDueDate && new Date(slaDueDate) < new Date()) score += 10;
+  // Overdue SLA bonus — only when slaRiskLevel is not already Critical (avoid double-counting)
+  if (slaDueDate && new Date(slaDueDate) < new Date() && slaRiskLevel !== "Critical") score += 10;
 
   return Math.min(100, Math.max(0, Math.round(score)));
 }
