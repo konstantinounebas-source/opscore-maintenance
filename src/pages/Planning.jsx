@@ -16,7 +16,6 @@ import PinLegend from "@/components/planning/PinLegend";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
 import { Plus, CalendarDays, Loader2, GitCompare, Download } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import {
