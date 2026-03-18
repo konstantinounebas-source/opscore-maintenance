@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Pencil, Trash2, ExternalLink, Search, ChevronUp, ChevronDown } from "lucide-react";
 import { assignmentStatusColor, priorityBucketColor, pinColorStyle } from "./planningUtils";
 import { useNavigate } from "react-router-dom";
@@ -15,13 +16,27 @@ const QUICK_FILTERS = [
   { label: "Completed",  key: "assignment_status",  value: "Completed" },
 ];
 
-export default function AssignmentTable({ assignments, assetsMap, onSelect, selectedId, onEdit, onRemove }) {
+export default function AssignmentTable({ assignments, assetsMap, onSelect, selectedId, onEdit, onRemove, selectedIds = [], onSelectionChange }) {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState("asset_id");
   const [sortDir, setSortDir] = useState("asc");
   const [pendingRemoveId, setPendingRemoveId] = useState(null);
   const [quickFilter, setQuickFilter] = useState(null); // { key, value }
+
+  const toggleSelect = (id, e) => {
+    e.stopPropagation();
+    if (!onSelectionChange) return;
+    onSelectionChange(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  const toggleAll = () => {
+    if (!onSelectionChange) return;
+    const allIds = sorted.map(a => a.id);
+    onSelectionChange(prev => prev.length === allIds.length ? [] : allIds);
+  };
 
   const handleSort = (key) => {
     if (sortKey === key) setSortDir(d => d === "asc" ? "desc" : "asc");
@@ -102,7 +117,11 @@ export default function AssignmentTable({ assignments, assetsMap, onSelect, sele
         <table className="w-full text-sm min-w-[680px]">
           <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
             <tr>
-              <th className="w-4 px-2" />
+              <th className="w-8 px-2">
+                <Checkbox checked={sorted.length > 0 && selectedIds.length === sorted.length}
+                  onCheckedChange={toggleAll} className="h-3.5 w-3.5" />
+              </th>
+              <th className="w-4 px-1" />
               <Th label="Asset ID"   k="asset_id" />
               <Th label="Name"       k="asset_name" />
               <Th label="City"       k="city" />
@@ -125,7 +144,10 @@ export default function AssignmentTable({ assignments, assetsMap, onSelect, sele
                 <tr key={a.id}
                   className={`cursor-pointer transition-colors ${isSelected ? "bg-indigo-50" : "hover:bg-slate-50"}`}
                   onClick={() => onSelect(a)}>
-                  <td className="px-2 py-2">
+                  <td className="px-2 py-2" onClick={e => toggleSelect(a.id, e)}>
+                    <Checkbox checked={selectedIds.includes(a.id)} className="h-3.5 w-3.5" />
+                  </td>
+                  <td className="px-1 py-2">
                     <div className="w-3 h-3 rounded-full border border-white shadow-sm" style={pinColorStyle(a.pin_color)} />
                   </td>
                   <td className="px-3 py-2 font-mono text-xs text-slate-700 whitespace-nowrap">{a._asset.asset_id || "—"}</td>
