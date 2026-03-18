@@ -160,35 +160,47 @@ export default function IncidentDetail() {
         {/* Workflow */}
         <IncidentWorkflow incident={incident} incidentId={incidentId} onRefresh={invalidateAll} />
 
-        {/* Unified Activity Feed */}
+        {/* Activity Feed + Documents */}
         <div className="bg-white rounded-xl border border-slate-200 p-5">
-          <div className="flex items-center justify-between mb-5">
-            <h3 className="text-sm font-semibold text-slate-700">Activity & Audit Trail</h3>
-            <span className="text-xs text-slate-400">{auditTrail.length + comments.length + attachments.length} entries</span>
-          </div>
-
-          {/* Add comment / attach file */}
-          <div className="flex gap-2 mb-6 pb-5 border-b border-slate-100">
-            <Select value={commentType} onValueChange={setCommentType}>
-              <SelectTrigger className="w-28 h-9 text-xs shrink-0"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Comment">Comment</SelectItem>
-                <SelectItem value="Note">Note</SelectItem>
-              </SelectContent>
-            </Select>
-            <Textarea value={comment} onChange={e => setComment(e.target.value)} placeholder="Write a comment or note..." className="flex-1 min-h-[40px] text-sm" rows={2} />
-            <div className="flex flex-col gap-1.5 self-end">
-              <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 h-9" onClick={handleAddComment}>
-                <Send className="w-4 h-4" />
-              </Button>
-              <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileUpload} />
-              <Button size="sm" variant="outline" className="h-9" disabled={uploading} onClick={() => fileInputRef.current?.click()} title="Attach file">
-                {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
-              </Button>
+          <Tabs defaultValue="audit">
+            <div className="flex items-center justify-between mb-4">
+              <TabsList className="h-8">
+                <TabsTrigger value="audit" className="text-xs">Activity & Audit Trail</TabsTrigger>
+                <TabsTrigger value="documents" className="text-xs">
+                  Documents {attachments.length + auditTrail.reduce((sum, e) => sum + (e.attachment_metadata?.length || 0) + (e.attachments?.length || 0), 0) > 0 && `(${attachments.length + auditTrail.reduce((sum, e) => sum + (e.attachment_metadata?.length || 0) + (e.attachments?.length || 0), 0)})`}
+                </TabsTrigger>
+              </TabsList>
+              <span className="text-xs text-slate-400">{auditTrail.length + comments.length} entries</span>
             </div>
-          </div>
 
-          <AuditLog entries={sortedAudit} queryKey={["incidentAudit", incidentId]} />
+            <TabsContent value="audit">
+              {/* Add comment / attach file */}
+              <div className="flex gap-2 mb-6 pb-5 border-b border-slate-100">
+                <Select value={commentType} onValueChange={setCommentType}>
+                  <SelectTrigger className="w-28 h-9 text-xs shrink-0"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Comment">Comment</SelectItem>
+                    <SelectItem value="Note">Note</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Textarea value={comment} onChange={e => setComment(e.target.value)} placeholder="Write a comment or note..." className="flex-1 min-h-[40px] text-sm" rows={2} />
+                <div className="flex flex-col gap-1.5 self-end">
+                  <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 h-9" onClick={handleAddComment}>
+                    <Send className="w-4 h-4" />
+                  </Button>
+                  <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileUpload} />
+                  <Button size="sm" variant="outline" className="h-9" disabled={uploading} onClick={() => fileInputRef.current?.click()} title="Attach file">
+                    {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
+                  </Button>
+                </div>
+              </div>
+              <AuditLog entries={sortedAudit} queryKey={["incidentAudit", incidentId]} />
+            </TabsContent>
+
+            <TabsContent value="documents">
+              <IncidentDocuments attachments={attachments} auditTrail={auditTrail} />
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
       <IncidentFormDialog open={editOpen} onOpenChange={setEditOpen} incident={incident} onSave={handleEditSave} />
