@@ -13,6 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
 import { ArrowLeft, Pencil, Send, ChevronDown, ChevronUp, Paperclip, Loader2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import IncidentDocuments from "@/components/incidents/IncidentDocuments";
 
 export default function IncidentDetail() {
   const params = new URLSearchParams(window.location.search);
