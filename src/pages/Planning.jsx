@@ -19,8 +19,8 @@ import { Switch } from "@/components/ui/switch";
 import { Plus, CalendarDays, Loader2, GitCompare, Download } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import {
-  EMPTY_FILTERS, computePriorityBucket, computePinColor,
-  mapViewToFilters, filtersToMapView, DEFAULT_PRESETS
+  EMPTY_FILTERS, computePinColor,
+  mapViewToFilters, filtersToMapView,
 } from "@/components/planning/planningUtils";
 import { format } from "date-fns";
 
@@ -58,30 +58,14 @@ export default function Planning() {
   const [selectedAssignmentIds, setSelectedAssignmentIds] = useState([]);
   const [bulkSaving, setBulkSaving]             = useState(false);
   const [savingView, setSavingView]             = useState(false);
-  const [presetsSeeded, setPresetsSeeded]       = useState(false);
 
-  // Auto-select active week, seed default presets once
+  // Auto-select active week on load
   useEffect(() => {
     if (weeks.length > 0 && !selectedWeekId) {
       const active = weeks.find(w => w.is_active) || weeks[0];
       setSelectedWeekId(active.id);
     }
   }, [weeks, selectedWeekId]);
-
-  useEffect(() => {
-    if (presetsSeeded || mapViews.length > 0) return;
-    if (mapViews.length === 0 && !presetsSeeded) {
-      // Only seed once when no views exist yet
-      const seed = async () => {
-        for (const preset of DEFAULT_PRESETS) {
-          await base44.entities.MapViews.create(preset);
-        }
-        queryClient.invalidateQueries({ queryKey: ["mapViews"] });
-        setPresetsSeeded(true);
-      };
-      seed();
-    }
-  }, [mapViews.length, presetsSeeded]);
 
   // ── Derived ───────────────────────────────────────────────────────────────────
   const selectedWeek    = useMemo(() => weeks.find(w => w.id === selectedWeekId), [weeks, selectedWeekId]);
@@ -285,16 +269,15 @@ export default function Planning() {
     if (!viewId) { setFilters(EMPTY_FILTERS); setAppliedFilters(EMPTY_FILTERS); return; }
     const view = mapViews.find(v => v.id === viewId);
     if (!view) return;
+    // Build filters from view, using view_type="Custom" with no assignment filter as "unassigned" signal
     const f = mapViewToFilters(view);
+    // Restore show_unassigned_only from view metadata (view_type Custom + no other assignment filter)
+    if (view.view_type === "Custom" && !view.filter_assignment_status && !view.filter_assignment_type) {
+      f.show_unassigned_only = true;
+    }
     setFilters(f);
     setAppliedFilters(f);
     if (view.linked_week_id) setSelectedWeekId(view.linked_week_id);
-    // Special "Unassigned" preset behavior
-    if (view.name === "Unassigned Assets") {
-      const newF = { ...f, show_unassigned_only: true };
-      setFilters(newF);
-      setAppliedFilters(newF);
-    }
   };
 
   const handleExportSummary = () => {
@@ -367,12 +350,12 @@ export default function Planning() {
               <GitCompare className="w-4 h-4 text-indigo-400" />
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Week B</span>
             </div>
-            <Select value={compWeekId || ""} onValueChange={setCompWeekId}>
+            <Select value={compWeekId || "none"} onValueChange={v => setCompWeekId(v === "none" ? null : v)}>
               <SelectTrigger className="w-64 h-8 text-sm border-slate-200">
                 <SelectValue placeholder="Select comparison week..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={null}>— None —</SelectItem>
+                <SelectItem value="none">— None —</SelectItem>
                 {weeks.filter(w => w.id !== selectedWeekId).map(w => (
                   <SelectItem key={w.id} value={w.id}>
                     <span className="flex items-center gap-2">
