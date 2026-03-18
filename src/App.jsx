@@ -19,6 +19,8 @@ import ChildDetail from '@/pages/ChildDetail';
 import Configuration from '@/pages/Configuration';
 import Assistant from '@/pages/Assistant';
 import Planning from '@/pages/Planning';
+import Crews from '@/pages/Crews';
+import SLAConfig from '@/pages/SLAConfig';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
