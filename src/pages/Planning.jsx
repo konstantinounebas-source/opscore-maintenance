@@ -12,10 +12,8 @@ import PlanningWeekModal from "@/components/planning/PlanningWeekModal";
 import AssignAssetModal from "@/components/planning/AssignAssetModal";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Plus, CalendarDays, Loader2, Trash2, CheckSquare } from "lucide-react";
+import { Plus, CalendarDays, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { computePriorityBucket, computePinColor } from "@/components/planning/planningUtils";
 import { format } from "date-fns";
 
 const EMPTY_FILTERS = { search: "", city: "", shelter_type: "", asset_status: "", assignment_status: "", assignment_type: "", priority_bucket: "" };
@@ -107,24 +105,24 @@ export default function Planning() {
 
   // ── Mutations ─────────────────────────────────────────────────────────────────
   const saveWeekMutation = useMutation({
-    mutationFn: async (form) => {
-      // If setting to Active, deactivate others
+    mutationFn: async ({ form, existingWeekId }) => {
+      // If setting to Active, deactivate all other active weeks
       if (form.status === "Active" || form.is_active) {
-        const otherActives = weeks.filter(w => w.is_active && w.id !== (editingWeek?.id));
+        const otherActives = weeks.filter(w => w.is_active && w.id !== existingWeekId);
         for (const w of otherActives) {
           await base44.entities.PlanningWeeks.update(w.id, { is_active: false, status: w.status === "Active" ? "Draft" : w.status });
         }
       }
-      if (editingWeek) {
-        return base44.entities.PlanningWeeks.update(editingWeek.id, form);
+      if (existingWeekId) {
+        return base44.entities.PlanningWeeks.update(existingWeekId, form);
       } else {
         return base44.entities.PlanningWeeks.create(form);
       }
     },
-    onSuccess: (newWeek) => {
+    onSuccess: (newWeek, { existingWeekId }) => {
       queryClient.invalidateQueries({ queryKey: ["planningWeeks"] });
-      if (!editingWeek && newWeek?.id) setSelectedWeekId(newWeek.id);
-      toast({ title: editingWeek ? "Week updated" : "Planning week created" });
+      if (!existingWeekId && newWeek?.id) setSelectedWeekId(newWeek.id);
+      toast({ title: existingWeekId ? "Week updated" : "Planning week created" });
       setEditingWeek(null);
     },
   });
@@ -190,9 +188,7 @@ export default function Planning() {
   };
 
   const handleRemoveAssignment = (assignment) => {
-    if (window.confirm("Remove this assignment?")) {
-      removeAssignmentMutation.mutate(assignment.id);
-    }
+    removeAssignmentMutation.mutate(assignment.id);
   };
 
   const weekStatusBadge = (status) => {
@@ -326,7 +322,6 @@ export default function Planning() {
                   selectedId={selectedAssignment?.id}
                   onEdit={handleEditAssignment}
                   onRemove={handleRemoveAssignment}
-                  onStatusChange={() => {}}
                 />
               )}
             </div>
@@ -350,7 +345,7 @@ export default function Planning() {
         open={weekModalOpen}
         onOpenChange={setWeekModalOpen}
         week={editingWeek}
-        onSave={(form) => saveWeekMutation.mutateAsync(form)}
+        onSave={(form) => saveWeekMutation.mutateAsync({ form, existingWeekId: editingWeek?.id })}
       />
       <AssignAssetModal
         open={assignModalOpen}
