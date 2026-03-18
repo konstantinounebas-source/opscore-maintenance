@@ -6,7 +6,7 @@ import { pinColorStyle } from "./planningUtils";
 // Fit map bounds to visible markers
 function FitBounds({ points }) {
   const map = useMap();
-  React.useEffect(() => {
+  useEffect(() => {
     if (points.length > 0) {
       const lats = points.map(p => p.lat);
       const lngs = points.map(p => p.lng);
@@ -45,7 +45,7 @@ export default function PlanningMap({ assets, assignments, selectedAssetId, onSe
   return (
     <div className="w-full h-full rounded-lg overflow-hidden border border-slate-200">
       {markers.length === 0 && (
-        <div className="w-full h-full flex items-center justify-center bg-slate-50">
+        <div className="w-full h-full min-h-[300px] flex items-center justify-center bg-slate-50">
           <div className="text-center">
             <div className="text-slate-400 text-sm mb-1">No assets with coordinates to display</div>
             <div className="text-xs text-slate-300">Add latitude/longitude to assets to see them on the map</div>

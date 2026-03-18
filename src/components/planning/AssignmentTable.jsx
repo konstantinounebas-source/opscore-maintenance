@@ -6,10 +6,10 @@ import { Pencil, Trash2, ExternalLink, Search, ChevronUp, ChevronDown } from "lu
 import { assignmentStatusColor, priorityBucketColor, pinColorStyle } from "./planningUtils";
 import { useNavigate } from "react-router-dom";
 
-export default function AssignmentTable({ assignments, assetsMap, onSelect, selectedId, onEdit, onRemove, onStatusChange }) {
+export default function AssignmentTable({ assignments, assetsMap, onSelect, selectedId, onEdit, onRemove }) {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
-  const [sortKey, setSortKey] = useState("display_order");
+  const [sortKey, setSortKey] = useState("asset_id");
   const [sortDir, setSortDir] = useState("asc");
 
   const handleSort = (key) => {
