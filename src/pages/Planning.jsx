@@ -220,21 +220,22 @@ export default function Planning() {
 
   const handleDuplicateToWeek = async (ids, targetWeekId) => {
     setBulkSaving(true);
-    const targets = allAssignments.filter(a => ids.includes(a.id));
-    const existingInTarget = allAssignments.filter(a => a.planning_week_id === targetWeekId).map(a => a.asset_id);
-    let skipped = 0;
-    for (const a of targets) {
-      if (existingInTarget.includes(a.asset_id)) { skipped++; continue; }
-      await base44.entities.PlanningAssignments.create({
+    const idSet = new Set(ids);
+    const targets = allAssignments.filter(a => idSet.has(a.id));
+    const existingInTargetSet = new Set(allAssignments.filter(a => a.planning_week_id === targetWeekId).map(a => a.asset_id));
+    const toCreate = targets.filter(a => !existingInTargetSet.has(a.asset_id));
+    const skipped  = targets.length - toCreate.length;
+    await Promise.all(toCreate.map(a =>
+      base44.entities.PlanningAssignments.create({
         ...a, id: undefined, created_date: undefined, updated_date: undefined,
         planning_week_id: targetWeekId,
         assignment_status: "Planned",
-      });
-    }
+      })
+    ));
     queryClient.invalidateQueries({ queryKey: ["planningAssignments"] });
     setSelectedAssignmentIds([]);
     setBulkSaving(false);
-    toast({ title: `Duplicated ${targets.length - skipped} assignments${skipped > 0 ? ` (${skipped} skipped, already present)` : ""}` });
+    toast({ title: `Duplicated ${toCreate.length} assignments${skipped > 0 ? ` (${skipped} skipped, already present)` : ""}` });
   };
 
   // ── Handlers ──────────────────────────────────────────────────────────────────
