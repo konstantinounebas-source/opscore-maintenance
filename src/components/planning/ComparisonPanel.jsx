@@ -2,8 +2,12 @@ import React, { useMemo } from "react";
 import { computeSnapshot, computeChangeFlag, changeFlagStyle } from "./planningUtils";
 import PlanningKPIBar from "./PlanningKPIBar";
 
-function DeltaRow({ label, a, b }) {
+// higherIsBetter=true → green when positive (e.g. Completed)
+// higherIsBetter=false → red when positive (e.g. Deferred, Cancelled)
+function DeltaRow({ label, a, b, higherIsBetter = true }) {
   const delta = (b ?? 0) - (a ?? 0);
+  const positiveColor = higherIsBetter ? "text-emerald-600" : "text-red-500";
+  const negativeColor = higherIsBetter ? "text-red-500" : "text-emerald-600";
   return (
     <div className="flex items-center justify-between py-1 border-b border-slate-100 last:border-0">
       <span className="text-xs text-slate-500">{label}</span>
@@ -11,7 +15,7 @@ function DeltaRow({ label, a, b }) {
         <span className="text-xs text-slate-600">{a ?? 0}</span>
         <span className="text-xs text-slate-400">→</span>
         <span className="text-xs text-slate-600">{b ?? 0}</span>
-        <span className={`text-xs font-semibold w-12 text-right ${delta > 0 ? "text-emerald-600" : delta < 0 ? "text-red-500" : "text-slate-400"}`}>
+        <span className={`text-xs font-semibold w-12 text-right ${delta > 0 ? positiveColor : delta < 0 ? negativeColor : "text-slate-400"}`}>
           {delta > 0 ? `+${delta}` : delta === 0 ? "—" : delta}
         </span>
       </div>
@@ -62,12 +66,13 @@ export default function ComparisonPanel({
       {weekB && snapA && snapB && (
         <div className="bg-white border border-slate-200 rounded-lg p-3">
           <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Delta (A → B)</div>
-          <DeltaRow label="Total Assigned"  a={snapA.total_assets_assigned} b={snapB.total_assets_assigned} />
-          <DeltaRow label="Completed"       a={snapA.total_completed}       b={snapB.total_completed} />
-          <DeltaRow label="In Progress"     a={snapA.total_in_progress}     b={snapB.total_in_progress} />
-          <DeltaRow label="Deferred"        a={snapA.total_deferred}        b={snapB.total_deferred} />
-          <DeltaRow label="P1/Critical"     a={(snapA.total_p1 + snapA.total_critical)} b={(snapB.total_p1 + snapB.total_critical)} />
-          <DeltaRow label="P2/High"         a={(snapA.total_p2 + snapA.total_high)}     b={(snapB.total_p2 + snapB.total_high)} />
+          <DeltaRow label="Total Assigned"  a={snapA.total_assets_assigned} b={snapB.total_assets_assigned} higherIsBetter={true} />
+          <DeltaRow label="Completed"       a={snapA.total_completed}       b={snapB.total_completed}       higherIsBetter={true} />
+          <DeltaRow label="In Progress"     a={snapA.total_in_progress}     b={snapB.total_in_progress}     higherIsBetter={true} />
+          <DeltaRow label="Deferred"        a={snapA.total_deferred}        b={snapB.total_deferred}        higherIsBetter={false} />
+          <DeltaRow label="Cancelled"       a={snapA.total_cancelled}       b={snapB.total_cancelled}       higherIsBetter={false} />
+          <DeltaRow label="P1/Critical"     a={(snapA.total_p1 + snapA.total_critical)} b={(snapB.total_p1 + snapB.total_critical)} higherIsBetter={false} />
+          <DeltaRow label="P2/High"         a={(snapA.total_p2 + snapA.total_high)}     b={(snapB.total_p2 + snapB.total_high)}     higherIsBetter={false} />
         </div>
       )}
 
