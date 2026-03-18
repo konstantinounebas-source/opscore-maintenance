@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Pencil, Trash2, ExternalLink, Search, ChevronUp, ChevronDown } from "lucide-react";
 import { assignmentStatusColor, priorityBucketColor, pinColorStyle } from "./planningUtils";
 import { useNavigate } from "react-router-dom";
@@ -9,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 export default function AssignmentTable({ assignments, assetsMap, onSelect, selectedId, onEdit, onRemove }) {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
+  const [pendingRemoveId, setPendingRemoveId] = useState(null);
   const [sortKey, setSortKey] = useState("asset_id");
   const [sortDir, setSortDir] = useState("asc");
 
@@ -126,9 +126,19 @@ export default function AssignmentTable({ assignments, assetsMap, onSelect, sele
                           <ExternalLink className="h-3.5 w-3.5 text-amber-500" />
                         </Button>
                       )}
-                      <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => onRemove(a)} title="Remove">
-                        <Trash2 className="h-3.5 w-3.5 text-red-400" />
-                      </Button>
+                      {pendingRemoveId === a.id ? (
+                        <>
+                          <span className="text-xs text-red-500 mr-1">Remove?</span>
+                          <Button size="sm" variant="ghost" className="h-6 px-2 text-xs text-red-600 hover:bg-red-50"
+                            onClick={() => { onRemove(a); setPendingRemoveId(null); }}>Yes</Button>
+                          <Button size="sm" variant="ghost" className="h-6 px-2 text-xs"
+                            onClick={() => setPendingRemoveId(null)}>No</Button>
+                        </>
+                      ) : (
+                        <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => setPendingRemoveId(a.id)} title="Remove">
+                          <Trash2 className="h-3.5 w-3.5 text-red-400" />
+                        </Button>
+                      )}
                     </div>
                   </td>
                 </tr>
