@@ -45,7 +45,7 @@ export default function MapViewSelector({ mapViews, selectedViewId, onSelectView
       </Button>
 
       <Dialog open={saveOpen} onOpenChange={setSaveOpen}>
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent className="sm:max-w-sm" style={{ zIndex: 1000 }}>
           <DialogHeader><DialogTitle>Save Current Filters as Map View</DialogTitle></DialogHeader>
           <div className="space-y-3 pt-1">
             <div>
