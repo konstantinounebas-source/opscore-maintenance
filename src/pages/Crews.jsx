@@ -292,7 +292,7 @@ export default function Crews() {
                         {crew.base_city && <span>{crew.base_city}</span>}
                         {crew.supervisor_name && <span>Supervisor: {crew.supervisor_name}</span>}
                         <span>{crewMembers.length} member{crewMembers.length !== 1 ? "s" : ""}</span>
-                        <span>{weekTasks.length} assigned tasks{capacity > 0 ? ` / ${capacity} cap` : ""}</span>
+                        <span>{weekTasks.length} task{weekTasks.length !== 1 ? "s" : ""}{activeWeek ? ` (${activeWeek.week_code})` : ""}{capacity > 0 ? ` / ${capacity} cap` : ""}</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
