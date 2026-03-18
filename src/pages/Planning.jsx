@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useNavigate } from "react-router-dom";
@@ -45,7 +45,7 @@ export default function Planning() {
   const [assigningFromAsset, setAssigningFromAsset] = useState(null);
 
   // Auto-select active week on load
-  React.useEffect(() => {
+  useEffect(() => {
     if (weeks.length > 0 && !selectedWeekId) {
       const active = weeks.find(w => w.is_active) || weeks[0];
       setSelectedWeekId(active.id);
