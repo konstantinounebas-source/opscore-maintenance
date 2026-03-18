@@ -123,11 +123,11 @@ export default function EnhancedComparisonTab({
           <div className="grid grid-cols-2 gap-2">
             <div>
               <div className="text-xs text-slate-500 font-semibold mb-1">{weekA?.week_code} — A</div>
-              <PlanningKPIBar assignments={assignmentsA} compact />
+              <PlanningKPIBar assignments={assignmentsA} />
             </div>
             <div>
               <div className="text-xs text-slate-500 font-semibold mb-1">{weekB?.week_code} — B</div>
-              <PlanningKPIBar assignments={assignmentsB} compact />
+              <PlanningKPIBar assignments={assignmentsB} />
             </div>
           </div>
 
