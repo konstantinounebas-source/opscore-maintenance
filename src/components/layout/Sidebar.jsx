@@ -2,7 +2,8 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
   LayoutDashboard, Box, AlertTriangle, Settings, 
-  ChevronLeft, ChevronRight, Wrench, Package, Bot, MapPin
+  ChevronLeft, ChevronRight, Wrench, Package, Bot, MapPin,
+  Users, ShieldCheck, Route
 } from "lucide-react";
 
 const navItems = [
@@ -12,7 +13,10 @@ const navItems = [
   ]},
   { path: "/Incidents", label: "Incidents", icon: AlertTriangle },
   { path: "/WorkOrders", label: "Work Orders", icon: Wrench },
-  { path: "/Planning", label: "Planning", icon: MapPin },
+  { path: "/Planning", label: "Planning", icon: MapPin, submenu: [
+    { path: "/Crews", label: "Crews", icon: Users },
+    { path: "/SLAConfig", label: "SLA Rules", icon: ShieldCheck },
+  ]},
   { path: "/Assistant", label: "AI Assistant", icon: Bot },
   { path: "/Configuration", label: "Configuration", icon: Settings },
 ];
