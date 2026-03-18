@@ -1,10 +1,12 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { Download, Loader2 } from "lucide-react";
 
 export default function ImportAssetsDialog({ open, onOpenChange, onImport }) {
   const fileInputRef = useRef(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [importing, setImporting] = useState(false);
 
   const downloadTemplate = () => {
     const headers = ["asset_id", "asset_name", "active_shelter_id", "location_address", "city", "shelter_type", "status", "installation_date", "delivery_date", "delivery_year"];
@@ -18,13 +20,25 @@ export default function ImportAssetsDialog({ open, onOpenChange, onImport }) {
     URL.revokeObjectURL(url);
   };
 
-  const handleFileSelect = async (e) => {
+  const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
-    if (file) {
-      await onImport(file);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      onOpenChange(false);
-    }
+    if (file) setSelectedFile(file);
+  };
+
+  const handleImport = async () => {
+    if (!selectedFile) return;
+    setImporting(true);
+    await onImport(selectedFile);
+    setImporting(false);
+    setSelectedFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    onOpenChange(false);
+  };
+
+  const handleCancel = () => {
+    setSelectedFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    onOpenChange(false);
   };
 
   return (
@@ -57,11 +71,20 @@ export default function ImportAssetsDialog({ open, onOpenChange, onImport }) {
                 file:bg-indigo-50 file:text-indigo-700
                 hover:file:bg-indigo-100"
             />
+            {selectedFile && (
+              <p className="text-xs text-indigo-600 font-medium">Selected: {selectedFile.name}</p>
+            )}
           </div>
 
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+            <Button variant="outline" onClick={handleCancel}>Cancel</Button>
+            <Button
+              className="bg-indigo-600 hover:bg-indigo-700"
+              onClick={handleImport}
+              disabled={!selectedFile || importing}
+            >
+              {importing && <Loader2 className="w-4 h-4 animate-spin mr-1" />}
+              {importing ? "Importing..." : "Import"}
             </Button>
           </div>
         </div>
