@@ -127,7 +127,8 @@ export default function RecommendationsTab({
       ) : (
         <div className="space-y-2">
           {filteredRecs.map(rec => {
-            const asset = assetsMap[rec.asset_id] || {};
+            const isCrewRec = rec.asset_id?.startsWith("crew:");
+            const asset = isCrewRec ? null : (assetsMap[rec.asset_id] || {});
             const crew = rec.recommended_crew_id ? crewsMap[rec.recommended_crew_id] : null;
             return (
               <div key={rec.id} className="border border-slate-200 rounded-lg bg-white p-3 space-y-2">
@@ -143,20 +144,23 @@ export default function RecommendationsTab({
                       )}
                     </div>
                     <div className="text-xs font-medium text-slate-700">
-                      {asset.asset_name || asset.asset_id || "—"}
-                      {asset.city ? <span className="text-slate-400 font-normal"> · {asset.city}</span> : null}
+                      {isCrewRec
+                        ? (crew ? `Crew: ${crew.crew_name}` : "Crew-level issue")
+                        : (asset?.asset_name || asset?.asset_id || "—")}
+                      {!isCrewRec && asset?.city ? <span className="text-slate-400 font-normal"> · {asset.city}</span> : null}
                     </div>
                     <div className="text-xs text-slate-500 mt-0.5">{rec.recommendation_reason}</div>
                     {rec.suggested_action && (
                       <div className="text-xs text-indigo-600 mt-0.5">→ {rec.suggested_action}</div>
                     )}
-                    {crew && <div className="text-xs text-slate-400 mt-0.5">Recommended crew: {crew.crew_name}</div>}
                   </div>
-                  <button
-                    onClick={() => onNavigateToAsset && onNavigateToAsset(rec.asset_id)}
-                    className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600 shrink-0">
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </button>
+                  {!isCrewRec && (
+                    <button
+                      onClick={() => onNavigateToAsset && onNavigateToAsset(rec.asset_id)}
+                      className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600 shrink-0">
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
                 {rec.status === "Open" && (
                   <div className="flex items-center gap-1 pt-1 border-t border-slate-100">
