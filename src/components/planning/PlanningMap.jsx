@@ -3,7 +3,6 @@ import { MapContainer, TileLayer, CircleMarker, Tooltip, useMap } from "react-le
 import "leaflet/dist/leaflet.css";
 import { pinColorStyle } from "./planningUtils";
 
-// Fit map bounds to visible markers
 function FitBounds({ points }) {
   const map = useMap();
   useEffect(() => {
@@ -38,14 +37,12 @@ export default function PlanningMap({ assets, assignments, selectedAssetId, onSe
     [assets, assignmentByAsset, selectedAssetId]
   );
 
-  const defaultCenter = markers.length > 0
-    ? [markers[0].lat, markers[0].lng]
-    : [37.98, 23.73]; // Athens default
+  const defaultCenter = markers.length > 0 ? [markers[0].lat, markers[0].lng] : [37.98, 23.73];
 
   return (
     <div className="w-full h-full rounded-lg overflow-hidden border border-slate-200">
       {markers.length === 0 && (
-        <div className="w-full h-full min-h-[300px] flex items-center justify-center bg-slate-50">
+        <div className="w-full min-h-[300px] h-full flex items-center justify-center bg-slate-50">
           <div className="text-center">
             <div className="text-slate-400 text-sm mb-1">No assets with coordinates to display</div>
             <div className="text-xs text-slate-300">Add latitude/longitude to assets to see them on the map</div>
@@ -53,12 +50,7 @@ export default function PlanningMap({ assets, assignments, selectedAssetId, onSe
         </div>
       )}
       {markers.length > 0 && (
-        <MapContainer
-          center={defaultCenter}
-          zoom={10}
-          style={{ height: "100%", width: "100%" }}
-          scrollWheelZoom={true}
-        >
+        <MapContainer center={defaultCenter} zoom={10} style={{ height: "100%", width: "100%" }} scrollWheelZoom={true}>
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -80,13 +72,15 @@ export default function PlanningMap({ assets, assignments, selectedAssetId, onSe
               <Tooltip direction="top" offset={[0, -6]} opacity={0.95}>
                 <div className="text-xs font-medium">{m.asset.asset_id}</div>
                 <div className="text-xs text-slate-600">{m.asset.asset_name}</div>
-                {m.assignment && (
+                {m.assignment ? (
                   <div className="text-xs mt-0.5">
                     <span className="font-medium">Status: </span>{m.assignment.assignment_status}
                     {m.assignment.priority_bucket && <> · <span className="font-medium">Priority: </span>{m.assignment.priority_bucket}</>}
+                    {m.assignment.team_name && <> · {m.assignment.team_name}</>}
                   </div>
+                ) : (
+                  <div className="text-xs text-slate-400 mt-0.5">Not assigned this week</div>
                 )}
-                {!m.assignment && <div className="text-xs text-slate-400 mt-0.5">Not assigned this week</div>}
               </Tooltip>
             </CircleMarker>
           ))}
