@@ -111,9 +111,18 @@ export function generateRecommendations({ weekId, assignments, assetsMap, incide
   const crewTaskCount = {};
   assignments.forEach(a => { if (a.crew_id) crewTaskCount[a.crew_id] = (crewTaskCount[a.crew_id] || 0) + 1; });
 
+  // Pre-compute per-crew overload flags once, outside per-assignment loop
+  const crewOverloaded = {};
+  Object.entries(crewTaskCount).forEach(([crewId, count]) => {
+    const crew = crewsMap[crewId];
+    if (crew?.capacity_per_week && count > crew.capacity_per_week) {
+      crewOverloaded[crewId] = { crew, count };
+    }
+  });
+
   assignments.forEach(assignment => {
     const asset = assetsMap[assignment.asset_id];
-    const incidents = incidentsByAsset[assignment.asset_id] || [];
+    const incidents = [...(incidentsByAsset[assignment.asset_id] || [])]; // copy before sort
     const latestIncident = incidents.sort((a, b) => new Date(b.created_date) - new Date(a.created_date))[0];
 
     // P1/P2 unassigned
