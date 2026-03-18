@@ -161,9 +161,17 @@ export default function Crews() {
   const [memberCrewId, setMemberCrewId] = useState(null);
   const [expandedCrews, setExpandedCrews] = useState({});
 
-  const { data: crews = [] } = useQuery({ queryKey: ["crews"], queryFn: () => base44.entities.Crews.list("-created_date") });
-  const { data: members = [] } = useQuery({ queryKey: ["crewMembers"], queryFn: () => base44.entities.CrewMembers.list() });
+  const { data: crews = [] }       = useQuery({ queryKey: ["crews"],              queryFn: () => base44.entities.Crews.list("-created_date") });
+  const { data: members = [] }     = useQuery({ queryKey: ["crewMembers"],         queryFn: () => base44.entities.CrewMembers.list() });
+  const { data: weeks = [] }       = useQuery({ queryKey: ["planningWeeks"],       queryFn: () => base44.entities.PlanningWeeks.list("-created_date") });
   const { data: allAssignments = [] } = useQuery({ queryKey: ["planningAssignments"], queryFn: () => base44.entities.PlanningAssignments.list() });
+
+  // Workload is scoped to the active week (or most recent)
+  const activeWeek = useMemo(() => weeks.find(w => w.is_active) || weeks[0] || null, [weeks]);
+  const weekAssignments = useMemo(() =>
+    activeWeek ? allAssignments.filter(a => a.planning_week_id === activeWeek.id) : [],
+    [allAssignments, activeWeek]
+  );
 
   const cities = useMemo(() => [...new Set(crews.map(c => c.base_city).filter(Boolean))], [crews]);
 
