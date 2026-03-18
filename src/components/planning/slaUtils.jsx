@@ -17,6 +17,23 @@ export function computeSLADueDate(assignment, incident, slaRules) {
 }
 
 /**
+ * Convenience: compute both SLA due date AND risk level from a single rule lookup.
+ * Returns { dueDate: Date|null, riskLevel: string|null, rule: object|null }
+ */
+export function computeSLAStatus(assignment, incident, slaRules) {
+  const rule = findMatchingRule(assignment, incident, slaRules);
+  if (!rule || !rule.max_resolution_days) return { dueDate: null, riskLevel: null, rule };
+
+  const baseDate = incident?.reported_date || incident?.first_report_date || assignment?.created_date;
+  if (!baseDate) return { dueDate: null, riskLevel: null, rule };
+
+  const dueDate = new Date(baseDate);
+  dueDate.setDate(dueDate.getDate() + rule.max_resolution_days);
+  const riskLevel = computeSLARiskLevel(dueDate, rule.max_resolution_days);
+  return { dueDate, riskLevel, rule };
+}
+
+/**
  * Find best matching SLA rule for an assignment/incident pair.
  */
 export function findMatchingRule(assignment, incident, slaRules) {
