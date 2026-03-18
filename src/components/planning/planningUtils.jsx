@@ -156,15 +156,9 @@ export function computeSnapshot(weekId, weekCode, weekName, assignments) {
   };
 }
 
-// ─── Default MapView Presets ──────────────────────────────────────────────────
-
-export const DEFAULT_PRESETS = [
-  { name: "All Assets",         view_type: "Default",    sort_order: 0, is_default: true,  is_shared: true, description: "Show all assets with coordinates" },
-  { name: "Inspection Focus",   view_type: "Inspection", sort_order: 1, is_default: true,  is_shared: true, description: "Assets with inspection assignments", filter_assignment_type: "Inspection" },
-  { name: "Priority Focus",     view_type: "Priority",   sort_order: 2, is_default: true,  is_shared: true, description: "P1, P2 and Critical priority assets", filter_priority_bucket: "P1" },
-  { name: "Assigned This Week", view_type: "Assignment", sort_order: 3, is_default: true,  is_shared: true, description: "Only assets assigned to selected week", filter_assignment_status: "Planned" },
-  { name: "Unassigned Assets",  view_type: "Custom",     sort_order: 4, is_default: false, is_shared: true, description: "Assets not yet assigned to selected week" },
-];
+// ─── Default MapView Presets (reference only — seeded via create_entity_records at setup) ──
+// Presets are stored in MapViews entity. DO NOT re-seed programmatically from the frontend.
+// view_type="Custom" with no assignment filters signals show_unassigned_only=true (see handleSelectView).
 
 // ─── Change Flag logic (comparison mode) ─────────────────────────────────────
 
