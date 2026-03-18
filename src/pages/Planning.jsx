@@ -90,8 +90,10 @@ export default function Planning() {
   }, [workOrders]);
 
   const assignedAssetIds = useMemo(() => new Set(weekAssignments.map(a => a.asset_id)), [weekAssignments]);
+  // O(1) assignment lookup by asset ID — avoids O(n*m) find() inside filter loop
+  const assignmentByAssetId = useMemo(() => Object.fromEntries(weekAssignments.map(a => [a.asset_id, a])), [weekAssignments]);
 
-  // Apply filters (include unassigned filter logic)
+  // Apply filters
   const filteredAssets = useMemo(() => {
     return assets.filter(a => {
       const f = appliedFilters;
@@ -102,7 +104,7 @@ export default function Planning() {
       if (f.shelter_type && a.shelter_type !== f.shelter_type) return false;
       if (f.asset_status && a.status !== f.asset_status) return false;
       if (f.show_unassigned_only && assignedAssetIds.has(a.id)) return false;
-      const asgn = weekAssignments.find(wa => wa.asset_id === a.id);
+      const asgn = assignmentByAssetId[a.id];
       if (f.assignment_status && (!asgn || asgn.assignment_status !== f.assignment_status)) return false;
       if (f.assignment_type && (!asgn || asgn.assignment_type !== f.assignment_type)) return false;
       if (f.priority_bucket && (!asgn || asgn.priority_bucket !== f.priority_bucket)) return false;
@@ -113,7 +115,7 @@ export default function Planning() {
       if (f.has_work_order && !workOrdersByAsset[a.id]?.length) return false;
       return true;
     });
-  }, [assets, appliedFilters, weekAssignments, assignedAssetIds, incidentsByAsset, workOrdersByAsset]);
+  }, [assets, appliedFilters, assignedAssetIds, assignmentByAssetId, incidentsByAsset, workOrdersByAsset]);
 
   const filteredAssignments = useMemo(() => {
     const ids = new Set(filteredAssets.map(a => a.id));
