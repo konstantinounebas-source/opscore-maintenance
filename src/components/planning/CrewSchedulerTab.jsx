@@ -75,20 +75,32 @@ export default function CrewSchedulerTab({
     const crew = crews.find(c => c.id === crewId);
     const capacity = crew?.capacity_per_week || 0;
     const currentCount = weekAssignments.filter(a => a.crew_id === crewId).length;
-    const toAssign = unassignedAssignments;
+    const available = capacity > 0 ? capacity - currentCount : Infinity;
 
-    if (capacity > 0 && currentCount + toAssign.length > capacity) {
-      toast({
-        title: `Capacity warning`,
-        description: `Crew ${crew.crew_name} would have ${currentCount + toAssign.length} tasks (capacity: ${capacity}/week)`,
-        variant: "destructive",
-      });
+    // Sort unassigned by priority then scheduling_score desc so highest-priority items fill first
+    const PRIORITY_ORDER = { P1: 0, Critical: 1, P2: 2, High: 3, Medium: 4, Low: 5 };
+    const sorted = [...unassignedAssignments].sort((a, b) => {
+      const pa = PRIORITY_ORDER[a.priority_bucket] ?? 6;
+      const pb = PRIORITY_ORDER[b.priority_bucket] ?? 6;
+      if (pa !== pb) return pa - pb;
+      return (b.scheduling_score || 0) - (a.scheduling_score || 0);
+    });
+
+    const toAssign = isFinite(available) ? sorted.slice(0, available) : sorted;
+    const skipped = sorted.length - toAssign.length;
+
+    if (toAssign.length === 0) {
+      toast({ title: capacity > 0 ? `${crew.crew_name} is already at capacity` : "No unassigned tasks" });
+      return;
     }
 
     setSaving(true);
     await Promise.all(toAssign.map(a => base44.entities.PlanningAssignments.update(a.id, { crew_id: crewId })));
     queryClient.invalidateQueries({ queryKey: ["planningAssignments"] });
-    toast({ title: `Assigned ${toAssign.length} tasks to ${crew?.crew_name}` });
+    const msg = skipped > 0
+      ? `Assigned ${toAssign.length} tasks to ${crew?.crew_name} (${skipped} skipped — at capacity)`
+      : `Assigned ${toAssign.length} tasks to ${crew?.crew_name}`;
+    toast({ title: msg });
     setSaving(false);
   };
 
