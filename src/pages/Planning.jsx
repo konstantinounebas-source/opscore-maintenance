@@ -137,8 +137,8 @@ export default function Planning() {
 
   const currentAssignment = useMemo(() => {
     if (!selectedAsset || !selectedWeekId) return null;
-    return weekAssignments.find(a => a.asset_id === selectedAsset.id) || null;
-  }, [selectedAsset, weekAssignments, selectedWeekId]);
+    return assignmentByAssetId[selectedAsset.id] || null;
+  }, [selectedAsset, assignmentByAssetId, selectedWeekId]);
 
   // ── Mutations ─────────────────────────────────────────────────────────────────
   const saveWeekMutation = useMutation({
