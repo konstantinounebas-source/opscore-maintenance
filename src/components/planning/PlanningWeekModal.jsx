@@ -50,7 +50,7 @@ export default function PlanningWeekModal({ open, onOpenChange, week, onSave }) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" style={{ zIndex: 1000 }}>
         <DialogHeader>
           <DialogTitle>{week ? "Edit Planning Week" : "New Planning Week"}</DialogTitle>
         </DialogHeader>
