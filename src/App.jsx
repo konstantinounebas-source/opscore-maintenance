@@ -18,6 +18,7 @@ import WorkOrders from '@/pages/WorkOrders';
 import ChildDetail from '@/pages/ChildDetail';
 import Configuration from '@/pages/Configuration';
 import Assistant from '@/pages/Assistant';
+import Planning from '@/pages/Planning';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -52,6 +53,7 @@ const AuthenticatedApp = () => {
         <Route path="/IncidentDetail" element={<IncidentDetail />} />
         <Route path="/IncidentForm" element={<IncidentForm />} />
         <Route path="/WorkOrders" element={<WorkOrders />} />
+        <Route path="/Planning" element={<Planning />} />
         <Route path="/Configuration" element={<Configuration />} />
         <Route path="/Assistant" element={<Assistant />} />
       </Route>
