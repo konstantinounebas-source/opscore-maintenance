@@ -56,6 +56,8 @@ const AuthenticatedApp = () => {
         <Route path="/IncidentForm" element={<IncidentForm />} />
         <Route path="/WorkOrders" element={<WorkOrders />} />
         <Route path="/Planning" element={<Planning />} />
+        <Route path="/Crews" element={<Crews />} />
+        <Route path="/SLAConfig" element={<SLAConfig />} />
         <Route path="/Configuration" element={<Configuration />} />
         <Route path="/Assistant" element={<Assistant />} />
       </Route>
