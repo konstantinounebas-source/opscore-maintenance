@@ -1,36 +1,35 @@
 import React from "react";
 
-function KPICard({ label, value, color = "slate" }) {
-  const colorMap = {
-    slate:   "bg-slate-50 border-slate-200 text-slate-700",
-    indigo:  "bg-indigo-50 border-indigo-200 text-indigo-700",
-    amber:   "bg-amber-50 border-amber-200 text-amber-700",
-    emerald: "bg-emerald-50 border-emerald-200 text-emerald-700",
-    red:     "bg-red-50 border-red-200 text-red-700",
-    orange:  "bg-orange-50 border-orange-200 text-orange-700",
-  };
+function KPICard({ label, value, color = "text-slate-700" }) {
   return (
-    <div className={`rounded-lg border px-4 py-3 flex flex-col gap-1 ${colorMap[color] || colorMap.slate}`}>
-      <span className="text-xs font-medium opacity-70">{label}</span>
-      <span className="text-xl font-bold">{value}</span>
+    <div className="flex flex-col items-center justify-center bg-white border border-slate-200 rounded-lg px-3 py-2 min-w-[72px]">
+      <span className={`text-lg font-bold leading-none ${color}`}>{value ?? 0}</span>
+      <span className="text-xs text-slate-400 mt-1 text-center leading-tight">{label}</span>
     </div>
   );
 }
 
-export default function PlanningKPIBar({ assignments }) {
-  const total = assignments.length;
-  const planned = assignments.filter(a => a.assignment_status === "Planned").length;
-  const inProgress = assignments.filter(a => a.assignment_status === "In Progress").length;
-  const completed = assignments.filter(a => a.assignment_status === "Completed").length;
-  const p1p2 = assignments.filter(a => a.priority_bucket === "P1" || a.priority_bucket === "P2").length;
+export default function PlanningKPIBar({ assignments, label = "" }) {
+  const total    = assignments.length;
+  const planned  = assignments.filter(a => a.assignment_status === "Planned").length;
+  const inProg   = assignments.filter(a => a.assignment_status === "In Progress").length;
+  const done     = assignments.filter(a => a.assignment_status === "Completed").length;
+  const deferred = assignments.filter(a => a.assignment_status === "Deferred").length;
+  const p1       = assignments.filter(a => a.priority_bucket === "P1" || a.priority_bucket === "Critical").length;
+  const p2       = assignments.filter(a => a.priority_bucket === "P2" || a.priority_bucket === "High").length;
 
   return (
-    <div className="grid grid-cols-5 gap-3">
-      <KPICard label="Total Assigned" value={total} color="indigo" />
-      <KPICard label="Planned" value={planned} color="slate" />
-      <KPICard label="In Progress" value={inProgress} color="amber" />
-      <KPICard label="Completed" value={completed} color="emerald" />
-      <KPICard label="P1 / P2" value={p1p2} color="red" />
+    <div>
+      {label && <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">{label}</div>}
+      <div className="flex gap-2 flex-wrap">
+        <KPICard label="Total"       value={total}    color="text-slate-700" />
+        <KPICard label="Planned"     value={planned}  color="text-slate-600" />
+        <KPICard label="In Progress" value={inProg}   color="text-blue-600" />
+        <KPICard label="Completed"   value={done}     color="text-emerald-600" />
+        <KPICard label="Deferred"    value={deferred} color="text-purple-600" />
+        <KPICard label="P1/Critical" value={p1}       color="text-red-600" />
+        <KPICard label="P2/High"     value={p2}       color="text-orange-600" />
+      </div>
     </div>
   );
 }
