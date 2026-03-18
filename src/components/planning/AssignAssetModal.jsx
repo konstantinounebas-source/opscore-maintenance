@@ -68,7 +68,7 @@ export default function AssignAssetModal({ open, onOpenChange, asset, week, exis
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto" style={{ zIndex: 1000 }}>
         <DialogHeader>
           <DialogTitle>{existingAssignment ? "Edit Assignment" : "Assign Asset to Week"}</DialogTitle>
         </DialogHeader>
