@@ -236,9 +236,8 @@ export default function Planning() {
   // ── Handlers ──────────────────────────────────────────────────────────────────
   const handleSelectAsset = useCallback((asset) => {
     setSelectedAsset(asset);
-    const asgn = weekAssignments.find(a => a.asset_id === asset.id);
-    setSelectedAssignment(asgn || null);
-  }, [weekAssignments]);
+    setSelectedAssignment(assignmentByAssetId[asset.id] || null);
+  }, [assignmentByAssetId]);
 
   const handleSelectAssignmentRow = useCallback((assignment) => {
     setSelectedAssignment(assignment);
