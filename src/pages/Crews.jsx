@@ -270,7 +270,7 @@ export default function Crews() {
           <div className="space-y-3 max-w-4xl">
             {filteredCrews.map(crew => {
               const crewMembers = members.filter(m => m.crew_id === crew.id);
-              const weekTasks = allAssignments.filter(a => a.crew_id === crew.id);
+              const weekTasks = weekAssignments.filter(a => a.crew_id === crew.id);
               const capacity = crew.capacity_per_week || 0;
               const overloaded = capacity > 0 && weekTasks.length > capacity;
               const expanded = expandedCrews[crew.id];
