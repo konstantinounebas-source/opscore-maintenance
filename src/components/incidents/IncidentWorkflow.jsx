@@ -140,7 +140,7 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
         description: `OMPI. SLA: ${sla}. ${formData.ompi_notes || ""}`,
       });
       if (formData.ompiFile) {
-        await handleAttachUpload(formData.ompiFile);
+        await handleAttachUpload(formData.ompiFile, "OMPI");
         auditLines.push(`  📎 Attached: ${formData.ompiFile.file_name}`);
       }
       updates.ompi_done = true;
