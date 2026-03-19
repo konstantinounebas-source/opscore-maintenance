@@ -215,6 +215,12 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
               {errors.active_shelter_id && <p className="text-xs text-red-500">Required</p>}
             </div>
             <div className="space-y-1.5">
+              <Label className="text-xs">Asset Name</Label>
+              <Input value={form.asset_name} onChange={e => set("asset_name", e.target.value)} placeholder="Display name (auto-filled if blank)" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
               <Label className="text-xs">Shelter Type</Label>
               <Select value={form.shelter_type} onValueChange={v => set("shelter_type", v)}>
                 <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
