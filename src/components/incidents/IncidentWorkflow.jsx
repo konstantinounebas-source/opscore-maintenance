@@ -414,6 +414,7 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
               <div className="flex items-center gap-2">
                 <Checkbox id="do_confirmation" checked={!!formData.do_confirmation} onCheckedChange={v => setFormData(f => ({ ...f, do_confirmation: v }))} />
                 <label htmlFor="do_confirmation" className="text-sm font-medium cursor-pointer">Confirmation of Receipt</label>
+                {flags.confirmation_done && <span className="ml-auto text-xs text-green-600 font-medium">✓ Done</span>}
               </div>
               {formData.do_confirmation && (
                 <div className="p-3 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800 whitespace-pre-line leading-relaxed">
