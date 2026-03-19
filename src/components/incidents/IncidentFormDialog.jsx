@@ -53,7 +53,7 @@ const emptyForm = () => ({
   reported_by_org: "", reported_by_name: "", phone_available: null, reported_by_phone: "",
   email_available: null, reported_by_email: "",
   incident_reporting_method: "",
-  province: "", municipality: "", active_shelter_id: "", location_address: "",
+  province: "", municipality: "", shelter_type: "", active_shelter_id: "", location_address: "",
   detection_time: "",
   incident_source: "", work_order_reference: "", incident_source_other: "",
   subsystem_structural_selected: false, subsystem_structural_issue: "",
