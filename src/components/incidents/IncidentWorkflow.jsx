@@ -67,15 +67,16 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
   });
 
   const flags = {
-    ompi_done:        !!incident.ompi_done,
-    inspection_done:  !!incident.inspection_done,
-    make_safe_done:   !!incident.make_safe_done,
-    owr_fmpi_done:    !!incident.owr_fmpi_done,
-    corrective_done:  !!incident.corrective_done,
-    checklist_done:   !!incident.checklist_done,
-    revisit_done:     !!incident.revisit_done,
-    finalise_done:    !!incident.finalise_done,
-    closed:           incident.status === "Closed",
+    ompi_done:           !!incident.ompi_done,
+    confirmation_done:   !!incident.confirmation_done,
+    inspection_done:     !!incident.inspection_done,
+    make_safe_done:      !!incident.make_safe_done,
+    owr_fmpi_done:       !!incident.owr_fmpi_done,
+    corrective_done:     !!incident.corrective_done,
+    checklist_done:      !!incident.checklist_done,
+    revisit_done:        !!incident.revisit_done,
+    finalise_done:       !!incident.finalise_done,
+    closed:              incident.status === "Closed",
   };
 
   const [activeModal, setActiveModal] = useState(null);
