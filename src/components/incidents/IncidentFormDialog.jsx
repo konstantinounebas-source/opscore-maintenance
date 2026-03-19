@@ -163,12 +163,10 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
     if (!form.reported_by_name) e.reported_by_name = true;
     if (form.phone_available && !form.reported_by_phone) e.reported_by_phone = true;
     if (form.email_available && !form.reported_by_email) e.reported_by_email = true;
-    if (!form.first_report_date) e.first_report_date = true;
-    if (form.first_report_date && form.issue_date && form.first_report_date > form.issue_date) e.first_report_date_order = true;
     if (!form.incident_source) e.incident_source = true;
     if (form.incident_source === "Work Order" && !form.work_order_reference) e.work_order_reference = true;
     if (form.incident_source === "ΆΛΛΟ" && !form.incident_source_other) e.incident_source_other = true;
-    if (!form.subsystem_structural_selected && !form.subsystem_electrical_selected && !form.subsystem_electronic_selected) e.subsystems = true;
+    if (!form.subsystem_structural_selected && !form.subsystem_electrical_selected && !form.subsystem_electronic_selected && !form.subsystem_other_selected) e.subsystems = true;
     if (form.subsystem_structural_selected && !form.subsystem_structural_issue) e.subsystem_structural_issue = true;
     if (form.subsystem_electrical_selected && !form.subsystem_electrical_issue) e.subsystem_electrical_issue = true;
     if (form.subsystem_electronic_selected && !form.subsystem_electronic_issue) e.subsystem_electronic_issue = true;
