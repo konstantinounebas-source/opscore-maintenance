@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,8 +9,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useConfigLists } from "@/components/shared/useConfigLists";
-import FileUploader from "@/components/shared/FileUploader";
 import ConfirmCloseDialog from "@/components/shared/ConfirmCloseDialog";
+import { Upload, Loader2, X, FileText, Image } from "lucide-react";
 
 const generateIncidentId = (incidents) => {
   const nums = incidents
