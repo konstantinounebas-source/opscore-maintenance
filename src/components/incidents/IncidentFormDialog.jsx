@@ -434,10 +434,7 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
           <div className="grid grid-cols-2 gap-4">
             <SectionTitle>5. Εγκρίσεις & Επαλήθευση</SectionTitle>
 
-            <Field label="Ημερομηνία Έγκρισης">
-              <Input type="date" value={form.approval_date} onChange={e => set("approval_date", e.target.value)} />
-            </Field>
-            <Field label="Εκπρόσωπος Αναθέτουσας Αρχής">
+            <Field label="Εκπρόσωπος Αναθέτουσας Αρχής" colSpan={2}>
               <Input value={form.authority_representative} onChange={e => set("authority_representative", e.target.value)} />
             </Field>
           </div>
