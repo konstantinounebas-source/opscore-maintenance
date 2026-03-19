@@ -9,7 +9,14 @@ export default function ImportAssetsDialog({ open, onOpenChange, onImport }) {
   const [importing, setImporting] = useState(false);
 
   const downloadTemplate = () => {
-    const headers = ["asset_id", "asset_name", "active_shelter_id", "location_address", "city", "shelter_type", "status", "installation_date", "delivery_date", "delivery_year"];
+    const headers = [
+      "asset_id", "active_shelter_id", "shelter_type", "location_address", "city", "status",
+      "latitude", "longitude", "category", "asset_type",
+      "delivery_year", "warranty_base_year", "installation_date", "delivery_date", "notes",
+      "software_warranty_end_date", "preventive_inspection_date", "next_inspection_date",
+      "electronics_warranty_end_date", "materials_warranty_end_date", "structural_warranty_end_date",
+      "evidence_types", "description"
+    ];
     const csv = headers.join(",") + "\n";
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
