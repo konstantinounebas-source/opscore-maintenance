@@ -408,6 +408,17 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
                     </Select>
                   </div>
                 )}
+
+                {/* Other */}
+                <div className="flex items-center gap-2">
+                  <Checkbox id="subsystem_other" checked={form.subsystem_other_selected} onCheckedChange={v => set("subsystem_other_selected", !!v)} />
+                  <label htmlFor="subsystem_other" className="text-sm text-slate-700">Άλλο</label>
+                </div>
+                {form.subsystem_other_selected && (
+                  <div className="ml-6">
+                    <Input value={form.subsystem_other_issue} onChange={e => set("subsystem_other_issue", e.target.value)} placeholder="Περιγράψτε το υποσύστημα..." />
+                  </div>
+                )}
               </div>
             </div>
 
