@@ -42,6 +42,7 @@ export default function ChildFormDialog({ open, onOpenChange, child, onSave, par
   const handleSubmit = (e) => {
     e.preventDefault();
     onSave(form);
+    onOpenChange(false);
   };
 
   return (

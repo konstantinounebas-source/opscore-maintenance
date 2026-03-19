@@ -162,7 +162,10 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (validate()) onSave(form);
+    if (validate()) {
+      onSave(form);
+      onOpenChange(false);
+    }
   };
 
   const err = (key) => errors[key] ? "border-red-400" : "";

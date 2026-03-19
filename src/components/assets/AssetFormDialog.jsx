@@ -190,7 +190,8 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
     delete payload.attachments;
     
     // Call onSave with the asset payload and attachments
-    await onSave(payload, attachments);
+    onSave(payload, attachments);
+    onOpenChange(false);
   };
 
   return (
