@@ -98,10 +98,21 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
     await base44.entities.IncidentAuditTrail.create({ incident_id: incidentId, action, details, user: auditUser, ...extra });
   };
 
-  const handleAttachUpload = async (fileData) => {
+  const handleAttachUpload = async (fileData, auditContext = null) => {
     const user = await base44.auth.me();
     await base44.entities.IncidentAttachments.create({ ...fileData, incident_id: incidentId, uploaded_by: user?.email });
     queryClient.invalidateQueries({ queryKey: ["incidentAttachments", incidentId] });
+    if (auditContext) {
+      await base44.entities.IncidentAuditTrail.create({
+        incident_id: incidentId,
+        action: "Attachment Uploaded",
+        details: `${auditContext}: ${fileData.file_name}`,
+        user: person || user?.email,
+        attachments: [fileData.file_url],
+        attachment_names: [fileData.file_name],
+      });
+      queryClient.invalidateQueries({ queryKey: ["incidentAudit", incidentId] });
+    }
   };
 
   const refreshAll = () => {
