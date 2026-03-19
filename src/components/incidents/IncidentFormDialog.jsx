@@ -318,11 +318,7 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
               <Input value={form.location_address} onChange={e => set("location_address", e.target.value)} />
             </Field>
 
-            <Field label="Ημερομηνία Πρώτης Αναφοράς" required>
-              <Input type="date" className={err("first_report_date") || err("first_report_date_order")} value={form.first_report_date} onChange={e => set("first_report_date", e.target.value)} />
-              {errors.first_report_date_order && <p className="text-xs text-red-500">Δεν μπορεί να είναι μετά την Ημ. Έκδοσης</p>}
-            </Field>
-            <Field label="Ώρα Εντοπισμού">
+            <Field label="Ώρα Εντοπισμού" colSpan={2}>
               <Input type="time" value={form.detection_time} onChange={e => set("detection_time", e.target.value)} />
             </Field>
           </div>
