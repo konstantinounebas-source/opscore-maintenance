@@ -20,6 +20,7 @@ const emptyForm = {
 
 export default function ChildFormDialog({ open, onOpenChange, child, onSave, parentAssets }) {
   const [form, setForm] = useState(emptyForm);
+  const [confirmClose, setConfirmClose] = useState(false);
 
   const { data: configLists = [] } = useQuery({
     queryKey: ["configLists"],

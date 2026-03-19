@@ -41,6 +41,7 @@ export default function ChildFormDialog({ open, onOpenChange, child, parentAsset
   }, [child, open]);
 
   const [selectedRecordId, setSelectedRecordId] = useState(null);
+  const [confirmClose, setConfirmClose] = useState(false);
 
   const handleChildSelect = (childId) => {
     const selected = allChildAssets.find(c => c.child_id === childId);

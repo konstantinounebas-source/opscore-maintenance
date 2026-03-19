@@ -86,6 +86,7 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
 
   const [form, setForm] = useState(emptyForm());
   const [errors, setErrors] = useState({});
+  const [confirmClose, setConfirmClose] = useState(false);
 
   useEffect(() => {
     if (incident) {

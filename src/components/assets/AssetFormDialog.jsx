@@ -61,6 +61,7 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
 
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState({});
+  const [confirmClose, setConfirmClose] = useState(false);
 
   useEffect(() => {
     if (asset) {
