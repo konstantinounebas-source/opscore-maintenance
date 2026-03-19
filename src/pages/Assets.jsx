@@ -180,7 +180,6 @@ export default function Assets() {
 
   const columns = [
     { key: "asset_id", label: "Asset ID" },
-    { key: "asset_name", label: "Name" },
     { key: "active_shelter_id", label: "Shelter ID" },
     { key: "category", label: "Category" },
     { key: "asset_type", label: "Type" },
