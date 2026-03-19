@@ -221,19 +221,22 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
               <Input type="date" className={err("issue_date")} value={form.issue_date} onChange={e => set("issue_date", e.target.value)} />
             </Field>
 
-            <Field label="Αναφέρων" required colSpan={2}>
-              {reporterNames.length > 0 && (
-                <Select value={reporterNames.includes(form.reported_by_name) ? form.reported_by_name : "__manual__"}
-                  onValueChange={v => { if (v !== "__manual__") set("reported_by_name", v); }}>
-                  <SelectTrigger className="mb-1"><SelectValue placeholder="Επιλογή από λίστα..." /></SelectTrigger>
-                  <SelectContent>
-                    {reporterNames.map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}
-                    <SelectItem value="__manual__">— Χειροκίνητη εισαγωγή —</SelectItem>
-                  </SelectContent>
-                </Select>
-              )}
-              <Input className={err("reported_by_name")} value={form.reported_by_name} onChange={e => set("reported_by_name", e.target.value)} placeholder="ή πληκτρολογήστε..." />
+            <Field label="Αναφέρων - Οργανισμός" required colSpan={2}>
+              <Select value={form.reported_by_org} onValueChange={v => { set("reported_by_org", v); set("reported_by_name", ""); }}>
+                <SelectTrigger className={err("reported_by_name")}><SelectValue placeholder="Επιλογή οργανισμού..." /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Contracting Authority">Contracting Authority</SelectItem>
+                  <SelectItem value="Air Control">Air Control</SelectItem>
+                  {reporterOrgs.filter(o => o !== "Contracting Authority" && o !== "Air Control").map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </Field>
+
+            {form.reported_by_org && (
+              <Field label="Όνομα Αναφέροντος" required colSpan={2}>
+                <Input className={err("reported_by_name")} value={form.reported_by_name} onChange={e => set("reported_by_name", e.target.value)} placeholder="Όνομα προσώπου..." />
+              </Field>
+            )}
 
             <Field label="Τρόπος Αναφοράς" colSpan={2}>
               {reportingMethods.length > 0 ? (
