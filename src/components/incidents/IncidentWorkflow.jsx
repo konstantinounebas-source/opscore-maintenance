@@ -169,7 +169,7 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
       updates.inspection_done = true;
       auditLines.push(`✔ Inspection WO created`);
       if (formData.inspectionFile) {
-        await handleAttachUpload(formData.inspectionFile);
+        await handleAttachUpload(formData.inspectionFile, "Inspection WO");
         auditLines.push(`  📎 Attached: ${formData.inspectionFile.file_name}`);
       }
     }
