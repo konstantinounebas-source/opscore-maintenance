@@ -302,20 +302,28 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
             </Field>
 
             <Field label="Επαρχία">
-              <Select value={form.province} onValueChange={v => set("province", v)}>
-                <SelectTrigger><SelectValue placeholder="Επιλογή επαρχίας..." /></SelectTrigger>
-                <SelectContent>{provinces.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
-              </Select>
+              {form.related_asset_id ? (
+                <Input value={form.province} readOnly className="bg-slate-50 text-slate-600" />
+              ) : (
+                <Select value={form.province} onValueChange={v => set("province", v)}>
+                  <SelectTrigger><SelectValue placeholder="Επιλογή επαρχίας..." /></SelectTrigger>
+                  <SelectContent>{provinces.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+                </Select>
+              )}
             </Field>
             <Field label="Δήμος">
-              <Select value={form.municipality} onValueChange={v => set("municipality", v)}>
-                <SelectTrigger><SelectValue placeholder="Επιλογή δήμου..." /></SelectTrigger>
-                <SelectContent>{municipalities.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
-              </Select>
+              {form.related_asset_id ? (
+                <Input value={form.municipality} readOnly className="bg-slate-50 text-slate-600" />
+              ) : (
+                <Select value={form.municipality} onValueChange={v => set("municipality", v)}>
+                  <SelectTrigger><SelectValue placeholder="Επιλογή δήμου..." /></SelectTrigger>
+                  <SelectContent>{municipalities.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
+                </Select>
+              )}
             </Field>
 
             <Field label="Διεύθυνση Στάσης" colSpan={2}>
-              <Input value={form.location_address} onChange={e => set("location_address", e.target.value)} />
+              <Input value={form.location_address} readOnly={!!form.related_asset_id} className={form.related_asset_id ? "bg-slate-50 text-slate-600" : ""} onChange={e => set("location_address", e.target.value)} />
             </Field>
 
             <Field label="Ώρα Εντοπισμού" colSpan={2}>
