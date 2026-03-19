@@ -121,13 +121,31 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
     setForm(f => ({
       ...f,
       related_asset_id: assetId,
-      related_asset_name: asset?.asset_name || "",
+      related_asset_name: asset?.asset_id || "",
       active_shelter_id: asset?.asset_id || "",
-      province: asset?.category || "",
-      municipality: asset?.asset_type || "",
-      location_address: asset?.location || "",
-      title: asset ? `${asset.asset_name} - ${f.issue_date}` : f.title,
+      province: asset?.city || asset?.category || "",
+      municipality: asset?.shelter_type || asset?.asset_type || "",
+      location_address: asset?.location_address || asset?.location || "",
+      title: asset ? `${asset.asset_id} - ${f.issue_date}` : f.title,
     }));
+  };
+
+  const handleFileSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    const isImage = file.type.startsWith("image/");
+    const preview = isImage ? URL.createObjectURL(file) : null;
+    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    setPendingFiles(pf => [...pf, { name: file.name, url: file_url, type: isImage ? "Photo" : "Document", preview }]);
+    setForm(f => ({ ...f, evidence_files: [...f.evidence_files, file_url] }));
+    setUploading(false);
+    if (fileRef.current) fileRef.current.value = "";
+  };
+
+  const removePendingFile = (url) => {
+    setPendingFiles(pf => pf.filter(f => f.url !== url));
+    setForm(f => ({ ...f, evidence_files: f.evidence_files.filter(u => u !== url) }));
   };
 
   const toggleEvidenceType = (val) => {
