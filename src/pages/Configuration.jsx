@@ -132,6 +132,11 @@ export default function Configuration() {
           <p className="text-xs text-slate-500 mb-6">Configure the dropdown values used in child asset management. These lists power category, type, parent asset, and status fields.</p>
           <ListManager listTypes={CHILD_LIST_TYPES} allItems={allItems} queryClient={queryClient} />
         </div>
+
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <p className="text-xs text-slate-500 mb-6">Define and manage workflow actions, phases, SLA rules, and attachment requirements. Changes here are reflected immediately in all incident workflows.</p>
+          <WorkflowConfig />
+        </div>
       </div>
     </div>
   );
