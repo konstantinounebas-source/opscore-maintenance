@@ -124,9 +124,9 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
       related_asset_id: assetId,
       related_asset_name: asset?.asset_id || "",
       active_shelter_id: asset?.asset_id || "",
-      province: asset?.category || "",
-      municipality: asset?.city || "",
-      shelter_type: asset?.shelter_type || asset?.asset_type || "",
+      province: asset?.city || "",
+      municipality: asset?.municipality || "",
+      shelter_type: asset?.shelter_type || "",
       location_address: asset?.location_address || asset?.location || "",
       title: asset ? `${asset.asset_id} - ${f.issue_date}` : f.title,
     }));
