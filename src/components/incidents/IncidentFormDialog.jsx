@@ -102,14 +102,16 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
         const asset = assets.find(a => a.id === defaultAssetId);
         if (asset) {
           f.active_shelter_id = asset.asset_id || "";
-          f.province = asset.category || "";
-          f.location_address = asset.location || "";
-          f.title = `${asset.asset_name} - ${f.issue_date}`;
+          f.province = asset.city || asset.category || "";
+          f.municipality = asset.shelter_type || asset.asset_type || "";
+          f.location_address = asset.location_address || asset.location || "";
+          f.title = `${asset.asset_id} - ${f.issue_date}`;
         }
       }
       setForm(f);
     }
     setErrors({});
+    setPendingFiles([]);
   }, [incident, open, defaultAssetId, allIncidents.length]);
 
   const set = (key, value) => setForm(f => ({ ...f, [key]: value }));
