@@ -324,6 +324,10 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
               )}
             </Field>
 
+            <Field label="Τύπος Στάσης" colSpan={2}>
+              <Input value={form.shelter_type} readOnly={!!form.related_asset_id} className={form.related_asset_id ? "bg-slate-50 text-slate-600" : ""} onChange={e => set("shelter_type", e.target.value)} placeholder="Τύπος..." />
+            </Field>
+
             <Field label="Διεύθυνση Στάσης" colSpan={2}>
               <Input value={form.location_address} readOnly={!!form.related_asset_id} className={form.related_asset_id ? "bg-slate-50 text-slate-600" : ""} onChange={e => set("location_address", e.target.value)} />
             </Field>
