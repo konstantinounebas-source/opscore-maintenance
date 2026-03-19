@@ -139,6 +139,7 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
     // Confirmation of Receipt
     if (formData.do_confirmation) {
       const confirmationMessage = `Αγαπητοί/ες,\n\nΕπιβεβαιώνουμε τη λήψη της ειδοποίησής σας για το περιστατικό με Κωδικό Αναφοράς (Incident Number): ${incident.incident_id}.\n\nΤο περιστατικό έχει καταγραφεί και έχουν ενεργοποιηθεί οι διαδικασίες διερεύνησης. Παρακαλώ όπως βρείτε επισυναπτόμενο το Outline Management Plan.\nΠαραμένουμε στην διάθεσή σας.\nΜε εκτίμηση,`;
+      await base44.entities.Incidents.update(incidentId, { confirmation_done: true });
       await addAudit("Confirmation of Receipt", confirmationMessage);
       auditLines.push(`✔ Confirmation of Receipt sent`);
     }
