@@ -125,10 +125,21 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
         related_asset_name: incident.related_asset_name,
         status: "Open",
         priority: incident.initial_priority === "P1" ? "High" : "Medium",
-        description: `Response/Confirmation of Receipt. SLA: ${sla}. ${formData.ompi_notes || ""}`,
+        description: `OMPI. SLA: ${sla}. ${formData.ompi_notes || ""}`,
       });
+      if (formData.ompiFile) {
+        await handleAttachUpload(formData.ompiFile);
+        auditLines.push(`  📎 Attached: ${formData.ompiFile.file_name}`);
+      }
       updates.ompi_done = true;
       auditLines.push(`✔ OMPI created — SLA: ${sla}`);
+    }
+
+    // Confirmation of Receipt
+    if (formData.do_confirmation) {
+      const confirmationMessage = `Αγαπητοί/ες,\n\nΕπιβεβαιώνουμε τη λήψη της ειδοποίησής σας για το περιστατικό με Κωδικό Αναφοράς (Incident Number): ${incident.incident_id}.\n\nΤο περιστατικό έχει καταγραφεί και έχουν ενεργοποιηθεί οι διαδικασίες διερεύνησης. Παρακαλώ όπως βρείτε επισυναπτόμενο το Outline Management Plan.\nΠαραμένουμε στην διάθεσή σας.\nΜε εκτίμηση,`;
+      await addAudit("Confirmation of Receipt", confirmationMessage);
+      auditLines.push(`✔ Confirmation of Receipt sent`);
     }
 
     // Inspection
