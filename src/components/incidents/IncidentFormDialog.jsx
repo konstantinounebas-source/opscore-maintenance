@@ -168,8 +168,14 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
   const err = (key) => errors[key] ? "border-red-400" : "";
 
   return (
+    <>
+    <ConfirmCloseDialog
+      open={confirmClose}
+      onCancel={() => setConfirmClose(false)}
+      onConfirm={() => { setConfirmClose(false); onOpenChange(false); }}
+    />
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto" onInteractOutside={e => { e.preventDefault(); setConfirmClose(true); }}>
         <DialogHeader>
           <DialogTitle className="text-base font-semibold">
             {incident ? "Επεξεργασία Συμβάντος" : "Νέο Συμβάν"}
@@ -442,7 +448,7 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
           </div>
 
           <div className="flex justify-end gap-2 pt-2 border-t">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Ακύρωση</Button>
+            <Button type="button" variant="outline" onClick={() => setConfirmClose(true)}>Ακύρωση</Button>
             <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700">
               {incident ? "Ενημέρωση" : "Δημιουργία"}
             </Button>
@@ -450,5 +456,6 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
         </form>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
