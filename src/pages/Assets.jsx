@@ -93,8 +93,8 @@ export default function Assets() {
   const assetsWithOpenWO = assets.filter(a => getOpenWorkOrders(a.id) > 0).length;
 
   const exportCSV = () => {
-    const headers = ["asset_id", "asset_name", "active_shelter_id", "location_address", "city", "shelter_type", "status", "installation_date", "delivery_date", "delivery_year"];
-    const rows = assets.map(a => [a.asset_id, a.asset_name, a.active_shelter_id || "", a.location_address || "", a.city || "", a.shelter_type || "", a.status || "", a.installation_date || "", a.delivery_date || "", a.delivery_year || ""]);
+    const headers = ["asset_id", "asset_name", "category", "asset_type", "active_shelter_id", "location_address", "city", "shelter_type", "status", "installation_date", "delivery_date", "delivery_year", "latitude", "longitude", "notes"];
+    const rows = assets.map(a => [a.asset_id, a.asset_name, a.category || "", a.asset_type || "", a.active_shelter_id || "", a.location_address || "", a.city || "", a.shelter_type || "", a.status || "", a.installation_date || "", a.delivery_date || "", a.delivery_year || "", a.latitude || "", a.longitude || "", a.notes || ""]);
     const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);

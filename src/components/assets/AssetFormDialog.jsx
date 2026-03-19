@@ -264,6 +264,17 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Category</Label>
+              <Input value={form.category} onChange={e => set("category", e.target.value)} placeholder="e.g. Bus Stop Shelter" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Asset Type</Label>
+              <Input value={form.asset_type} onChange={e => set("asset_type", e.target.value)} placeholder="e.g. Digital Display" />
+            </div>
+          </div>
+
           {/* ── MANUAL INPUTS ── */}
           <SectionHeader title="Manual Inputs" color="blue" />
           <div className="grid grid-cols-2 gap-4">
