@@ -19,10 +19,21 @@ export default function Incidents() {
   const { data: incidents = [] } = useQuery({ queryKey: ["incidents"], queryFn: () => base44.entities.Incidents.list() });
 
   const createMutation = useMutation({
-    mutationFn: async (data) => {
+    mutationFn: async ({ data, pendingFiles }) => {
       const inc = await base44.entities.Incidents.create(data);
       const user = await base44.auth.me();
       await base44.entities.IncidentAuditTrail.create({ incident_id: inc.id, action: "Incident Created", details: `Incident ${data.incident_id} created`, user: user?.email });
+      if (pendingFiles?.length > 0) {
+        for (const file of pendingFiles) {
+          await base44.entities.IncidentAttachments.create({
+            incident_id: inc.id,
+            file_name: file.name,
+            file_url: file.url,
+            file_type: file.type,
+            uploaded_by: user?.email,
+          });
+        }
+      }
       return inc;
     },
     onSuccess: () => {
