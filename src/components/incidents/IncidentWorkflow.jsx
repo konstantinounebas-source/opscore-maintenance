@@ -393,11 +393,30 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
             <div className="space-y-2 border rounded-lg p-3">
               <div className="flex items-center gap-2">
                 <Checkbox id="do_ompi" checked={!!formData.do_ompi} onCheckedChange={v => setFormData(f => ({ ...f, do_ompi: v }))} />
-                <label htmlFor="do_ompi" className="text-sm font-medium cursor-pointer">Create OMPI / Confirmation of Receipt</label>
+                <label htmlFor="do_ompi" className="text-sm font-medium cursor-pointer">Create OMPI</label>
                 {flags.ompi_done && <span className="ml-auto text-xs text-green-600 font-medium">✓ Done</span>}
               </div>
               {formData.do_ompi && (
-                <Textarea placeholder="OMPI notes..." rows={2} value={formData.ompi_notes || ""} onChange={e => setFormData(f => ({ ...f, ompi_notes: e.target.value }))} className="text-sm" />
+                <div className="space-y-2">
+                  <Textarea placeholder="OMPI notes..." rows={2} value={formData.ompi_notes || ""} onChange={e => setFormData(f => ({ ...f, ompi_notes: e.target.value }))} className="text-sm" />
+                  <div>
+                    <Label className="text-xs mb-1 block">Upload OMPI Form</Label>
+                    <FileUploader onUpload={(fd) => setFormData(f => ({ ...f, ompiFile: fd }))} label={formData.ompiFile ? formData.ompiFile.file_name : "Upload Form"} />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Confirmation of Receipt */}
+            <div className="space-y-2 border rounded-lg p-3">
+              <div className="flex items-center gap-2">
+                <Checkbox id="do_confirmation" checked={!!formData.do_confirmation} onCheckedChange={v => setFormData(f => ({ ...f, do_confirmation: v }))} />
+                <label htmlFor="do_confirmation" className="text-sm font-medium cursor-pointer">Confirmation of Receipt</label>
+              </div>
+              {formData.do_confirmation && (
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800 whitespace-pre-line leading-relaxed">
+                  {`Αγαπητοί/ες,\n\nΕπιβεβαιώνουμε τη λήψη της ειδοποίησής σας για το περιστατικό με Κωδικό Αναφοράς (Incident Number): ${incident.incident_id}.\n\nΤο περιστατικό έχει καταγραφεί και έχουν ενεργοποιηθεί οι διαδικασίες διερεύνησης. Παρακαλώ όπως βρείτε επισυναπτόμενο το Outline Management Plan.\nΠαραμένουμε στην διάθεσή σας.\nΜε εκτίμηση,`}
+                </div>
               )}
             </div>
 
