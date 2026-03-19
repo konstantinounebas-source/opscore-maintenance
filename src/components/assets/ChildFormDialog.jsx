@@ -64,8 +64,14 @@ export default function ChildFormDialog({ open, onOpenChange, child, parentAsset
   };
 
   return (
+    <>
+    <ConfirmCloseDialog
+      open={confirmClose}
+      onCancel={() => setConfirmClose(false)}
+      onConfirm={() => { setConfirmClose(false); onOpenChange(false); }}
+    />
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" onInteractOutside={e => { e.preventDefault(); setConfirmClose(true); }}>
         <DialogHeader>
           <DialogTitle>{child ? "Edit Child" : "Add Child"}</DialogTitle>
         </DialogHeader>
@@ -122,11 +128,12 @@ export default function ChildFormDialog({ open, onOpenChange, child, parentAsset
             <Input type="date" value={form.installation_date} onChange={e => setForm(f => ({ ...f, installation_date: e.target.value }))} />
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={() => setConfirmClose(true)}>Cancel</Button>
             <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700">{child ? "Update" : "Add"}</Button>
           </div>
         </form>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
