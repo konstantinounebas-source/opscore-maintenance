@@ -93,8 +93,22 @@ export default function Assets() {
   const assetsWithOpenWO = assets.filter(a => getOpenWorkOrders(a.id) > 0).length;
 
   const exportCSV = () => {
-    const headers = ["asset_id", "asset_name", "category", "asset_type", "active_shelter_id", "location_address", "city", "shelter_type", "status", "installation_date", "delivery_date", "delivery_year", "latitude", "longitude", "notes"];
-    const rows = assets.map(a => [a.asset_id, a.asset_name, a.category || "", a.asset_type || "", a.active_shelter_id || "", a.location_address || "", a.city || "", a.shelter_type || "", a.status || "", a.installation_date || "", a.delivery_date || "", a.delivery_year || "", a.latitude || "", a.longitude || "", a.notes || ""]);
+    const headers = [
+      "asset_id", "active_shelter_id", "shelter_type", "location_address", "city", "status",
+      "latitude", "longitude", "category", "asset_type",
+      "delivery_year", "warranty_base_year", "installation_date", "delivery_date", "notes",
+      "software_warranty_end_date", "preventive_inspection_date", "next_inspection_date",
+      "electronics_warranty_end_date", "materials_warranty_end_date", "structural_warranty_end_date",
+      "description"
+    ];
+    const rows = assets.map(a => [
+      a.asset_id, a.active_shelter_id || "", a.shelter_type || "", a.location_address || "", a.city || "", a.status || "",
+      a.latitude || "", a.longitude || "", a.category || "", a.asset_type || "",
+      a.delivery_year || "", a.warranty_base_year || "", a.installation_date || "", a.delivery_date || "", a.notes || "",
+      a.software_warranty_end_date || "", a.preventive_inspection_date || "", a.next_inspection_date || "",
+      a.electronics_warranty_end_date || "", a.materials_warranty_end_date || "", a.structural_warranty_end_date || "",
+      a.description || ""
+    ]);
     const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
