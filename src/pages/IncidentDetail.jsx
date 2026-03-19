@@ -52,9 +52,10 @@ export default function IncidentDetail() {
     onSuccess: () => { invalidateAll(); setEditOpen(false); toast({ title: "Incident updated" }); },
   });
 
-  const handleEditSave = async (data) => {
-    await addAuditEntry("Incident Updated", "Incident details modified");
+  const handleEditSave = (data) => {
+    addAuditEntry("Incident Updated", "Incident details modified");
     updateIncident.mutate(data);
+    setEditOpen(false);
   };
 
   const handleAddComment = async () => {
