@@ -51,6 +51,20 @@ export default function Assets() {
   const handleSave = async (formData, attachments = []) => {
     if (editingAsset) {
       updateMutation.mutate({ id: editingAsset.id, data: formData });
+      if (attachments.length > 0) {
+        const user = await base44.auth.me();
+        for (const file of attachments) {
+          await base44.entities.AssetAttachments.create({
+            asset_id: editingAsset.id,
+            file_name: file.file_name,
+            file_url: file.file_url,
+            file_type: file.file_type,
+            file_size: file.file_size,
+            uploaded_by: user?.email,
+          });
+        }
+        queryClient.invalidateQueries({ queryKey: ["assets"] });
+      }
     } else {
       // Check for duplicate asset_id or active_shelter_id
       const dupId = formData.asset_id && assets.some(a => a.asset_id === formData.asset_id);
