@@ -194,8 +194,14 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
   };
 
   return (
+    <>
+    <ConfirmCloseDialog
+      open={confirmClose}
+      onCancel={() => setConfirmClose(false)}
+      onConfirm={() => { setConfirmClose(false); onOpenChange(false); }}
+    />
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto" onInteractOutside={e => { e.preventDefault(); setConfirmClose(true); }}>
         <DialogHeader>
           <DialogTitle>{asset ? "Edit Asset" : "Add New Asset"}</DialogTitle>
         </DialogHeader>
@@ -386,11 +392,12 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={() => setConfirmClose(true)}>Cancel</Button>
             <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700">{asset ? "Update" : "Create"}</Button>
           </div>
         </form>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
