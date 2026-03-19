@@ -188,7 +188,7 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
       updates.make_safe_done = true;
       auditLines.push(`✔ Make Safe WO created — SLA: 24h from Confirmation of Receipt`);
       if (formData.makeSafeFile) {
-        await handleAttachUpload(formData.makeSafeFile);
+        await handleAttachUpload(formData.makeSafeFile, "Make Safe WO");
         auditLines.push(`  📎 Attached: ${formData.makeSafeFile.file_name}`);
       }
     }
