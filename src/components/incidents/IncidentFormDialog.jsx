@@ -102,9 +102,9 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
       const asset = assets.find(a => a.id === defaultAssetId);
       if (asset) {
         f.active_shelter_id = asset.asset_id || "";
-        f.province = asset.category || "";
-        f.municipality = asset.city || "";
-        f.shelter_type = asset.shelter_type || asset.asset_type || "";
+        f.province = asset.city || "";
+        f.municipality = asset.municipality || "";
+        f.shelter_type = asset.shelter_type || "";
         f.location_address = asset.location_address || asset.location || "";
         f.title = `${asset.asset_id} - ${f.issue_date}`;
       }
