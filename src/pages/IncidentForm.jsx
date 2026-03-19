@@ -13,12 +13,23 @@ export default function IncidentForm() {
   const { toast } = useToast();
 
   const createMutation = useMutation({
-    mutationFn: async (data) => {
+    mutationFn: async ({ data, pendingFiles }) => {
       const inc = await base44.entities.Incidents.create(data);
       const user = await base44.auth.me();
       await base44.entities.IncidentAuditTrail.create({ incident_id: inc.id, action: "Incident Created", details: `Incident ${data.incident_id} created`, user: user?.email });
       if (assetId) {
         await base44.entities.AssetTransactions.create({ asset_id: assetId, action: "Incident Opened", details: `Incident ${data.incident_id}: ${data.title}`, user: user?.email });
+      }
+      if (pendingFiles?.length > 0) {
+        for (const file of pendingFiles) {
+          await base44.entities.IncidentAttachments.create({
+            incident_id: inc.id,
+            file_name: file.name,
+            file_url: file.url,
+            file_type: file.type,
+            uploaded_by: user?.email,
+          });
+        }
       }
       return inc;
     },
