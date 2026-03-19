@@ -88,7 +88,7 @@ export default function Incidents() {
           searchPlaceholder="Search incidents..."
         />
       </div>
-      <IncidentFormDialog open={formOpen} onOpenChange={setFormOpen} onSave={(data) => createMutation.mutate(data)} />
+      <IncidentFormDialog open={formOpen} onOpenChange={setFormOpen} onSave={(data, pendingFiles) => createMutation.mutate({ data, pendingFiles })} />
     </div>
   );
 }
