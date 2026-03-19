@@ -39,7 +39,7 @@ function SectionHeader({ title, color = "slate" }) {
 
 const emptyForm = {
   asset_id: "", asset_name: "", active_shelter_id: "", location_address: "",
-  city: "", shelter_type: "", status: "Active",
+  city: "", shelter_type: "", category: "", asset_type: "", status: "Active",
   installation_date: "", delivery_date: "", delivery_year: "",
   warranty_base_year: "", software_warranty_end_date: "",
   electronics_warranty_end_date: "", materials_warranty_end_date: "",
