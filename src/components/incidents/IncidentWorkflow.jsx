@@ -253,7 +253,7 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
     }
 
     if (formData.do_checklist && formData.checklistFile) {
-      await handleAttachUpload(formData.checklistFile);
+      await handleAttachUpload(formData.checklistFile, "WO Checklist");
       updates.checklist_done = true;
       auditLines.push(`✔ WO Checklist uploaded — ${formData.checklistFile.file_name}`);
     }
