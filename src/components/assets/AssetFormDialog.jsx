@@ -11,6 +11,7 @@ import FileUploader from "@/components/shared/FileUploader";
 import { Trash2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
+import ConfirmCloseDialog from "@/components/shared/ConfirmCloseDialog";
 
 const CONTRACT_BASE_YEAR = 2023;
 

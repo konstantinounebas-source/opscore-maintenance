@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useConfigLists } from "@/components/shared/useConfigLists";
 import FileUploader from "@/components/shared/FileUploader";
+import ConfirmCloseDialog from "@/components/shared/ConfirmCloseDialog";
 
 const generateIncidentId = (incidents) => {
   const nums = incidents

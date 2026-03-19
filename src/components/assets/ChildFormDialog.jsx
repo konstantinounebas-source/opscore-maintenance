@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useConfigLists } from "@/components/shared/useConfigLists";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import ConfirmCloseDialog from "@/components/shared/ConfirmCloseDialog";
 
 export default function ChildFormDialog({ open, onOpenChange, child, parentAssetId, onSave }) {
   const categories = useConfigLists("Child Category");
