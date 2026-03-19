@@ -49,7 +49,7 @@ export default function IncidentForm() {
       open={true}
       onOpenChange={(open) => { if (!open) navigate(-1); }}
       defaultAssetId={assetId}
-      onSave={(data) => createMutation.mutate(data)}
+      onSave={(data, pendingFiles) => createMutation.mutate({ data, pendingFiles })}
     />
   );
 }
