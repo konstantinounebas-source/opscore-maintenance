@@ -185,7 +185,7 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validate()) {
-      onSave(form);
+      onSave(form, pendingFiles);
       onOpenChange(false);
     }
   };
