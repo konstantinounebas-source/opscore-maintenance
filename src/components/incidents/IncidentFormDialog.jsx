@@ -314,8 +314,8 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
               )}
             </Field>
             <Field label="Δήμος">
-              <Select value={form.municipality} onValueChange={v => set("municipality", v)} disabled={!!form.related_asset_id}>
-                <SelectTrigger className={form.related_asset_id ? "bg-slate-50 text-slate-600" : ""}>
+              <Select value={form.municipality} onValueChange={v => set("municipality", v)}>
+                <SelectTrigger>
                   <SelectValue placeholder="Επιλογή δήμου..." />
                 </SelectTrigger>
                 <SelectContent>{municipalities.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
