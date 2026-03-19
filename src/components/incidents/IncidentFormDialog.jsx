@@ -67,6 +67,9 @@ const emptyForm = () => ({
 });
 
 export default function IncidentFormDialog({ open, onOpenChange, incident, onSave, defaultAssetId }) {
+  const fileRef = useRef(null);
+  const [uploading, setUploading] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState([]); // {name, url, type, preview}
   const incidentSources = useConfigLists("Incident Sources");
   const structuralIssues = useConfigLists("Structural Issues");
   const electricalIssues = useConfigLists("Electrical Issues");
