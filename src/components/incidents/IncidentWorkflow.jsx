@@ -430,8 +430,11 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
                 {flags.confirmation_done && <span className="ml-auto text-xs text-green-600 font-medium">✓ Done</span>}
               </div>
               {formData.do_confirmation && (
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800 whitespace-pre-line leading-relaxed">
-                  {`Αγαπητοί/ες,\n\nΕπιβεβαιώνουμε τη λήψη της ειδοποίησής σας για το περιστατικό με Κωδικό Αναφοράς (Incident Number): ${incident.incident_id}.\n\nΤο περιστατικό έχει καταγραφεί και έχουν ενεργοποιηθεί οι διαδικασίες διερεύνησης. Παρακαλώ όπως βρείτε επισυναπτόμενο το Outline Management Plan.\nΠαραμένουμε στην διάθεσή σας.\nΜε εκτίμηση,`}
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800 leading-relaxed space-y-2">
+                  <p>Αγαπητοί/ες,</p>
+                  <p>Επιβεβαιώνουμε τη λήψη της ειδοποίησής σας για το περιστατικό με Κωδικό Αναφοράς (Incident Number): <strong>{incident.incident_id}</strong>.</p>
+                  <p>Το περιστατικό έχει καταγραφεί και έχουν ενεργοποιηθεί οι διαδικασίες διερεύνησης. Παρακαλώ όπως βρείτε επισυναπτόμενο το Outline Management Plan.</p>
+                  <p>Παραμένουμε στην διάθεσή σας.<br />Με εκτίμηση,</p>
                 </div>
               )}
             </div>
