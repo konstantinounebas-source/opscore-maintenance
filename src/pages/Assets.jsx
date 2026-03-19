@@ -114,6 +114,8 @@ export default function Assets() {
         properties: {
           asset_id: { type: "string" },
           asset_name: { type: "string" },
+          category: { type: "string" },
+          asset_type: { type: "string" },
           active_shelter_id: { type: "string" },
           location_address: { type: "string" },
           city: { type: "string" },
@@ -122,6 +124,9 @@ export default function Assets() {
           installation_date: { type: "string" },
           delivery_date: { type: "string" },
           delivery_year: { type: "number" },
+          latitude: { type: "number" },
+          longitude: { type: "number" },
+          notes: { type: "string" },
         }
       }
     });
