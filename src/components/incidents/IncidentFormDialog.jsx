@@ -449,12 +449,36 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
                   </label>
                 ))}
               </div>
-              <FileUploader
-                onUpload={(url, name) => setForm(f => ({ ...f, evidence_files: [...f.evidence_files, url] }))}
-                label="Επισύναψη αρχείου"
-              />
-              {form.evidence_files.length > 0 && (
-                <p className="text-xs text-slate-500">{form.evidence_files.length} αρχείο(α) επισυνημμένα</p>
+              <div>
+                <input ref={fileRef} type="file" className="hidden" onChange={handleFileSelect} />
+                <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
+                  {uploading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
+                  Επισύναψη αρχείου
+                </Button>
+              </div>
+              {pendingFiles.length > 0 && (
+                <div className="flex flex-wrap gap-3 mt-2">
+                  {pendingFiles.map(f => (
+                    <div key={f.url} className="relative border rounded-lg overflow-hidden w-24 h-24 bg-slate-50 flex flex-col items-center justify-center group">
+                      {f.preview ? (
+                        <img src={f.preview} alt={f.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="flex flex-col items-center justify-center p-2 text-center">
+                          <FileText className="w-6 h-6 text-slate-400 mb-1" />
+                          <span className="text-xs text-slate-500 truncate w-full text-center px-1">{f.name}</span>
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => removePendingFile(f.url)}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="w-2.5 h-2.5" />
+                      </button>
+                      {f.preview && <span className="absolute bottom-0 left-0 right-0 bg-black/40 text-white text-[9px] truncate px-1">{f.name}</span>}
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           </div>
