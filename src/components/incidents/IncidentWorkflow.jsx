@@ -184,11 +184,13 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
 
     if (Object.keys(updates).length > 0) {
       await base44.entities.Incidents.update(incidentId, updates);
-      await addAudit(
-        "Response & Assessment",
-        auditLines.join("\n"),
-        {},
-      );
+    }
+
+    if (auditLines.length > 0) {
+      await addAudit("Response & Assessment", auditLines.join("\n"));
+    }
+
+    if (Object.keys(updates).length > 0 || formData.do_confirmation) {
       refreshAll();
       toast({ title: "Response & Assessment saved" });
     }
