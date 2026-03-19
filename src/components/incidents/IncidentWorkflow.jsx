@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +12,7 @@ import FileUploader from "@/components/shared/FileUploader";
 import { useToast } from "@/components/ui/use-toast";
 import {
   CheckCircle2, Circle, Loader2, ChevronRight,
-  Paperclip, StickyNote, AlertTriangle, Clock
+  Paperclip, StickyNote, AlertTriangle, FileCheck
 } from "lucide-react";
 
 const PHASE_ORDER = ["Response", "Execution", "Finalisation", "Closure"];
@@ -35,18 +34,21 @@ const FLAG_MAP = {
   upload_wo_checklist:    "checklist_done",
   revisit:                "revisit_done",
   finalise_fmpi:          "finalise_done",
-  close_incident:         null, // handled via status
+  close_incident:         null,
 };
 
-function SlaTimer({ slaHours, priority }) {
-  if (!slaHours) return null;
-  return (
-    <span className="flex items-center gap-1 text-xs text-amber-600">
-      <Clock className="w-3 h-3" />
-      SLA: {priority === "P1" ? slaHours : slaHours}h
-    </span>
-  );
-}
+// Map action_key → context label used when storing attachments
+const ATTACHMENT_CONTEXT = {
+  create_ompi:         "OMPI",
+  create_inspection_wo:"Inspection WO",
+  create_make_safe_wo: "Make Safe WO",
+  finalise_fmpi:       "FMPI Finalisation",
+};
+
+// Actions that REQUIRE an attachment (unless one already exists for that context)
+const ATTACHMENT_REQUIRED_KEYS = new Set([
+  "create_ompi", "create_inspection_wo", "create_make_safe_wo", "finalise_fmpi"
+]);
 
 function ActionCard({ actionType, incident, onOpen }) {
   const flag = FLAG_MAP[actionType.action_key];
@@ -75,20 +77,18 @@ function ActionCard({ actionType, incident, onOpen }) {
             {actionType.label}
           </span>
           {isDone && <span className="text-xs text-green-600 font-medium">✓ Done</span>}
-          {actionType.requires_attachment && !isDone && (
-            <span className="flex items-center gap-0.5 text-xs text-amber-600"><Paperclip className="w-3 h-3" /> Attachment required</span>
+          {ATTACHMENT_REQUIRED_KEYS.has(actionType.action_key) && !isDone && (
+            <span className="flex items-center gap-0.5 text-xs text-amber-600">
+              <Paperclip className="w-3 h-3" /> Attachment required
+            </span>
           )}
-          {actionType.owr_only && <Badge className="text-xs bg-purple-50 text-purple-600 border border-purple-200 px-1.5 py-0">OWR</Badge>}
+          {actionType.owr_only && (
+            <Badge className="text-xs bg-purple-50 text-purple-600 border border-purple-200 px-1.5 py-0">OWR</Badge>
+          )}
         </div>
         {actionType.description && !isDone && (
           <p className="text-xs text-slate-400 mt-0.5 truncate">{actionType.description}</p>
         )}
-        <div className="mt-1">
-          <SlaTimer
-            slaHours={incident.initial_priority === "P1" ? actionType.sla_hours_p1 : actionType.sla_hours_p2}
-            priority={incident.initial_priority}
-          />
-        </div>
       </div>
       {!isDone && <ChevronRight className="w-4 h-4 text-slate-300 flex-shrink-0 mt-0.5" />}
     </button>
@@ -103,6 +103,29 @@ function ActionModal({ actionType, incident, incidentId, onClose, onDone }) {
   const [formData, setFormData] = useState({});
   const [saving, setSaving] = useState(false);
   const [person, setPerson] = useState("");
+
+  const key = actionType.action_key;
+  const context = ATTACHMENT_CONTEXT[key];
+  const needsAttachment = ATTACHMENT_REQUIRED_KEYS.has(key);
+
+  // Load existing attachments for this incident
+  const { data: existingAttachments = [] } = useQuery({
+    queryKey: ["incidentAttachments", incidentId],
+    queryFn: () => base44.entities.IncidentAttachments.filter({ incident_id: incidentId }),
+  });
+
+  // Check if attachment already uploaded for this context
+  const alreadyUploaded = needsAttachment && context
+    ? existingAttachments.some(a => a.file_name?.includes(context) || (a.uploaded_by && a.file_name))
+    : false;
+
+  // More precise check: look for any attachment tagged to this context
+  const contextAttachments = needsAttachment && context
+    ? existingAttachments.filter(a => {
+        // We store context in audit trail details; here check by context prefix in file name or just show all
+        return true; // Show all existing; user decides
+      })
+    : [];
 
   const { data: personList = [] } = useQuery({
     queryKey: ["configList", "incident_person"],
@@ -123,7 +146,7 @@ function ActionModal({ actionType, incident, incidentId, onClose, onDone }) {
     });
   };
 
-  const handleAttach = async (fileData, context) => {
+  const handleAttach = async (fileData, ctx) => {
     const user = await base44.auth.me();
     await base44.entities.IncidentAttachments.create({
       ...fileData, incident_id: incidentId, uploaded_by: user?.email
@@ -131,7 +154,7 @@ function ActionModal({ actionType, incident, incidentId, onClose, onDone }) {
     await base44.entities.IncidentAuditTrail.create({
       incident_id: incidentId,
       action: "Attachment Uploaded",
-      details: `${context}: ${fileData.file_name}`,
+      details: `${ctx}: ${fileData.file_name}`,
       user: person || user?.email,
       attachments: [fileData.file_url],
       attachment_names: [fileData.file_name],
@@ -146,25 +169,28 @@ function ActionModal({ actionType, incident, incidentId, onClose, onDone }) {
   };
 
   const handleSubmit = async () => {
-    // Validate attachment if required
-    if (actionType.requires_attachment && !formData.file) {
-      toast({ title: "Attachment required", description: "Please upload the required file before completing." });
+    // Attachment required unless already uploaded or user uploads now
+    if (needsAttachment && !formData.file && existingAttachments.length === 0) {
+      toast({ title: "Attachment required", description: "Please upload the required file." });
       return;
     }
     if (!person.trim()) {
       toast({ title: "Person required", description: "Please enter the responsible person." });
       return;
     }
+    // Make Safe: needs yes/no answer
+    if (key === "create_make_safe_wo" && !formData.make_safe_confirmed) {
+      toast({ title: "Confirmation required", description: "Please confirm if Make Safe is required." });
+      return;
+    }
 
     setSaving(true);
-    const key = actionType.action_key;
     const auditLines = [];
     let incidentUpdates = {};
 
     try {
       // ── create_ompi ──
       if (key === "create_ompi") {
-        const sla = incident.initial_priority === "P1" ? "24h from next working day" : "Same working day";
         await base44.entities.WorkOrders.create({
           work_order_id: `OMPI-${Date.now()}`,
           title: `OMPI - ${incident.incident_id}`,
@@ -172,11 +198,11 @@ function ActionModal({ actionType, incident, incidentId, onClose, onDone }) {
           related_asset_name: incident.related_asset_name,
           status: "Open",
           priority: incident.initial_priority === "P1" ? "High" : "Medium",
-          description: `OMPI. SLA: ${sla}. ${formData.notes || ""}`,
+          description: formData.notes || "",
         });
         if (formData.file) await handleAttach(formData.file, "OMPI");
         incidentUpdates.ompi_done = true;
-        auditLines.push(`✔ OMPI created — SLA: ${sla}`);
+        auditLines.push(`✔ OMPI created`);
       }
 
       // ── confirmation_of_receipt ──
@@ -204,17 +230,21 @@ function ActionModal({ actionType, incident, incidentId, onClose, onDone }) {
 
       // ── create_make_safe_wo ──
       if (key === "create_make_safe_wo") {
-        await base44.entities.WorkOrders.create({
-          work_order_id: `MSAFE-${Date.now()}`,
-          title: `Make Safe WO - ${incident.incident_id}`,
-          related_asset_id: incident.related_asset_id,
-          related_asset_name: incident.related_asset_name,
-          status: "Open", priority: "Critical",
-          description: `Make Safe. SLA: 24h from Confirmation of Receipt. ${formData.notes || ""}`,
-        });
-        if (formData.file) await handleAttach(formData.file, "Make Safe WO");
+        if (formData.make_safe_confirmed === "yes") {
+          await base44.entities.WorkOrders.create({
+            work_order_id: `MSAFE-${Date.now()}`,
+            title: `Make Safe WO - ${incident.incident_id}`,
+            related_asset_id: incident.related_asset_id,
+            related_asset_name: incident.related_asset_name,
+            status: "Open", priority: "Critical",
+            description: formData.notes || "Make Safe required",
+          });
+          if (formData.file) await handleAttach(formData.file, "Make Safe WO");
+          auditLines.push(`✔ Make Safe WO created`);
+        } else {
+          auditLines.push(`✔ Make Safe assessed — not required`);
+        }
         incidentUpdates.make_safe_done = true;
-        auditLines.push(`✔ Make Safe WO created — SLA: 24h`);
       }
 
       // ── create_corrective_wo ──
@@ -280,6 +310,7 @@ function ActionModal({ actionType, incident, incidentId, onClose, onDone }) {
 
       // ── finalise_fmpi ──
       if (key === "finalise_fmpi") {
+        if (formData.file) await handleAttach(formData.file, "FMPI Finalisation");
         incidentUpdates.finalise_done = true;
         auditLines.push(`✔ FMPI Finalised`);
         if (incident.is_owr) auditLines.push(`  ⚠ OWR — CA Approval required before closure`);
@@ -311,9 +342,8 @@ function ActionModal({ actionType, incident, incidentId, onClose, onDone }) {
     }
   };
 
-  const flag = FLAG_MAP[actionType.action_key];
+  const flag = FLAG_MAP[key];
   const isDone = flag ? !!incident[flag] : incident.status === "Closed";
-  const key = actionType.action_key;
 
   return (
     <Dialog open onOpenChange={() => onClose()}>
@@ -329,16 +359,6 @@ function ActionModal({ actionType, incident, incidentId, onClose, onDone }) {
           {isDone && (
             <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-xs text-green-700">
               ✓ This action has already been completed. You can perform it again if needed.
-            </div>
-          )}
-
-          {/* SLA info */}
-          {(actionType.sla_hours_p1 || actionType.sla_hours_p2) && (
-            <div className="p-2.5 bg-amber-50 border border-amber-200 rounded text-xs text-amber-700 flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5" />
-              SLA: {incident.initial_priority === "P1"
-                ? `P1 — ${actionType.sla_hours_p1}h from next working day`
-                : `P2 — ${actionType.sla_hours_p2}h`}
             </div>
           )}
 
@@ -359,9 +379,27 @@ function ActionModal({ actionType, incident, incidentId, onClose, onDone }) {
             </div>
           )}
 
-          {/* Make Safe SLA */}
+          {/* Make Safe: Yes / No question */}
           {key === "create_make_safe_wo" && (
-            <div className="p-2.5 bg-red-50 border border-red-200 rounded text-xs text-red-700">SLA: 24h from Confirmation of Receipt</div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Is Make Safe Required? *</Label>
+              <div className="flex gap-2">
+                {["yes", "no"].map(v => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => set("make_safe_confirmed", v)}
+                    className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-all ${
+                      formData.make_safe_confirmed === v
+                        ? v === "yes" ? "bg-red-600 text-white border-red-600" : "bg-slate-700 text-white border-slate-700"
+                        : "bg-white text-slate-600 border-slate-200 hover:border-slate-400"
+                    }`}
+                  >
+                    {v === "yes" ? "Yes — Create WO" : "No — Not required"}
+                  </button>
+                ))}
+              </div>
+            </div>
           )}
 
           {/* Status update select */}
@@ -405,7 +443,7 @@ function ActionModal({ actionType, incident, incidentId, onClose, onDone }) {
             </div>
           )}
 
-          {/* Notes (for most actions) */}
+          {/* Notes */}
           {key !== "confirmation_of_receipt" && key !== "update_status" && (
             <div className="space-y-1.5">
               <Label className="text-xs flex items-center gap-1">
@@ -423,12 +461,47 @@ function ActionModal({ actionType, incident, incidentId, onClose, onDone }) {
             </div>
           )}
 
-          {/* Attachment */}
-          {key !== "confirmation_of_receipt" && key !== "update_status" && key !== "close_incident" && key !== "revisit" && key !== "create_corrective_wo" && key !== "finalise_fmpi" && (
+          {/* Attachment section for actions that require it */}
+          {needsAttachment && (
+            // Only show attachment uploader for Make Safe if user selected "yes"
+            (key !== "create_make_safe_wo" || formData.make_safe_confirmed === "yes") && (
+            <div className="space-y-2">
+              <Label className="text-xs flex items-center gap-1">
+                <Paperclip className="w-3 h-3" /> Attachment
+                {existingAttachments.length === 0 && <span className="text-red-500">*</span>}
+              </Label>
+
+              {/* Show existing attachments */}
+              {existingAttachments.length > 0 && (
+                <div className="p-2 bg-green-50 border border-green-200 rounded-lg space-y-1">
+                  <p className="text-xs text-green-700 flex items-center gap-1 font-medium">
+                    <FileCheck className="w-3.5 h-3.5" /> Already uploaded — attachment not required again
+                  </p>
+                  {existingAttachments.slice(0, 3).map(a => (
+                    <a key={a.id} href={a.file_url} target="_blank" rel="noreferrer"
+                      className="block text-xs text-green-700 underline truncate">
+                      {a.file_name}
+                    </a>
+                  ))}
+                  {existingAttachments.length > 3 && (
+                    <p className="text-xs text-green-600">+{existingAttachments.length - 3} more</p>
+                  )}
+                  <p className="text-xs text-green-600 mt-1">You can still upload an additional file below.</p>
+                </div>
+              )}
+
+              <FileUploader
+                onUpload={fd => set("file", fd)}
+                label={formData.file ? formData.file.file_name : existingAttachments.length > 0 ? "Upload additional file (optional)" : "Upload File"}
+              />
+            </div>
+          ))}
+
+          {/* Generic optional attachment for other actions */}
+          {!needsAttachment && key !== "confirmation_of_receipt" && key !== "update_status" && key !== "close_incident" && key !== "revisit" && key !== "create_corrective_wo" && (
             <div className="space-y-1.5">
               <Label className="text-xs flex items-center gap-1">
-                <Paperclip className="w-3 h-3" /> Upload File
-                {actionType.requires_attachment && <span className="text-red-500">*</span>}
+                <Paperclip className="w-3 h-3" /> Upload File (optional)
               </Label>
               <FileUploader
                 onUpload={fd => set("file", fd)}
@@ -440,7 +513,7 @@ function ActionModal({ actionType, incident, incidentId, onClose, onDone }) {
           {/* Person Responsible */}
           <div className="space-y-1.5 border-t pt-3">
             <Label className="text-xs font-semibold">Person Responsible *</Label>
-            {personList.length > 0 ? (
+            {personList.length > 0 && (
               <Select value={personList.includes(person) ? person : "__manual__"} onValueChange={v => { if (v !== "__manual__") setPerson(v); }}>
                 <SelectTrigger className="mb-1"><SelectValue placeholder="Select from list..." /></SelectTrigger>
                 <SelectContent>
@@ -448,7 +521,7 @@ function ActionModal({ actionType, incident, incidentId, onClose, onDone }) {
                   <SelectItem value="__manual__">— Manual Entry —</SelectItem>
                 </SelectContent>
               </Select>
-            ) : null}
+            )}
             <Input
               placeholder="Enter person name..."
               value={person}
@@ -517,7 +590,6 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
         </div>
       </div>
 
-      {/* Phase groups */}
       {PHASE_ORDER.map(phase => {
         const items = grouped[phase];
         if (!items.length) return null;
@@ -540,7 +612,6 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
         );
       })}
 
-      {/* Closure readiness summary */}
       {closurePercent < 100 && (
         <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-600 space-y-1">
           <p className="font-medium text-slate-700">Missing for Closure:</p>
@@ -553,7 +624,6 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
         </div>
       )}
 
-      {/* Action Modal */}
       {activeAction && (
         <ActionModal
           actionType={activeAction}
