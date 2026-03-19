@@ -52,9 +52,30 @@ export default function IncidentDetail() {
     onSuccess: () => { invalidateAll(); setEditOpen(false); toast({ title: "Incident updated" }); },
   });
 
-  const handleEditSave = (data) => {
+  const handleEditSave = async (data, pendingFiles) => {
     addAuditEntry("Incident Updated", "Incident details modified");
     updateIncident.mutate(data);
+    if (pendingFiles?.length > 0) {
+      const user = await base44.auth.me();
+      for (const file of pendingFiles) {
+        await base44.entities.IncidentAttachments.create({
+          incident_id: incidentId,
+          file_name: file.name,
+          file_url: file.url,
+          file_type: file.type,
+          uploaded_by: user?.email,
+        });
+        await base44.entities.IncidentAuditTrail.create({
+          incident_id: incidentId,
+          action: "Attachment Uploaded",
+          details: file.name,
+          user: user?.email,
+          attachments: [file.url],
+          attachment_names: [file.name],
+        });
+      }
+      invalidateAll();
+    }
     setEditOpen(false);
   };
 
