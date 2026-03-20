@@ -167,7 +167,7 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
         });
         if (formData.file) await handleAttach(formData.file, "OMPI");
         incidentUpdates.ompi_done = true;
-        await addAudit("OMPI Created", `OMPI created${formData.notes ? `: ${formData.notes}` : ""}`);
+        await addAudit("OMPI Created", `OMPI created${formData.notes ? `: ${formData.notes}` : ""}`, formData.file ? { attachments: [formData.file.file_url], attachment_names: [formData.file.file_name] } : {});
       }
 
       if (key === "create_fmpi") {
@@ -182,28 +182,23 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
         if (formData.file) await handleAttach(formData.file, "FMPI");
         incidentUpdates.owr_fmpi_done = true;
         const details = `FMPI created${formData.notes ? `: ${formData.notes}` : ""}${!incident.is_owr ? " — CA Approval required" : ""}`;
-        await addAudit("FMPI Created", details);
+        await addAudit("FMPI Created", details, formData.file ? { attachments: [formData.file.file_url], attachment_names: [formData.file.file_name] } : {});
       }
 
       if (key === "close_incident") {
         await base44.entities.Incidents.update(incidentId, { status: "Closed" });
         await addAudit("Incident Closed", formData.notes ? `Closing notes: ${formData.notes}` : "Incident closed and resolved.");
-        refreshAll();
-        toast({ title: "Incident Closed" });
-        setSaving(false);
-        onDone();
-        return;
-      }
-
-      if (Object.keys(incidentUpdates).length > 0) {
+      } else if (Object.keys(incidentUpdates).length > 0) {
         await base44.entities.Incidents.update(incidentId, incidentUpdates);
       }
 
       refreshAll();
-      toast({ title: `${step.label} completed` });
+      queryClient.invalidateQueries({ queryKey: ["incidentAttachments", incidentId] });
+      queryClient.invalidateQueries({ queryKey: ["workOrders", incidentId] });
+      toast({ title: key === "close_incident" ? "Incident Closed" : `${step.label} completed` });
+      onDone();
     } finally {
       setSaving(false);
-      onDone();
     }
   };
 
