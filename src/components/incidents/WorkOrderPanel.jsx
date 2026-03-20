@@ -60,6 +60,7 @@ function WOCard({ wo, onClose, onSubmitChecklist }) {
 
 function CreateWOModal({ woType, incident, incidentId, onClose, onDone }) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const config = WO_TYPE_CONFIG[woType];
   const [formData, setFormData] = useState({});
