@@ -379,9 +379,9 @@ export default function WorkOrderPanel({ woType, incident, incidentId }) {
     queryFn: () => base44.entities.WorkOrders.filter({ related_asset_id: incident.related_asset_id }),
   });
 
-  // Filter by title prefix to get WOs for this incident & type
+  // Filter strictly by incident_id in title AND by WO type label
   const wos = allWOs.filter(w =>
-    w.title?.includes(config.label) && w.title?.includes(incident.incident_id)
+    w.title?.includes(`- ${incident.incident_id}`) && w.title?.includes(config.label)
   );
 
   const openCount = wos.filter(w => w.status !== "Completed" && w.status !== "Cancelled").length;
