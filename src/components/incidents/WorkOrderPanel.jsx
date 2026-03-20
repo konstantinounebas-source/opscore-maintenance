@@ -319,7 +319,6 @@ function ChecklistModal({ wo, incidentId, onClose, onDone }) {
     if (!person.trim()) { toast({ title: "Person required" }); return; }
     setSaving(true);
     try {
-      const user = await base44.auth.me();
       if (file) {
         await base44.entities.IncidentAttachments.create({
           ...file, incident_id: incidentId, uploaded_by: user?.email
