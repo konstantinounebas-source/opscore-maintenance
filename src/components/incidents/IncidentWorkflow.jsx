@@ -120,7 +120,7 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
       file_name: fileData.file_name,
       file_type: fileData.file_type || "Document",
       incident_id: incidentId,
-      uploaded_by: user?.email,
+      uploaded_by: user?.email || person,
     });
   };
 
