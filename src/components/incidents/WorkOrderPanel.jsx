@@ -223,6 +223,7 @@ function CreateWOModal({ woType, incident, incidentId, onClose, onDone }) {
 
 function CloseWOModal({ wo, incidentId, onClose, onDone }) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [notes, setNotes] = useState("");
   const [person, setPerson] = useState("");
