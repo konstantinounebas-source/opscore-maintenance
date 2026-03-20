@@ -335,6 +335,9 @@ function ChecklistModal({ wo, incidentId, onClose, onDone }) {
       queryClient.invalidateQueries({ queryKey: ["incidentAttachments", incidentId] });
       toast({ title: "Checklist submitted" });
       onDone();
+    } catch (err) {
+      console.error("ChecklistModal error:", err);
+      toast({ title: "Error", description: err?.message || "Something went wrong. Please try again." });
     } finally {
       setSaving(false);
     }
