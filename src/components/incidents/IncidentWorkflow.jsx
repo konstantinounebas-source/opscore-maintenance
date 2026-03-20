@@ -83,6 +83,7 @@ function AdminStepCard({ step, stepIndex, incident, onOpen }) {
 // ── Admin Action Modal ───────────────────────────────────────────────────────
 function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({});
   const [saving, setSaving] = useState(false);
