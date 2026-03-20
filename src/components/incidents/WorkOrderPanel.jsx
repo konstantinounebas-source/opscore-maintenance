@@ -119,10 +119,12 @@ function CreateWOModal({ woType, incident, incidentId, onClose, onDone }) {
           ? `WO created${formData.notes ? `: ${formData.notes}` : ""}${formData.assigned_to ? ` — Assigned: ${formData.assigned_to}` : ""}`
           : "Make Safe assessed — not required",
         user: person || user?.email,
+        ...(formData.file ? { attachments: [formData.file.file_url], attachment_names: [formData.file.file_name] } : {}),
       });
 
       queryClient.invalidateQueries({ queryKey: ["workOrders", incidentId] });
       queryClient.invalidateQueries({ queryKey: ["incidentAudit", incidentId] });
+      queryClient.invalidateQueries({ queryKey: ["incidentAttachments", incidentId] });
       toast({ title: woCreated ? `${config.label} created` : "Make Safe assessed" });
       onDone();
     } finally {
