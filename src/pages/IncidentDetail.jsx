@@ -117,6 +117,7 @@ export default function IncidentDetail() {
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => navigate("/Incidents")}><ArrowLeft className="w-3.5 h-3.5 mr-1.5" />Back</Button>
             <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}><Pencil className="w-3.5 h-3.5 mr-1.5" />Edit</Button>
+            <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50" onClick={() => setResetOpen(true)}><RotateCcw className="w-3.5 h-3.5 mr-1.5" />Reset</Button>
           </div>
         }
       />
