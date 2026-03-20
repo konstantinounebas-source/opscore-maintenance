@@ -94,6 +94,7 @@ function CreateWOModal({ woType, incident, incidentId, onClose, onDone }) {
         const woId = `${config.prefix}-${Date.now()}`;
         await base44.entities.WorkOrders.create({
           work_order_id: woId,
+          incident_id: incidentId,
           title: `${config.label} - ${incident.incident_id}`,
           related_asset_id: incident.related_asset_id,
           related_asset_name: incident.related_asset_name,
@@ -107,7 +108,11 @@ function CreateWOModal({ woType, incident, incidentId, onClose, onDone }) {
 
         if (formData.file) {
           await base44.entities.IncidentAttachments.create({
-            ...formData.file, incident_id: incidentId, uploaded_by: user?.email
+            file_url: formData.file.file_url,
+            file_name: formData.file.file_name,
+            file_type: formData.file.file_type || "Document",
+            incident_id: incidentId,
+            uploaded_by: user?.email,
           });
         }
       }
@@ -127,6 +132,9 @@ function CreateWOModal({ woType, incident, incidentId, onClose, onDone }) {
       queryClient.invalidateQueries({ queryKey: ["incidentAttachments", incidentId] });
       toast({ title: woCreated ? `${config.label} created` : "Make Safe assessed" });
       onDone();
+    } catch (err) {
+      console.error("CreateWOModal error:", err);
+      toast({ title: "Error", description: err?.message || "Something went wrong. Please try again." });
     } finally {
       setSaving(false);
     }
