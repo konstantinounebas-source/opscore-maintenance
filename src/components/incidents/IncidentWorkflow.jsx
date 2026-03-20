@@ -113,26 +113,22 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
     });
   };
 
-  const handleAttach = async (fileData, ctx) => {
+  const uploadAttachment = async (fileData) => {
     const user = await base44.auth.me();
     await base44.entities.IncidentAttachments.create({
-      ...fileData, incident_id: incidentId, uploaded_by: user?.email
-    });
-    await base44.entities.IncidentAuditTrail.create({
+      file_url: fileData.file_url,
+      file_name: fileData.file_name,
+      file_type: fileData.file_type || "Document",
       incident_id: incidentId,
-      action: "Attachment Uploaded",
-      details: `${ctx}: ${fileData.file_name}`,
-      user: person || user?.email,
-      attachments: [fileData.file_url],
-      attachment_names: [fileData.file_name],
+      uploaded_by: user?.email,
     });
-    queryClient.invalidateQueries({ queryKey: ["incidentAttachments", incidentId] });
-    queryClient.invalidateQueries({ queryKey: ["incidentAudit", incidentId] });
   };
 
   const refreshAll = () => {
     queryClient.invalidateQueries({ queryKey: ["incident", incidentId] });
     queryClient.invalidateQueries({ queryKey: ["incidentAudit", incidentId] });
+    queryClient.invalidateQueries({ queryKey: ["incidentAttachments", incidentId] });
+    queryClient.invalidateQueries({ queryKey: ["workOrders", incidentId] });
   };
 
   const handleSubmit = async () => {
@@ -147,7 +143,7 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
 
     setSaving(true);
     try {
-      let incidentUpdates = {};
+      const incidentUpdates = {};
 
       if (key === "confirmation_of_receipt") {
         const msg = `Αγαπητοί/ες,\n\nΕπιβεβαιώνουμε τη λήψη της ειδοποίησής σας για το περιστατικό με Κωδικό Αναφοράς (Incident Number): ${incident.incident_id}.\n\nΤο περιστατικό έχει καταγραφεί και έχουν ενεργοποιηθεί οι διαδικασίες διερεύνησης. Παρακαλώ όπως βρείτε επισυναπτόμενο το Outline Management Plan.\nΠαραμένουμε στην διάθεσή σας.\nΜε εκτίμηση,`;
@@ -158,6 +154,7 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
       if (key === "create_ompi") {
         await base44.entities.WorkOrders.create({
           work_order_id: `OMPI-${Date.now()}`,
+          incident_id: incidentId,
           title: `OMPI - ${incident.incident_id}`,
           related_asset_id: incident.related_asset_id,
           related_asset_name: incident.related_asset_name,
@@ -165,24 +162,34 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
           priority: incident.initial_priority === "P1" ? "High" : "Medium",
           description: formData.notes || "",
         });
-        if (formData.file) await handleAttach(formData.file, "OMPI");
+        if (formData.file) await uploadAttachment(formData.file);
         incidentUpdates.ompi_done = true;
-        await addAudit("OMPI Created", `OMPI created${formData.notes ? `: ${formData.notes}` : ""}`, formData.file ? { attachments: [formData.file.file_url], attachment_names: [formData.file.file_name] } : {});
+        await addAudit(
+          "OMPI Created",
+          `OMPI created${formData.notes ? `: ${formData.notes}` : ""}`,
+          formData.file ? { attachments: [formData.file.file_url], attachment_names: [formData.file.file_name] } : {}
+        );
       }
 
       if (key === "create_fmpi") {
         await base44.entities.WorkOrders.create({
           work_order_id: `FMPI-${Date.now()}`,
+          incident_id: incidentId,
           title: `FMPI - ${incident.incident_id}`,
           related_asset_id: incident.related_asset_id,
           related_asset_name: incident.related_asset_name,
-          status: "Open", priority: "High",
+          status: "Open",
+          priority: "High",
           description: `FMPI${incident.is_owr ? " (OWR)" : ""}. ${formData.notes || ""}`,
         });
-        if (formData.file) await handleAttach(formData.file, "FMPI");
+        if (formData.file) await uploadAttachment(formData.file);
         incidentUpdates.owr_fmpi_done = true;
         const details = `FMPI created${formData.notes ? `: ${formData.notes}` : ""}${!incident.is_owr ? " — CA Approval required" : ""}`;
-        await addAudit("FMPI Created", details, formData.file ? { attachments: [formData.file.file_url], attachment_names: [formData.file.file_name] } : {});
+        await addAudit(
+          "FMPI Created",
+          details,
+          formData.file ? { attachments: [formData.file.file_url], attachment_names: [formData.file.file_name] } : {}
+        );
       }
 
       if (key === "close_incident") {
@@ -193,10 +200,11 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
       }
 
       refreshAll();
-      queryClient.invalidateQueries({ queryKey: ["incidentAttachments", incidentId] });
-      queryClient.invalidateQueries({ queryKey: ["workOrders", incidentId] });
       toast({ title: key === "close_incident" ? "Incident Closed" : `${step.label} completed` });
       onDone();
+    } catch (err) {
+      console.error("AdminActionModal error:", err);
+      toast({ title: "Error", description: err?.message || "Something went wrong. Please try again." });
     } finally {
       setSaving(false);
     }
