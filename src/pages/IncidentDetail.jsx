@@ -6,7 +6,7 @@ import TopHeader from "@/components/layout/TopHeader";
 import StatusBadge from "@/components/shared/StatusBadge";
 import AuditLog from "@/components/shared/AuditLog";
 import IncidentFormDialog from "@/components/incidents/IncidentFormDialog";
-import IncidentWorkflow from "@/components/incidents/IncidentWorkflow.jsx";
+import IncidentWorkflow from "@/components/incidents/IncidentWorkflow";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
