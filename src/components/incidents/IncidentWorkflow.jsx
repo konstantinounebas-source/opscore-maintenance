@@ -107,7 +107,6 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
   const set = (k, v) => setFormData(p => ({ ...p, [k]: v }));
 
   const addAudit = async (action, details, extra = {}) => {
-    const user = await base44.auth.me();
     await base44.entities.IncidentAuditTrail.create({
       incident_id: incidentId, action, details,
       user: person || user?.email,
@@ -116,7 +115,6 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
   };
 
   const uploadAttachment = async (fileData) => {
-    const user = await base44.auth.me();
     await base44.entities.IncidentAttachments.create({
       file_url: fileData.file_url,
       file_name: fileData.file_name,
