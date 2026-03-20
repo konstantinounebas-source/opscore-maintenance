@@ -144,6 +144,7 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
     setSaving(true);
     try {
       const incidentUpdates = {};
+      // user is available from useAuth() context
 
       if (key === "confirmation_of_receipt") {
         const msg = `Αγαπητοί/ες,\n\nΕπιβεβαιώνουμε τη λήψη της ειδοποίησής σας για το περιστατικό με Κωδικό Αναφοράς (Incident Number): ${incident.incident_id}.\n\nΤο περιστατικό έχει καταγραφεί και έχουν ενεργοποιηθεί οι διαδικασίες διερεύνησης. Παρακαλώ όπως βρείτε επισυναπτόμενο το Outline Management Plan.\nΠαραμένουμε στην διάθεσή σας.\nΜε εκτίμηση,`;
