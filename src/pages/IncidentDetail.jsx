@@ -229,6 +229,7 @@ export default function IncidentDetail() {
         </div>
       </div>
       <IncidentFormDialog open={editOpen} onOpenChange={setEditOpen} incident={incident} onSave={handleEditSave} />
+      <ResetIncidentDialog open={resetOpen} onOpenChange={setResetOpen} incident={incident} incidentId={incidentId} />
     </div>
   );
 }
