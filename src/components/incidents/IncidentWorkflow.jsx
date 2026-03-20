@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import FileUploader from "@/components/shared/FileUploader";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/lib/AuthContext";
 import WorkOrderPanel from "@/components/incidents/WorkOrderPanel";
 import {
   CheckCircle2, Circle, Loader2, ChevronRight,
