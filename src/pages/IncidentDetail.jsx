@@ -15,6 +15,7 @@ import { format } from "date-fns";
 import { ArrowLeft, Pencil, Send, ChevronDown, ChevronUp, Paperclip, Loader2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import IncidentDocuments from "@/components/incidents/IncidentDocuments";
+import ResetIncidentDialog from "@/components/incidents/ResetIncidentDialog";
 
 export default function IncidentDetail() {
   const params = new URLSearchParams(window.location.search);
