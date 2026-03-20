@@ -241,7 +241,6 @@ function CloseWOModal({ wo, incidentId, onClose, onDone }) {
     if (!person.trim()) { toast({ title: "Person required" }); return; }
     setSaving(true);
     try {
-      const user = await base44.auth.me();
       await base44.entities.WorkOrders.update(wo.id, { status: "Completed" });
       await base44.entities.IncidentAuditTrail.create({
         incident_id: incidentId,
