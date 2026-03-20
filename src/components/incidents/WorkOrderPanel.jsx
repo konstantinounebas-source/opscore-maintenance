@@ -89,7 +89,6 @@ function CreateWOModal({ woType, incident, incidentId, onClose, onDone }) {
 
     setSaving(true);
     try {
-      const user = await base44.auth.me();
       let woCreated = false;
 
       if (woType !== "make_safe" || formData.make_safe_confirmed === "yes") {
