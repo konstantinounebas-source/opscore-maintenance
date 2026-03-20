@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
-import { ArrowLeft, Pencil, Send, ChevronDown, ChevronUp, Paperclip, Loader2 } from "lucide-react";
+import { ArrowLeft, Pencil, Send, ChevronDown, ChevronUp, Paperclip, Loader2, RotateCcw } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import IncidentDocuments from "@/components/incidents/IncidentDocuments";
 import ResetIncidentDialog from "@/components/incidents/ResetIncidentDialog";
