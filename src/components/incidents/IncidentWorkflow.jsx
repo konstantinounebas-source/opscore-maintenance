@@ -68,7 +68,7 @@ function AdminStepCard({ step, stepIndex, incident, onOpen }) {
         }
       </div>
       <div className="flex-1 flex items-center gap-2">
-        <span className={`text-sm font-medium ${done ? "line-through text-slate-400" : locked ? "text-slate-400" : "text-slate-800"}`}>
+        <span className={`text-sm font-medium ${done ? "text-slate-600" : locked ? "text-slate-400" : "text-slate-800"}`}>
           {step.label}
         </span>
         {done && <span className="text-xs text-green-600 font-medium">✓ Done</span>}
