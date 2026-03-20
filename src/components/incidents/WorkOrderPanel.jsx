@@ -241,6 +241,7 @@ function CloseWOModal({ wo, incidentId, onClose, onDone }) {
       });
       queryClient.invalidateQueries({ queryKey: ["workOrders", incidentId] });
       queryClient.invalidateQueries({ queryKey: ["incidentAudit", incidentId] });
+      queryClient.invalidateQueries({ queryKey: ["incident", incidentId] });
       toast({ title: "Work Order closed" });
       onDone();
     } finally {
