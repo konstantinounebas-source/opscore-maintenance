@@ -321,6 +321,7 @@ function ChecklistModal({ wo, incidentId, onClose, onDone }) {
         attachment_names: file ? [file.file_name] : [],
       });
       queryClient.invalidateQueries({ queryKey: ["incidentAudit", incidentId] });
+      queryClient.invalidateQueries({ queryKey: ["incidentAttachments", incidentId] });
       toast({ title: "Checklist submitted" });
       onDone();
     } finally {
