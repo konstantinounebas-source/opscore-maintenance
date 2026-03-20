@@ -300,6 +300,7 @@ function CloseWOModal({ wo, incidentId, onClose, onDone }) {
 
 function ChecklistModal({ wo, incidentId, onClose, onDone }) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [notes, setNotes] = useState("");
   const [file, setFile] = useState(null);
