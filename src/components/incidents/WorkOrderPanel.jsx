@@ -252,6 +252,9 @@ function CloseWOModal({ wo, incidentId, onClose, onDone }) {
       queryClient.invalidateQueries({ queryKey: ["incident", incidentId] });
       toast({ title: "Work Order closed" });
       onDone();
+    } catch (err) {
+      console.error("CloseWOModal error:", err);
+      toast({ title: "Error", description: err?.message || "Something went wrong. Please try again." });
     } finally {
       setSaving(false);
     }
