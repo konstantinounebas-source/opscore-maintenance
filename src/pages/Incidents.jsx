@@ -136,11 +136,12 @@ export default function Incidents() {
         }
       />
       <div className="p-6">
-        <DataTable
+        <DraggableDataTable
           columns={columns}
           data={incidents}
           onRowClick={(row) => navigate(`/IncidentDetail?id=${row.id}`)}
           searchPlaceholder="Search incidents..."
+          storageKey="incidents_table_columns_order"
         />
       </div>
       <IncidentFormDialog open={formOpen} onOpenChange={setFormOpen} onSave={(data, pendingFiles) => createMutation.mutate({ data, pendingFiles })} />
