@@ -139,7 +139,7 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
   };
 
   const handleSubmit = async () => {
-    if (!person.trim()) {
+    if (key !== "ca_status" && !person.trim()) {
       toast({ title: "Person required", description: "Please enter the responsible person." });
       return;
     }
