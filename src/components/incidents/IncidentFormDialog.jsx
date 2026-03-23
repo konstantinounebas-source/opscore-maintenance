@@ -323,7 +323,7 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
               <Select value={form.related_asset_id} onValueChange={handleAssetChange}>
                 <SelectTrigger><SelectValue placeholder="Επιλογή asset..." /></SelectTrigger>
                 <SelectContent>
-                  {assets.map(a => <SelectItem key={a.id} value={a.id}>{a.asset_id} — {a.asset_name}</SelectItem>)}
+                  {assets.map(a => <SelectItem key={a.id} value={a.id}>{a.asset_id} {a.asset_name ? `- ${a.asset_name}` : ""}</SelectItem>)}
                 </SelectContent>
               </Select>
             </Field>
