@@ -384,16 +384,21 @@ export default function WorkOrderPanel({ woType, incident, incidentId }) {
   const totalCount = wos.length;
 
   return (
-    <div className="border border-slate-200 rounded-lg overflow-hidden">
+    <div className={`border rounded-lg overflow-hidden ${isCorrectiveLocked ? "border-slate-100 opacity-60" : "border-slate-200"}`}>
       <button
-        onClick={() => setExpanded(e => !e)}
-        className="w-full flex items-center justify-between px-3 py-2.5 bg-white hover:bg-slate-50 transition-colors"
+        onClick={() => !isCorrectiveLocked && setExpanded(e => !e)}
+        className={`w-full flex items-center justify-between px-3 py-2.5 bg-white transition-colors ${isCorrectiveLocked ? "cursor-not-allowed" : "hover:bg-slate-50"}`}
       >
         <div className="flex items-center gap-2">
           <span className={`text-xs font-semibold px-2 py-0.5 rounded border ${config.color}`}>
             {config.label}
           </span>
-          {totalCount > 0 && (
+          {isCorrectiveLocked && (
+            <span className="text-xs text-slate-400 flex items-center gap-1">
+              <Lock className="w-3 h-3" /> Requires CA Approval
+            </span>
+          )}
+          {!isCorrectiveLocked && totalCount > 0 && (
             <span className="text-xs text-slate-500">
               {totalCount} WO{totalCount > 1 ? "s" : ""}
               {openCount > 0 && <span className="text-amber-600 ml-1">({openCount} open)</span>}
@@ -401,13 +406,15 @@ export default function WorkOrderPanel({ woType, incident, incidentId }) {
           )}
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={e => { e.stopPropagation(); setShowCreate(true); }}
-            className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 font-medium"
-          >
-            <Plus className="w-3.5 h-3.5" /> Create WO
-          </button>
-          {expanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+          {!isCorrectiveLocked && (
+            <button
+              onClick={e => { e.stopPropagation(); setShowCreate(true); }}
+              className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+            >
+              <Plus className="w-3.5 h-3.5" /> Create WO
+            </button>
+          )}
+          {!isCorrectiveLocked && (expanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />)}
         </div>
       </button>
 
