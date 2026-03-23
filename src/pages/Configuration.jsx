@@ -50,22 +50,26 @@ const ASSET_LIST_TYPES = [
 function ListManager({ listTypes, allItems, queryClient }) {
   const [selectedType, setSelectedType] = useState(listTypes[0].key);
   const [newValue, setNewValue] = useState("");
+  const [editingId, setEditingId] = useState(null);
+  const [editValue, setEditValue] = useState("");
+  const [dragOverId, setDragOverId] = useState(null);
+  const dragSrcId = React.useRef(null);
 
   const items = allItems.filter(i => i.list_type === selectedType).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.ConfigLists.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["configLists"] });
-      setNewValue("");
-    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["configLists"] }); setNewValue(""); },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.ConfigLists.update(id, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["configLists"] }),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.ConfigLists.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["configLists"] });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["configLists"] }),
   });
 
   const handleAdd = () => {
@@ -73,10 +77,38 @@ function ListManager({ listTypes, allItems, queryClient }) {
     createMutation.mutate({ list_type: selectedType, value: newValue.trim(), is_active: true, sort_order: items.length });
   };
 
+  const startEdit = (item) => { setEditingId(item.id); setEditValue(item.value); };
+  const saveEdit = (item) => {
+    if (editValue.trim() && editValue.trim() !== item.value)
+      updateMutation.mutate({ id: item.id, data: { value: editValue.trim() } });
+    setEditingId(null);
+  };
+  const cancelEdit = () => setEditingId(null);
+
+  const toggleActive = (item) => updateMutation.mutate({ id: item.id, data: { is_active: !item.is_active } });
+
+  // Drag handlers
+  const onDragStart = (e, item) => { dragSrcId.current = item.id; e.dataTransfer.effectAllowed = "move"; };
+  const onDragOver = (e, item) => { e.preventDefault(); setDragOverId(item.id); };
+  const onDrop = (e, dropItem) => {
+    e.preventDefault();
+    const srcId = dragSrcId.current;
+    if (!srcId || srcId === dropItem.id) { setDragOverId(null); return; }
+    const srcIdx = items.findIndex(i => i.id === srcId);
+    const dstIdx = items.findIndex(i => i.id === dropItem.id);
+    const reordered = [...items];
+    const [moved] = reordered.splice(srcIdx, 1);
+    reordered.splice(dstIdx, 0, moved);
+    reordered.forEach((item, idx) => updateMutation.mutate({ id: item.id, data: { sort_order: idx } }));
+    dragSrcId.current = null;
+    setDragOverId(null);
+  };
+  const onDragEnd = () => { dragSrcId.current = null; setDragOverId(null); };
+
   return (
     <>
       <div className="flex items-center gap-4 mb-6">
-        <Select value={selectedType} onValueChange={setSelectedType}>
+        <Select value={selectedType} onValueChange={(v) => { setSelectedType(v); setEditingId(null); }}>
           <SelectTrigger className="w-64"><SelectValue /></SelectTrigger>
           <SelectContent>
             {listTypes.map(t => <SelectItem key={t.key} value={t.key}>{t.label}</SelectItem>)}
@@ -87,17 +119,67 @@ function ListManager({ listTypes, allItems, queryClient }) {
       <div className="space-y-2 mb-4">
         {items.length === 0 && <p className="text-sm text-slate-400 py-4">No items configured. Add values below.</p>}
         {items.map(item => (
-          <div key={item.id} className="flex items-center justify-between px-4 py-2.5 bg-slate-50 rounded-lg">
-            <span className="text-sm text-slate-700">{item.value}</span>
-            <Button variant="ghost" size="sm" onClick={() => deleteMutation.mutate(item.id)}>
-              <Trash2 className="w-3.5 h-3.5 text-red-500" />
-            </Button>
+          <div
+            key={item.id}
+            draggable
+            onDragStart={e => onDragStart(e, item)}
+            onDragOver={e => onDragOver(e, item)}
+            onDrop={e => onDrop(e, item)}
+            onDragEnd={onDragEnd}
+            className={`flex items-center justify-between px-3 py-2.5 rounded-lg border transition-colors group
+              ${!item.is_active ? "bg-slate-50 opacity-60" : "bg-white"}
+              ${dragOverId === item.id ? "border-indigo-400 bg-indigo-50" : "border-transparent hover:border-slate-200"}
+            `}
+          >
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              {/* Drag handle */}
+              <span className="opacity-0 group-hover:opacity-50 cursor-grab active:cursor-grabbing shrink-0">
+                <GripVertical className="w-4 h-4 text-slate-400" />
+              </span>
+              {editingId === item.id ? (
+                <Input
+                  value={editValue}
+                  onChange={e => setEditValue(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter") saveEdit(item); if (e.key === "Escape") cancelEdit(); }}
+                  className="h-7 text-sm max-w-xs"
+                  autoFocus
+                />
+              ) : (
+                <span className={`text-sm ${item.is_active ? "text-slate-700" : "text-slate-400 line-through"}`}>{item.value}</span>
+              )}
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              {editingId === item.id ? (
+                <>
+                  <Button variant="ghost" size="sm" onClick={() => saveEdit(item)} className="h-7 w-7 p-0 text-green-600 hover:text-green-700">
+                    <Check className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={cancelEdit} className="h-7 w-7 p-0 text-slate-400 hover:text-slate-600">
+                    <X className="w-3.5 h-3.5" />
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button variant="ghost" size="sm" onClick={() => toggleActive(item)} title={item.is_active ? "Deactivate" : "Activate"} className="h-7 w-7 p-0">
+                    {item.is_active
+                      ? <ToggleRight className="w-4 h-4 text-green-500" />
+                      : <ToggleLeft className="w-4 h-4 text-slate-400" />}
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => startEdit(item)} className="h-7 w-7 p-0 text-slate-400 hover:text-indigo-600">
+                    <Pencil className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => deleteMutation.mutate(item.id)} className="h-7 w-7 p-0 text-slate-400 hover:text-red-500">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
         ))}
       </div>
 
       <div className="flex gap-2">
-        <Input value={newValue} onChange={e => setNewValue(e.target.value)} placeholder={`Add new value...`} className="max-w-sm" onKeyDown={e => e.key === "Enter" && handleAdd()} />
+        <Input value={newValue} onChange={e => setNewValue(e.target.value)} placeholder="Add new value..." className="max-w-sm" onKeyDown={e => e.key === "Enter" && handleAdd()} />
         <Button className="bg-indigo-600 hover:bg-indigo-700 gap-1.5" onClick={handleAdd}>
           <Plus className="w-3.5 h-3.5" /> Add
         </Button>
