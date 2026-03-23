@@ -196,7 +196,6 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
     if (form.probable_cause === "Άλλη αιτία" && !form.probable_cause_other) e.probable_cause_other = true;
     if (!form.initial_priority) e.initial_priority = true;
     if (form.is_owr === null) e.is_owr = true;
-    if (form.requires_make_safe === null) e.requires_make_safe = true;
     setErrors(e);
     return Object.keys(e).length === 0;
   };
