@@ -34,7 +34,11 @@ const WO_PANELS = [
 ];
 
 function isStepDone(step, incident) {
-  if (step.key === "ca_status") return incident.ca_status === "Approved" || incident.ca_status === "Not Approved";
+  if (step.key === "ca_status") {
+    // If not out of warranty, skip this step entirely (treat as done)
+    if (incident.out_of_warranty !== "Yes") return true;
+    return incident.ca_status === "Approved" || incident.ca_status === "Not Approved";
+  }
   if (step.flag) return !!incident[step.flag];
   return incident.status === "Closed";
 }
