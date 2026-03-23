@@ -153,6 +153,10 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
       const incidentUpdates = {};
       // user is available from useAuth() context
 
+      if (formData.out_of_warranty) {
+        incidentUpdates.out_of_warranty = formData.out_of_warranty;
+      }
+
       if (key === "confirmation_of_receipt") {
         const msg = `Αγαπητοί/ες,\n\nΕπιβεβαιώνουμε τη λήψη της ειδοποίησής σας για το περιστατικό με Κωδικό Αναφοράς (Incident Number): ${incident.incident_id}.\n\nΤο περιστατικό έχει καταγραφεί και έχουν ενεργοποιηθεί οι διαδικασίες διερεύνησης.\nΠαραμένουμε στην διάθεσή σας.\nΜε εκτίμηση,`;
         incidentUpdates.confirmation_done = true;
