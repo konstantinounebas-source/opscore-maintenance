@@ -119,6 +119,55 @@ export default function Assets() {
   const assetsWithOpenIncidents = assets.filter(a => getOpenIncidents(a.id) > 0).length;
   const assetsWithOpenWO = assets.filter(a => getOpenWorkOrders(a.id) > 0).length;
 
+  // Unique filter options
+  const uniqueCategories = [...new Set(assets.map(a => a.category).filter(Boolean))].sort();
+  const uniqueCities = [...new Set(assets.map(a => a.city).filter(Boolean))].sort();
+  const uniqueShelterTypes = [...new Set(assets.map(a => a.shelter_type).filter(Boolean))].sort();
+  const uniqueStatuses = [...new Set(assets.map(a => a.status).filter(Boolean))].sort();
+
+  // Filtered data
+  const filteredAssets = useMemo(() => {
+    return assets.filter(a => {
+      const childs = getChildCount(a.id);
+      const openInc = getOpenIncidents(a.id);
+      const openWO = getOpenWorkOrders(a.id);
+
+      // Text search: asset_id, shelter_id, category, city, shelter_type, status, delivery_date
+      if (searchText.trim()) {
+        const q = searchText.toLowerCase();
+        const matches = [
+          a.asset_id, a.active_shelter_id, a.category, a.city,
+          a.shelter_type, a.status, a.delivery_date
+        ].some(v => v && String(v).toLowerCase().includes(q));
+        if (!matches) return false;
+      }
+
+      if (filterCategory !== "all" && a.category !== filterCategory) return false;
+      if (filterCity !== "all" && a.city !== filterCity) return false;
+      if (filterShelterType !== "all" && a.shelter_type !== filterShelterType) return false;
+      if (filterStatus !== "all" && a.status !== filterStatus) return false;
+      if (filterDeliveryDate && a.delivery_date !== filterDeliveryDate) return false;
+      if (filterChilds === "with" && childs === 0) return false;
+      if (filterChilds === "without" && childs > 0) return false;
+      if (filterOpenIncidents === "with" && openInc === 0) return false;
+      if (filterOpenIncidents === "without" && openInc > 0) return false;
+      if (filterOpenWO === "with" && openWO === 0) return false;
+      if (filterOpenWO === "without" && openWO > 0) return false;
+
+      return true;
+    });
+  }, [assets, searchText, filterCategory, filterCity, filterShelterType, filterStatus, filterDeliveryDate, filterChilds, filterOpenIncidents, filterOpenWO, childAssets, incidents, workOrders]);
+
+  const hasActiveFilters = searchText || filterCategory !== "all" || filterCity !== "all" ||
+    filterShelterType !== "all" || filterStatus !== "all" || filterDeliveryDate ||
+    filterChilds !== "all" || filterOpenIncidents !== "all" || filterOpenWO !== "all";
+
+  const clearFilters = () => {
+    setSearchText(""); setFilterCategory("all"); setFilterCity("all");
+    setFilterShelterType("all"); setFilterStatus("all"); setFilterDeliveryDate("");
+    setFilterChilds("all"); setFilterOpenIncidents("all"); setFilterOpenWO("all");
+  };
+
   const exportCSV = () => {
     const headers = [
       "asset_id", "active_shelter_id", "shelter_type", "location_address", "city", "status",
