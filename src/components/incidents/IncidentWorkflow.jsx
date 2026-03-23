@@ -243,6 +243,35 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
             </div>
           )}
 
+          {key === "ca_status" && (
+            <div className="space-y-3">
+              <p className="text-xs text-slate-500">
+                The CA must review and set an approval status before the Corrective Work Order can proceed. If left pending, the corrective WO will remain locked.
+              </p>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">CA Approval Decision *</Label>
+                <div className="flex gap-3">
+                  {["Approved", "Not Approved"].map(opt => (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => set("ca_status", opt)}
+                      className={`flex-1 py-2.5 rounded-lg border text-sm font-medium transition-all ${
+                        formData.ca_status === opt
+                          ? opt === "Approved"
+                            ? "bg-green-600 text-white border-green-600"
+                            : "bg-red-600 text-white border-red-600"
+                          : "bg-white text-slate-600 border-slate-200 hover:border-slate-400"
+                      }`}
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
           {key === "create_ompi" && (
             <div className="space-y-2">
               <Label className="text-xs flex items-center gap-1">
