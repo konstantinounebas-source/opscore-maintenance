@@ -49,9 +49,16 @@ export default function AssetDetail() {
           asset_id: assetId,
           file_name: file.file_name,
           file_url: file.file_url,
-          file_type: file.file_type,
+          file_type: file.file_type || "Document",
           file_size: file.file_size,
+          doc_label: file.doc_label,
           uploaded_by: user?.email,
+        });
+        await base44.entities.AssetTransactions.create({
+          asset_id: assetId,
+          action: "Document Uploaded",
+          details: `${file.doc_label || file.file_type || "Document"}: ${file.file_name}`,
+          user: user?.email,
         });
       }
       const changes = Object.entries(data).filter(([key, val]) => asset[key] !== val).map(([key, val]) => `${key}: ${asset[key]} → ${val}`).join(", ");
