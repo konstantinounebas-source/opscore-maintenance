@@ -74,7 +74,12 @@ function AdminStepCard({ step, stepIndex, incident, onOpen }) {
         <span className={`text-sm font-medium ${done ? "text-slate-600" : locked ? "text-slate-400" : "text-slate-800"}`}>
           {step.label}
         </span>
-        {done && <span className="text-xs text-green-600 font-medium">✓ Done</span>}
+        {done && step.key === "ca_status" && (
+          <span className={`text-xs font-medium px-2 py-0.5 rounded ${incident.ca_status === "Approved" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+            {incident.ca_status}
+          </span>
+        )}
+        {done && step.key !== "ca_status" && <span className="text-xs text-green-600 font-medium">✓ Done</span>}
         {locked && <span className="text-xs text-slate-400">Locked</span>}
       </div>
       {!done && !locked && <ChevronRight className="w-4 h-4 text-slate-300 flex-shrink-0" />}
