@@ -279,7 +279,7 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
           )}
 
           <div className="space-y-1.5 border-t pt-3">
-            <Label className="text-xs font-semibold">Person Responsible *</Label>
+            <Label className="text-xs font-semibold">Confirmed By *</Label>
             {personList.length > 0 && (
               <Select value={personList.includes(person) ? person : "__manual__"} onValueChange={v => { if (v !== "__manual__") setPerson(v); }}>
                 <SelectTrigger className="mb-1"><SelectValue placeholder="Select from list..." /></SelectTrigger>

@@ -195,7 +195,7 @@ function CreateWOModal({ woType, incident, incidentId, onClose, onDone }) {
           )}
 
           <div className="space-y-1.5 border-t pt-3">
-            <Label className="text-xs font-semibold">Person Responsible *</Label>
+            <Label className="text-xs font-semibold">Confirmed By *</Label>
             {personList.length > 0 && (
               <Select value={personList.includes(person) ? person : "__manual__"} onValueChange={v => { if (v !== "__manual__") setPerson(v); }}>
                 <SelectTrigger className="mb-1"><SelectValue placeholder="Select from list..." /></SelectTrigger>
@@ -273,7 +273,7 @@ function CloseWOModal({ wo, incidentId, onClose, onDone }) {
             <Textarea placeholder="Add closing notes..." rows={2} value={notes} onChange={e => setNotes(e.target.value)} className="text-sm" />
           </div>
           <div className="space-y-1.5 border-t pt-3">
-            <Label className="text-xs font-semibold">Person Responsible *</Label>
+            <Label className="text-xs font-semibold">Confirmed By *</Label>
             {personList.length > 0 && (
               <Select value={personList.includes(person) ? person : "__manual__"} onValueChange={v => { if (v !== "__manual__") setPerson(v); }}>
                 <SelectTrigger className="mb-1"><SelectValue placeholder="Select from list..." /></SelectTrigger>
@@ -360,7 +360,7 @@ function ChecklistModal({ wo, incidentId, onClose, onDone }) {
             <FileUploader onUpload={fd => setFile(fd)} label={file ? file.file_name : "Upload Checklist File"} />
           </div>
           <div className="space-y-1.5 border-t pt-3">
-            <Label className="text-xs font-semibold">Person Responsible *</Label>
+            <Label className="text-xs font-semibold">Confirmed By *</Label>
             {personList.length > 0 && (
               <Select value={personList.includes(person) ? person : "__manual__"} onValueChange={v => { if (v !== "__manual__") setPerson(v); }}>
                 <SelectTrigger className="mb-1"><SelectValue placeholder="Select from list..." /></SelectTrigger>
