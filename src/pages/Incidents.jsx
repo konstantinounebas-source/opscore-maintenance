@@ -17,6 +17,14 @@ export default function Incidents() {
   const { toast } = useToast();
   const [formOpen, setFormOpen] = useState(false);
 
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterPriority, setFilterPriority] = useState("all");
+  const [filterWO, setFilterWO] = useState("all");
+  const [filterProvince, setFilterProvince] = useState("all");
+  const [filterShelterType, setFilterShelterType] = useState("all");
+  const [filterReportingMethod, setFilterReportingMethod] = useState("all");
+  const [filterSource, setFilterSource] = useState("all");
+
   const { data: incidents = [] } = useQuery({ queryKey: ["incidents"], queryFn: () => base44.entities.Incidents.list() });
   const { data: workOrders = [] } = useQuery({ queryKey: ["workOrders"], queryFn: () => base44.entities.WorkOrders.list() });
 
