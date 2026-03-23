@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, ArrowUpDown, ChevronLeft, ChevronRight } from "lucide-react";
 
-export default function DataTable({ columns, data, onRowClick, searchPlaceholder = "Search...", pageSize = 20 }) {
+export default function DataTable({ columns, data, onRowClick, searchPlaceholder = "Search...", pageSize = 20, hideSearch = false }) {
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState(null);
   const [sortDir, setSortDir] = useState("asc");
