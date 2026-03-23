@@ -51,15 +51,17 @@ export default function DataTable({ columns, data, onRowClick, searchPlaceholder
   return (
     <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
       <div className="p-4 border-b border-slate-100 space-y-3">
-        <div className="relative max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <Input
-            value={search}
-            onChange={e => { setSearch(e.target.value); setPage(0); }}
-            placeholder={searchPlaceholder}
-            className="pl-9 h-9 text-sm bg-slate-50 border-slate-200"
-          />
-        </div>
+        {!hideSearch && (
+          <div className="relative max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Input
+              value={search}
+              onChange={e => { setSearch(e.target.value); setPage(0); }}
+              placeholder={searchPlaceholder}
+              className="pl-9 h-9 text-sm bg-slate-50 border-slate-200"
+            />
+          </div>
+        )}
         <div className="flex items-center gap-2 text-sm text-slate-600">
           <span>Show</span>
           <Select value={String(currentPageSize)} onValueChange={(val) => { setCurrentPageSize(parseInt(val)); setPage(0); }}>
