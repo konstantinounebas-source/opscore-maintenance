@@ -145,25 +145,7 @@ function CreateWOModal({ woType, incident, incidentId, onClose, onDone }) {
         </DialogHeader>
         <div className="space-y-4 mt-2">
 
-          {woType === "make_safe" && (
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Is Make Safe Required? *</Label>
-              <div className="flex gap-2">
-                {["yes", "no"].map(v => (
-                  <button key={v} type="button" onClick={() => set("make_safe_confirmed", v)}
-                    className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-all ${
-                      formData.make_safe_confirmed === v
-                        ? v === "yes" ? "bg-red-600 text-white border-red-600" : "bg-slate-700 text-white border-slate-700"
-                        : "bg-white text-slate-600 border-slate-200 hover:border-slate-400"
-                    }`}>
-                    {v === "yes" ? "Yes — Create WO" : "No — Not required"}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {(woType !== "make_safe" || formData.make_safe_confirmed === "yes") && (
+          {(
             <>
               {woType === "corrective" && (
                 <div className="grid grid-cols-2 gap-2">
