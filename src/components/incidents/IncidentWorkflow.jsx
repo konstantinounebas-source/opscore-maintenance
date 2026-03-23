@@ -92,7 +92,7 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [formData, setFormData] = useState({});
+  const [formData, setFormData] = useState({ ca_status: "Approved" });
   const [saving, setSaving] = useState(false);
   const [person, setPerson] = useState("");
 
