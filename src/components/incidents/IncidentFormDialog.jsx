@@ -65,7 +65,7 @@ const emptyForm = () => ({
   subsystem_other_selected: false, subsystem_other_issue: "",
   damage_description: "", probable_cause: "", probable_cause_other: "",
   evidence_type: [], evidence_files: [],
-  initial_priority: "", is_owr: null, requires_make_safe: null,
+  initial_priority: "", is_owr: null, requires_make_safe: false,
   approval_date: "", authority_representative: ""
 });
 
