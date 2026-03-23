@@ -16,8 +16,10 @@ import CrewSchedulerTab from "@/components/planning/CrewSchedulerTab";
 import RoutesTab from "@/components/planning/RoutesTab";
 import RecommendationsTab from "@/components/planning/RecommendationsTab";
 import EnhancedComparisonTab from "@/components/planning/EnhancedComparisonTab";
+import MultiWeekPlanningView from "@/pages/MultiWeekPlanningView";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, CalendarDays, Loader2, Download, AlertTriangle, Zap } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import {
@@ -43,6 +45,7 @@ const weekStatusBadge = (status) => {
 export default function Planning() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [viewMode, setViewMode] = useState("single"); // "single" or "multi"
 
   // ── Data ──────────────────────────────────────────────────────────────────────
   const { data: weeks = [],          isLoading: weeksLoading }       = useQuery({ queryKey: ["planningWeeks"],       queryFn: () => base44.entities.PlanningWeeks.list("-created_date") });
@@ -311,6 +314,26 @@ export default function Planning() {
 
   const isLoading = weeksLoading || assignmentsLoading;
 
+  // Render multi-week view if selected
+  if (viewMode === "multi") {
+    return (
+      <div className="flex flex-col h-screen overflow-hidden">
+        <TopHeader
+          title="Planning & Map Scheduler — 4-Week View"
+          actions={
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" className="gap-1.5 text-xs"
+                onClick={() => setViewMode("single")}>
+                Single Week View
+              </Button>
+            </div>
+          }
+        />
+        <MultiWeekPlanningView />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-screen overflow-hidden">
       <TopHeader
@@ -321,6 +344,10 @@ export default function Planning() {
             <Button size="sm" variant="outline" className="gap-1.5 text-xs"
               onClick={() => { setEditingWeek(null); setWeekModalOpen(true); }}>
               <Plus className="w-3.5 h-3.5" /> New Week
+            </Button>
+            <Button size="sm" variant="outline" className="gap-1.5 text-xs"
+              onClick={() => setViewMode("multi")}>
+              4-Week View
             </Button>
           </div>
         }
