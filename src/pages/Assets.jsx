@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useNavigate } from "react-router-dom";
@@ -9,7 +9,9 @@ import StatusBadge from "@/components/shared/StatusBadge";
 import AssetFormDialog from "@/components/assets/AssetFormDialog";
 import ImportAssetsDialog from "@/components/assets/ImportAssetsDialog";
 import { Button } from "@/components/ui/button";
-import { Box, Activity, Link2, AlertTriangle, Wrench, Plus, Download, Upload } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Box, Activity, Link2, AlertTriangle, Wrench, Plus, Download, Upload, Search, X } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function Assets() {
