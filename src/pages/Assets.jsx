@@ -378,7 +378,7 @@ export default function Assets() {
           columns={columns}
           data={filteredAssets}
           onRowClick={(row) => navigate(`/AssetDetail?id=${row.id}`)}
-          searchPlaceholder="Search assets..."
+          hideSearch
         />
       </div>
       <AssetFormDialog
