@@ -257,9 +257,9 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
 
             {form.reported_by_org && (
               <Field label="Όνομα Αναφέροντος" required colSpan={2}>
-                {reporterNames.length > 0 && (
+                {form.reported_by_org === "Air Control" && reporterNames.length > 0 && (
                   <Select value={reporterNames.includes(form.reported_by_name) ? form.reported_by_name : "__manual__"}
-                    onValueChange={v => { if (v !== "__manual__") set("reported_by_name", v); }}>
+                    onValueChange={v => { if (v !== "__manual__") set("reported_by_name", v); else set("reported_by_name", ""); }}>
                     <SelectTrigger className="mb-1"><SelectValue placeholder="Επιλογή από λίστα..." /></SelectTrigger>
                     <SelectContent>
                       {reporterNames.map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}
