@@ -87,7 +87,7 @@ function CreateWOModal({ woType, incident, incidentId, onClose, onDone }) {
     try {
       let woCreated = false;
 
-      if (woType !== "make_safe" || formData.make_safe_confirmed === "yes") {
+      if (true) {
         const woId = `${config.prefix}-${Date.now()}`;
         await base44.entities.WorkOrders.create({
           work_order_id: woId,
