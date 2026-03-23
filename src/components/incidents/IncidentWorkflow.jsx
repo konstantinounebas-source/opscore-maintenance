@@ -180,6 +180,12 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
         );
       }
 
+      if (key === "ca_status") {
+        const caVal = formData.ca_status || "Approved";
+        incidentUpdates.ca_status = caVal;
+        await addAudit("CA Status Set", `CA Status set to: ${caVal}${formData.notes ? ` — ${formData.notes}` : ""}`);
+      }
+
       if (key === "close_incident") {
         await base44.entities.Incidents.update(incidentId, { status: "Closed" });
         await addAudit("Incident Closed", formData.notes ? `Closing notes: ${formData.notes}` : "Incident closed and resolved.");
