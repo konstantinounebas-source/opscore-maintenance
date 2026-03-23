@@ -34,6 +34,7 @@ const WO_PANELS = [
 ];
 
 function isStepDone(step, incident) {
+  if (step.key === "ca_status") return incident.ca_status === "Approved" || incident.ca_status === "Not Approved";
   if (step.flag) return !!incident[step.flag];
   return incident.status === "Closed";
 }
