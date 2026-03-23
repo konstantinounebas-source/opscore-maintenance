@@ -320,7 +320,22 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
             </div>
           )}
 
-          <div className="space-y-1.5 border-t pt-3">
+          {key === "ca_status" && (
+            <div className="space-y-1.5">
+              <Label className="text-xs flex items-center gap-1">
+                <StickyNote className="w-3 h-3" /> Notes (optional)
+              </Label>
+              <Textarea
+                placeholder="Add notes..."
+                rows={2}
+                value={formData.notes || ""}
+                onChange={e => set("notes", e.target.value)}
+                className="text-sm"
+              />
+            </div>
+          )}
+
+          {key !== "ca_status" && <div className="space-y-1.5 border-t pt-3">
             <Label className="text-xs font-semibold">Confirmed By *</Label>
             {personList.length > 0 && (
               <Select value={personList.includes(person) ? person : "__manual__"} onValueChange={v => { if (v !== "__manual__") setPerson(v); }}>
