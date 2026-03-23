@@ -22,6 +22,17 @@ export default function Assets() {
   const [editingAsset, setEditingAsset] = useState(null);
   const [importOpen, setImportOpen] = useState(false);
 
+  // Filter state
+  const [searchText, setSearchText] = useState("");
+  const [filterCategory, setFilterCategory] = useState("all");
+  const [filterCity, setFilterCity] = useState("all");
+  const [filterShelterType, setFilterShelterType] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterDeliveryDate, setFilterDeliveryDate] = useState("");
+  const [filterChilds, setFilterChilds] = useState("all");
+  const [filterOpenIncidents, setFilterOpenIncidents] = useState("all");
+  const [filterOpenWO, setFilterOpenWO] = useState("all");
+
   const { data: assets = [] } = useQuery({ queryKey: ["assets"], queryFn: () => base44.entities.Assets.list() });
   const { data: childAssets = [] } = useQuery({ queryKey: ["childAssets"], queryFn: () => base44.entities.ChildAssets.list() });
   const { data: incidents = [] } = useQuery({ queryKey: ["incidents"], queryFn: () => base44.entities.Incidents.list() });
