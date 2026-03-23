@@ -194,7 +194,14 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
       if (key === "ca_status") {
         const caVal = formData.ca_status || "Approved";
         incidentUpdates.ca_status = caVal;
-        await addAudit("CA Status Set", `CA Status set to: ${caVal}${formData.notes ? ` — ${formData.notes}` : ""}`);
+        const auditDetails = `CA Status set to: ${caVal}${formData.notes ? ` — ${formData.notes}` : ""}`;
+        const auditExtra = {};
+        if (formData.ca_invoice) {
+          await uploadAttachment(formData.ca_invoice);
+          auditExtra.attachments = [formData.ca_invoice.file_url];
+          auditExtra.attachment_names = [formData.ca_invoice.file_name];
+        }
+        await addAudit("CA Status Set", auditDetails, auditExtra);
       }
 
       if (key === "close_incident") {
