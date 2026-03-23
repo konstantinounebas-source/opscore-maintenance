@@ -13,7 +13,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/AuthContext";
 import {
   Plus, ChevronDown, ChevronUp, CheckCircle2, Clock,
-  Loader2, Paperclip, StickyNote, XCircle
+  Loader2, Paperclip, StickyNote, XCircle, Lock
 } from "lucide-react";
 
 const WO_TYPE_CONFIG = {
