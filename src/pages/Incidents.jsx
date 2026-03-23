@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useNavigate } from "react-router-dom";
 import TopHeader from "@/components/layout/TopHeader";
-import DataTable from "@/components/shared/DataTable";
+import DraggableDataTable from "@/components/shared/DraggableDataTable";
 import StatusBadge from "@/components/shared/StatusBadge";
 import IncidentFormDialog from "@/components/incidents/IncidentFormDialog";
 import { Button } from "@/components/ui/button";
