@@ -292,9 +292,91 @@ export default function Assets() {
           <StatCard label="Open Incidents" value={assetsWithOpenIncidents} icon={AlertTriangle} color="red" />
           <StatCard label="Open Work Orders" value={assetsWithOpenWO} icon={Wrench} color="amber" />
         </div>
+        {/* Filter Bar */}
+        <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+          <div className="flex flex-wrap gap-2 items-center">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Input
+                value={searchText}
+                onChange={e => setSearchText(e.target.value)}
+                placeholder="Search by ID, shelter, city..."
+                className="pl-9 h-9 text-sm w-56 bg-slate-50 border-slate-200"
+              />
+            </div>
+            <Select value={filterCategory} onValueChange={setFilterCategory}>
+              <SelectTrigger className="h-9 text-sm w-40"><SelectValue placeholder="Category" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {uniqueCategories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={filterCity} onValueChange={setFilterCity}>
+              <SelectTrigger className="h-9 text-sm w-36"><SelectValue placeholder="City" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Cities</SelectItem>
+                {uniqueCities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={filterShelterType} onValueChange={setFilterShelterType}>
+              <SelectTrigger className="h-9 text-sm w-40"><SelectValue placeholder="Shelter Type" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Shelter Types</SelectItem>
+                {uniqueShelterTypes.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="h-9 text-sm w-36"><SelectValue placeholder="Status" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                {uniqueStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Input
+              type="date"
+              value={filterDeliveryDate}
+              onChange={e => setFilterDeliveryDate(e.target.value)}
+              className="h-9 text-sm w-40 bg-slate-50 border-slate-200"
+              title="Delivery Date"
+            />
+            <Select value={filterChilds} onValueChange={setFilterChilds}>
+              <SelectTrigger className="h-9 text-sm w-36"><SelectValue placeholder="Childs" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All (Childs)</SelectItem>
+                <SelectItem value="with">With Childs</SelectItem>
+                <SelectItem value="without">Without Childs</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filterOpenIncidents} onValueChange={setFilterOpenIncidents}>
+              <SelectTrigger className="h-9 text-sm w-44"><SelectValue placeholder="Open Incidents" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All (Incidents)</SelectItem>
+                <SelectItem value="with">With Open Incidents</SelectItem>
+                <SelectItem value="without">No Open Incidents</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filterOpenWO} onValueChange={setFilterOpenWO}>
+              <SelectTrigger className="h-9 text-sm w-44"><SelectValue placeholder="Open WOs" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All (Work Orders)</SelectItem>
+                <SelectItem value="with">With Open WOs</SelectItem>
+                <SelectItem value="without">No Open WOs</SelectItem>
+              </SelectContent>
+            </Select>
+            {hasActiveFilters && (
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="h-9 gap-1.5 text-slate-500">
+                <X className="w-3.5 h-3.5" /> Clear
+              </Button>
+            )}
+          </div>
+          {hasActiveFilters && (
+            <p className="text-xs text-slate-500">{filteredAssets.length} of {assets.length} assets shown</p>
+          )}
+        </div>
+
         <DataTable
           columns={columns}
-          data={assets}
+          data={filteredAssets}
           onRowClick={(row) => navigate(`/AssetDetail?id=${row.id}`)}
           searchPlaceholder="Search assets..."
         />
