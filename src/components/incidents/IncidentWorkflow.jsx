@@ -280,6 +280,13 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
                   ))}
                 </div>
               </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs flex items-center gap-1">
+                  <Paperclip className="w-3 h-3" /> Signed Invoice (optional)
+                </Label>
+                <FileUploader onUpload={fd => set("ca_invoice", fd)} label={formData.ca_invoice ? formData.ca_invoice.file_name : "Upload signed CA invoice"} />
+              </div>
             </div>
           )}
 
