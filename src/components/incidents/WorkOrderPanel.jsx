@@ -82,10 +82,6 @@ function CreateWOModal({ woType, incident, incidentId, onClose, onDone }) {
       toast({ title: "Person required" });
       return;
     }
-    if (woType === "make_safe" && !formData.make_safe_confirmed) {
-      toast({ title: "Please confirm if Make Safe is required" });
-      return;
-    }
 
     setSaving(true);
     try {
