@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useNavigate } from "react-router-dom";
@@ -7,9 +7,7 @@ import DraggableDataTable from "@/components/shared/DraggableDataTable";
 import StatusBadge from "@/components/shared/StatusBadge";
 import IncidentFormDialog from "@/components/incidents/IncidentFormDialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Download, Search, X } from "lucide-react";
+import { Plus, Download } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function Incidents() {
@@ -17,15 +15,6 @@ export default function Incidents() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [formOpen, setFormOpen] = useState(false);
-
-  // Filter state
-  const [searchText, setSearchText] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all");
-  const [filterPriority, setFilterPriority] = useState("all");
-  const [filterShelterType, setFilterShelterType] = useState("all");
-  const [filterCity, setFilterCity] = useState("all");
-  const [filterWO, setFilterWO] = useState("all");
-  const [filterReportedDate, setFilterReportedDate] = useState("");
 
   const { data: incidents = [] } = useQuery({ queryKey: ["incidents"], queryFn: () => base44.entities.Incidents.list() });
   const { data: workOrders = [] } = useQuery({ queryKey: ["workOrders"], queryFn: () => base44.entities.WorkOrders.list() });
@@ -64,40 +53,6 @@ export default function Incidents() {
     const a = document.createElement("a");
     a.href = url; a.download = "incidents_export.csv"; a.click();
     URL.revokeObjectURL(url);
-  };
-
-  // Unique filter options derived from data
-  const uniqueStatuses = [...new Set(incidents.map(i => i.status).filter(Boolean))].sort();
-  const uniqueShelterTypes = [...new Set(incidents.map(i => i.shelter_type).filter(Boolean))].sort();
-  const uniqueCities = [...new Set(incidents.map(i => i.province).filter(Boolean))].sort();
-
-  const filteredIncidents = useMemo(() => {
-    return incidents.filter(i => {
-      const hasWO = workOrders.some(wo => wo.incident_id === i.id || wo.incident_id === i.incident_id);
-
-      if (searchText.trim()) {
-        const q = searchText.toLowerCase();
-        const matches = [i.incident_id, i.title, i.related_asset_name, i.active_shelter_id, i.province, i.municipality]
-          .some(v => v && String(v).toLowerCase().includes(q));
-        if (!matches) return false;
-      }
-      if (filterStatus !== "all" && i.status !== filterStatus) return false;
-      if (filterPriority !== "all" && i.initial_priority !== filterPriority) return false;
-      if (filterShelterType !== "all" && i.shelter_type !== filterShelterType) return false;
-      if (filterCity !== "all" && i.province !== filterCity) return false;
-      if (filterWO === "with" && !hasWO) return false;
-      if (filterWO === "without" && hasWO) return false;
-      if (filterReportedDate && i.reported_date !== filterReportedDate) return false;
-      return true;
-    });
-  }, [incidents, workOrders, searchText, filterStatus, filterPriority, filterShelterType, filterCity, filterWO, filterReportedDate]);
-
-  const hasActiveFilters = searchText || filterStatus !== "all" || filterPriority !== "all" ||
-    filterShelterType !== "all" || filterCity !== "all" || filterWO !== "all" || filterReportedDate;
-
-  const clearFilters = () => {
-    setSearchText(""); setFilterStatus("all"); setFilterPriority("all");
-    setFilterShelterType("all"); setFilterCity("all"); setFilterWO("all"); setFilterReportedDate("");
   };
 
   const columns = [
@@ -180,81 +135,13 @@ export default function Incidents() {
           </div>
         }
       />
-      <div className="p-6 space-y-4">
-        {/* Filter Bar */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
-          <div className="flex flex-wrap gap-2 items-center">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <Input
-                value={searchText}
-                onChange={e => setSearchText(e.target.value)}
-                placeholder="Search by ID, asset, city..."
-                className="pl-9 h-9 text-sm w-56 bg-slate-50 border-slate-200"
-              />
-            </div>
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="h-9 text-sm w-36"><SelectValue placeholder="All Statuses" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                {uniqueStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Select value={filterPriority} onValueChange={setFilterPriority}>
-              <SelectTrigger className="h-9 text-sm w-32"><SelectValue placeholder="All Priorities" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Priorities</SelectItem>
-                <SelectItem value="P1">P1</SelectItem>
-                <SelectItem value="P2">P2</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={filterShelterType} onValueChange={setFilterShelterType}>
-              <SelectTrigger className="h-9 text-sm w-40"><SelectValue placeholder="All Shelter Types" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Shelter Types</SelectItem>
-                {uniqueShelterTypes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Select value={filterCity} onValueChange={setFilterCity}>
-              <SelectTrigger className="h-9 text-sm w-36"><SelectValue placeholder="All Cities" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Cities</SelectItem>
-                {uniqueCities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Select value={filterWO} onValueChange={setFilterWO}>
-              <SelectTrigger className="h-9 text-sm w-40"><SelectValue placeholder="All (Work Orders)" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All (Work Orders)</SelectItem>
-                <SelectItem value="with">With Work Order</SelectItem>
-                <SelectItem value="without">No Work Order</SelectItem>
-              </SelectContent>
-            </Select>
-            <Input
-              type="date"
-              value={filterReportedDate}
-              onChange={e => setFilterReportedDate(e.target.value)}
-              className="h-9 text-sm w-40 bg-slate-50 border-slate-200"
-              title="Reported Date"
-            />
-            {hasActiveFilters && (
-              <Button variant="ghost" size="sm" onClick={clearFilters} className="h-9 gap-1.5 text-slate-500">
-                <X className="w-3.5 h-3.5" /> Clear
-              </Button>
-            )}
-          </div>
-          {hasActiveFilters && (
-            <p className="text-xs text-slate-500">{filteredIncidents.length} of {incidents.length} incidents shown</p>
-          )}
-        </div>
-
+      <div className="p-6">
         <DraggableDataTable
           columns={columns}
-          data={filteredIncidents}
+          data={incidents}
           onRowClick={(row) => navigate(`/IncidentDetail?id=${row.id}`)}
           searchPlaceholder="Search incidents..."
           storageKey="incidents_table_columns_order"
-          hideSearch
         />
       </div>
       <IncidentFormDialog open={formOpen} onOpenChange={setFormOpen} onSave={(data, pendingFiles) => createMutation.mutate({ data, pendingFiles })} />
