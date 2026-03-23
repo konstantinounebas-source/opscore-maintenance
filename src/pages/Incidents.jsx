@@ -64,6 +64,34 @@ export default function Incidents() {
     URL.revokeObjectURL(url);
   };
 
+  const uniqueProvinces = [...new Set(incidents.map(i => i.province).filter(Boolean))].sort();
+  const uniqueShelterTypes = [...new Set(incidents.map(i => i.shelter_type).filter(Boolean))].sort();
+  const uniqueReportingMethods = [...new Set(incidents.map(i => i.incident_reporting_method).filter(Boolean))].sort();
+  const uniqueSources = [...new Set(incidents.map(i => i.incident_source).filter(Boolean))].sort();
+
+  const filteredIncidents = useMemo(() => {
+    return incidents.filter(i => {
+      const hasWO = workOrders.some(wo => wo.incident_id === i.id || wo.incident_id === i.incident_id);
+      if (filterStatus !== "all" && i.status !== filterStatus) return false;
+      if (filterPriority !== "all" && i.initial_priority !== filterPriority) return false;
+      if (filterWO === "yes" && !hasWO) return false;
+      if (filterWO === "no" && hasWO) return false;
+      if (filterProvince !== "all" && i.province !== filterProvince) return false;
+      if (filterShelterType !== "all" && i.shelter_type !== filterShelterType) return false;
+      if (filterReportingMethod !== "all" && i.incident_reporting_method !== filterReportingMethod) return false;
+      if (filterSource !== "all" && i.incident_source !== filterSource) return false;
+      return true;
+    });
+  }, [incidents, workOrders, filterStatus, filterPriority, filterWO, filterProvince, filterShelterType, filterReportingMethod, filterSource]);
+
+  const hasActiveFilters = filterStatus !== "all" || filterPriority !== "all" || filterWO !== "all" ||
+    filterProvince !== "all" || filterShelterType !== "all" || filterReportingMethod !== "all" || filterSource !== "all";
+
+  const clearFilters = () => {
+    setFilterStatus("all"); setFilterPriority("all"); setFilterWO("all");
+    setFilterProvince("all"); setFilterShelterType("all"); setFilterReportingMethod("all"); setFilterSource("all");
+  };
+
   const columns = [
     { key: "incident_id", label: "ID" },
     {
