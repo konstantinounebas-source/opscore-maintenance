@@ -147,7 +147,7 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
       // user is available from useAuth() context
 
       if (key === "confirmation_of_receipt") {
-        const msg = `Αγαπητοί/ες,\n\nΕπιβεβαιώνουμε τη λήψη της ειδοποίησής σας για το περιστατικό με Κωδικό Αναφοράς (Incident Number): ${incident.incident_id}.\n\nΤο περιστατικό έχει καταγραφεί και έχουν ενεργοποιηθεί οι διαδικασίες διερεύνησης. Παρακαλώ όπως βρείτε επισυναπτόμενο το Outline Management Plan.\nΠαραμένουμε στην διάθεσή σας.\nΜε εκτίμηση,`;
+        const msg = `Αγαπητοί/ες,\n\nΕπιβεβαιώνουμε τη λήψη της ειδοποίησής σας για το περιστατικό με Κωδικό Αναφοράς (Incident Number): ${incident.incident_id}.\n\nΤο περιστατικό έχει καταγραφεί και έχουν ενεργοποιηθεί οι διαδικασίες διερεύνησης.\nΠαραμένουμε στην διάθεσή σας.\nΜε εκτίμηση,`;
         incidentUpdates.confirmation_done = true;
         await addAudit("Confirmation of Receipt", msg);
       }
@@ -214,7 +214,7 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
             <div className="p-3 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800 leading-relaxed space-y-2">
               <p>Αγαπητοί/ες,</p>
               <p>Επιβεβαιώνουμε τη λήψη της ειδοποίησής σας για το περιστατικό με Κωδικό Αναφοράς (Incident Number): <strong>{incident.incident_id}</strong>.</p>
-              <p>Το περιστατικό έχει καταγραφεί και έχουν ενεργοποιηθεί οι διαδικασίες διερεύνησης. Παρακαλώ όπως βρείτε επισυναπτόμενο το Outline Management Plan.</p>
+              <p>Το περιστατικό έχει καταγραφεί και έχουν ενεργοποιηθεί οι διαδικασίες διερεύνησης.</p>
               <p>Παραμένουμε στην διάθεσή σας.<br />Με εκτίμηση,</p>
             </div>
           )}
