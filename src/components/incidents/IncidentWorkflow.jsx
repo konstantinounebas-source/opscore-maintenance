@@ -304,7 +304,7 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
             </div>
           )}
 
-          {key !== "confirmation_of_receipt" && (
+          {key !== "confirmation_of_receipt" && key !== "ca_status" && (
             <div className="space-y-1.5">
               <Label className="text-xs flex items-center gap-1">
                 <StickyNote className="w-3 h-3" />
