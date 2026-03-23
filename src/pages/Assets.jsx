@@ -93,16 +93,24 @@ export default function Assets() {
         return;
       }
       const newAsset = await createMutation.mutateAsync(formData);
-      // Save attachments after asset is created
+      // Save attachments + audit after asset is created
       if (attachments.length > 0 && newAsset?.id) {
+        const user = await base44.auth.me();
         for (const file of attachments) {
           await base44.entities.AssetAttachments.create({
             asset_id: newAsset.id,
             file_name: file.file_name,
             file_url: file.file_url,
-            file_type: file.file_type,
+            file_type: file.file_type || "Document",
             file_size: file.file_size,
-            uploaded_by: (await base44.auth.me())?.email
+            doc_label: file.doc_label,
+            uploaded_by: user?.email
+          });
+          await base44.entities.AssetTransactions.create({
+            asset_id: newAsset.id,
+            action: "Document Uploaded",
+            details: `${file.doc_label || file.file_type || "Document"}: ${file.file_name}`,
+            user: user?.email,
           });
         }
         queryClient.invalidateQueries({ queryKey: ["assets"] });
