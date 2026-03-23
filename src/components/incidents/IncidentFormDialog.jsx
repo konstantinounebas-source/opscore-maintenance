@@ -238,7 +238,10 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
             <SectionTitle>1. Βασικά Στοιχεία</SectionTitle>
 
             <Field label="Ημερομηνία Έκδοσης" required colSpan={2}>
-              <Input type="date" className={err("issue_date")} value={form.issue_date} onChange={e => set("issue_date", e.target.value)} />
+              <div className="flex gap-2">
+                <Input type="date" className={`flex-1 ${err("issue_date")}`} value={form.issue_date} onChange={e => set("issue_date", e.target.value)} />
+                <Input type="time" className="w-32" value={form.created_time} onChange={e => set("created_time", e.target.value)} />
+              </div>
             </Field>
 
             <Field label="Αναφέρων - Οργανισμός" required colSpan={2}>
@@ -254,57 +257,61 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
 
             {form.reported_by_org && (
               <Field label="Όνομα Αναφέροντος" required colSpan={2}>
+                {reporterNames.length > 0 && (
+                  <Select value={reporterNames.includes(form.reported_by_name) ? form.reported_by_name : "__manual__"}
+                    onValueChange={v => { if (v !== "__manual__") set("reported_by_name", v); }}>
+                    <SelectTrigger className="mb-1"><SelectValue placeholder="Επιλογή από λίστα..." /></SelectTrigger>
+                    <SelectContent>
+                      {reporterNames.map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}
+                      <SelectItem value="__manual__">— Χειροκίνητη εισαγωγή —</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
                 <Input className={err("reported_by_name")} value={form.reported_by_name} onChange={e => set("reported_by_name", e.target.value)} placeholder="Όνομα προσώπου..." />
               </Field>
             )}
 
+            <Field label="Αρχική Προτεραιότητα" required>
+              <Select value={form.initial_priority} onValueChange={v => set("initial_priority", v)}>
+                <SelectTrigger className={err("initial_priority")}><SelectValue placeholder="P1 / P2" /></SelectTrigger>
+                <SelectContent>{initialPriorities.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+              </Select>
+            </Field>
+            <div />
+
             <Field label="Τρόπος Αναφοράς" colSpan={2}>
-              {reportingMethods.length > 0 ? (
-                <Select value={form.incident_reporting_method} onValueChange={v => set("incident_reporting_method", v)}>
-                  <SelectTrigger><SelectValue placeholder="Επιλογή τρόπου αναφοράς..." /></SelectTrigger>
-                  <SelectContent>{reportingMethods.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
-                </Select>
-              ) : (
-                <Input value={form.incident_reporting_method} onChange={e => set("incident_reporting_method", e.target.value)} placeholder="π.χ. Email, Τηλέφωνο..." />
-              )}
+              <Select value={form.incident_reporting_method} onValueChange={v => { set("incident_reporting_method", v); set("reporting_contact_info", ""); }}>
+                <SelectTrigger><SelectValue placeholder="Επιλογή τρόπου αναφοράς..." /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Web Maintenance">Web Maintenance</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                  {reportingMethods.filter(m => m !== "Web Maintenance" && m !== "Other").map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </Field>
 
-            <Field label="Τηλέφωνο διαθέσιμο">
-              <YesNoSelect value={form.phone_available} onChange={v => set("phone_available", v)} />
-            </Field>
-            {form.phone_available && (
-              <Field label="Τηλέφωνο" required>
-                {reporterPhones.length > 0 && (
-                  <Select value={reporterPhones.includes(form.reported_by_phone) ? form.reported_by_phone : "__manual__"}
-                    onValueChange={v => { if (v !== "__manual__") set("reported_by_phone", v); }}>
-                    <SelectTrigger className="mb-1"><SelectValue placeholder="Επιλογή από λίστα..." /></SelectTrigger>
-                    <SelectContent>
-                      {reporterPhones.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                      <SelectItem value="__manual__">— Χειροκίνητη εισαγωγή —</SelectItem>
-                    </SelectContent>
-                  </Select>
+            {form.incident_reporting_method === "Other" && (
+              <>
+                <Field label="Τηλέφωνο διαθέσιμο">
+                  <YesNoSelect value={form.phone_available} onChange={v => set("phone_available", v)} />
+                </Field>
+                <Field label="Email διαθέσιμο">
+                  <YesNoSelect value={form.email_available} onChange={v => set("email_available", v)} />
+                </Field>
+                {form.phone_available && (
+                  <Field label="Τηλέφωνο" required colSpan={2}>
+                    <Input type="tel" className={err("reported_by_phone")} value={form.reported_by_phone} onChange={e => set("reported_by_phone", e.target.value)} placeholder="π.χ. 6912345678" />
+                  </Field>
                 )}
-                <Input type="tel" className={err("reported_by_phone")} value={form.reported_by_phone} onChange={e => set("reported_by_phone", e.target.value)} placeholder="π.χ. 6912345678" />
-              </Field>
-            )}
-
-            <Field label="Email διαθέσιμο">
-              <YesNoSelect value={form.email_available} onChange={v => set("email_available", v)} />
-            </Field>
-            {form.email_available && (
-              <Field label="Email" required>
-                {reporterEmails.length > 0 && (
-                  <Select value={reporterEmails.includes(form.reported_by_email) ? form.reported_by_email : "__manual__"}
-                    onValueChange={v => { if (v !== "__manual__") set("reported_by_email", v); }}>
-                    <SelectTrigger className="mb-1"><SelectValue placeholder="Επιλογή από λίστα..." /></SelectTrigger>
-                    <SelectContent>
-                      {reporterEmails.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
-                      <SelectItem value="__manual__">— Χειροκίνητη εισαγωγή —</SelectItem>
-                    </SelectContent>
-                  </Select>
+                {form.email_available && (
+                  <Field label="Email" required colSpan={2}>
+                    <Input type="email" className={err("reported_by_email")} value={form.reported_by_email} onChange={e => set("reported_by_email", e.target.value)} placeholder="π.χ. name@example.com" />
+                  </Field>
                 )}
-                <Input type="email" className={err("reported_by_email")} value={form.reported_by_email} onChange={e => set("reported_by_email", e.target.value)} placeholder="π.χ. name@example.com" />
-              </Field>
+                <Field label="Βασικά Στοιχεία Επικοινωνίας" colSpan={2}>
+                  <Textarea value={form.reporting_contact_info} onChange={e => set("reporting_contact_info", e.target.value)} placeholder="Ονοματεπώνυμο, email, τηλέφωνο κ.λπ." rows={2} />
+                </Field>
+              </>
             )}
           </div>
 
