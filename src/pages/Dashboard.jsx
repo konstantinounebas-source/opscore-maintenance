@@ -46,6 +46,16 @@ export default function Dashboard() {
     <div>
       <TopHeader title="Dashboard" />
       <div className="p-6 space-y-6">
+        {/* Greece Time */}
+        <div className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl px-5 py-3 w-fit">
+          <Clock className="w-4 h-4 text-indigo-500 shrink-0" />
+          <div>
+            <p className="text-xs text-slate-400 font-medium">Greece Time (EET/EEST)</p>
+            <p className="text-lg font-bold text-slate-900 tabular-nums leading-tight">{greeceTime}</p>
+            <p className="text-xs text-slate-500">{greeceDate}</p>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard label="Total Assets" value={assets.length} icon={Box} color="indigo" />
           <StatCard label="Active Assets" value={activeAssets} icon={Activity} color="green" />
