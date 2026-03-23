@@ -339,12 +339,14 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
               )}
             </Field>
             <Field label="Δήμος">
-              <Select value={form.municipality} onValueChange={v => set("municipality", v)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Επιλογή δήμου..." />
-                </SelectTrigger>
-                <SelectContent>{municipalities.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
-              </Select>
+              {form.related_asset_id ? (
+                <Input value={form.municipality} readOnly className="bg-slate-50 text-slate-600" />
+              ) : (
+                <Select value={form.municipality} onValueChange={v => set("municipality", v)}>
+                  <SelectTrigger><SelectValue placeholder="Επιλογή δήμου..." /></SelectTrigger>
+                  <SelectContent>{municipalities.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
+                </Select>
+              )}
             </Field>
 
             <Field label="Τύπος Στάσης" colSpan={2}>
