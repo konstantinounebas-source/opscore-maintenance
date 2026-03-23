@@ -19,9 +19,10 @@ import {
 
 // ── Administrative steps in strict sequential order ──────────────────────────
 const ADMIN_STEPS = [
-  { key: "confirmation_of_receipt", label: "Confirmation of Receipt", flag: "confirmation_done" },
+  { key: "confirmation_of_receipt", label: "Confirmation of Receipt",       flag: "confirmation_done" },
   { key: "create_ompi",             label: "Outline Management Plan (OMPI)", flag: "ompi_done" },
   { key: "create_fmpi",             label: "Full Management Plan (FMPI)",    flag: "owr_fmpi_done" },
+  { key: "ca_status",               label: "CA Status",                      flag: "ca_status_done" },
   { key: "close_incident",          label: "Close Incident",                 flag: null },
 ];
 
