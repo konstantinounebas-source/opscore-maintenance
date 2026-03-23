@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useNavigate } from "react-router-dom";
@@ -7,7 +7,8 @@ import DraggableDataTable from "@/components/shared/DraggableDataTable";
 import StatusBadge from "@/components/shared/StatusBadge";
 import IncidentFormDialog from "@/components/incidents/IncidentFormDialog";
 import { Button } from "@/components/ui/button";
-import { Plus, Download } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Download, X } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function Incidents() {
