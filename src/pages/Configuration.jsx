@@ -53,7 +53,7 @@ function ListManager({ listTypes, allItems, queryClient }) {
   const [editingId, setEditingId] = useState(null);
   const [editValue, setEditValue] = useState("");
   const [dragOverId, setDragOverId] = useState(null);
-  const dragSrcId = React.useRef(null);
+  const dragSrcId = useRef(null);
 
   const items = allItems.filter(i => i.list_type === selectedType).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
 
