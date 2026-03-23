@@ -156,6 +156,19 @@ export default function Incidents() {
       }
     },
     {
+      key: "ca_status",
+      label: "CA Status",
+      render: (r) => {
+        const s = r.ca_status || "Pending";
+        const styles = {
+          Pending: "bg-amber-100 text-amber-700",
+          Approved: "bg-green-100 text-green-700",
+          "Not Approved": "bg-red-100 text-red-700",
+        };
+        return <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${styles[s] || "bg-slate-100 text-slate-500"}`}>{s}</span>;
+      }
+    },
+    {
       key: "reported_date",
       label: "Reported Date and Time",
       render: (r) => {
