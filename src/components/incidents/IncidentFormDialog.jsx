@@ -535,27 +535,7 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
             </div>
           </div>
 
-          {/* ── 4. Κατάταξη Προτεραιότητας ─────────────────────── */}
-          <div className="grid grid-cols-2 gap-4">
-            <SectionTitle>4. Κατάταξη Προτεραιότητας</SectionTitle>
-
-            <Field label="Αρχική Προτεραιότητα" required>
-              <Select value={form.initial_priority} onValueChange={v => set("initial_priority", v)}>
-                <SelectTrigger className={err("initial_priority")}><SelectValue placeholder="P1 / P2" /></SelectTrigger>
-                <SelectContent>{initialPriorities.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
-              </Select>
-            </Field>
-            <Field label="Εκτός Εγγύησης (OWR)" required>
-              <YesNoSelect value={form.is_owr} onChange={v => set("is_owr", v)} />
-              {errors.is_owr && <p className="text-xs text-red-500">Υποχρεωτικό</p>}
-            </Field>
-            <Field label="Απαιτεί Άμεση Ασφάλιση Χώρου (Make-Safe)" required colSpan={2}>
-              <YesNoSelect value={form.requires_make_safe} onChange={v => set("requires_make_safe", v)} />
-              {errors.requires_make_safe && <p className="text-xs text-red-500">Υποχρεωτικό</p>}
-            </Field>
-          </div>
-
-          {/* ── 5. Εγκρίσεις & Επαλήθευση ──────────────────────── */}
+          {/* ── 4. Εγκρίσεις & Επαλήθευση ──────────────────────── */}
           <div className="grid grid-cols-2 gap-4">
             <SectionTitle>5. Εγκρίσεις & Επαλήθευση</SectionTitle>
 
