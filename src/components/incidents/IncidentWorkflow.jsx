@@ -354,7 +354,7 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
             <Button
               className={key === "close_incident" ? "bg-red-600 hover:bg-red-700" : "bg-indigo-600 hover:bg-indigo-700"}
               onClick={handleSubmit}
-              disabled={saving || !person.trim()}
+              disabled={saving || (key !== "ca_status" && !person.trim())}
             >
               {saving && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
               {saving ? "Saving..." : key === "close_incident" ? "Close Incident" : "Confirm"}
