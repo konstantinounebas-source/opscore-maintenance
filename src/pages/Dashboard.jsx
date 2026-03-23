@@ -20,6 +20,28 @@ export default function Dashboard() {
 
   const recentIncidents = [...incidents].sort((a, b) => new Date(b.created_date) - new Date(a.created_date)).slice(0, 5);
 
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const greeceTime = new Intl.DateTimeFormat("el-GR", {
+    timeZone: "Europe/Athens",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).format(now);
+
+  const greeceDate = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Athens",
+    weekday: "short",
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(now);
+
   return (
     <div>
       <TopHeader title="Dashboard" />
