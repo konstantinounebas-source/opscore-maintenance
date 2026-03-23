@@ -335,6 +335,24 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
             </div>
           )}
 
+          {key !== "ca_status" && (
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Out of Warranty</Label>
+              <Select value={formData.out_of_warranty || ""} onValueChange={v => set("out_of_warranty", v)}>
+                <SelectTrigger className="text-sm"><SelectValue placeholder="Select..." /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Yes">Yes</SelectItem>
+                  <SelectItem value="No">No</SelectItem>
+                </SelectContent>
+              </Select>
+              {formData.out_of_warranty === "Yes" && (
+                <p className="text-xs text-amber-600 flex items-center gap-1">
+                  <AlertTriangle className="w-3 h-3" /> CA Status approval will be required.
+                </p>
+              )}
+            </div>
+          )}
+
           {key !== "ca_status" && <div className="space-y-1.5 border-t pt-3">
             <Label className="text-xs font-semibold">Confirmed By *</Label>
             {personList.length > 0 && (
