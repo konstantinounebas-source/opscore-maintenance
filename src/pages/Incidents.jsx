@@ -57,13 +57,67 @@ export default function Incidents() {
 
   const columns = [
     { key: "incident_id", label: "ID" },
-    { key: "title", label: "Title" },
-    { key: "related_asset_name", label: "Related Asset" },
+    {
+      key: "related_asset_name",
+      label: "Related Asset",
+      render: (r) => r.related_asset_name ? (
+        <span className="font-medium text-slate-700">{r.related_asset_name}</span>
+      ) : <span className="text-slate-400">—</span>
+    },
     { key: "status", label: "Status", render: (r) => <StatusBadge status={r.status} /> },
-    { key: "priority", label: "Priority", render: (r) => <StatusBadge status={r.priority} /> },
-    { key: "category", label: "Category" },
-    { key: "reported_date", label: "Reported Date" },
-    { key: "assigned_to", label: "Assigned To" },
+    {
+      key: "initial_priority",
+      label: "Priority",
+      render: (r) => r.initial_priority ? (
+        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${r.initial_priority === "P1" ? "bg-red-100 text-red-700" : "bg-orange-100 text-orange-700"}`}>
+          {r.initial_priority}
+        </span>
+      ) : <span className="text-slate-400">—</span>
+    },
+    {
+      key: "subsystems",
+      label: "Επηρεαζόμενα Υποσυστήματα",
+      render: (r) => {
+        const parts = [];
+        if (r.subsystem_structural_selected) parts.push(`Δομικό${r.subsystem_structural_issue ? `: ${r.subsystem_structural_issue}` : ""}`);
+        if (r.subsystem_electrical_selected) parts.push(`Ηλεκτρικό${r.subsystem_electrical_issue ? `: ${r.subsystem_electrical_issue}` : ""}`);
+        if (r.subsystem_electronic_selected) parts.push(`Ηλεκτρονικό${r.subsystem_electronic_issue ? `: ${r.subsystem_electronic_issue}` : ""}`);
+        if (r.subsystem_other_selected) parts.push(`Άλλο${r.subsystem_other_issue ? `: ${r.subsystem_other_issue}` : ""}`);
+        return parts.length ? (
+          <div className="flex flex-wrap gap-1">
+            {parts.map((p, i) => <span key={i} className="inline-block bg-slate-100 text-slate-700 text-xs px-1.5 py-0.5 rounded">{p}</span>)}
+          </div>
+        ) : <span className="text-slate-400">—</span>;
+      }
+    },
+    {
+      key: "damage_description",
+      label: "Περιγραφή Βλάβης / Ζημιάς",
+      render: (r) => r.damage_description ? (
+        <span className="text-sm text-slate-700 line-clamp-2">{r.damage_description}</span>
+      ) : <span className="text-slate-400">—</span>
+    },
+    {
+      key: "has_wo",
+      label: "WO",
+      render: (r) => {
+        const hasWO = workOrders.some(wo => wo.incident_id === r.id || wo.incident_id === r.incident_id);
+        return hasWO ? (
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">Yes</span>
+        ) : (
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-500">No</span>
+        );
+      }
+    },
+    {
+      key: "reported_date",
+      label: "Reported Date and Time",
+      render: (r) => {
+        if (!r.reported_date) return <span className="text-slate-400">—</span>;
+        const time = r.detection_time ? ` ${r.detection_time}` : "";
+        return <span className="text-sm text-slate-700">{r.reported_date}{time}</span>;
+      }
+    },
   ];
 
   return (
