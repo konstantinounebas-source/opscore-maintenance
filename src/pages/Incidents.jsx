@@ -77,6 +77,14 @@ export default function Incidents() {
     {
       key: "subsystems",
       label: "Επηρεαζόμενα Υποσυστήματα",
+      accessor: (r) => {
+        const parts = [];
+        if (r.subsystem_structural_selected) parts.push(`Δομικό${r.subsystem_structural_issue ? `: ${r.subsystem_structural_issue}` : ""}`);
+        if (r.subsystem_electrical_selected) parts.push(`Ηλεκτρικό${r.subsystem_electrical_issue ? `: ${r.subsystem_electrical_issue}` : ""}`);
+        if (r.subsystem_electronic_selected) parts.push(`Ηλεκτρονικό${r.subsystem_electronic_issue ? `: ${r.subsystem_electronic_issue}` : ""}`);
+        if (r.subsystem_other_selected) parts.push(`Άλλο${r.subsystem_other_issue ? `: ${r.subsystem_other_issue}` : ""}`);
+        return parts.join(", ");
+      },
       render: (r) => {
         const parts = [];
         if (r.subsystem_structural_selected) parts.push(`Δομικό${r.subsystem_structural_issue ? `: ${r.subsystem_structural_issue}` : ""}`);
