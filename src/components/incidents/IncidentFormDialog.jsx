@@ -537,7 +537,7 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
 
           {/* ── 4. Εγκρίσεις & Επαλήθευση ──────────────────────── */}
           <div className="grid grid-cols-2 gap-4">
-            <SectionTitle>5. Εγκρίσεις & Επαλήθευση</SectionTitle>
+            <SectionTitle>4. Εγκρίσεις & Επαλήθευση</SectionTitle>
 
             <Field label="Εκπρόσωπος Αναθέτουσας Αρχής" colSpan={2}>
               <Input value={form.authority_representative} onChange={e => set("authority_representative", e.target.value)} />
