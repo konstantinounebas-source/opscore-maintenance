@@ -108,6 +108,7 @@ export default function Incidents() {
     {
       key: "has_wo",
       label: "WO",
+      accessor: (r) => workOrders.some(wo => wo.incident_id === r.id || wo.incident_id === r.incident_id) ? "Yes" : "No",
       render: (r) => {
         const hasWO = workOrders.some(wo => wo.incident_id === r.id || wo.incident_id === r.incident_id);
         return hasWO ? (
