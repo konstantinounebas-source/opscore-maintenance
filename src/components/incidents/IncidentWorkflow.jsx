@@ -347,7 +347,7 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
               </Select>
             )}
             <Input placeholder="Enter person name..." value={person} onChange={e => setPerson(e.target.value)} className="text-sm" />
-          </div>
+          </div>}
 
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={onClose}>Cancel</Button>
