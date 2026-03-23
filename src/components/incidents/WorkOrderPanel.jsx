@@ -365,6 +365,7 @@ function ChecklistModal({ wo, incidentId, onClose, onDone }) {
 
 export default function WorkOrderPanel({ woType, incident, incidentId }) {
   const config = WO_TYPE_CONFIG[woType];
+  const isCorrectiveLocked = woType === "corrective" && incident?.ca_status !== "Approved";
   const [expanded, setExpanded] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [closingWO, setClosingWO] = useState(null);
