@@ -66,6 +66,40 @@ export default function Incidents() {
     URL.revokeObjectURL(url);
   };
 
+  // Unique filter options derived from data
+  const uniqueStatuses = [...new Set(incidents.map(i => i.status).filter(Boolean))].sort();
+  const uniqueShelterTypes = [...new Set(incidents.map(i => i.shelter_type).filter(Boolean))].sort();
+  const uniqueCities = [...new Set(incidents.map(i => i.province).filter(Boolean))].sort();
+
+  const filteredIncidents = useMemo(() => {
+    return incidents.filter(i => {
+      const hasWO = workOrders.some(wo => wo.incident_id === i.id || wo.incident_id === i.incident_id);
+
+      if (searchText.trim()) {
+        const q = searchText.toLowerCase();
+        const matches = [i.incident_id, i.title, i.related_asset_name, i.active_shelter_id, i.province, i.municipality]
+          .some(v => v && String(v).toLowerCase().includes(q));
+        if (!matches) return false;
+      }
+      if (filterStatus !== "all" && i.status !== filterStatus) return false;
+      if (filterPriority !== "all" && i.initial_priority !== filterPriority) return false;
+      if (filterShelterType !== "all" && i.shelter_type !== filterShelterType) return false;
+      if (filterCity !== "all" && i.province !== filterCity) return false;
+      if (filterWO === "with" && !hasWO) return false;
+      if (filterWO === "without" && hasWO) return false;
+      if (filterReportedDate && i.reported_date !== filterReportedDate) return false;
+      return true;
+    });
+  }, [incidents, workOrders, searchText, filterStatus, filterPriority, filterShelterType, filterCity, filterWO, filterReportedDate]);
+
+  const hasActiveFilters = searchText || filterStatus !== "all" || filterPriority !== "all" ||
+    filterShelterType !== "all" || filterCity !== "all" || filterWO !== "all" || filterReportedDate;
+
+  const clearFilters = () => {
+    setSearchText(""); setFilterStatus("all"); setFilterPriority("all");
+    setFilterShelterType("all"); setFilterCity("all"); setFilterWO("all"); setFilterReportedDate("");
+  };
+
   const columns = [
     { key: "incident_id", label: "ID" },
     {
