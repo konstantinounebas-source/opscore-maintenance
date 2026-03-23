@@ -181,10 +181,83 @@ export default function Incidents() {
           </div>
         }
       />
-      <div className="p-6">
+      <div className="p-6 space-y-4">
+        {/* Filter Bar */}
+        <div className="bg-white rounded-xl border border-slate-200 p-4">
+          <div className="flex flex-wrap gap-2 items-center">
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="h-9 text-sm w-36"><SelectValue placeholder="Status" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                {["Open","In Progress","On Hold","Resolved","Closed"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={filterPriority} onValueChange={setFilterPriority}>
+              <SelectTrigger className="h-9 text-sm w-32"><SelectValue placeholder="Priority" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Priorities</SelectItem>
+                <SelectItem value="P1">P1 (Χαμηλή)</SelectItem>
+                <SelectItem value="P2">P2 (Υψηλή)</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filterWO} onValueChange={setFilterWO}>
+              <SelectTrigger className="h-9 text-sm w-32"><SelectValue placeholder="Work Order" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All (WO)</SelectItem>
+                <SelectItem value="yes">Has WO</SelectItem>
+                <SelectItem value="no">No WO</SelectItem>
+              </SelectContent>
+            </Select>
+            {uniqueProvinces.length > 0 && (
+              <Select value={filterProvince} onValueChange={setFilterProvince}>
+                <SelectTrigger className="h-9 text-sm w-36"><SelectValue placeholder="Province" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Provinces</SelectItem>
+                  {uniqueProvinces.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
+            {uniqueShelterTypes.length > 0 && (
+              <Select value={filterShelterType} onValueChange={setFilterShelterType}>
+                <SelectTrigger className="h-9 text-sm w-40"><SelectValue placeholder="Shelter Type" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Shelter Types</SelectItem>
+                  {uniqueShelterTypes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
+            {uniqueReportingMethods.length > 0 && (
+              <Select value={filterReportingMethod} onValueChange={setFilterReportingMethod}>
+                <SelectTrigger className="h-9 text-sm w-44"><SelectValue placeholder="Reporting Method" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Methods</SelectItem>
+                  {uniqueReportingMethods.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
+            {uniqueSources.length > 0 && (
+              <Select value={filterSource} onValueChange={setFilterSource}>
+                <SelectTrigger className="h-9 text-sm w-40"><SelectValue placeholder="Source" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Sources</SelectItem>
+                  {uniqueSources.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
+            {hasActiveFilters && (
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="h-9 gap-1.5 text-slate-500">
+                <X className="w-3.5 h-3.5" /> Clear
+              </Button>
+            )}
+          </div>
+          {hasActiveFilters && (
+            <p className="text-xs text-slate-500 mt-2">{filteredIncidents.length} of {incidents.length} incidents shown</p>
+          )}
+        </div>
+
         <DraggableDataTable
           columns={columns}
-          data={incidents}
+          data={filteredIncidents}
           onRowClick={(row) => navigate(`/IncidentDetail?id=${row.id}`)}
           searchPlaceholder="Search incidents..."
           storageKey="incidents_table_columns_order"
