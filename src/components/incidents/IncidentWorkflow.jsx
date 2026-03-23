@@ -153,16 +153,6 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
       }
 
       if (key === "create_ompi") {
-        await base44.entities.WorkOrders.create({
-          work_order_id: `OMPI-${Date.now()}`,
-          incident_id: incidentId,
-          title: `OMPI - ${incident.incident_id}`,
-          related_asset_id: incident.related_asset_id,
-          related_asset_name: incident.related_asset_name,
-          status: "Open",
-          priority: incident.initial_priority === "P1" ? "High" : "Medium",
-          description: formData.notes || "",
-        });
         if (formData.file) await uploadAttachment(formData.file);
         incidentUpdates.ompi_done = true;
         await addAudit(
@@ -173,16 +163,6 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
       }
 
       if (key === "create_fmpi") {
-        await base44.entities.WorkOrders.create({
-          work_order_id: `FMPI-${Date.now()}`,
-          incident_id: incidentId,
-          title: `FMPI - ${incident.incident_id}`,
-          related_asset_id: incident.related_asset_id,
-          related_asset_name: incident.related_asset_name,
-          status: "Open",
-          priority: "High",
-          description: `FMPI${incident.is_owr ? " (OWR)" : ""}. ${formData.notes || ""}`,
-        });
         if (formData.file) await uploadAttachment(formData.file);
         incidentUpdates.owr_fmpi_done = true;
         const details = `FMPI created${formData.notes ? `: ${formData.notes}` : ""}${!incident.is_owr ? " — CA Approval required" : ""}`;
