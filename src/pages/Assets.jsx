@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { useNavigate } from "react-router-dom";
 import TopHeader from "@/components/layout/TopHeader";
 import StatCard from "@/components/shared/StatCard";
-import DataTable from "@/components/shared/DataTable";
+import DraggableDataTable from "@/components/shared/DraggableDataTable";
 import StatusBadge from "@/components/shared/StatusBadge";
 import AssetFormDialog from "@/components/assets/AssetFormDialog";
 import ImportAssetsDialog from "@/components/assets/ImportAssetsDialog";
