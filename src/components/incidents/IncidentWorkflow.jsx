@@ -21,7 +21,7 @@ import {
 const ADMIN_STEPS = [
   { key: "confirmation_of_receipt", label: "Confirmation of Receipt", flag: "confirmation_done" },
   { key: "create_ompi",             label: "Outline Management Plan (OMPI)", flag: "ompi_done" },
-  { key: "create_fmpi",             label: "Final Management Plan (FMPI)",   flag: "owr_fmpi_done" },
+  { key: "create_fmpi",             label: "Full Management Plan (FMPI)",    flag: "owr_fmpi_done" },
   { key: "close_incident",          label: "Close Incident",                 flag: null },
 ];
 
