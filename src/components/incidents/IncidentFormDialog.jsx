@@ -455,9 +455,15 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
               </div>
             </div>
 
-            <Field label="Περιγραφή Βλάβης / Ζημιάς" required colSpan={2}>
+            <Field label="Περιγραφή Βλάβης / Ζημιάς" colSpan={2}>
               <Textarea className={err("damage_description")} value={form.damage_description} onChange={e => set("damage_description", e.target.value)} rows={3} />
             </Field>
+
+            <Field label="Εκτός Εγγύησης (OWR)" required>
+              <YesNoSelect value={form.is_owr} onChange={v => set("is_owr", v)} />
+              {errors.is_owr && <p className="text-xs text-red-500">Υποχρεωτικό</p>}
+            </Field>
+            <div />
 
             <Field label="Πιθανή Αιτία" required>
               <Select value={form.probable_cause} onValueChange={v => set("probable_cause", v)}>
