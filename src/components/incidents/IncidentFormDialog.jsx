@@ -357,14 +357,16 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
               <Input value={form.location_address} readOnly={!!form.related_asset_id} className={form.related_asset_id ? "bg-slate-50 text-slate-600" : ""} onChange={e => set("location_address", e.target.value)} />
             </Field>
 
-            <Field label="Ώρα Εντοπισμού" colSpan={2}>
-              <Input type="time" value={form.detection_time} onChange={e => set("detection_time", e.target.value)} />
-            </Field>
           </div>
 
           {/* ── 3. Περιγραφή Συμβάντος ─────────────────────────── */}
           <div className="grid grid-cols-2 gap-4">
             <SectionTitle>3. Περιγραφή Συμβάντος</SectionTitle>
+
+            <Field label="Ώρα Εντοπισμού">
+              <Input type="time" value={form.detection_time} onChange={e => set("detection_time", e.target.value)} />
+            </Field>
+            <div />
 
             <Field label="Προέλευση Αναφοράς Συμβάντος" required colSpan={2}>
               <Select value={form.incident_source} onValueChange={v => set("incident_source", v)}>
