@@ -255,14 +255,12 @@ export default function Assets() {
   };
 
   const columns = [
-    { key: "asset_id", label: "Asset ID" },
     { key: "active_shelter_id", label: "Shelter ID" },
     { key: "category", label: "Category" },
-    { key: "asset_type", label: "Type" },
     { key: "city", label: "City" },
     { key: "shelter_type", label: "Shelter Type" },
     { key: "status", label: "Status", render: (row) => <StatusBadge status={row.status} /> },
-    { key: "installation_date", label: "Install Date" },
+    { key: "delivery_date", label: "Delivery Date" },
     { key: "childs", label: "Childs", accessor: (row) => getChildCount(row.id) },
     { key: "incidents", label: "Open Incidents", accessor: (row) => getOpenIncidents(row.id) },
     { key: "work_orders", label: "Open WOs", accessor: (row) => getOpenWorkOrders(row.id) },
