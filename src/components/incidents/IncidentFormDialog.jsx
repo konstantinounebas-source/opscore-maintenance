@@ -11,6 +11,7 @@ import { base44 } from "@/api/base44Client";
 import { useConfigLists } from "@/components/shared/useConfigLists";
 import ConfirmCloseDialog from "@/components/shared/ConfirmCloseDialog";
 import { Upload, Loader2, X, FileText, Image } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 const generateIncidentId = (incidents) => {
   const nums = incidents
