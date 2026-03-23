@@ -290,7 +290,10 @@ export default function AssetDetail() {
                     {att.file_type === "Photo" ? <Image className="w-4 h-4 text-indigo-500" /> : <FileText className="w-4 h-4 text-slate-500" />}
                     <div>
                       <p className="text-sm font-medium text-slate-900">{att.file_name}</p>
-                      <p className="text-xs text-slate-400">{att.file_size || "—"} · {att.uploaded_by || "—"} · {att.created_date ? format(new Date(att.created_date), "MMM d, yyyy") : "—"}</p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {att.doc_label && <span className="text-xs bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-medium">{att.doc_label}</span>}
+                        <p className="text-xs text-slate-400">{att.file_size || "—"} · {att.uploaded_by || "—"} · {att.created_date ? format(new Date(att.created_date), "MMM d, yyyy") : "—"}</p>
+                      </div>
                     </div>
                   </div>
                   <a href={att.file_url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-700">
