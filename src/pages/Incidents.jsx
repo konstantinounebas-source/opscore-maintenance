@@ -17,6 +17,7 @@ export default function Incidents() {
   const [formOpen, setFormOpen] = useState(false);
 
   const { data: incidents = [] } = useQuery({ queryKey: ["incidents"], queryFn: () => base44.entities.Incidents.list() });
+  const { data: workOrders = [] } = useQuery({ queryKey: ["workOrders"], queryFn: () => base44.entities.WorkOrders.list() });
 
   const createMutation = useMutation({
     mutationFn: async ({ data, pendingFiles }) => {
