@@ -382,11 +382,12 @@ export default function Assets() {
           )}
         </div>
 
-        <DataTable
+        <DraggableDataTable
           columns={columns}
           data={filteredAssets}
           onRowClick={(row) => navigate(`/AssetDetail?id=${row.id}`)}
           hideSearch
+          storageKey="assets_table_columns_order"
         />
       </div>
       <AssetFormDialog
