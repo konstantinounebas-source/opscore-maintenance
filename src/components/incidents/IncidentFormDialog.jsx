@@ -488,12 +488,25 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
                   </label>
                 ))}
               </div>
-              <div>
-                <input ref={fileRef} type="file" className="hidden" onChange={handleFileSelect} />
-                <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
-                  {uploading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
-                  Επισύναψη αρχείου
-                </Button>
+              <div
+                className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors cursor-pointer ${dragOver ? "border-indigo-400 bg-indigo-50" : "border-slate-200 hover:border-slate-300"}`}
+                onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={handleDrop}
+                onClick={() => fileRef.current?.click()}
+              >
+                <input ref={fileRef} type="file" className="hidden" onChange={handleFileSelect} multiple />
+                {uploading ? (
+                  <div className="flex items-center justify-center gap-2 text-sm text-slate-500">
+                    <Loader2 className="w-4 h-4 animate-spin" /> Ανέβασμα...
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-1 text-slate-500">
+                    <Upload className="w-5 h-5" />
+                    <span className="text-xs">Σύρετε αρχεία εδώ ή <span className="text-indigo-600 underline">κάντε κλικ</span></span>
+                    <span className="text-xs text-slate-400">Υποστηρίζονται πολλαπλά αρχεία</span>
+                  </div>
+                )}
               </div>
               {pendingFiles.length > 0 && (
                 <div className="flex flex-wrap gap-3 mt-2">
