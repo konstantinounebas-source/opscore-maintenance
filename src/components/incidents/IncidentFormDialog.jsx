@@ -137,17 +137,31 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
     }));
   };
 
-  const handleFileSelect = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
+  const uploadFile = async (file) => {
     const isImage = file.type.startsWith("image/");
     const preview = isImage ? URL.createObjectURL(file) : null;
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
     setPendingFiles(pf => [...pf, { name: file.name, url: file_url, type: isImage ? "Photo" : "Document", preview }]);
     setForm(f => ({ ...f, evidence_files: [...f.evidence_files, file_url] }));
+  };
+
+  const handleFileSelect = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    setUploading(true);
+    for (const file of files) await uploadFile(file);
     setUploading(false);
     if (fileRef.current) fileRef.current.value = "";
+  };
+
+  const handleDrop = async (e) => {
+    e.preventDefault();
+    setDragOver(false);
+    const files = Array.from(e.dataTransfer.files || []);
+    if (!files.length) return;
+    setUploading(true);
+    for (const file of files) await uploadFile(file);
+    setUploading(false);
   };
 
   const removePendingFile = (url) => {
