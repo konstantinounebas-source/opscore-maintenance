@@ -46,7 +46,7 @@ const weekStatusBadge = (status) => {
 export default function Planning() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [viewMode, setViewMode] = useState("single"); // "single", "multi", or "multimap"
+  const [viewMode, setViewMode] = useState("multimap");
 
   // ── Data ──────────────────────────────────────────────────────────────────────
   const { data: weeks = [],          isLoading: weeksLoading }       = useQuery({ queryKey: ["planningWeeks"],       queryFn: () => base44.entities.PlanningWeeks.list("-created_date") });
