@@ -204,6 +204,16 @@ export default function Planning() {
     onError: (err) => toast({ title: err.message || "Failed to save", variant: "destructive" }),
   });
 
+  const deleteWeekMutation = useMutation({
+    mutationFn: (id) => base44.entities.PlanningWeeks.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["planningWeeks"] });
+      setSelectedWeekId(null);
+      toast({ title: "Planning week deleted" });
+      setEditingWeek(null);
+    },
+  });
+
   const removeAssignmentMutation = useMutation({
     mutationFn: (id) => base44.entities.PlanningAssignments.delete(id),
     onSuccess: () => {
