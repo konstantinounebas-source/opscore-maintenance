@@ -35,6 +35,11 @@ const FORM_TEMPLATES = [
     name: "Full Management Plan",
     description: "Comprehensive management plan with Work Order linkage, auto-calculated SLA dates, and contractual process steps.",
   },
+  {
+    id: "work_order_form_f",
+    name: "Έντυπο F – Εντολή Εργασίας",
+    description: "Εντολή εργασίας με επιλογή παιδιών από το Childs module, αυτόματο υπολογισμό κόστους και φωτογραφικά αποδεικτικά.",
+  },
 ];
 
 export default function Forms() {
