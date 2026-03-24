@@ -10,7 +10,7 @@ import { Loader2 } from "lucide-react";
 import { computePriorityBucket, computePinColor } from "./planningUtils";
 
 const BLANK = {
-  assignment_type: "Inspection",
+  assignment_type: "Make Safe",
   assignment_status: "Planned",
   priority_bucket: "",
   team_name: "",
@@ -28,7 +28,7 @@ export default function AssignAssetModal({ open, onOpenChange, asset, week, exis
   useEffect(() => {
     if (existingAssignment) {
       setForm({
-        assignment_type:    existingAssignment.assignment_type    || "Inspection",
+        assignment_type:    existingAssignment.assignment_type    || "Make Safe",
         assignment_status:  existingAssignment.assignment_status  || "Planned",
         priority_bucket:    existingAssignment.priority_bucket    || "",
         team_name:          existingAssignment.team_name          || "",
@@ -94,7 +94,7 @@ export default function AssignAssetModal({ open, onOpenChange, asset, week, exis
                 <Select value={form.assignment_type} onValueChange={v => set("assignment_type", v)}>
                   <SelectTrigger className="mt-1 text-sm"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {["Inspection", "Preventive", "Corrective", "Review", "Mixed"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    {["Make Safe", "Corrective"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -103,7 +103,7 @@ export default function AssignAssetModal({ open, onOpenChange, asset, week, exis
                 <Select value={form.assignment_status} onValueChange={v => set("assignment_status", v)}>
                   <SelectTrigger className="mt-1 text-sm"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {["Planned", "In Progress", "Completed", "Deferred", "Cancelled"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    {["Planned", "In Progress", "Completed", "Deferred"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -114,7 +114,7 @@ export default function AssignAssetModal({ open, onOpenChange, asset, week, exis
                 <SelectTrigger className="mt-1 text-sm"><SelectValue placeholder="Auto from source" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="auto">Auto from linked source</SelectItem>
-                  {["P1", "P2", "Critical", "High", "Medium", "Low"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  {["P1", "P2"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                 </SelectContent>
               </Select>
               <p className="text-xs text-slate-400 mt-1">If "Auto", priority is derived from any linked incident or work order.</p>
