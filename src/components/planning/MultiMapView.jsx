@@ -165,8 +165,10 @@ export default function MultiMapView() {
         style={{ width: `${splitPct}%`, minWidth: `${MIN_LEFT_PCT}%` }}
       >
         {[0, 1, 2, 3].map(i => {
-          const { filteredAssets, filteredAssignments } = panelData[i];
+          const { filteredAssets, filteredAssignments, assignmentByAsset } = panelData[i];
           const state = panelStates[i];
+          const selectedAsset = state.selectedAssetId ? assets.find(a => a.id === state.selectedAssetId) : null;
+          const selectedAssignment = selectedAsset ? assignmentByAsset[selectedAsset.id] : null;
           return (
             <div
               key={i}
@@ -183,6 +185,13 @@ export default function MultiMapView() {
                 selectedAssetId={state.selectedAssetId}
                 onSelectAsset={(asset) => updatePanel(i, { selectedAssetId: asset.id === state.selectedAssetId ? null : asset.id })}
               />
+              {selectedAsset && (
+                <AssetMapPopup
+                  asset={selectedAsset}
+                  assignment={selectedAssignment}
+                  onClose={() => updatePanel(i, { selectedAssetId: null })}
+                />
+              )}
             </div>
           );
         })}
