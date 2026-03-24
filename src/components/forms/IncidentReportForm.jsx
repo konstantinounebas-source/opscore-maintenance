@@ -410,9 +410,9 @@ export default function IncidentReportForm({ submission, incidents = [], assets 
               <Field label="Ημερομηνία Έκδοσης" required>
                 <Input type="date" value={fd.issue_date} onChange={e => set("issue_date", e.target.value)} className="text-sm mt-1" />
               </Field>
-              <Field label="Αναφέρων" required>
+              <Field label={<>Αναφέρων – Οργανισμός {(incident?.reported_by_org || incident?.reported_by_name) && <AutoBadge />}</>} required>
                 <Input value={fd.reporter_name} onChange={e => set("reporter_name", e.target.value)}
-                  placeholder="Ονοματεπώνυμο..." className="text-sm mt-1" />
+                  placeholder="Ονοματεπώνυμο / Οργανισμός..." className="text-sm mt-1" />
               </Field>
               <Field label="Τηλέφωνο" required>
                 <Input type="tel" value={fd.reporter_phone} onChange={e => set("reporter_phone", e.target.value)}
