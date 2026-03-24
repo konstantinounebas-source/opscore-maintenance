@@ -41,6 +41,11 @@ const FORM_TEMPLATES = [
     name: "Work Order Invoice",
     description: "Εντολή εργασίας με επιλογή παιδιών από το Childs module, αυτόματο υπολογισμό κόστους και φωτογραφικά αποδεικτικά.",
   },
+  {
+    id: "make_safe_checklist",
+    name: "MAKE-SAFE CHECKLIST ΠΕΔΙΟΥ",
+    description: "Smart Bus Shelters – Άμεση ασφάλιση χώρου/κινδύνου. Ελέγχος ασφαλείας, PPE, LOTO, ενέργειες Make-Safe, τεκμηρίωση και υπογραφές.",
+  },
 ];
 
 export default function Forms() {
@@ -119,6 +124,17 @@ export default function Forms() {
           workOrders={workOrders}
           crews={crews}
           childAssets={childAssets}
+          onClose={handleClose}
+        />
+      );
+    }
+    if (formType === "make_safe_checklist") {
+      return (
+        <MakeSafeChecklistForm
+          submission={editingSubmission}
+          incidents={incidents}
+          assets={assets}
+          workOrders={workOrders}
           onClose={handleClose}
         />
       );
