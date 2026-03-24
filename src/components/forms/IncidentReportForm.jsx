@@ -333,6 +333,54 @@ export default function IncidentReportForm({ submission, incidents = [], assets 
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-4xl mx-auto p-6 space-y-5">
 
+          {/* ── Linked records ── */}
+          {(incidents.length > 0 || assets.length > 0) && (
+            <div className="bg-white rounded-xl border border-indigo-100 p-5 space-y-3">
+              <h3 className="text-sm font-semibold text-indigo-800 flex items-center gap-2">
+                <Info className="w-4 h-4" /> Σύνδεση Εγγραφών (προαιρετικό – για αυτόματη συμπλήρωση)
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {incidents.length > 0 && (
+                  <div>
+                    <label className="text-xs font-medium text-slate-600 block mb-1">Incident</label>
+                    <Select value={linkedIncidentId || "_none"} onValueChange={v => setLinkedIncidentId(v === "_none" ? "" : v)}>
+                      <SelectTrigger className="text-sm"><SelectValue placeholder="Επιλογή Incident..." /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="_none">— Χωρίς σύνδεση —</SelectItem>
+                        {incidents.map(i => (
+                          <SelectItem key={i.id} value={i.id}>
+                            <span className="font-mono text-xs mr-1">{i.incident_id}</span>{i.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                {assets.length > 0 && (
+                  <div>
+                    <label className="text-xs font-medium text-slate-600 block mb-1">Asset / Στάση</label>
+                    <Select value={linkedAssetId || "_none"} onValueChange={v => setLinkedAssetId(v === "_none" ? "" : v)}>
+                      <SelectTrigger className="text-sm"><SelectValue placeholder="Επιλογή Asset..." /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="_none">— Χωρίς σύνδεση —</SelectItem>
+                        {assets.map(a => (
+                          <SelectItem key={a.id} value={a.id}>
+                            <span className="font-mono text-xs mr-1">{a.asset_id}</span>{a.active_shelter_id || a.location_address || ""}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+              {(incident || asset) && (
+                <p className="text-xs text-indigo-500 flex items-center gap-1 mt-1">
+                  <CheckCircle2 className="w-3 h-3" /> Τα διαθέσιμα πεδία συμπληρώθηκαν αυτόματα. Μπορείτε να τα τροποποιήσετε.
+                </p>
+              )}
+            </div>
+          )}
+
           {/* ── Visual Indicators ── */}
           {(priorityP1 || owrYes || makeSafeYes) && (
             <div className="flex flex-wrap gap-2">
