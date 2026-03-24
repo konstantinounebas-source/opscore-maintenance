@@ -300,8 +300,8 @@ export default function IncidentReportForm({ submission, incidents = [], assets 
     saveMutation.mutate({
       form_type: "incident_report",
       form_name: "Request for Corrective Maintenance – Incident Report",
-      incident_id: submission?.incident_id || "",
-      asset_id: submission?.asset_id || "",
+      incident_id: linkedIncidentId || "",
+      asset_id: linkedAssetId || "",
       work_order_id: submission?.work_order_id || "",
       status,
       submitted_at: status === "Submitted" ? new Date().toISOString() : submission?.submitted_at,
