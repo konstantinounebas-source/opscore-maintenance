@@ -9,7 +9,7 @@ export default function OperationalMetrics({ data }) {
   const { filteredAssets, filteredIncidents, workOrders } = data;
   const [drillDown, setDrillDown] = useState(null);
 
-  const activeAssets = filteredAssets.filter(a => a.status === "Active");
+  const activeAssets = filteredAssets.filter(a => a.status === "Active" || a.status === "Delivered");
   const assetsWithOpenWO = useMemo(() => {
     const ids = new Set(workOrders.filter(w => ["Open", "In Progress"].includes(w.status)).map(w => w.related_asset_id).filter(Boolean));
     return filteredAssets.filter(a => ids.has(a.id));
@@ -43,7 +43,7 @@ export default function OperationalMetrics({ data }) {
       icon: Box,
       records: activeAssets,
       type: "assets",
-      description: "All Assets with status = Active"
+      description: "All Assets with status = Active or Delivered"
     },
     {
       label: "Shelters Under Maintenance",

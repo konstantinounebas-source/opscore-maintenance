@@ -19,7 +19,7 @@ export default function KPIOverview({ data }) {
   const { assets, filteredAssets, filteredIncidents, workOrders } = data;
   const [drillDown, setDrillDown] = useState(null);
 
-  const activeAssets = filteredAssets.filter(a => a.status === "Active");
+  const activeAssets = filteredAssets.filter(a => a.status === "Active" || a.status === "Delivered");
   const assetsWithOpenWO = useMemo(() => {
     const assetIdsWithOpenWO = new Set(
       workOrders.filter(w => w.status === "Open" || w.status === "In Progress").map(w => w.related_asset_id).filter(Boolean)
