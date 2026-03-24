@@ -9,7 +9,7 @@ import { countActiveFilters } from "./planningUtils";
 
 const ALL = "all";
 
-export default function PlanningFilters({ filters, onChange, onApply, onReset, assets, assignments }) {
+export default function PlanningFilters({ filters, onChange, onApply, onReset, assets, assignments, onSelectAsset }) {
   const [expanded, setExpanded] = useState(false);
 
   const cities        = [...new Set(assets.map(a => a.city).filter(Boolean))].sort();
@@ -24,12 +24,33 @@ export default function PlanningFilters({ filters, onChange, onApply, onReset, a
 
   return (
     <div className="bg-white border border-slate-200 rounded-lg p-3 space-y-2">
-      {/* Always-visible search + toggle */}
+      {/* Always-visible asset selector + search + toggle */}
       <div className="flex items-center gap-2">
+        <Select
+          value={filters.selected_asset_id || "all"}
+          onValueChange={v => {
+            const asset = assets.find(a => a.id === v);
+            if (asset && onSelectAsset) onSelectAsset(asset);
+            onChange({ ...filters, selected_asset_id: v === "all" ? "" : v });
+          }}
+        >
+          <SelectTrigger className="w-52 h-8 text-sm border-slate-200 shrink-0">
+            <SelectValue placeholder="Select asset..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">— All Assets —</SelectItem>
+            {assets.map(a => (
+              <SelectItem key={a.id} value={a.id}>
+                <span className="font-mono text-xs mr-1 text-slate-500">{a.active_shelter_id || a.asset_id}</span>
+                {a.city && <span className="text-slate-600">{a.city}</span>}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <div className="relative flex-1">
           <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-slate-400" />
           <Input
-            placeholder="Asset ID, name, shelter ID, address..."
+            placeholder="Search ID, shelter, address..."
             className="pl-8 text-sm h-8"
             value={filters.search || ""}
             onChange={e => set("search", e.target.value)}
