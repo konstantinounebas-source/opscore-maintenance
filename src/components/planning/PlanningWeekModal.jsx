@@ -18,9 +18,11 @@ const BLANK = {
   notes: "",
 };
 
-export default function PlanningWeekModal({ open, onOpenChange, week, onSave }) {
+export default function PlanningWeekModal({ open, onOpenChange, week, onSave, onDelete }) {
   const [form, setForm] = useState(BLANK);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     if (week) {
