@@ -105,7 +105,19 @@ export default function PlanningWeekModal({ open, onOpenChange, week, onSave, on
             <Label className="text-xs">Notes</Label>
             <Textarea placeholder="Optional notes..." value={form.notes} onChange={e => set("notes", e.target.value)} className="mt-1 text-sm" rows={2} />
           </div>
-          <div className="flex justify-end gap-2 pt-1">
+          <div className="flex justify-between items-center pt-1">
+            {week && onDelete ? (
+              <Button
+                variant="outline"
+                className={confirmDelete ? "border-red-500 text-red-600 hover:bg-red-50" : "text-red-500 hover:text-red-700 hover:border-red-300"}
+                onClick={handleDelete}
+                disabled={deleting}
+              >
+                {deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Trash2 className="h-3.5 w-3.5 mr-1" />}
+                {confirmDelete ? "Confirm Delete" : "Delete Week"}
+              </Button>
+            ) : <span />}
+            <div className="flex gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
             <Button
               className="bg-indigo-600 hover:bg-indigo-700"
