@@ -149,6 +149,8 @@ export default function Forms() {
       return (
         <IncidentReportForm
           submission={editingSubmission}
+          incidents={incidents}
+          assets={assets}
           onClose={handleClose}
         />
       );
