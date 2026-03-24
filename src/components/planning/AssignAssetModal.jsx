@@ -21,9 +21,11 @@ const BLANK = {
   source_work_order_id: "",
 };
 
-export default function AssignAssetModal({ open, onOpenChange, asset, week, existingAssignment, incidents, workOrders, onSave }) {
+export default function AssignAssetModal({ open, onOpenChange, asset, week, existingAssignment, incidents, workOrders, onSave, onDelete }) {
   const [form, setForm] = useState(BLANK);
   const [saving, setSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (existingAssignment) {
