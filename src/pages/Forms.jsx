@@ -47,6 +47,11 @@ const FORM_TEMPLATES = [
     name: "MAKE-SAFE CHECKLIST ΠΕΔΙΟΥ",
     description: "Smart Bus Shelters – Άμεση ασφάλιση χώρου/κινδύνου. Ελέγχος ασφαλείας, PPE, LOTO, ενέργειες Make-Safe, τεκμηρίωση και υπογραφές.",
   },
+  {
+    id: "incident_report",
+    name: "Request for Corrective Maintenance – Incident Report",
+    description: "Φόρμα Αναφοράς Συμβάντος. Καταγραφή βλαβών, κατάταξη προτεραιότητας, OWR, Make-Safe και εγκρίσεις.",
+  },
 ];
 
 export default function Forms() {
@@ -136,6 +141,14 @@ export default function Forms() {
           incidents={incidents}
           assets={assets}
           workOrders={workOrders}
+          onClose={handleClose}
+        />
+      );
+    }
+    if (formType === "incident_report") {
+      return (
+        <IncidentReportForm
+          submission={editingSubmission}
           onClose={handleClose}
         />
       );
