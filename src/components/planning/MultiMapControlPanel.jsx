@@ -103,6 +103,52 @@ export default function MultiMapControlPanel({
 
   const set = (key) => (v) => onUpdate({ [key]: v === "__all__" || v === "__none__" ? "" : v });
 
+  // Asset search filter (applied after all other filters)
+  const assetSearchLower = assetSearch.trim().toLowerCase();
+  const displayedAssets = assetSearch
+    ? filteredAssets.filter(a =>
+        (a.active_shelter_id || "").toLowerCase().includes(assetSearchLower) ||
+        (a.asset_id || "").toLowerCase().includes(assetSearchLower) ||
+        (a.city || "").toLowerCase().includes(assetSearchLower) ||
+        (a.location_address || "").toLowerCase().includes(assetSearchLower)
+      )
+    : filteredAssets;
+
+  // Create week + assignment handler
+  const handleCreate = async () => {
+    if (!selectedAssetForCreate) { setSaveMsg("Select an asset."); return; }
+    setSaving(true); setSaveMsg("");
+    try {
+      let weekId = selectedWeekForCreate;
+      if (selectedWeekForCreate === "__new__") {
+        if (!weekForm.week_code || !weekForm.start_date || !weekForm.end_date) {
+          setSaveMsg("Fill in Week Code, Start & End dates."); setSaving(false); return;
+        }
+        const newWeek = await base44.entities.PlanningWeeks.create({
+          ...weekForm, status: "Draft",
+        });
+        weekId = newWeek.id;
+        queryClient.invalidateQueries({ queryKey: ["planningWeeks"] });
+      }
+      await base44.entities.PlanningAssignments.create({
+        planning_week_id: weekId,
+        asset_id: selectedAssetForCreate,
+        ...asgnForm,
+      });
+      queryClient.invalidateQueries({ queryKey: ["planningAssignments"] });
+      setSaveMsg("✓ Created successfully!");
+      setWeekForm(DEFAULT_WEEK_FORM);
+      setAsgnForm(DEFAULT_ASGN_FORM);
+      setSelectedAssetForCreate("");
+      setSelectedWeekForCreate("__new__");
+      // auto-select the week in this panel
+      onUpdate({ selectedWeekId: weekId });
+    } catch (e) {
+      setSaveMsg("Error: " + e.message);
+    }
+    setSaving(false);
+  };
+
   return (
     <div className={`flex flex-col h-full rounded-lg border-2 ${theme.border} bg-white overflow-hidden`}>
       {/* Header */}
