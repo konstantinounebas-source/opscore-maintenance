@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import MultiMapInstance from "./MultiMapInstance";
 import MultiMapControlPanel from "./MultiMapControlPanel";
+import AssetMapPopup from "./AssetMapPopup";
 import { Loader2 } from "lucide-react";
 
 const MIN_LEFT_PCT = 40;
