@@ -368,7 +368,7 @@ export default function MultiMapControlPanel({
                   </thead>
                   <tbody>
                     {filteredAssignments.map(asgn => {
-                      const asset = filteredAssets.find(a => a.id === asgn.asset_id);
+                     const asset = displayedAssets.find(a => a.id === asgn.asset_id) || filteredAssets.find(a => a.id === asgn.asset_id);
                       const isSelected = state.selectedAssetId === asgn.asset_id;
                       return (
                         <tr
