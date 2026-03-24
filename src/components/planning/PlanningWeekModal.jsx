@@ -25,6 +25,7 @@ export default function PlanningWeekModal({ open, onOpenChange, week, onSave, on
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
+    setConfirmDelete(false);
     if (week) {
       setForm({
         week_code: week.week_code || "",
