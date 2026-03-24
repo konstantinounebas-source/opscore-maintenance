@@ -32,11 +32,11 @@ function ReadOnlyField({ label, value, badge, children }) {
 }
 
 // ── Section wrapper ─────────────────────────────────────────────────────────
-function Section({ title, icon: Icon, accent, children }) {
+function Section({ title, icon: SectionIcon, accent, children }) {
   return (
     <div className={`bg-white rounded-xl border ${accent || "border-slate-200"} overflow-hidden`}>
       <div className={`flex items-center gap-2.5 px-5 py-3.5 border-b ${accent ? "border-inherit bg-slate-50/50" : "border-slate-100 bg-slate-50/30"}`}>
-        {Icon && <Icon className="w-4 h-4 text-slate-500" />}
+        {SectionIcon && <SectionIcon className="w-4 h-4 text-slate-500" />}
         <h3 className="text-sm font-semibold text-slate-700">{title}</h3>
       </div>
       <div className="p-5 space-y-4">{children}</div>
