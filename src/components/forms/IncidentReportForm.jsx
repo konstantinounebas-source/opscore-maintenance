@@ -66,6 +66,7 @@ function Field({ label, required, children }) {
 function FileUploadArea({ files, onChange }) {
   const inputRef = useRef();
   const [uploading, setUploading] = useState(false);
+  const [dragging, setDragging] = useState(false);
 
   const handleFiles = async (fileList) => {
     setUploading(true);
@@ -78,21 +79,36 @@ function FileUploadArea({ files, onChange }) {
     setUploading(false);
   };
 
+  const onDrop = (e) => {
+    e.preventDefault();
+    setDragging(false);
+    if (e.dataTransfer.files?.length) handleFiles(e.dataTransfer.files);
+  };
+
   const remove = (idx) => { const c = [...files]; c.splice(idx, 1); onChange(c); };
   const isImage = (f) => f.type?.startsWith("image/") || /\.(jpg|jpeg|png|gif|webp)$/i.test(f.name);
 
   return (
     <div className="space-y-3">
       <div
-        className="border-2 border-dashed border-slate-200 rounded-lg p-5 text-center cursor-pointer hover:border-indigo-300 hover:bg-indigo-50/30 transition-colors"
+        className={`border-2 border-dashed rounded-lg p-5 text-center cursor-pointer transition-colors ${
+          dragging
+            ? "border-indigo-400 bg-indigo-50 scale-[1.01]"
+            : "border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/30"
+        }`}
         onClick={() => inputRef.current?.click()}
+        onDragOver={e => { e.preventDefault(); setDragging(true); }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={onDrop}
       >
-        <Upload className="w-6 h-6 text-slate-400 mx-auto mb-1.5" />
+        <Upload className={`w-6 h-6 mx-auto mb-1.5 ${dragging ? "text-indigo-500" : "text-slate-400"}`} />
         {uploading ? (
           <p className="text-sm text-indigo-600 font-medium">Μεταφόρτωση...</p>
+        ) : dragging ? (
+          <p className="text-sm text-indigo-600 font-medium">Αφήστε τα αρχεία εδώ...</p>
         ) : (
           <>
-            <p className="text-sm text-slate-600 font-medium">Κλικ για επισύναψη αρχείων</p>
+            <p className="text-sm text-slate-600 font-medium">Σύρτε & αφήστε ή κλικ για επισύναψη</p>
             <p className="text-xs text-slate-400 mt-0.5">Εικόνες και έγγραφα</p>
           </>
         )}
