@@ -127,6 +127,7 @@ export default function PlanningWeekModal({ open, onOpenChange, week, onSave, on
               {saving && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
               {saving ? "Saving..." : week ? "Update" : "Create"}
             </Button>
+            </div>
           </div>
         </div>
       </DialogContent>
