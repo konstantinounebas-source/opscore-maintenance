@@ -355,6 +355,21 @@ export default function Planning() {
     </div>
   );
 
+  // ── MULTI-MAP VIEW ────────────────────────────────────────────────────────────
+  if (viewMode === "multimap") {
+    return (
+      <div className="flex flex-col h-screen overflow-hidden">
+        <TopHeader title="Planning & Map Scheduler" subtitle="Multi-Map Operational View" />
+        <div className="bg-white border-b border-slate-200 px-4 py-2 flex items-center gap-2">
+          {ViewModeToggle}
+        </div>
+        <div className="flex-1 overflow-hidden">
+          <MultiMapView />
+        </div>
+      </div>
+    );
+  }
+
   // ── MULTI-WEEK VIEW ───────────────────────────────────────────────────────────
   if (viewMode === "multi") {
     return (
