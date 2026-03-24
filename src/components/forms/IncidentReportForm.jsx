@@ -182,10 +182,25 @@ const defaultData = () => ({
   authority_representative: "",
 });
 
+// ── Auto-fill badge ───────────────────────────────────────────────────────────
+function AutoBadge() {
+  return (
+    <span className="inline-flex items-center gap-1 text-xs text-indigo-600 font-medium bg-indigo-50 border border-indigo-200 rounded px-1.5 py-0.5 ml-1">
+      <Lock className="w-2.5 h-2.5" /> auto
+    </span>
+  );
+}
+
 // ── Main Component ────────────────────────────────────────────────────────────
-export default function IncidentReportForm({ submission, onClose }) {
+export default function IncidentReportForm({ submission, incidents = [], assets = [], onClose }) {
   const { toast } = useToast();
   const isEditing = !!submission;
+
+  const [linkedIncidentId, setLinkedIncidentId] = useState(submission?.incident_id || "");
+  const [linkedAssetId, setLinkedAssetId]       = useState(submission?.asset_id || "");
+
+  const incident = useMemo(() => incidents.find(i => i.id === linkedIncidentId), [incidents, linkedIncidentId]);
+  const asset    = useMemo(() => assets.find(a => a.id === linkedAssetId), [assets, linkedAssetId]);
 
   const [fd, setFd] = useState(() => ({
     ...defaultData(),
@@ -193,6 +208,34 @@ export default function IncidentReportForm({ submission, onClose }) {
   }));
 
   const set = (key, val) => setFd(prev => ({ ...prev, [key]: val }));
+
+  // ── Auto-fill from linked incident / asset ────────────────────────────────
+  useEffect(() => {
+    if (!incident) return;
+    setFd(prev => ({
+      ...prev,
+      reporter_name: prev.reporter_name || incident.reported_by_org || incident.reported_by_name || "",
+      municipality:  prev.municipality  || incident.municipality || "",
+      province:      prev.province      || incident.province || "",
+      stop_number:   prev.stop_number   || incident.active_shelter_id || "",
+      stop_address:  prev.stop_address  || incident.location_address || "",
+      first_report_date: prev.first_report_date || incident.first_report_date || incident.reported_date || "",
+      detection_time:    prev.detection_time    || incident.detection_time || "",
+    }));
+    // Also try to link asset from incident
+    if (!linkedAssetId && incident.related_asset_id) setLinkedAssetId(incident.related_asset_id);
+  }, [linkedIncidentId]);
+
+  useEffect(() => {
+    if (!asset) return;
+    setFd(prev => ({
+      ...prev,
+      municipality: prev.municipality || asset.municipality || "",
+      province:     prev.province     || asset.city || "",
+      stop_number:  prev.stop_number  || asset.active_shelter_id || "",
+      stop_address: prev.stop_address || asset.location_address || "",
+    }));
+  }, [linkedAssetId]);
 
   // Reset subsystem detail when subsystem changes
   const setSubsystem = (val) => setFd(prev => ({ ...prev, subsystem: val, subsystem_detail: "" }));
