@@ -209,7 +209,8 @@ export default function MultiMapControlPanel({
                   {state.filterCrew && <FilterChip label={activeCrew.find(c => c.id === state.filterCrew)?.crew_name || state.filterCrew} onRemove={() => onUpdate({ filterCrew: "" })} />}
                   {state.filterCity && <FilterChip label={state.filterCity} onRemove={() => onUpdate({ filterCity: "" })} />}
                   {state.filterMunicipality && <FilterChip label={state.filterMunicipality} onRemove={() => onUpdate({ filterMunicipality: "" })} />}
-                  <button onClick={() => onUpdate({ filterAssetState:"", filterStatus:"", filterType:"", filterPriority:"", filterCrew:"", filterCity:"", filterMunicipality:"" })}
+                  {assetSearch && <FilterChip label={`"${assetSearch}"`} onRemove={() => setAssetSearch("")} />}
+                  <button onClick={() => { onUpdate({ filterAssetState:"", filterStatus:"", filterType:"", filterPriority:"", filterCrew:"", filterCity:"", filterMunicipality:"" }); setAssetSearch(""); }}
                     className="text-[9px] text-red-500 hover:text-red-700 font-semibold underline ml-1">
                     Clear all
                   </button>
