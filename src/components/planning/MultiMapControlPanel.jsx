@@ -98,7 +98,7 @@ export default function MultiMapControlPanel({
 
   const activeFilters = [
     state.filterAssetState, state.filterStatus, state.filterType, state.filterPriority,
-    state.filterCrew, state.filterCity, state.filterMunicipality,
+    state.filterCrew, state.filterCity, state.filterMunicipality, assetSearch,
   ].filter(Boolean).length;
 
   const set = (key) => (v) => onUpdate({ [key]: v === "__all__" || v === "__none__" ? "" : v });
