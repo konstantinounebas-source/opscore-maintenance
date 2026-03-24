@@ -17,6 +17,7 @@ import RoutesTab from "@/components/planning/RoutesTab";
 import RecommendationsTab from "@/components/planning/RecommendationsTab";
 import EnhancedComparisonTab from "@/components/planning/EnhancedComparisonTab";
 import MultiWeekPlanningView from "@/pages/MultiWeekPlanningView";
+import MultiMapView from "@/components/planning/MultiMapView";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -45,7 +46,7 @@ const weekStatusBadge = (status) => {
 export default function Planning() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [viewMode, setViewMode] = useState("single"); // "single" or "multi"
+  const [viewMode, setViewMode] = useState("single"); // "single", "multi", or "multimap"
 
   // ── Data ──────────────────────────────────────────────────────────────────────
   const { data: weeks = [],          isLoading: weeksLoading }       = useQuery({ queryKey: ["planningWeeks"],       queryFn: () => base44.entities.PlanningWeeks.list("-created_date") });
@@ -342,6 +343,14 @@ export default function Planning() {
         }`}
       >
         Multi-Week View
+      </button>
+      <button
+        onClick={() => setViewMode("multimap")}
+        className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+          viewMode === "multimap" ? "bg-white shadow text-indigo-700 border border-slate-200" : "text-slate-500 hover:text-slate-700"
+        }`}
+      >
+        Multi-Map View
       </button>
     </div>
   );
