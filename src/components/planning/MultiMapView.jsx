@@ -146,7 +146,15 @@ export default function MultiMapView() {
     );
   }
 
-  const PANEL_COLORS = ["indigo", "emerald", "amber", "purple"];
+  const MAP_BORDER = [
+    "border-indigo-300", "border-emerald-300", "border-amber-300", "border-purple-300"
+  ];
+  const MAP_BADGE = [
+    "bg-indigo-100 text-indigo-700 border-indigo-200",
+    "bg-emerald-100 text-emerald-700 border-emerald-200",
+    "bg-amber-100 text-amber-700 border-amber-200",
+    "bg-purple-100 text-purple-700 border-purple-200",
+  ];
 
   return (
     <div ref={containerRef} className="flex h-full overflow-hidden bg-slate-100">
@@ -158,15 +166,14 @@ export default function MultiMapView() {
         {[0, 1, 2, 3].map(i => {
           const { filteredAssets, filteredAssignments } = panelData[i];
           const state = panelStates[i];
-          const color = PANEL_COLORS[i];
           return (
             <div
               key={i}
-              className={`relative rounded-lg overflow-hidden border-2 border-${color}-300 bg-white`}
+              className={`relative rounded-lg overflow-hidden border-2 ${MAP_BORDER[i]} bg-white`}
               style={{ isolation: "isolate", minHeight: 0 }}
             >
               {/* Map label badge */}
-              <div className={`absolute top-1.5 left-1.5 z-10 px-2 py-0.5 rounded-full text-[10px] font-bold bg-${color}-100 text-${color}-700 border border-${color}-200 shadow-sm`}>
+              <div className={`absolute top-1.5 left-1.5 z-10 px-2 py-0.5 rounded-full text-[10px] font-bold border shadow-sm ${MAP_BADGE[i]}`}>
                 Map {i + 1}
               </div>
               <MultiMapInstance
