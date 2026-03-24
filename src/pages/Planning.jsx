@@ -314,41 +314,19 @@ export default function Planning() {
 
   const isLoading = weeksLoading || assignmentsLoading;
 
-  // Render multi-week view if selected
-  if (viewMode === "multi") {
-    return (
-      <div className="flex flex-col h-screen overflow-hidden">
-        <TopHeader
-          title="Planning & Map Scheduler — 4-Week View"
-          actions={
-            <div className="flex items-center gap-2">
-              <Button size="sm" variant="outline" className="gap-1.5 text-xs"
-                onClick={() => setViewMode("single")}>
-                Single Week View
-              </Button>
-            </div>
-          }
-        />
-        <MultiWeekPlanningView />
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col h-screen overflow-hidden">
       <TopHeader
         title="Planning & Map Scheduler"
-        subtitle={selectedWeek ? `${selectedWeek.week_code} — ${selectedWeek.week_name}` : undefined}
+        subtitle={viewMode === "single" && selectedWeek ? `${selectedWeek.week_code} — ${selectedWeek.week_name}` : undefined}
         actions={
           <div className="flex items-center gap-2">
-            <Button size="sm" variant="outline" className="gap-1.5 text-xs"
-              onClick={() => { setEditingWeek(null); setWeekModalOpen(true); }}>
-              <Plus className="w-3.5 h-3.5" /> New Week
-            </Button>
-            <Button size="sm" variant="outline" className="gap-1.5 text-xs"
-              onClick={() => setViewMode("multi")}>
-              4-Week View
-            </Button>
+            {viewMode === "single" && (
+              <Button size="sm" variant="outline" className="gap-1.5 text-xs"
+                onClick={() => { setEditingWeek(null); setWeekModalOpen(true); }}>
+                <Plus className="w-3.5 h-3.5" /> New Week
+              </Button>
+            )}
           </div>
         }
       />
