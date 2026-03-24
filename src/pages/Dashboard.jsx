@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import TopHeader from "@/components/layout/TopHeader";
 import { Clock } from "lucide-react";
+// Note: "Active Shelters" counts assets with status "Active" OR "Delivered"
 
 import SystemStatusCards from "@/components/dashboard/SystemStatusCards";
 import NeedsAttention from "@/components/dashboard/NeedsAttention";
