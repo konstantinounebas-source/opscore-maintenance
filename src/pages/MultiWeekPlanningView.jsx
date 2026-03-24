@@ -1,180 +1,194 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import WeekPlanningPanel from '@/components/planning/WeekPlanningPanel';
-import { ChevronRight, ChevronLeft, Settings } from 'lucide-react';
+import { LayoutGrid, Columns2, Square, Table2, ChevronLeft, ChevronRight } from 'lucide-react';
+
+// Layout grid class per panel count
+const GRID_CONFIG = {
+  1: { grid: 'grid-cols-1', rows: 'grid-rows-1' },
+  2: { grid: 'grid-cols-2', rows: 'grid-rows-1' },
+  3: { grid: 'grid-cols-2', rows: 'grid-rows-2' }, // 3 panels = 2x2 with last spanning
+  4: { grid: 'grid-cols-2', rows: 'grid-rows-2' },
+};
+
+const PANEL_BUTTONS = [
+  { count: 1, label: '1', icon: Square, title: '1 Panel' },
+  { count: 2, label: '2', icon: Columns2, title: '2 Panels' },
+  { count: 3, label: '3', icon: Table2, title: '3 Panels' },
+  { count: 4, label: '4', icon: LayoutGrid, title: '4 Panels' },
+];
 
 export default function MultiWeekPlanningView() {
-  const [baseWeekId, setBaseWeekId] = useState(null);
+  const [panelCount, setPanelCount] = useState(2);
   const [manualMode, setManualMode] = useState(false);
-  const [selectedWeekIds, setSelectedWeekIds] = useState([]);
+  // Per-panel selected week IDs — supports up to 4 independent slots
+  const [panelWeekIds, setPanelWeekIds] = useState([null, null, null, null]);
 
-  // Data fetching
   const { data: weeks = [] } = useQuery({
     queryKey: ['planningWeeks'],
     queryFn: () => base44.entities.PlanningWeeks.list('-created_date'),
   });
-
   const { data: assets = [] } = useQuery({
     queryKey: ['assets'],
     queryFn: () => base44.entities.Assets.list(),
   });
-
-  const { data: incidents = [] } = useQuery({
-    queryKey: ['incidents'],
-    queryFn: () => base44.entities.Incidents.list(),
-  });
-
-  const { data: workOrders = [] } = useQuery({
-    queryKey: ['workOrders'],
-    queryFn: () => base44.entities.WorkOrders.list(),
-  });
-
   const { data: allAssignments = [] } = useQuery({
     queryKey: ['planningAssignments'],
     queryFn: () => base44.entities.PlanningAssignments.list(),
   });
 
-  // Set default base week
+  // On weeks load, auto-assign sequential weeks to panels
   useEffect(() => {
-    if (weeks.length > 0 && !baseWeekId) {
+    if (weeks.length === 0) return;
+    setPanelWeekIds(prev => {
+      if (prev.some(id => id !== null)) return prev; // already set
       const active = weeks.find(w => w.is_active) || weeks[0];
-      setBaseWeekId(active.id);
-    }
-  }, [weeks, baseWeekId]);
+      const baseIdx = weeks.findIndex(w => w.id === active.id);
+      return [0, 1, 2, 3].map(i => weeks[baseIdx + i]?.id || null);
+    });
+  }, [weeks]);
 
-  // Compute 4 weeks to display
-  const displayWeeks = useMemo(() => {
+  // Auto-sequential nav: shift base week forward/back
+  const handleBaseShift = useCallback((dir) => {
+    setPanelWeekIds(prev => {
+      const firstId = prev[0];
+      const firstIdx = weeks.findIndex(w => w.id === firstId);
+      const newBase = firstIdx + dir;
+      if (newBase < 0 || newBase >= weeks.length) return prev;
+      return [0, 1, 2, 3].map(i => weeks[newBase + i]?.id || null);
+    });
+  }, [weeks]);
+
+  // Manual per-panel week change
+  const handlePanelWeekChange = useCallback((panelIdx, weekId) => {
+    setPanelWeekIds(prev => {
+      const next = [...prev];
+      next[panelIdx] = weekId;
+      return next;
+    });
+    if (!manualMode) setManualMode(true);
+  }, [manualMode]);
+
+  // When switching from manual back to auto, re-sequence
+  const handleToggleMode = () => {
     if (manualMode) {
-      return weeks.filter(w => selectedWeekIds.includes(w.id)).slice(0, 4);
+      // Reset to sequential from first panel's week
+      const firstId = panelWeekIds[0];
+      const baseIdx = weeks.findIndex(w => w.id === firstId);
+      const base = baseIdx >= 0 ? baseIdx : 0;
+      setPanelWeekIds([0, 1, 2, 3].map(i => weeks[base + i]?.id || null));
     }
-
-    // Auto-sequential mode
-    if (!baseWeekId) return [];
-
-    const baseIdx = weeks.findIndex(w => w.id === baseWeekId);
-    if (baseIdx < 0) return [];
-
-    return [baseIdx, baseIdx + 1, baseIdx + 2, baseIdx + 3]
-      .map(i => weeks[i])
-      .filter(Boolean);
-  }, [weeks, baseWeekId, manualMode, selectedWeekIds]);
-
-  // Derived data
-  const incidentsByAsset = useMemo(() => {
-    const m = {};
-    incidents.forEach(i => {
-      if (!m[i.related_asset_id]) m[i.related_asset_id] = [];
-      m[i.related_asset_id].push(i);
-    });
-    return m;
-  }, [incidents]);
-
-  const workOrdersByAsset = useMemo(() => {
-    const m = {};
-    workOrders.forEach(w => {
-      if (!m[w.related_asset_id]) m[w.related_asset_id] = [];
-      m[w.related_asset_id].push(w);
-    });
-    return m;
-  }, [workOrders]);
-
-  const handlePrev = () => {
-    if (!baseWeekId) return;
-    const baseIdx = weeks.findIndex(w => w.id === baseWeekId);
-    if (baseIdx > 0) setBaseWeekId(weeks[baseIdx - 1].id);
+    setManualMode(m => !m);
   };
 
-  const handleNext = () => {
-    if (!baseWeekId) return;
-    const baseIdx = weeks.findIndex(w => w.id === baseWeekId);
-    if (baseIdx < weeks.length - 1) setBaseWeekId(weeks[baseIdx + 1].id);
+  // When panel count changes, auto-fill new slots sequentially
+  const handlePanelCountChange = (newCount) => {
+    setPanelCount(newCount);
+    if (!manualMode) {
+      setPanelWeekIds(prev => {
+        const firstId = prev[0];
+        const baseIdx = weeks.findIndex(w => w.id === firstId);
+        const base = baseIdx >= 0 ? baseIdx : 0;
+        return [0, 1, 2, 3].map(i => weeks[base + i]?.id || null);
+      });
+    }
+  };
+
+  // Derive week objects for visible panels
+  const weeksMap = useMemo(() => Object.fromEntries(weeks.map(w => [w.id, w])), [weeks]);
+  const visiblePanelWeeks = panelWeekIds.slice(0, panelCount).map(id => weeksMap[id] || null);
+
+  // Range label for header
+  const rangeLabel = useMemo(() => {
+    const valid = visiblePanelWeeks.filter(Boolean);
+    if (valid.length === 0) return 'No weeks selected';
+    if (valid.length === 1) return valid[0].week_code;
+    return `${valid[0].week_code} → ${valid[valid.length - 1].week_code}`;
+  }, [visiblePanelWeeks]);
+
+  // Grid CSS based on panel count
+  const getGridClass = () => {
+    if (panelCount === 1) return 'grid grid-cols-1 h-full';
+    if (panelCount === 2) return 'grid grid-cols-2 h-full gap-3';
+    if (panelCount === 3) return 'grid grid-cols-2 gap-3 h-full';
+    return 'grid grid-cols-2 grid-rows-2 gap-3 h-full';
+  };
+
+  // For 3-panel, the 3rd panel spans full width of second row
+  const getPanelClass = (idx, count) => {
+    if (count === 3 && idx === 2) return 'col-span-2';
+    return '';
   };
 
   return (
-    <div className="flex flex-col h-full w-full overflow-hidden bg-slate-50">
-      {/* Controls */}
-      <div className="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between gap-3 flex-shrink-0">
-        <div className="flex items-center gap-2">
-          <Button size="sm" variant="outline" onClick={handlePrev} className="h-8 w-8 p-0">
-            <ChevronLeft className="w-4 h-4" />
+    <div className="flex flex-col h-full w-full overflow-hidden bg-slate-100">
+      {/* Toolbar */}
+      <div className="bg-white border-b border-slate-200 px-4 py-2.5 flex items-center gap-3 flex-shrink-0">
+        {/* Panel count selector */}
+        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
+          {PANEL_BUTTONS.map(({ count, label, title }) => (
+            <button
+              key={count}
+              onClick={() => handlePanelCountChange(count)}
+              title={title}
+              className={`w-8 h-7 rounded text-xs font-bold transition-all ${
+                panelCount === count
+                  ? 'bg-white shadow text-indigo-700 border border-slate-200'
+                  : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Navigation */}
+        <div className="flex items-center gap-1">
+          <Button size="sm" variant="outline" onClick={() => handleBaseShift(-1)} className="h-7 w-7 p-0" disabled={manualMode}>
+            <ChevronLeft className="w-3.5 h-3.5" />
           </Button>
-          <span className="text-xs font-semibold text-slate-600">
-            {displayWeeks.length > 0
-              ? `${displayWeeks[0].week_code} → ${displayWeeks[displayWeeks.length - 1].week_code}`
-              : 'No weeks selected'}
-          </span>
-          <Button size="sm" variant="outline" onClick={handleNext} className="h-8 w-8 p-0">
-            <ChevronRight className="w-4 h-4" />
+          <span className="text-xs font-semibold text-slate-600 px-2 min-w-[120px] text-center">{rangeLabel}</span>
+          <Button size="sm" variant="outline" onClick={() => handleBaseShift(1)} className="h-7 w-7 p-0" disabled={manualMode}>
+            <ChevronRight className="w-3.5 h-3.5" />
           </Button>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            variant={manualMode ? 'default' : 'outline'}
-            className="h-8 text-xs gap-1.5"
-            onClick={() => setManualMode(!manualMode)}
-          >
-            <Settings className="w-3 h-3" /> {manualMode ? 'Auto' : 'Manual'}
-          </Button>
-        </div>
+        {/* Mode toggle */}
+        <button
+          onClick={handleToggleMode}
+          className={`text-xs px-3 py-1.5 rounded-md border font-medium transition-all ${
+            manualMode
+              ? 'bg-indigo-50 border-indigo-300 text-indigo-700'
+              : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+          }`}
+        >
+          {manualMode ? '⚙ Manual' : '⚡ Auto-Seq'}
+        </button>
 
-        {manualMode && (
-          <Select
-            value={selectedWeekIds[0] || ''}
-            onValueChange={(v) => {
-              const baseIdx = weeks.findIndex(w => w.id === v);
-              const ids = weeks.slice(baseIdx, baseIdx + 4).map(w => w.id);
-              setSelectedWeekIds(ids);
-            }}
-          >
-            <SelectTrigger className="w-48 h-8 text-xs">
-              <SelectValue placeholder="Select weeks..." />
-            </SelectTrigger>
-            <SelectContent>
-              {weeks.map(w => (
-                <SelectItem key={w.id} value={w.id}>
-                  {w.week_code} — {w.week_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
+        <div className="ml-auto flex items-center gap-2 text-xs text-slate-400">
+          <span>{panelCount} week{panelCount !== 1 ? 's' : ''} · {allAssignments.length} assignments total</span>
+        </div>
       </div>
 
-      {/* Week Panels Grid */}
-      <div className="flex-1 overflow-hidden p-4">
-        <div className="grid grid-cols-4 gap-3 h-full auto-rows-fr">
-          {displayWeeks.map(week => (
-            <WeekPlanningPanel
-              key={week.id}
-              week={week}
-              allAssignments={allAssignments}
-              assets={assets}
-              incidentsByAsset={incidentsByAsset}
-              workOrdersByAsset={workOrdersByAsset}
-              onSelectAssignment={(assignment) => {
-                // Handle assignment selection if needed
-              }}
-              onOpenWeek={() => {
-                // Navigate to single week view if needed
-              }}
-            />
+      {/* Panels grid */}
+      <div className="flex-1 overflow-hidden p-3">
+        <div className={getGridClass()}>
+          {visiblePanelWeeks.map((week, idx) => (
+            <div key={`panel-${idx}`} className={`min-h-0 overflow-hidden ${getPanelClass(idx, panelCount)}`}>
+              <WeekPlanningPanel
+                panelIndex={idx}
+                week={week}
+                weeks={weeks}
+                allAssignments={allAssignments}
+                assets={assets}
+                panelCount={panelCount}
+                onWeekChange={(weekId) => handlePanelWeekChange(idx, weekId)}
+                onOpenWeek={null}
+              />
+            </div>
           ))}
-
-          {/* Empty slots for visual balance */}
-          {displayWeeks.length < 4 &&
-            Array.from({ length: 4 - displayWeeks.length }).map((_, i) => (
-              <div
-                key={`empty-${i}`}
-                className="bg-white border border-dashed border-slate-200 rounded-lg flex items-center justify-center"
-              >
-                <p className="text-xs text-slate-400">No data</p>
-              </div>
-            ))}
         </div>
       </div>
     </div>
