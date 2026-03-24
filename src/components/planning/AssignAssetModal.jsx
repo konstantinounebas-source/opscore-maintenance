@@ -43,6 +43,7 @@ export default function AssignAssetModal({ open, onOpenChange, asset, week, exis
     } else {
       setForm(BLANK);
     }
+    setConfirmDelete(false);
   }, [existingAssignment, open]);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
