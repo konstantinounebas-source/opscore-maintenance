@@ -629,6 +629,7 @@ export default function Planning() {
         onOpenChange={setWeekModalOpen}
         week={editingWeek}
         onSave={(form) => saveWeekMutation.mutateAsync({ form, existingWeekId: editingWeek?.id })}
+        onDelete={(id) => deleteWeekMutation.mutateAsync(id)}
       />
       <AssignAssetModal
         open={assignModalOpen}
