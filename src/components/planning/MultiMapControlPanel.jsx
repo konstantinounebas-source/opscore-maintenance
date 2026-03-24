@@ -1,7 +1,11 @@
 import React, { useMemo, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarDays, ChevronDown, ChevronUp, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { CalendarDays, ChevronDown, ChevronUp, X, Plus, Loader2 } from "lucide-react";
 import { assignmentStatusColor, priorityBucketColor } from "./planningUtils";
+import { base44 } from "@/api/base44Client";
+import { useQueryClient } from "@tanstack/react-query";
 
 const ASSIGNMENT_TYPES = ["Make Safe", "Corrective"];
 const PRIORITIES = ["P1", "P2"];
