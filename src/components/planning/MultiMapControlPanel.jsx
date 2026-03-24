@@ -29,17 +29,19 @@ function FilterChip({ label, onRemove }) {
   );
 }
 
-function SectionHeader({ title, count, open, onToggle }) {
+function SectionHeader({ title, count, open, onToggle, highlight }) {
   return (
     <button
       onClick={onToggle}
-      className="w-full flex items-center justify-between px-2 py-1 hover:bg-slate-50 transition-colors border-b border-slate-100"
+      className={`w-full flex items-center justify-between px-2 py-1.5 transition-colors border-b border-slate-100 ${highlight ? "bg-slate-700 hover:bg-slate-800" : "hover:bg-slate-50"}`}
     >
       <div className="flex items-center gap-1.5">
-        <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{title}</span>
-        {count != null && <span className="text-[9px] bg-slate-200 text-slate-600 rounded px-1 font-semibold">{count}</span>}
+        <span className={`text-[9px] font-bold uppercase tracking-widest ${highlight ? "text-white" : "text-slate-500"}`}>{title}</span>
+        {count != null && <span className={`text-[9px] rounded px-1 font-semibold ${highlight ? "bg-white/20 text-white" : "bg-slate-200 text-slate-600"}`}>{count}</span>}
       </div>
-      {open ? <ChevronUp className="w-3 h-3 text-slate-400" /> : <ChevronDown className="w-3 h-3 text-slate-400" />}
+      {open
+        ? <ChevronUp className={`w-3 h-3 ${highlight ? "text-white/70" : "text-slate-400"}`} />
+        : <ChevronDown className={`w-3 h-3 ${highlight ? "text-white/70" : "text-slate-400"}`} />}
     </button>
   );
 }
