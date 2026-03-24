@@ -434,7 +434,7 @@ export default function IncidentReportForm({ submission, incidents = [], assets 
                 <Input value={fd.province} onChange={e => set("province", e.target.value)}
                   placeholder="π.χ. Λευκωσία" className="text-sm mt-1" />
               </Field>
-              <Field label="Δήμος" required>
+              <Field label={<>Δήμος {(incident?.municipality || asset?.municipality) && <AutoBadge />}</>} required>
                 <Input value={fd.municipality} onChange={e => set("municipality", e.target.value)}
                   placeholder="π.χ. Στρόβολος" className="text-sm mt-1" />
               </Field>
