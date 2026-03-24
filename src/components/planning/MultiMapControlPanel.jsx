@@ -404,7 +404,7 @@ export default function MultiMapControlPanel({
         </div>
         {/* CREATE WEEK + ASSIGNMENT */}
         <div className="border-t border-slate-100 shrink-0">
-          <SectionHeader title="Create Assignment" open={createOpen} onToggle={() => { setCreateOpen(v => !v); setSaveMsg(""); }} />
+          <SectionHeader title="Create Assignment" open={createOpen} onToggle={() => { setCreateOpen(v => !v); setSaveMsg(""); }} highlight />
           {createOpen && (
             <div className="px-2 py-2 space-y-1.5">
 
