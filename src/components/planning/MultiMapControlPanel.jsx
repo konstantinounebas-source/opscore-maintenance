@@ -44,6 +44,14 @@ function SectionHeader({ title, count, open, onToggle }) {
   );
 }
 
+const DEFAULT_WEEK_FORM = {
+  week_code: "", week_name: "", start_date: "", end_date: "",
+};
+const DEFAULT_ASGN_FORM = {
+  assignment_type: "Corrective", assignment_status: "Planned", priority_bucket: "P2",
+  planned_date: "", notes: "",
+};
+
 export default function MultiMapControlPanel({
   panelIndex,
   state,
@@ -55,10 +63,23 @@ export default function MultiMapControlPanel({
 }) {
   const theme = PANEL_THEME[panelIndex];
   const { filteredAssets, filteredAssignments } = panelData;
+  const queryClient = useQueryClient();
 
   const [filtersOpen, setFiltersOpen] = useState(true);
   const [kpiOpen, setKpiOpen] = useState(true);
   const [listOpen, setListOpen] = useState(true);
+  const [createOpen, setCreateOpen] = useState(false);
+
+  // Asset search
+  const [assetSearch, setAssetSearch] = useState("");
+
+  // Create week + assignment form
+  const [weekForm, setWeekForm] = useState(DEFAULT_WEEK_FORM);
+  const [asgnForm, setAsgnForm] = useState(DEFAULT_ASGN_FORM);
+  const [selectedAssetForCreate, setSelectedAssetForCreate] = useState("");
+  const [selectedWeekForCreate, setSelectedWeekForCreate] = useState("__new__");
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState("");
 
   const cities = useMemo(() => [...new Set(assets.map(a => a.city).filter(Boolean))].sort(), [assets]);
   const municipalities = useMemo(() => [...new Set(assets.map(a => a.municipality).filter(Boolean))].sort(), [assets]);
