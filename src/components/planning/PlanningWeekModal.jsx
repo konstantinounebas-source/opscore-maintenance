@@ -51,6 +51,14 @@ export default function PlanningWeekModal({ open, onOpenChange, week, onSave, on
     onOpenChange(false);
   };
 
+  const handleDelete = async () => {
+    if (!confirmDelete) { setConfirmDelete(true); return; }
+    setDeleting(true);
+    await onDelete(week.id);
+    setDeleting(false);
+    onOpenChange(false);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md" style={{ zIndex: 1000 }}>
