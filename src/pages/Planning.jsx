@@ -641,6 +641,7 @@ export default function Planning() {
         incidents={incidents}
         workOrders={workOrders}
         onSave={handleSaveAssignment}
+        onDelete={(id) => removeAssignmentMutation.mutateAsync(id)}
       />
     </div>
   );
