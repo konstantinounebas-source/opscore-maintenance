@@ -180,12 +180,40 @@ export default function AssignAssetModal({ open, onOpenChange, asset, week, exis
           </TabsContent>
         </Tabs>
 
-        <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 mt-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button className="bg-indigo-600 hover:bg-indigo-700" onClick={handleSave} disabled={saving || !asset || !week}>
-            {saving && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
-            {saving ? "Saving..." : existingAssignment ? "Update" : "Assign"}
-          </Button>
+        <div className="flex items-center justify-between pt-2 border-t border-slate-100 mt-2 gap-2">
+          {existingAssignment && onDelete && (
+            <div className="flex items-center gap-2">
+              {!confirmDelete ? (
+                <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700 hover:bg-red-50 gap-1.5 text-xs"
+                  onClick={() => setConfirmDelete(true)}>
+                  <Trash2 className="w-3.5 h-3.5" /> Delete
+                </Button>
+              ) : (
+                <>
+                  <span className="text-xs text-red-600 font-medium">Are you sure?</span>
+                  <Button variant="destructive" size="sm" className="text-xs h-7" disabled={deleting}
+                    onClick={async () => {
+                      setDeleting(true);
+                      await onDelete(existingAssignment.id);
+                      setDeleting(false);
+                      onOpenChange(false);
+                    }}>
+                    {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Confirm Delete"}
+                  </Button>
+                  <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => setConfirmDelete(false)}>
+                    Cancel
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
+          <div className="flex gap-2 ml-auto">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button className="bg-indigo-600 hover:bg-indigo-700" onClick={handleSave} disabled={saving || !asset || !week}>
+              {saving && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
+              {saving ? "Saving..." : existingAssignment ? "Update" : "Assign"}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
