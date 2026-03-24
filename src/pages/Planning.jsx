@@ -314,53 +314,81 @@ export default function Planning() {
 
   const isLoading = weeksLoading || assignmentsLoading;
 
-  return (
-    <div className="flex flex-col h-screen overflow-hidden">
-      <TopHeader
-        title="Planning & Map Scheduler"
-        subtitle={viewMode === "single" && selectedWeek ? `${selectedWeek.week_code} — ${selectedWeek.week_name}` : undefined}
-        actions={
-          <div className="flex items-center gap-2">
-            {viewMode === "single" && (
+  // ── VIEW MODE TOGGLE BAR (shared between both views) ──────────────────────────
+  const ViewModeToggle = (
+    <div className="flex items-center bg-slate-100 rounded-lg p-0.5 shrink-0">
+      <button
+        onClick={() => setViewMode("single")}
+        className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+          viewMode === "single" ? "bg-white shadow text-indigo-700 border border-slate-200" : "text-slate-500 hover:text-slate-700"
+        }`}
+      >
+        Single Week
+      </button>
+      <button
+        onClick={() => setViewMode("multi")}
+        className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+          viewMode === "multi" ? "bg-white shadow text-indigo-700 border border-slate-200" : "text-slate-500 hover:text-slate-700"
+        }`}
+      >
+        Multi-Week View
+      </button>
+    </div>
+  );
+
+  // ── MULTI-WEEK VIEW ───────────────────────────────────────────────────────────
+  if (viewMode === "multi") {
+    return (
+      <div className="flex flex-col h-screen overflow-hidden">
+        <TopHeader
+          title="Planning & Map Scheduler"
+          actions={
+            <div className="flex items-center gap-2">
               <Button size="sm" variant="outline" className="gap-1.5 text-xs"
                 onClick={() => { setEditingWeek(null); setWeekModalOpen(true); }}>
                 <Plus className="w-3.5 h-3.5" /> New Week
               </Button>
-            )}
+            </div>
+          }
+        />
+        <div className="bg-white border-b border-slate-200 px-4 py-2 flex items-center gap-3">
+          {ViewModeToggle}
+        </div>
+        <div className="flex-1 overflow-hidden">
+          <MultiWeekPlanningView />
+        </div>
+        <PlanningWeekModal
+          open={weekModalOpen}
+          onOpenChange={setWeekModalOpen}
+          week={editingWeek}
+          onSave={(form) => saveWeekMutation.mutateAsync({ form, existingWeekId: editingWeek?.id })}
+        />
+      </div>
+    );
+  }
+
+  // ── SINGLE WEEK VIEW ─────────────────────────────────────────────────────────
+  return (
+    <div className="flex flex-col h-screen overflow-hidden">
+      <TopHeader
+        title="Planning & Map Scheduler"
+        subtitle={selectedWeek ? `${selectedWeek.week_code} — ${selectedWeek.week_name}` : undefined}
+        actions={
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" className="gap-1.5 text-xs"
+              onClick={() => { setEditingWeek(null); setWeekModalOpen(true); }}>
+              <Plus className="w-3.5 h-3.5" /> New Week
+            </Button>
           </div>
         }
       />
 
-      {/* View mode toggle + Week Selector Bar */}
+      {/* Toolbar: view toggle + week selector */}
       <div className="bg-white border-b border-slate-200 px-4 py-2 flex items-center gap-3 flex-wrap">
-        {/* View mode pill toggle */}
-        <div className="flex items-center bg-slate-100 rounded-lg p-0.5 shrink-0">
-          <button
-            onClick={() => setViewMode("single")}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
-              viewMode === "single" ? "bg-white shadow text-indigo-700 border border-slate-200" : "text-slate-500 hover:text-slate-700"
-            }`}
-          >
-            Single Week
-          </button>
-          <button
-            onClick={() => setViewMode("multi")}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
-              viewMode === "multi" ? "bg-white shadow text-indigo-700 border border-slate-200" : "text-slate-500 hover:text-slate-700"
-            }`}
-          >
-            Multi-Week View
-          </button>
-        </div>
+        {ViewModeToggle}
 
-        {viewMode === "multi" && (
-          <div className="flex-1 flex items-center">
-            <MultiWeekPlanningView embedded />
-          </div>
-        )}
+        <div className="w-px h-5 bg-slate-200 shrink-0" />
 
-        {viewMode === "single" && (
-        <>
         <div className="flex items-center gap-1.5 shrink-0">
           <CalendarDays className="w-4 h-4 text-slate-400" />
           <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Week</span>
@@ -398,7 +426,6 @@ export default function Planning() {
           </div>
         )}
 
-        {/* SLA quick status pills */}
         {criticalSLACount > 0 && (
           <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-medium ml-1">
             <AlertTriangle className="w-3 h-3" />{criticalSLACount} SLA risk
@@ -409,14 +436,11 @@ export default function Planning() {
             <Zap className="w-3 h-3" />{openRecsCount} recommendation{openRecsCount !== 1 ? "s" : ""}
           </span>
         )}
-
         {isLoading && <Loader2 className="w-4 h-4 animate-spin text-slate-400 ml-auto" />}
       </div>
 
       {/* Main Split Layout */}
       <div className="flex flex-1 overflow-hidden">
-
-        {/* LEFT PANEL — 58% — Map + Filters */}
         <div className="flex flex-col w-[58%] border-r border-slate-200 overflow-hidden">
           <div className="p-4 space-y-3 overflow-y-auto flex flex-col h-full">
             <div className="flex items-center gap-3 flex-wrap">
@@ -429,7 +453,6 @@ export default function Planning() {
                 saving={savingView}
               />
             </div>
-
             <PlanningFilters
               filters={filters}
               onChange={(updated) => {
@@ -441,7 +464,6 @@ export default function Planning() {
               assets={assets}
               assignments={weekAssignments}
             />
-
             <div className="flex-1 min-h-[380px]">
               <PlanningMap
                 assets={filteredAssets}
@@ -454,10 +476,7 @@ export default function Planning() {
           </div>
         </div>
 
-        {/* RIGHT PANEL — 42% — Tabbed */}
         <div className="flex flex-col w-[42%] overflow-hidden bg-slate-50">
-
-          {/* Tab bar */}
           <div className="bg-white border-b border-slate-200 px-3 flex items-center gap-0 overflow-x-auto shrink-0">
             {TABS.map(tab => {
               const badge = tab.id === "recommendations" && openRecsCount > 0 ? openRecsCount : null;
@@ -466,9 +485,7 @@ export default function Planning() {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`px-3 py-2.5 text-xs font-medium whitespace-nowrap border-b-2 transition-colors flex items-center gap-1.5 ${
-                    activeTab === tab.id
-                      ? "border-indigo-500 text-indigo-700"
-                      : "border-transparent text-slate-500 hover:text-slate-700"
+                    activeTab === tab.id ? "border-indigo-500 text-indigo-700" : "border-transparent text-slate-500 hover:text-slate-700"
                   }`}
                 >
                   {tab.label}
@@ -481,17 +498,12 @@ export default function Planning() {
               );
             })}
           </div>
-
-          {/* Tab content */}
           <div className="flex-1 overflow-y-auto p-4">
-
-            {/* ── ASSIGNMENTS TAB ── */}
             {activeTab === "assignments" && (
               <div className="space-y-4">
                 <div className="bg-white border border-slate-200 rounded-lg p-3">
                   <PlanningKPIBar assignments={weekAssignments} />
                 </div>
-
                 <BulkActionsBar
                   selectedIds={selectedAssignmentIds}
                   allAssignments={allAssignments}
@@ -501,7 +513,6 @@ export default function Planning() {
                   onDuplicateToWeek={handleDuplicateToWeek}
                   saving={bulkSaving}
                 />
-
                 <div className="bg-white rounded-lg border border-slate-200 p-3 flex flex-col" style={{ minHeight: 260 }}>
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-xs font-semibold text-slate-700 uppercase tracking-wide">Assignments</span>
@@ -533,7 +544,6 @@ export default function Planning() {
                     />
                   )}
                 </div>
-
                 <AssetDetailPanel
                   asset={selectedAsset}
                   assignment={currentAssignment}
@@ -545,8 +555,6 @@ export default function Planning() {
                 />
               </div>
             )}
-
-            {/* ── CREW SCHEDULER TAB ── */}
             {activeTab === "crew" && (
               <CrewSchedulerTab
                 selectedWeekId={selectedWeekId}
@@ -558,8 +566,6 @@ export default function Planning() {
                 onRefresh={() => queryClient.invalidateQueries({ queryKey: ["planningAssignments"] })}
               />
             )}
-
-            {/* ── ROUTES TAB ── */}
             {activeTab === "routes" && (
               <RoutesTab
                 selectedWeekId={selectedWeekId}
@@ -574,8 +580,6 @@ export default function Planning() {
                 }}
               />
             )}
-
-            {/* ── RECOMMENDATIONS TAB ── */}
             {activeTab === "recommendations" && (
               <RecommendationsTab
                 selectedWeekId={selectedWeekId}
@@ -592,8 +596,6 @@ export default function Planning() {
                 }}
               />
             )}
-
-            {/* ── COMPARISON TAB ── */}
             {activeTab === "comparison" && (
               <EnhancedComparisonTab
                 weekA={selectedWeek}
@@ -607,12 +609,10 @@ export default function Planning() {
                 weeks={weeks}
               />
             )}
-
           </div>
         </div>
       </div>
 
-      {/* Modals */}
       <PlanningWeekModal
         open={weekModalOpen}
         onOpenChange={setWeekModalOpen}
