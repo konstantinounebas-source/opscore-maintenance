@@ -109,6 +109,19 @@ export default function Forms() {
         />
       );
     }
+    if (formType === "work_order_form_f") {
+      return (
+        <WorkOrderFormF
+          submission={editingSubmission}
+          incidents={incidents}
+          assets={assets}
+          workOrders={workOrders}
+          crews={crews}
+          childAssets={childAssets}
+          onClose={handleClose}
+        />
+      );
+    }
     return (
       <OutlineManagementForm
         submission={editingSubmission}
