@@ -48,14 +48,24 @@ function fmtNum(n) {
 // ── Photo upload area ─────────────────────────────────────────────────────────
 function PhotoUploadArea({ label, files, onChange, required }) {
   const inputRef = useRef();
+  const [dragging, setDragging] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const handleFiles = async (fileList) => {
+    setUploading(true);
     const uploaded = [];
     for (const file of Array.from(fileList)) {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       uploaded.push({ name: file.name, url: file_url });
     }
     onChange([...files, ...uploaded]);
+    setUploading(false);
+  };
+
+  const onDrop = (e) => {
+    e.preventDefault();
+    setDragging(false);
+    if (e.dataTransfer.files?.length) handleFiles(e.dataTransfer.files);
   };
 
   const remove = (idx) => {
@@ -80,11 +90,22 @@ function PhotoUploadArea({ label, files, onChange, required }) {
         )}
       </div>
       <div
-        className="border-2 border-dashed border-slate-200 rounded-lg p-4 text-center cursor-pointer hover:border-indigo-300 hover:bg-indigo-50/30 transition-colors"
+        className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
+          dragging ? "border-indigo-400 bg-indigo-50" : "border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/30"
+        }`}
         onClick={() => inputRef.current?.click()}
+        onDragOver={e => { e.preventDefault(); setDragging(true); }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={onDrop}
       >
-        <Upload className="w-5 h-5 text-slate-400 mx-auto mb-1" />
-        <p className="text-xs text-slate-500">Κλικ για μεταφόρτωση φωτογραφιών</p>
+        <Upload className={`w-5 h-5 mx-auto mb-1 ${dragging ? "text-indigo-500" : "text-slate-400"}`} />
+        {uploading ? (
+          <p className="text-xs text-indigo-600 font-medium">Μεταφόρτωση...</p>
+        ) : dragging ? (
+          <p className="text-xs text-indigo-600 font-medium">Αφήστε εδώ...</p>
+        ) : (
+          <p className="text-xs text-slate-500">Σύρτε & αφήστε ή κλικ για μεταφόρτωση</p>
+        )}
         <input ref={inputRef} type="file" multiple accept="image/*" className="hidden"
           onChange={e => handleFiles(e.target.files)} />
       </div>
