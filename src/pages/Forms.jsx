@@ -37,7 +37,7 @@ const FORM_TEMPLATES = [
   },
   {
     id: "work_order_form_f",
-    name: "Έντυπο F – Εντολή Εργασίας",
+    name: "Work Order Invoice",
     description: "Εντολή εργασίας με επιλογή παιδιών από το Childs module, αυτόματο υπολογισμό κόστους και φωτογραφικά αποδεικτικά.",
   },
 ];

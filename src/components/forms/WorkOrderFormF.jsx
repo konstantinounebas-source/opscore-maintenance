@@ -239,7 +239,7 @@ export default function WorkOrderFormF({ submission, incidents, assets, workOrde
   return (
     <div className="flex flex-col min-h-screen bg-slate-50">
       <TopHeader
-        title="Έντυπο F – Εντολή Εργασίας"
+        title="Work Order Invoice"
         subtitle={isEditing ? `Επεξεργασία – ${submission?.status}` : "Νέα Υποβολή"}
         actions={
           <div className="flex items-center gap-2">
