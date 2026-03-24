@@ -10,6 +10,7 @@ import OutlineManagementForm from "@/components/forms/OutlineManagementForm";
 import FullManagementPlanForm from "@/components/forms/FullManagementPlanForm";
 import WorkOrderFormF from "@/components/forms/WorkOrderFormF";
 import MakeSafeChecklistForm from "@/components/forms/MakeSafeChecklistForm";
+import IncidentReportForm from "@/components/forms/IncidentReportForm";
 
 const STATUS_BADGE = {
   Draft:     "bg-slate-100 text-slate-600",
