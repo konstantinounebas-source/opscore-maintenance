@@ -1,12 +1,12 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { X } from 'lucide-react';
+import { SlidersHorizontal, X } from 'lucide-react';
 import { EMPTY_FILTERS } from '@/components/planning/planningUtils';
 
-export default function WeekPanelFilters({ filters, onChange, assets, assignments, onReset }) {
-  const [localFilters, setLocalFilters] = useState(filters || EMPTY_FILTERS);
+export default function WeekPanelFilters({ filters, onChange, assets, assignments, onReset, compact = false }) {
+  const debounceRef = useRef(null);
 
   const uniqueCities = useMemo(() => {
     const cities = new Set(assets.map(a => a.city).filter(Boolean));
@@ -23,46 +23,107 @@ export default function WeekPanelFilters({ filters, onChange, assets, assignment
     return Array.from(crews).sort();
   }, [assignments]);
 
-  const handleChange = (key, value) => {
-    const updated = { ...localFilters, [key]: value };
-    setLocalFilters(updated);
+  const handleChange = useCallback((key, value) => {
+    const updated = { ...filters, [key]: value || null };
     onChange(updated);
+  }, [filters, onChange]);
+
+  const handleSearchChange = (e) => {
+    const val = e.target.value;
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => handleChange('search', val), 200);
   };
 
-  const handleReset = () => {
-    setLocalFilters(EMPTY_FILTERS);
-    onReset?.();
-  };
+  const hasFilters = Object.entries(filters).some(([k, v]) => k !== 'search' && v);
+  const hasSearch = !!filters.search;
+  const hasAny = hasFilters || hasSearch;
 
-  const hasFilters = Object.values(localFilters).some(v => v !== undefined && v !== null && v !== '');
+  // COMPACT MODE: single row with dropdowns collapsed into select chips
+  if (compact) {
+    return (
+      <div className="px-2 py-1.5 border-b border-slate-200 bg-slate-50 flex items-center gap-1.5 flex-wrap">
+        <Input
+          defaultValue={filters.search || ''}
+          onChange={handleSearchChange}
+          placeholder="Search..."
+          className="h-6 text-[11px] w-24 px-2"
+        />
+        <Select value={filters.city || ''} onValueChange={v => handleChange('city', v)}>
+          <SelectTrigger className="h-6 text-[11px] w-20 px-1.5 border-slate-200">
+            <SelectValue placeholder="City" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={null}>All</SelectItem>
+            {uniqueCities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={filters.assignment_status || ''} onValueChange={v => handleChange('assignment_status', v)}>
+          <SelectTrigger className="h-6 text-[11px] w-20 px-1.5 border-slate-200">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={null}>All</SelectItem>
+            <SelectItem value="Planned">Planned</SelectItem>
+            <SelectItem value="In Progress">In Progress</SelectItem>
+            <SelectItem value="Completed">Completed</SelectItem>
+            <SelectItem value="Deferred">Deferred</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={filters.priority_bucket || ''} onValueChange={v => handleChange('priority_bucket', v)}>
+          <SelectTrigger className="h-6 text-[11px] w-16 px-1.5 border-slate-200">
+            <SelectValue placeholder="Pri." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={null}>All</SelectItem>
+            <SelectItem value="P1">P1</SelectItem>
+            <SelectItem value="P2">P2</SelectItem>
+            <SelectItem value="Medium">Med</SelectItem>
+            <SelectItem value="Low">Low</SelectItem>
+          </SelectContent>
+        </Select>
+        {hasAny && (
+          <button onClick={onReset} className="h-6 w-6 flex items-center justify-center rounded hover:bg-slate-200 text-slate-500 transition-colors" title="Clear filters">
+            <X className="w-3 h-3" />
+          </button>
+        )}
+      </div>
+    );
+  }
 
+  // FULL MODE (1-panel or 2-panel)
   return (
-    <div className="px-3 py-2 border-b border-slate-200 bg-slate-50 space-y-2 text-xs">
+    <div className="px-3 py-2 border-b border-slate-200 bg-slate-50 space-y-2">
+      <div className="flex items-center gap-1.5">
+        <SlidersHorizontal className="w-3 h-3 text-slate-400" />
+        <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Filters</span>
+        {hasAny && (
+          <button onClick={onReset} className="ml-auto flex items-center gap-1 text-[11px] text-slate-500 hover:text-slate-700">
+            <X className="w-3 h-3" /> Clear
+          </button>
+        )}
+      </div>
       <Input
-        placeholder="Search..."
-        value={localFilters.search || ''}
-        onChange={(e) => handleChange('search', e.target.value)}
+        defaultValue={filters.search || ''}
+        onChange={handleSearchChange}
+        placeholder="Search asset ID, address..."
         className="h-7 text-xs"
       />
-
-      <div className="grid grid-cols-1 gap-1.5">
-        <Select value={localFilters.city || ''} onValueChange={(v) => handleChange('city', v || null)}>
+      <div className="grid grid-cols-2 gap-1.5">
+        <Select value={filters.city || ''} onValueChange={v => handleChange('city', v)}>
           <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="City..." /></SelectTrigger>
           <SelectContent>
             <SelectItem value={null}>All Cities</SelectItem>
             {uniqueCities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
           </SelectContent>
         </Select>
-
-        <Select value={localFilters.shelter_type || ''} onValueChange={(v) => handleChange('shelter_type', v || null)}>
-          <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Shelter Type..." /></SelectTrigger>
+        <Select value={filters.shelter_type || ''} onValueChange={v => handleChange('shelter_type', v)}>
+          <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Shelter..." /></SelectTrigger>
           <SelectContent>
             <SelectItem value={null}>All Types</SelectItem>
             {uniqueShelterTypes.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
           </SelectContent>
         </Select>
-
-        <Select value={localFilters.assignment_status || ''} onValueChange={(v) => handleChange('assignment_status', v || null)}>
+        <Select value={filters.assignment_status || ''} onValueChange={v => handleChange('assignment_status', v)}>
           <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Status..." /></SelectTrigger>
           <SelectContent>
             <SelectItem value={null}>All Status</SelectItem>
@@ -72,8 +133,7 @@ export default function WeekPanelFilters({ filters, onChange, assets, assignment
             <SelectItem value="Deferred">Deferred</SelectItem>
           </SelectContent>
         </Select>
-
-        <Select value={localFilters.priority_bucket || ''} onValueChange={(v) => handleChange('priority_bucket', v || null)}>
+        <Select value={filters.priority_bucket || ''} onValueChange={v => handleChange('priority_bucket', v)}>
           <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Priority..." /></SelectTrigger>
           <SelectContent>
             <SelectItem value={null}>All Priorities</SelectItem>
@@ -83,26 +143,14 @@ export default function WeekPanelFilters({ filters, onChange, assets, assignment
             <SelectItem value="Low">Low</SelectItem>
           </SelectContent>
         </Select>
-
-        <Select value={localFilters.team_name || ''} onValueChange={(v) => handleChange('team_name', v || null)}>
-          <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Crew..." /></SelectTrigger>
+        <Select value={filters.team_name || ''} onValueChange={v => handleChange('team_name', v)} className="col-span-2">
+          <SelectTrigger className="h-7 text-xs col-span-2"><SelectValue placeholder="Crew..." /></SelectTrigger>
           <SelectContent>
             <SelectItem value={null}>All Crews</SelectItem>
             {uniqueCrews.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
-
-      {hasFilters && (
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-6 w-full text-xs text-slate-600 hover:text-slate-700"
-          onClick={handleReset}
-        >
-          <X className="w-3 h-3 mr-1" /> Clear Filters
-        </Button>
-      )}
     </div>
   );
 }
