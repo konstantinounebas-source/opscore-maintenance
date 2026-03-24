@@ -216,7 +216,7 @@ export default function WorkOrderFormF({ submission, incidents, assets, workOrde
     }
     saveMutation.mutate({
       form_type: "work_order_form_f",
-      form_name: "Έντυπο F - Εντολή Εργασίας",
+      form_name: "Work Order Invoice",
       incident_id: submission?.incident_id || "",
       asset_id: linkedAssetId,
       work_order_id: linkedWOId,
