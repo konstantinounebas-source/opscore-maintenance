@@ -463,6 +463,7 @@ export default function Planning() {
               onReset={() => { setFilters(EMPTY_FILTERS); setAppliedFilters(EMPTY_FILTERS); setSelectedViewId(null); }}
               assets={assets}
               assignments={weekAssignments}
+              onSelectAsset={handleSelectAsset}
             />
             <div className="flex-1 min-h-[380px]">
               <PlanningMap
