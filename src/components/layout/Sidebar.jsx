@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { 
   LayoutDashboard, Box, AlertTriangle, Settings, 
   ChevronLeft, ChevronRight, Wrench, Package, Bot, MapPin,
-  Users, ShieldCheck, Route
+  Users, ShieldCheck, Route, FileText
 } from "lucide-react";
 
 const navItems = [
@@ -17,6 +17,7 @@ const navItems = [
     { path: "/Crews", label: "Crews", icon: Users },
     { path: "/SLAConfig", label: "SLA Rules", icon: ShieldCheck },
   ]},
+  { path: "/Forms", label: "Forms", icon: FileText },
   { path: "/Assistant", label: "AI Assistant", icon: Bot },
   { path: "/Configuration", label: "Configuration", icon: Settings },
 ];

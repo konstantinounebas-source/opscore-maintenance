@@ -19,6 +19,7 @@ import ChildDetail from '@/pages/ChildDetail';
 import Configuration from '@/pages/Configuration';
 import Assistant from '@/pages/Assistant';
 import Planning from '@/pages/Planning';
+import Forms from '@/pages/Forms';
 import Crews from '@/pages/Crews';
 import SLAConfig from '@/pages/SLAConfig';
 
@@ -56,6 +57,7 @@ const AuthenticatedApp = () => {
         <Route path="/IncidentForm" element={<IncidentForm />} />
         <Route path="/WorkOrders" element={<WorkOrders />} />
         <Route path="/Planning" element={<Planning />} />
+        <Route path="/Forms" element={<Forms />} />
         <Route path="/Crews" element={<Crews />} />
         <Route path="/SLAConfig" element={<SLAConfig />} />
         <Route path="/Configuration" element={<Configuration />} />
