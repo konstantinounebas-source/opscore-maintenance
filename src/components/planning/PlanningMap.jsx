@@ -40,7 +40,7 @@ export default function PlanningMap({ assets, assignments, selectedAssetId, onSe
   const defaultCenter = markers.length > 0 ? [markers[0].lat, markers[0].lng] : [37.98, 23.73];
 
   return (
-    <div className="w-full h-full rounded-lg overflow-hidden border border-slate-200">
+    <div className="w-full h-full rounded-lg overflow-hidden border border-slate-200" style={{ isolation: "isolate", zIndex: 0 }}>
       {markers.length === 0 && (
         <div className="w-full min-h-[300px] h-full flex items-center justify-center bg-slate-50">
           <div className="text-center">
