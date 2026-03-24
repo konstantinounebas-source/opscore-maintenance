@@ -85,5 +85,14 @@ module.exports = {
   		}
   	}
   },
+  safelist: [
+    "border-indigo-300", "border-emerald-300", "border-amber-300", "border-purple-300",
+    "bg-indigo-100", "bg-emerald-100", "bg-amber-100", "bg-purple-100",
+    "text-indigo-700", "text-emerald-700", "text-amber-700", "text-purple-700",
+    "border-indigo-200", "border-emerald-200", "border-amber-200", "border-purple-200",
+    "bg-indigo-50", "bg-emerald-50", "bg-amber-50", "bg-purple-50",
+    "text-indigo-800", "text-emerald-800", "text-amber-800", "text-purple-800",
+    "bg-indigo-400", "bg-emerald-400", "bg-amber-400", "bg-purple-400",
+  ],
   plugins: [require("tailwindcss-animate")],
 }
