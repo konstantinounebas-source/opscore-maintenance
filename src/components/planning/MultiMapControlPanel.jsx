@@ -216,6 +216,16 @@ export default function MultiMapControlPanel({
                 </div>
               )}
 
+              {/* Asset Search */}
+              <FilterRow label="Asset">
+                <Input
+                  value={assetSearch}
+                  onChange={e => setAssetSearch(e.target.value)}
+                  placeholder="Search ID / city…"
+                  className="h-6 text-[10px] border-slate-200 px-2"
+                />
+              </FilterRow>
+
               {/* A. Asset State */}
               <FilterRow label="Asset State">
                 <Select value={state.filterAssetState || "__all__"} onValueChange={set("filterAssetState")}>
