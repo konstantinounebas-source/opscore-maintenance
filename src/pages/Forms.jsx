@@ -62,6 +62,10 @@ export default function Forms() {
     queryKey: ["crews"],
     queryFn: () => base44.entities.Crews.list(),
   });
+  const { data: childAssets = [] } = useQuery({
+    queryKey: ["childAssets"],
+    queryFn: () => base44.entities.ChildAssets.list(),
+  });
 
   const handleNew = (template) => {
     setSelectedTemplate(template);
