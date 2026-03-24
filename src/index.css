@@ -86,3 +86,27 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Prevent Leaflet map from overlapping dropdowns/modals */
+.leaflet-pane,
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-tile-container,
+.leaflet-map-pane svg,
+.leaflet-map-pane canvas,
+.leaflet-zoom-box,
+.leaflet-image-layer,
+.leaflet-layer {
+  z-index: 0 !important;
+}
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 1 !important;
+}
+.leaflet-control {
+  z-index: 2 !important;
+}
+.leaflet-popup {
+  z-index: 3 !important;
+}
