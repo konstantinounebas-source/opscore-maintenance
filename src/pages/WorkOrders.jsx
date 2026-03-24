@@ -34,9 +34,6 @@ export default function WorkOrders() {
     <div>
       <TopHeader title="Work Orders" />
       <div className="p-6">
-        <div className="bg-white rounded-xl border border-slate-200 p-8 text-center mb-6">
-          <p className="text-sm text-slate-500">Work Orders module is coming soon. Structure is ready for expansion.</p>
-        </div>
         <DataTable columns={columns} data={workOrders} searchPlaceholder="Search work orders..." />
       </div>
     </div>
