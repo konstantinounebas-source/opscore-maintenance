@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Save, Send, Upload, X, AlertTriangle, CheckCircle2, ShieldAlert, Info } from "lucide-react";
+import { ArrowLeft, Save, Send, Upload, X, AlertTriangle, CheckCircle2, ShieldAlert, Info, Lock } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 // ── Sub-systems with sub-categories ──────────────────────────────────────────
