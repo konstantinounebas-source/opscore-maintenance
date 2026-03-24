@@ -7,8 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, FileText, Clock, CheckCircle2, XCircle, Eye } from "lucide-react";
 import { format } from "date-fns";
 import OutlineManagementForm from "@/components/forms/OutlineManagementForm";
-import FullManagementPlanForm from "@/components/forms/FullManagementPlanForm";
-import WorkOrderFormF from "@/components/forms/WorkOrderFormF";
+import CombinedFMPIandInvoiceForm from "@/components/forms/CombinedFMPIandInvoiceForm";
 import MakeSafeChecklistForm from "@/components/forms/MakeSafeChecklistForm";
 import IncidentReportForm from "@/components/forms/IncidentReportForm";
 
@@ -33,14 +32,9 @@ const FORM_TEMPLATES = [
     description: "Structured incident management outline form with SLA tracking and decision logic.",
   },
   {
-    id: "full_management_plan",
+    id: "combined_fmpi_invoice",
     name: "Full Management Plan",
-    description: "Comprehensive management plan with Work Order linkage, auto-calculated SLA dates, and contractual process steps.",
-  },
-  {
-    id: "work_order_form_f",
-    name: "Work Order Invoice",
-    description: "Εντολή εργασίας με επιλογή παιδιών από το Childs module, αυτόματο υπολογισμό κόστους και φωτογραφικά αποδεικτικά.",
+    description: "Combined FMPI & Work Order Invoice with tabs for management plan details and pricing order.",
   },
   {
     id: "make_safe_checklist",
@@ -109,21 +103,9 @@ export default function Forms() {
 
   if (view === "new" || view === "edit") {
     const formType = editingSubmission?.form_type || selectedTemplate?.id;
-    if (formType === "full_management_plan") {
+    if (formType === "combined_fmpi_invoice") {
       return (
-        <FullManagementPlanForm
-          submission={editingSubmission}
-          incidents={incidents}
-          assets={assets}
-          workOrders={workOrders}
-          crews={crews}
-          onClose={handleClose}
-        />
-      );
-    }
-    if (formType === "work_order_form_f") {
-      return (
-        <WorkOrderFormF
+        <CombinedFMPIandInvoiceForm
           submission={editingSubmission}
           incidents={incidents}
           assets={assets}
