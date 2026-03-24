@@ -30,7 +30,7 @@ function HealthRow({ icon: Icon, color, label, value, sublabel, href }) {
 }
 
 export default function AssetHealthSummary({ assets, incidents, workOrders }) {
-  const underMaintenance = assets.filter(a => a.status === "Under Maintenance").length;
+  const underMaintenance = assets.filter(a => a.status === "Under Maintenance" || a.status === "Maintenance").length;
   const inactive = assets.filter(a => a.status === "Inactive").length;
 
   // Assets with 2+ total incidents (all-time)
@@ -48,7 +48,7 @@ export default function AssetHealthSummary({ assets, incidents, workOrders }) {
   }).length;
 
   // Active assets total
-  const active = assets.filter(a => a.status === "Active").length;
+  const active = assets.filter(a => a.status === "Active" || a.status === "Delivered").length;
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-5">

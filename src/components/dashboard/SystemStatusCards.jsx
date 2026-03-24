@@ -51,7 +51,7 @@ function countYesterday(items, filterFn, dateFn) {
 }
 
 export default function SystemStatusCards({ assets, incidents, workOrders }) {
-  const activeAssets = assets.filter(a => a.status === "Active").length;
+  const activeAssets = assets.filter(a => a.status === "Active" || a.status === "Delivered").length;
   const openInc = incidents.filter(i => ["Open", "In Progress"].includes(i.status)).length;
   const pendingApproval = incidents.filter(i => i.ca_status === "Pending" && i.requires_make_safe !== true && OPEN_STATUSES.includes(i.status)).length;
   const openWOs = workOrders.filter(w => ["Open", "In Progress"].includes(w.status)).length;
@@ -62,7 +62,7 @@ export default function SystemStatusCards({ assets, incidents, workOrders }) {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <StatusCard label="Active Assets" value={activeAssets} prevValue={activeAssets} icon={Box} color="indigo" href="/Assets" description="Currently operational shelters" />
+      <StatusCard label="Active Shelters" value={activeAssets} prevValue={activeAssets} icon={Box} color="indigo" href="/Assets" description="Active + Delivered shelters" />
       <StatusCard label="Open Incidents" value={openInc} prevValue={Math.max(0, openInc - newIncYest)} icon={AlertTriangle} color="red" href="/Incidents" description="Open + In Progress" />
       <StatusCard label="Pending Approval" value={pendingApproval} prevValue={pendingApproval} icon={Clock} color="amber" href="/Incidents" description="Awaiting CA decision" />
       <StatusCard label="Open Work Orders" value={openWOs} prevValue={Math.max(0, openWOs - newWOYest)} icon={Wrench} color="emerald" href="/WorkOrders" description="Open + In Progress" />
