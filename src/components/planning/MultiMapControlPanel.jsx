@@ -400,6 +400,108 @@ export default function MultiMapControlPanel({
             </div>
           )}
         </div>
+        {/* CREATE WEEK + ASSIGNMENT */}
+        <div className="border-t border-slate-100 shrink-0">
+          <SectionHeader title="Create Assignment" open={createOpen} onToggle={() => { setCreateOpen(v => !v); setSaveMsg(""); }} />
+          {createOpen && (
+            <div className="px-2 py-2 space-y-1.5">
+
+              {/* Asset select */}
+              <FilterRow label="Asset *">
+                <Select value={selectedAssetForCreate || "__none__"} onValueChange={v => setSelectedAssetForCreate(v === "__none__" ? "" : v)}>
+                  <SelectTrigger className="h-6 text-[10px] border-slate-200"><SelectValue placeholder="— pick asset —" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">— pick asset —</SelectItem>
+                    {assets.map(a => (
+                      <SelectItem key={a.id} value={a.id}>
+                        {a.active_shelter_id || a.asset_id}{a.city ? ` · ${a.city}` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FilterRow>
+
+              {/* Week: new or existing */}
+              <FilterRow label="Week *">
+                <Select value={selectedWeekForCreate} onValueChange={setSelectedWeekForCreate}>
+                  <SelectTrigger className="h-6 text-[10px] border-slate-200"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__new__">+ New week</SelectItem>
+                    {weeks.map(w => (
+                      <SelectItem key={w.id} value={w.id}>
+                        <span className="font-mono">{w.week_code}</span> {w.week_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FilterRow>
+
+              {/* New week fields */}
+              {selectedWeekForCreate === "__new__" && (
+                <div className="space-y-1 pl-1 border-l-2 border-slate-200 ml-1">
+                  <Input value={weekForm.week_code} onChange={e => setWeekForm(f => ({ ...f, week_code: e.target.value }))}
+                    placeholder="Code e.g. W2026-15" className="h-6 text-[10px] border-slate-200 px-2" />
+                  <Input value={weekForm.week_name} onChange={e => setWeekForm(f => ({ ...f, week_name: e.target.value }))}
+                    placeholder="Week name" className="h-6 text-[10px] border-slate-200 px-2" />
+                  <Input type="date" value={weekForm.start_date} onChange={e => setWeekForm(f => ({ ...f, start_date: e.target.value }))}
+                    className="h-6 text-[10px] border-slate-200 px-2" />
+                  <Input type="date" value={weekForm.end_date} onChange={e => setWeekForm(f => ({ ...f, end_date: e.target.value }))}
+                    className="h-6 text-[10px] border-slate-200 px-2" />
+                </div>
+              )}
+
+              {/* Assignment fields */}
+              <FilterRow label="Type">
+                <Select value={asgnForm.assignment_type} onValueChange={v => setAsgnForm(f => ({ ...f, assignment_type: v }))}>
+                  <SelectTrigger className="h-6 text-[10px] border-slate-200"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {ASSIGNMENT_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </FilterRow>
+              <FilterRow label="Status">
+                <Select value={asgnForm.assignment_status} onValueChange={v => setAsgnForm(f => ({ ...f, assignment_status: v }))}>
+                  <SelectTrigger className="h-6 text-[10px] border-slate-200"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </FilterRow>
+              <FilterRow label="Priority">
+                <div className="flex gap-1">
+                  {PRIORITIES.map(p => (
+                    <button key={p} onClick={() => setAsgnForm(f => ({ ...f, priority_bucket: p }))}
+                      className={`flex-1 text-[10px] font-bold py-0.5 rounded border transition-all ${
+                        asgnForm.priority_bucket === p
+                          ? p === "P1" ? "bg-red-500 text-white border-red-500" : "bg-orange-500 text-white border-orange-500"
+                          : "bg-white text-slate-500 border-slate-200 hover:border-slate-400"
+                      }`}>{p}</button>
+                  ))}
+                </div>
+              </FilterRow>
+              <FilterRow label="Date">
+                <Input type="date" value={asgnForm.planned_date} onChange={e => setAsgnForm(f => ({ ...f, planned_date: e.target.value }))}
+                  className="h-6 text-[10px] border-slate-200 px-2" />
+              </FilterRow>
+              <FilterRow label="Notes">
+                <Input value={asgnForm.notes} onChange={e => setAsgnForm(f => ({ ...f, notes: e.target.value }))}
+                  placeholder="Optional notes" className="h-6 text-[10px] border-slate-200 px-2" />
+              </FilterRow>
+
+              <Button size="sm" onClick={handleCreate} disabled={saving}
+                className="w-full h-7 text-[11px] gap-1 bg-slate-800 hover:bg-slate-900 mt-1">
+                {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
+                {saving ? "Saving…" : "Create"}
+              </Button>
+              {saveMsg && (
+                <p className={`text-[10px] text-center font-medium ${saveMsg.startsWith("✓") ? "text-emerald-600" : "text-red-500"}`}>
+                  {saveMsg}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
       </div>
     </div>
   );
