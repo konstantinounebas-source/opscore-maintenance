@@ -86,6 +86,19 @@ export default function Forms() {
   const assetMap    = Object.fromEntries(assets.map(a => [a.id, a]));
 
   if (view === "new" || view === "edit") {
+    const formType = editingSubmission?.form_type || selectedTemplate?.id;
+    if (formType === "full_management_plan") {
+      return (
+        <FullManagementPlanForm
+          submission={editingSubmission}
+          incidents={incidents}
+          assets={assets}
+          workOrders={workOrders}
+          crews={crews}
+          onClose={handleClose}
+        />
+      );
+    }
     return (
       <OutlineManagementForm
         submission={editingSubmission}
