@@ -29,6 +29,11 @@ const FORM_TEMPLATES = [
     name: "Outline Management Incident Plan",
     description: "Structured incident management outline form with SLA tracking and decision logic.",
   },
+  {
+    id: "full_management_plan",
+    name: "Full Management Plan",
+    description: "Comprehensive management plan with Work Order linkage, auto-calculated SLA dates, and contractual process steps.",
+  },
 ];
 
 export default function Forms() {
