@@ -9,10 +9,13 @@ export default function WorkOrders() {
   const { data: allWorkOrders = [] } = useQuery({ queryKey: ["workOrders"], queryFn: () => base44.entities.WorkOrders.list() });
 
   const ALLOWED_PREFIXES = ["CORR-", "MSAFE-", "INSP-"];
-  const workOrders = allWorkOrders.filter(w =>
-    ALLOWED_PREFIXES.some(p => (w.work_order_id || "").startsWith(p)) ||
-    ["make safe", "corrective", "inspection"].some(kw => (w.title || "").toLowerCase().includes(kw))
-  );
+  const workOrders = allWorkOrders.filter(w => {
+    const isAllowedType =
+      ALLOWED_PREFIXES.some(p => (w.work_order_id || "").startsWith(p)) ||
+      ["make safe", "corrective", "inspection"].some(kw => (w.title || "").toLowerCase().includes(kw));
+    const isPending = w.status !== "Completed" && w.status !== "Cancelled";
+    return isAllowedType || isPending;
+  });
 
   const priorityBadge = (p) => {
     const map = { P1: "bg-red-100 text-red-700 border border-red-200", P2: "bg-amber-100 text-amber-700 border border-amber-200" };
