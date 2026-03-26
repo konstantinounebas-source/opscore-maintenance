@@ -105,12 +105,9 @@ export default function AssetDetail() {
     toast({ title: "File uploaded" });
   };
 
-  const handleChildSave = (data, existingRecordId) => {
+  const handleChildSave = (data) => {
     if (editingChild) {
       updateChild.mutate({ id: editingChild.id, data });
-    } else if (existingRecordId) {
-      // Assign existing unassigned child to this asset
-      updateChild.mutate({ id: existingRecordId, data });
     } else {
       createChild.mutate(data);
     }
