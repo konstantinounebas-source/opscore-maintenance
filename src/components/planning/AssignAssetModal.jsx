@@ -21,8 +21,9 @@ const BLANK = {
   source_work_order_id: "",
 };
 
-export default function AssignAssetModal({ open, onOpenChange, asset, week, existingAssignment, incidents, workOrders, onSave, onDelete }) {
+export default function AssignAssetModal({ open, onOpenChange, asset, week, weeks = [], existingAssignment, incidents, workOrders, onSave, onDelete }) {
   const [form, setForm] = useState(BLANK);
+  const [selectedWeekId, setSelectedWeekId] = useState("");
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -40,16 +41,20 @@ export default function AssignAssetModal({ open, onOpenChange, asset, week, exis
         source_incident_id: existingAssignment.source_incident_id || "",
         source_work_order_id: existingAssignment.source_work_order_id || "",
       });
+      setSelectedWeekId(existingAssignment.planning_week_id || week?.id || "");
     } else {
       setForm(BLANK);
+      setSelectedWeekId(week?.id || "");
     }
     setConfirmDelete(false);
-  }, [existingAssignment, open]);
+  }, [existingAssignment, open, week]);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
+  const resolvedWeek = weeks.find(w => w.id === selectedWeekId) || week;
+
   const handleSave = async () => {
-    if (!asset || !week) return;
+    if (!asset || !resolvedWeek) return;
     setSaving(true);
     const linkedIncident = incidents.find(i => i.id === form.source_incident_id);
     const linkedWO = workOrders.find(w => w.id === form.source_work_order_id);
@@ -57,7 +62,7 @@ export default function AssignAssetModal({ open, onOpenChange, asset, week, exis
     const pinColor = computePinColor(bucket, form.assignment_status);
     await onSave({
       ...form,
-      planning_week_id: week.id,
+      planning_week_id: resolvedWeek.id,
       asset_id: asset.id,
       priority_bucket: bucket,
       pin_color: pinColor,
@@ -77,9 +82,22 @@ export default function AssignAssetModal({ open, onOpenChange, asset, week, exis
         </DialogHeader>
 
         {asset && (
-          <div className="bg-slate-50 rounded-lg px-4 py-2.5 text-xs text-slate-600 border mb-1 space-y-0.5">
+          <div className="bg-slate-50 rounded-lg px-4 py-2.5 text-xs text-slate-600 border mb-1 space-y-1">
             <div><span className="font-medium">Asset:</span> {asset.asset_id} — {asset.asset_name}</div>
-            <div><span className="font-medium">Week:</span> {week?.week_name} ({week?.week_code})</div>
+            <div className="flex items-center gap-2">
+              <span className="font-medium shrink-0">Week:</span>
+              <Select value={selectedWeekId || "__none__"} onValueChange={v => setSelectedWeekId(v === "__none__" ? "" : v)}>
+                <SelectTrigger className="h-6 text-xs border-slate-300 bg-white flex-1">
+                  <SelectValue placeholder="Select a planning week..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">— Select week —</SelectItem>
+                  {weeks.map(w => (
+                    <SelectItem key={w.id} value={w.id}>{w.week_name} ({w.week_code})</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         )}
 
@@ -209,7 +227,7 @@ export default function AssignAssetModal({ open, onOpenChange, asset, week, exis
           )}
           <div className="flex gap-2 ml-auto">
             <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button className="bg-indigo-600 hover:bg-indigo-700" onClick={handleSave} disabled={saving || !asset || !week}>
+            <Button className="bg-indigo-600 hover:bg-indigo-700" onClick={handleSave} disabled={saving || !asset || !resolvedWeek}>
               {saving && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
               {saving ? "Saving..." : existingAssignment ? "Update" : "Assign"}
             </Button>

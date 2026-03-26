@@ -348,6 +348,7 @@ export default function MultiMapView() {
         }}
         asset={assignModal.asset}
         week={assignModal.week}
+        weeks={weeks}
         existingAssignment={assignModal.existingAssignment}
         incidents={incidents}
         workOrders={workOrders}
