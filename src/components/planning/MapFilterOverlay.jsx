@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import { Filter, X, ChevronDown, ChevronUp } from "lucide-react";
+import { Filter, ChevronDown, ChevronUp } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 
 const STATUSES = ["Planned", "In Progress", "Completed", "Deferred"];
 const TYPES = ["Make Safe", "Corrective"];
@@ -15,6 +14,10 @@ export default function MapFilterOverlay({ state, onUpdate, assets, crews }) {
 
   const cities = [...new Set(assets.map(a => a.city).filter(Boolean))].sort();
   const activeCrew = crews.filter(c => c.is_active !== false);
+
+  // Sorted asset list for dropdown
+  const assetOptions = [...assets]
+    .sort((a, b) => (a.active_shelter_id || a.asset_id || "").localeCompare(b.active_shelter_id || b.asset_id || ""));
 
   const activeCount = [
     state.filterAssetState, state.filterStatus, state.filterType,
@@ -31,8 +34,8 @@ export default function MapFilterOverlay({ state, onUpdate, assets, crews }) {
 
   return (
     <div
-      className="absolute top-1.5 left-1/2 -translate-x-1/2 z-[500] w-[calc(100%-8px)]"
-      style={{ maxWidth: 500 }}
+      className="absolute top-7 left-1/2 -translate-x-1/2 z-[500] w-[calc(100%-56px)]"
+      style={{ maxWidth: 400 }}
       onClick={e => e.stopPropagation()}
     >
       {/* Toggle bar */}
@@ -64,13 +67,20 @@ export default function MapFilterOverlay({ state, onUpdate, assets, crews }) {
       {/* Dropdown panel */}
       {open && (
         <div className="bg-white border border-slate-200 border-t-0 rounded-b-lg shadow-xl p-2 space-y-1.5">
-          {/* Asset search */}
-          <Input
-            value={state.assetSearch || ""}
-            onChange={e => onUpdate({ assetSearch: e.target.value })}
-            placeholder="Search asset ID / city..."
-            className="h-6 text-[10px] border-slate-200 px-2"
-          />
+          {/* Asset search dropdown */}
+          <Select value={state.assetSearch || "__all__"} onValueChange={v => onUpdate({ assetSearch: v === "__all__" ? "" : v })}>
+            <SelectTrigger className="h-6 text-[10px] border-slate-200 w-full">
+              <SelectValue placeholder="All asset IDs" />
+            </SelectTrigger>
+            <SelectContent className="max-h-48">
+              <SelectItem value="__all__">All asset IDs</SelectItem>
+              {assetOptions.map(a => (
+                <SelectItem key={a.id} value={a.active_shelter_id || a.asset_id}>
+                  {a.active_shelter_id || a.asset_id}{a.city ? ` – ${a.city}` : ""}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           <div className="grid grid-cols-2 gap-1.5">
             {/* Asset State */}

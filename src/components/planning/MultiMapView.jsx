@@ -61,6 +61,8 @@ function applyPanelFilters(assets, assignments, state) {
 
     if (searchLower) {
       const match =
+        (a.active_shelter_id || "").toLowerCase() === searchLower ||
+        (a.asset_id || "").toLowerCase() === searchLower ||
         (a.active_shelter_id || "").toLowerCase().includes(searchLower) ||
         (a.asset_id || "").toLowerCase().includes(searchLower) ||
         (a.city || "").toLowerCase().includes(searchLower) ||
