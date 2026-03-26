@@ -98,9 +98,9 @@ export default function Assets() {
       // Save child components
       if (childComponents.length > 0) {
         for (const child of childComponents) {
-          await base44.entities.AssetChilds.create({ ...child, asset_id: newAsset.id });
+          await base44.entities.ChildAssets.create({ ...child, asset_id: newAsset.id });
         }
-        queryClient.invalidateQueries({ queryKey: ["assetChilds"] });
+        queryClient.invalidateQueries({ queryKey: ["childAssets"] });
       }
 
       // Save attachments
