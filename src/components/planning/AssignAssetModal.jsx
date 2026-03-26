@@ -8,10 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Loader2, Trash2, Plus, ChevronDown, ChevronUp } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { useConfigLists } from "@/components/shared/useConfigLists";
 import { computePriorityBucket, computePinColor } from "./planningUtils";
 
 const BLANK = {
-  assignment_type: "Make Safe",
+  assignment_type: "",
   assignment_status: "Planned",
   priority_bucket: "",
   team_name: "",
@@ -22,9 +23,28 @@ const BLANK = {
   source_work_order_id: "",
 };
 
-const BLANK_WEEK = { week_name: "", week_code: "", start_date: "", end_date: "" };
+const BLANK_WEEK = { start_date: "", end_date: "" };
 
-export default function AssignAssetModal({ open, onOpenChange, asset, week, weeks = [], existingAssignment, incidents, workOrders, onSave, onDelete, onWeekCreated }) {
+// Auto-generate week_name and week_code from dates
+function deriveWeekMeta(start, end) {
+  if (!start) return { week_name: "", week_code: "" };
+  const d = new Date(start);
+  const year = d.getFullYear();
+  // ISO week number
+  const jan1 = new Date(year, 0, 1);
+  const weekNum = Math.ceil(((d - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+  const pad = (n) => String(n).padStart(2, "0");
+  return {
+    week_name: `Week ${weekNum} – ${d.toLocaleString("default", { month: "short" })} ${year}`,
+    week_code: `W${year}-${pad(weekNum)}`,
+  };
+}
+
+export default function AssignAssetModal({
+  open, onOpenChange, asset, week, weeks = [],
+  existingAssignment, incidents, workOrders,
+  onSave, onDelete, onWeekCreated,
+}) {
   const [form, setForm] = useState(BLANK);
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -34,19 +54,28 @@ export default function AssignAssetModal({ open, onOpenChange, asset, week, week
   const [newWeek, setNewWeek] = useState(BLANK_WEEK);
   const [creatingWeek, setCreatingWeek] = useState(false);
   const [weekCreateOpen, setWeekCreateOpen] = useState(false);
-  const [createdWeek, setCreatedWeek] = useState(null); // the week to assign to after creation
+  const [createdWeek, setCreatedWeek] = useState(null);
+
+  // Config lists from Configuration module
+  const assignmentTypes = useConfigLists("Planning Assignment Types");
+  const assignmentStatuses = useConfigLists("Planning Assignment Statuses");
+
+  const FALLBACK_TYPES = ["Inspection", "Preventive", "Corrective", "Make Safe", "Review", "Mixed"];
+  const FALLBACK_STATUSES = ["Planned", "In Progress", "Completed", "Deferred", "Cancelled"];
+  const typeOptions = assignmentTypes.length ? assignmentTypes : FALLBACK_TYPES;
+  const statusOptions = assignmentStatuses.length ? assignmentStatuses : FALLBACK_STATUSES;
 
   useEffect(() => {
     if (existingAssignment) {
       setForm({
-        assignment_type:    existingAssignment.assignment_type    || "Make Safe",
-        assignment_status:  existingAssignment.assignment_status  || "Planned",
-        priority_bucket:    existingAssignment.priority_bucket    || "",
-        team_name:          existingAssignment.team_name          || "",
-        assigned_to:        existingAssignment.assigned_to        || "",
-        route_zone:         existingAssignment.route_zone         || "",
-        notes:              existingAssignment.notes              || "",
-        source_incident_id: existingAssignment.source_incident_id || "",
+        assignment_type:      existingAssignment.assignment_type      || "",
+        assignment_status:    existingAssignment.assignment_status    || "Planned",
+        priority_bucket:      existingAssignment.priority_bucket      || "",
+        team_name:            existingAssignment.team_name            || "",
+        assigned_to:          existingAssignment.assigned_to          || "",
+        route_zone:           existingAssignment.route_zone           || "",
+        notes:                existingAssignment.notes                || "",
+        source_incident_id:   existingAssignment.source_incident_id   || "",
         source_work_order_id: existingAssignment.source_work_order_id || "",
       });
     } else {
@@ -58,16 +87,31 @@ export default function AssignAssetModal({ open, onOpenChange, asset, week, week
     setConfirmDelete(false);
   }, [existingAssignment, open, week]);
 
+  // Auto-fill priority from linked incident when source changes
+  useEffect(() => {
+    if (!form.source_incident_id) return;
+    const inc = assetIncidents.find(i => i.id === form.source_incident_id);
+    if (inc && !form.priority_bucket) {
+      const bucket = computePriorityBucket(inc, null);
+      if (bucket) setForm(f => ({ ...f, priority_bucket: bucket }));
+    }
+  }, [form.source_incident_id]);
+
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const setWk = (k, v) => setNewWeek(f => ({ ...f, [k]: v }));
 
-  // When editing, use the existing assignment's week; otherwise use a newly created week or the prop week
   const resolvedWeek = createdWeek || week;
 
   const handleCreateWeek = async () => {
-    if (!newWeek.week_name || !newWeek.week_code || !newWeek.start_date || !newWeek.end_date) return;
+    if (!newWeek.start_date || !newWeek.end_date) return;
     setCreatingWeek(true);
-    const created = await base44.entities.PlanningWeeks.create({ ...newWeek, status: "Draft" });
+    const meta = deriveWeekMeta(newWeek.start_date, newWeek.end_date);
+    const created = await base44.entities.PlanningWeeks.create({
+      ...meta,
+      start_date: newWeek.start_date,
+      end_date: newWeek.end_date,
+      status: "Draft",
+    });
     setCreatedWeek(created);
     setWeekCreateOpen(false);
     setCreatingWeek(false);
@@ -95,6 +139,14 @@ export default function AssignAssetModal({ open, onOpenChange, asset, week, week
   const assetIncidents = incidents.filter(i => i.related_asset_id === asset?.id);
   const assetWOs = workOrders.filter(w => w.related_asset_id === asset?.id);
 
+  // Derived priority from linked incident for display
+  const linkedIncidentForPriority = assetIncidents.find(i => i.id === form.source_incident_id);
+  const autoPriority = linkedIncidentForPriority
+    ? (linkedIncidentForPriority.initial_priority || linkedIncidentForPriority.priority || "")
+    : "";
+
+  const PRIORITY_OPTIONS = ["P1", "P2", "Critical", "High", "Medium", "Low"];
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto" style={{ zIndex: 1000 }}>
@@ -106,12 +158,13 @@ export default function AssignAssetModal({ open, onOpenChange, asset, week, week
           <div className="bg-slate-50 rounded-lg px-4 py-2.5 text-xs text-slate-600 border mb-1 space-y-1.5">
             <div><span className="font-medium">Asset:</span> {asset.asset_id} — {asset.asset_name}</div>
 
-            {/* Week display / creation */}
             <div className="flex items-center justify-between gap-2">
               <div>
                 <span className="font-medium">Week: </span>
                 {resolvedWeek
-                  ? <span className="text-indigo-700 font-semibold">{resolvedWeek.week_name} ({resolvedWeek.week_code})</span>
+                  ? <span className="text-indigo-700 font-semibold">
+                      {resolvedWeek.week_name || `${resolvedWeek.start_date} → ${resolvedWeek.end_date}`}
+                    </span>
                   : <span className="text-slate-400 italic">No week assigned yet</span>
                 }
               </div>
@@ -131,26 +184,25 @@ export default function AssignAssetModal({ open, onOpenChange, asset, week, week
                 <p className="text-[11px] text-indigo-600 font-semibold uppercase tracking-wide">Create New Planning Week</p>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <Label className="text-[11px]">Week Name</Label>
-                    <Input className="h-7 text-xs mt-0.5" placeholder="e.g. Week 14 – Apr" value={newWeek.week_name} onChange={e => setWk("week_name", e.target.value)} />
-                  </div>
-                  <div>
-                    <Label className="text-[11px]">Week Code</Label>
-                    <Input className="h-7 text-xs mt-0.5" placeholder="e.g. W2026-14" value={newWeek.week_code} onChange={e => setWk("week_code", e.target.value)} />
-                  </div>
-                  <div>
                     <Label className="text-[11px]">Start Date</Label>
-                    <Input type="date" className="h-7 text-xs mt-0.5" value={newWeek.start_date} onChange={e => setWk("start_date", e.target.value)} />
+                    <Input type="date" className="h-7 text-xs mt-0.5" value={newWeek.start_date}
+                      onChange={e => setWk("start_date", e.target.value)} />
                   </div>
                   <div>
                     <Label className="text-[11px]">End Date</Label>
-                    <Input type="date" className="h-7 text-xs mt-0.5" value={newWeek.end_date} onChange={e => setWk("end_date", e.target.value)} />
+                    <Input type="date" className="h-7 text-xs mt-0.5" value={newWeek.end_date}
+                      onChange={e => setWk("end_date", e.target.value)} />
                   </div>
                 </div>
+                {newWeek.start_date && newWeek.end_date && (
+                  <p className="text-[10px] text-slate-400">
+                    Will be saved as: <b>{deriveWeekMeta(newWeek.start_date).week_name}</b> ({deriveWeekMeta(newWeek.start_date).week_code})
+                  </p>
+                )}
                 <Button
                   size="sm"
                   className="w-full h-7 text-xs bg-indigo-600 hover:bg-indigo-700 mt-1"
-                  disabled={creatingWeek || !newWeek.week_name || !newWeek.week_code || !newWeek.start_date || !newWeek.end_date}
+                  disabled={creatingWeek || !newWeek.start_date || !newWeek.end_date}
                   onClick={handleCreateWeek}
                 >
                   {creatingWeek ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Plus className="w-3 h-3 mr-1" />}
@@ -172,34 +224,45 @@ export default function AssignAssetModal({ open, onOpenChange, asset, week, week
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs">Assignment Type</Label>
-                <Select value={form.assignment_type} onValueChange={v => set("assignment_type", v)}>
-                  <SelectTrigger className="mt-1 text-sm"><SelectValue /></SelectTrigger>
+                <Select value={form.assignment_type || "__none__"} onValueChange={v => set("assignment_type", v === "__none__" ? "" : v)}>
+                  <SelectTrigger className="mt-1 text-sm"><SelectValue placeholder="Select type…" /></SelectTrigger>
                   <SelectContent>
-                    {["Make Safe", "Corrective"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    <SelectItem value="__none__">— Select type —</SelectItem>
+                    {typeOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div>
                 <Label className="text-xs">Status</Label>
-                <Select value={form.assignment_status} onValueChange={v => set("assignment_status", v)}>
+                <Select value={form.assignment_status || "__none__"} onValueChange={v => set("assignment_status", v === "__none__" ? "" : v)}>
                   <SelectTrigger className="mt-1 text-sm"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {["Planned", "In Progress", "Completed", "Deferred"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    {statusOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
             </div>
+
+            {/* Priority — drawn from linked incident */}
             <div>
-              <Label className="text-xs">Priority Bucket</Label>
+              <Label className="text-xs">Priority</Label>
               <Select value={form.priority_bucket || "auto"} onValueChange={v => set("priority_bucket", v === "auto" ? "" : v)}>
-                <SelectTrigger className="mt-1 text-sm"><SelectValue placeholder="Auto from source" /></SelectTrigger>
+                <SelectTrigger className="mt-1 text-sm"><SelectValue placeholder="Auto from incident" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="auto">Auto from linked source</SelectItem>
-                  {["P1", "P2"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  <SelectItem value="auto">
+                    Auto from linked incident{autoPriority ? ` (${autoPriority})` : ""}
+                  </SelectItem>
+                  {PRIORITY_OPTIONS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-slate-400 mt-1">If "Auto", priority is derived from any linked incident or work order.</p>
+              {autoPriority && !form.priority_bucket && (
+                <p className="text-xs text-indigo-500 mt-1">Derived from linked incident: <b>{autoPriority}</b></p>
+              )}
+              {!autoPriority && !form.priority_bucket && (
+                <p className="text-xs text-slate-400 mt-1">Link an incident in the Links tab to auto-derive priority.</p>
+              )}
             </div>
+
             <div>
               <Label className="text-xs">Notes</Label>
               <Textarea placeholder="Assignment notes..." value={form.notes || ""} onChange={e => set("notes", e.target.value)} className="text-sm mt-1" rows={2} />
@@ -229,13 +292,15 @@ export default function AssignAssetModal({ open, onOpenChange, asset, week, week
             )}
             {assetIncidents.length > 0 && (
               <div>
-                <Label className="text-xs">Link to Incident (optional)</Label>
+                <Label className="text-xs">Link to Incident <span className="text-slate-400">(auto-fills priority)</span></Label>
                 <Select value={form.source_incident_id || "none"} onValueChange={v => set("source_incident_id", v === "none" ? "" : v)}>
                   <SelectTrigger className="mt-1 text-sm"><SelectValue placeholder="Select incident..." /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">None</SelectItem>
                     {assetIncidents.map(i => (
-                      <SelectItem key={i.id} value={i.id}>{i.incident_id} — {i.title} ({i.status})</SelectItem>
+                      <SelectItem key={i.id} value={i.id}>
+                        {i.incident_id} — {i.title} ({i.status}){i.initial_priority ? ` [${i.initial_priority}]` : ""}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
