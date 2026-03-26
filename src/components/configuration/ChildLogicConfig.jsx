@@ -42,6 +42,8 @@ function ChildCatalogTab({ catalog, queryClient }) {
         <div><Label className="text-xs">Name *</Label><Input className="mt-1 h-8 text-xs" value={value.child_name || ""} onChange={e => onChange({ ...value, child_name: e.target.value })} placeholder="e.g. Rear Glass Panel" /></div>
         <div><Label className="text-xs">Category</Label><Input className="mt-1 h-8 text-xs" value={value.child_category || ""} onChange={e => onChange({ ...value, child_category: e.target.value })} placeholder="Glass, Seating, Lighting..." /></div>
         <div><Label className="text-xs">Type</Label><Input className="mt-1 h-8 text-xs" value={value.child_type || ""} onChange={e => onChange({ ...value, child_type: e.target.value })} /></div>
+        <div><Label className="text-xs">Serial Number</Label><Input className="mt-1 h-8 text-xs" value={value.serial_number || ""} onChange={e => onChange({ ...value, serial_number: e.target.value })} placeholder="e.g. SN-001" /></div>
+        <div><Label className="text-xs">Unit Price (€)</Label><Input type="number" className="mt-1 h-8 text-xs" value={value.unit_price || ""} onChange={e => onChange({ ...value, unit_price: parseFloat(e.target.value) || undefined })} placeholder="0.00" /></div>
         <div><Label className="text-xs">Warranty (months)</Label><Input type="number" className="mt-1 h-8 text-xs" value={value.default_warranty_months || ""} onChange={e => onChange({ ...value, default_warranty_months: parseInt(e.target.value) })} /></div>
         <div>
           <Label className="text-xs">Warranty Start Rule</Label>
@@ -80,17 +82,17 @@ function ChildCatalogTab({ catalog, queryClient }) {
         <table className="w-full text-xs">
           <thead className="bg-slate-50 border-b">
             <tr>
-              {["Code","Name","Category","Type","Warranty","Start Rule","Active",""].map(h => (
+              {["Code","Name","Category","Type","Serial No.","Price (€)","Warranty","Start Rule","Active",""].map(h => (
                 <th key={h} className="px-3 py-2 text-left font-semibold text-slate-600">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {catalog.length === 0 && <tr><td colSpan={8} className="px-3 py-6 text-center text-slate-400">No children defined yet</td></tr>}
+            {catalog.length === 0 && <tr><td colSpan={10} className="px-3 py-6 text-center text-slate-400">No children defined yet</td></tr>}
             {catalog.map(item => (
               <tr key={item.id} className={`hover:bg-slate-50 ${!item.active ? "opacity-50" : ""}`}>
                 {editing?.id === item.id ? (
-                  <td colSpan={8} className="p-2">
+                  <td colSpan={10} className="p-2">
                     <BlankForm value={editing} onChange={setEditing}
                       onSave={() => updateMutation.mutate({ id: item.id, data: editing })}
                       onCancel={() => setEditing(null)} saving={updateMutation.isPending} />
@@ -101,6 +103,8 @@ function ChildCatalogTab({ catalog, queryClient }) {
                     <td className="px-3 py-2 font-medium text-slate-800">{item.child_name}</td>
                     <td className="px-3 py-2 text-slate-600">{item.child_category}</td>
                     <td className="px-3 py-2 text-slate-600">{item.child_type}</td>
+                    <td className="px-3 py-2 font-mono text-slate-500">{item.serial_number || "—"}</td>
+                    <td className="px-3 py-2 text-slate-600">{item.unit_price != null ? `€${item.unit_price.toLocaleString()}` : "—"}</td>
                     <td className="px-3 py-2">{item.default_warranty_months} mo</td>
                     <td className="px-3 py-2 text-slate-500">{WARRANTY_START_RULES.find(r => r.value === item.warranty_start_rule)?.label || item.warranty_start_rule}</td>
                     <td className="px-3 py-2">
