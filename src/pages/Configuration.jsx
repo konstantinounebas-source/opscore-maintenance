@@ -32,6 +32,11 @@ const INCIDENT_LIST_TYPES = [
   { key: "Τρόποι Αναφοράς", label: "Τρόποι Αναφοράς" },
 ];
 
+const PLANNING_LIST_TYPES = [
+  { key: "Planning Assignment Types",    label: "Assignment Types" },
+  { key: "Planning Assignment Statuses", label: "Assignment Statuses" },
+];
+
 const CHILD_LIST_TYPES = [
   { key: "Child Category", label: "Category" },
   { key: "Child Type", label: "Child Type" },
@@ -220,6 +225,12 @@ export default function Configuration() {
           <h2 className="text-sm font-semibold text-slate-900 mb-1">Child Logic</h2>
           <p className="text-xs text-slate-500 mb-6">Define child components, shelter type mappings, and templates. When a shelter type is selected during asset creation, children are auto-loaded from these templates.</p>
           <ChildLogicConfig />
+        </div>
+
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <h2 className="text-sm font-semibold text-slate-900 mb-1">Planning Configuration</h2>
+          <p className="text-xs text-slate-500 mb-6">Configure assignment types, statuses, and other planning dropdown values. These drive all Planning module dropdowns.</p>
+          <ListManager listTypes={PLANNING_LIST_TYPES} allItems={allItems} queryClient={queryClient} />
         </div>
 
         <div className="bg-white rounded-xl border border-slate-200 p-6">

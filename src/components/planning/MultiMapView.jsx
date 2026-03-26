@@ -417,8 +417,14 @@ export default function MultiMapView() {
                 highlightedAssetId={highlightedAssetId}
                 onHighlightAsset={setHighlightedAssetId}
                 onAssign={handleAssignFromTable}
+                onEditAssignment={(asgn) => {
+                  const asset = assets.find(a => a.id === asgn.asset_id);
+                  const week = weeks.find(w => w.id === asgn.planning_week_id);
+                  setAssignModal({ open: true, panelIndex: null, asset, existingAssignment: asgn, week });
+                }}
                 onRemoveAssignment={handleRemoveFromTable}
                 onOpenAsset={handleOpenAsset}
+                layers={enrichedLayers}
               />
             )}
             {rightTab === "layers" && (

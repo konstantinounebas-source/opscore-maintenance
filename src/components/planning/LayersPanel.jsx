@@ -1,16 +1,22 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Plus, Trash2, Edit2, Check, X, Layers, ChevronDown, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useConfigLists } from "@/components/shared/useConfigLists";
 
 const PRESET_COLORS = [
   "#EF4444", "#F97316", "#EAB308", "#22C55E", "#14B8A6",
   "#3B82F6", "#8B5CF6", "#EC4899", "#6B7280", "#1E293B",
 ];
 
+const FALLBACK_ASSIGNMENT_TYPES = [
+  "Corrective Maintenance", "Preventive Maintenance", "Make Safe",
+  "OWR / FMPI", "Inspection / Audit", "Installation / Replacement", "Operational Layer"
+];
+
 function ColorPicker({ value, onChange }) {
   return (
-    <div className="flex flex-wrap gap-1">
+    <div className="flex flex-wrap gap-1 items-center">
       {PRESET_COLORS.map(c => (
         <button
           key={c}
@@ -34,9 +40,16 @@ function ColorPicker({ value, onChange }) {
   );
 }
 
-export default function LayersPanel({ layers, assets, onCreateLayer, onDeleteLayer, onUpdateLayer, onAddAsset, onRemoveAsset }) {
+export default function LayersPanel({
+  layers, assets,
+  onCreateLayer, onDeleteLayer, onUpdateLayer, onAddAsset, onRemoveAsset,
+}) {
+  const configAssignmentTypes = useConfigLists("Planning Assignment Types");
+  const assignmentTypes = configAssignmentTypes.length ? configAssignmentTypes : FALLBACK_ASSIGNMENT_TYPES;
+
   const [newLayerName, setNewLayerName] = useState("");
   const [newLayerColor, setNewLayerColor] = useState("#3B82F6");
+  const [newLayerType, setNewLayerType] = useState(""); // "manual" | assignment type name
   const [creating, setCreating] = useState(false);
   const [expandedId, setExpandedId] = useState(null);
   const [editingId, setEditingId] = useState(null);
@@ -45,12 +58,27 @@ export default function LayersPanel({ layers, assets, onCreateLayer, onDeleteLay
   const [addingAssetTo, setAddingAssetTo] = useState(null);
   const [assetSearch, setAssetSearch] = useState("");
 
+  // Tabs: "manual" | "by_type"
+  const [createMode, setCreateMode] = useState("manual");
+
   const handleCreate = () => {
     if (!newLayerName.trim()) return;
-    onCreateLayer({ name: newLayerName.trim(), color: newLayerColor });
+    onCreateLayer({
+      name: newLayerName.trim(),
+      color: newLayerColor,
+      assignmentType: createMode === "by_type" ? newLayerType : "",
+    });
     setNewLayerName("");
     setNewLayerColor("#3B82F6");
+    setNewLayerType("");
     setCreating(false);
+  };
+
+  const handleQuickCreateByType = (typeName) => {
+    // Create a layer named after the assignment type with a random distinct color
+    const colors = ["#3B82F6","#22C55E","#F97316","#8B5CF6","#EF4444","#14B8A6","#EC4899","#EAB308"];
+    const color = colors[assignmentTypes.indexOf(typeName) % colors.length];
+    onCreateLayer({ name: typeName, color, assignmentType: typeName });
   };
 
   const handleEdit = (layer) => {
@@ -66,49 +94,87 @@ export default function LayersPanel({ layers, assets, onCreateLayer, onDeleteLay
 
   const layerAssetIds = (layer) => new Set(layer.assetIds || []);
 
-  const filteredAssets = assets.filter(a => {
+  const filteredAssets = useMemo(() => {
     const q = assetSearch.toLowerCase();
-    return !q || (a.active_shelter_id || a.asset_id || "").toLowerCase().includes(q) || (a.city || "").toLowerCase().includes(q);
-  });
+    return assets.filter(a =>
+      !q || (a.active_shelter_id || a.asset_id || "").toLowerCase().includes(q) || (a.city || "").toLowerCase().includes(q)
+    );
+  }, [assets, assetSearch]);
+
+  // Which assignment types already have a layer
+  const coveredTypes = new Set(layers.map(l => l.assignmentType).filter(Boolean));
 
   return (
     <div className="flex flex-col h-full">
+      {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200 bg-slate-50 shrink-0">
         <div className="flex items-center gap-1.5">
           <Layers className="w-3.5 h-3.5 text-slate-500" />
           <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">Layers</span>
           <span className="text-[10px] text-slate-400">({layers.length})</span>
         </div>
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-6 text-[10px] gap-1 px-2"
-          onClick={() => setCreating(v => !v)}
-        >
+        <Button size="sm" variant="outline" className="h-6 text-[10px] gap-1 px-2" onClick={() => setCreating(v => !v)}>
           <Plus className="w-3 h-3" /> New Layer
         </Button>
       </div>
 
-      {/* Create new layer */}
+      {/* Create new layer form */}
       {creating && (
         <div className="px-3 py-2 bg-indigo-50 border-b border-indigo-100 space-y-1.5 shrink-0">
-          <Input
-            placeholder="Layer name..."
-            value={newLayerName}
-            onChange={e => setNewLayerName(e.target.value)}
-            className="h-7 text-xs"
-            onKeyDown={e => e.key === "Enter" && handleCreate()}
-            autoFocus
-          />
-          <ColorPicker value={newLayerColor} onChange={setNewLayerColor} />
-          <div className="flex gap-1.5">
-            <Button size="sm" className="h-6 text-[10px] bg-indigo-600 hover:bg-indigo-700 flex-1" onClick={handleCreate} disabled={!newLayerName.trim()}>
-              <Check className="w-3 h-3 mr-1" /> Create
-            </Button>
-            <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={() => setCreating(false)}>
-              <X className="w-3 h-3" />
-            </Button>
+          {/* Mode tabs */}
+          <div className="flex gap-0.5 bg-indigo-100 rounded p-0.5 mb-1.5">
+            <button
+              onClick={() => setCreateMode("manual")}
+              className={`flex-1 text-[10px] py-0.5 rounded font-semibold transition-colors ${createMode === "manual" ? "bg-white text-indigo-700 shadow" : "text-indigo-500"}`}
+            >
+              Manual
+            </button>
+            <button
+              onClick={() => setCreateMode("by_type")}
+              className={`flex-1 text-[10px] py-0.5 rounded font-semibold transition-colors ${createMode === "by_type" ? "bg-white text-indigo-700 shadow" : "text-indigo-500"}`}
+            >
+              By Assignment Type
+            </button>
           </div>
+
+          {createMode === "by_type" ? (
+            <div className="space-y-1">
+              <div className="text-[9px] text-indigo-600 font-medium mb-1">Quick-create a layer per assignment type:</div>
+              {assignmentTypes.map(typeName => (
+                <div key={typeName} className="flex items-center justify-between py-0.5">
+                  <span className="text-[10px] text-slate-700">{typeName}</span>
+                  {coveredTypes.has(typeName) ? (
+                    <span className="text-[9px] text-emerald-600 font-medium">✓ has layer</span>
+                  ) : (
+                    <Button size="sm" variant="ghost" className="h-5 text-[10px] text-indigo-500 px-2"
+                      onClick={() => { handleQuickCreateByType(typeName); setCreating(false); }}>
+                      + Create
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <>
+              <Input
+                placeholder="Layer name..."
+                value={newLayerName}
+                onChange={e => setNewLayerName(e.target.value)}
+                className="h-7 text-xs"
+                onKeyDown={e => e.key === "Enter" && handleCreate()}
+                autoFocus
+              />
+              <ColorPicker value={newLayerColor} onChange={setNewLayerColor} />
+              <div className="flex gap-1.5">
+                <Button size="sm" className="h-6 text-[10px] bg-indigo-600 hover:bg-indigo-700 flex-1" onClick={handleCreate} disabled={!newLayerName.trim()}>
+                  <Check className="w-3 h-3 mr-1" /> Create
+                </Button>
+                <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={() => setCreating(false)}>
+                  <X className="w-3 h-3" />
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       )}
 
@@ -146,58 +212,53 @@ export default function LayersPanel({ layers, assets, onCreateLayer, onDeleteLay
                       onKeyDown={e => e.key === "Enter" && handleSaveEdit(layer)}
                       autoFocus
                     />
-                    <button onClick={() => handleSaveEdit(layer)} className="text-emerald-500 hover:text-emerald-700">
-                      <Check className="w-3 h-3" />
-                    </button>
-                    <button onClick={() => setEditingId(null)} className="text-slate-400 hover:text-slate-600">
-                      <X className="w-3 h-3" />
-                    </button>
+                    <button onClick={() => handleSaveEdit(layer)} className="text-emerald-500 hover:text-emerald-700"><Check className="w-3 h-3" /></button>
+                    <button onClick={() => setEditingId(null)} className="text-slate-400 hover:text-slate-600"><X className="w-3 h-3" /></button>
                   </div>
                 ) : (
-                  <span className="flex-1 text-[11px] font-semibold text-slate-700 truncate">{layer.name}</span>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[11px] font-semibold text-slate-700 truncate block">{layer.name}</span>
+                    {layer.assignmentType && (
+                      <span className="text-[9px] text-indigo-500">{layer.assignmentType}</span>
+                    )}
+                  </div>
                 )}
 
-                <span className="text-[9px] text-slate-400 shrink-0">{assetIds.size} assets</span>
+                <span className="text-[9px] text-slate-400 shrink-0">{assetIds.size}</span>
 
                 {!isEditing && (
                   <div className="flex gap-0.5">
-                    <button onClick={() => handleEdit(layer)} className="p-0.5 text-slate-300 hover:text-slate-600 transition-colors">
-                      <Edit2 className="w-3 h-3" />
-                    </button>
-                    <button onClick={() => onDeleteLayer(layer.id)} className="p-0.5 text-slate-300 hover:text-red-500 transition-colors">
-                      <Trash2 className="w-3 h-3" />
-                    </button>
+                    <button onClick={() => handleEdit(layer)} className="p-0.5 text-slate-300 hover:text-slate-600 transition-colors"><Edit2 className="w-3 h-3" /></button>
+                    <button onClick={() => onDeleteLayer(layer.id)} className="p-0.5 text-slate-300 hover:text-red-500 transition-colors"><Trash2 className="w-3 h-3" /></button>
                   </div>
                 )}
               </div>
 
-              {/* Expanded layer details */}
+              {/* Expanded details */}
               {isExpanded && (
                 <div className="px-3 pb-2 space-y-1.5">
-                  {/* Color edit */}
-                  {isEditing && (
-                    <ColorPicker value={editColor} onChange={setEditColor} />
-                  )}
+                  {/* Color edit when editing */}
+                  {isEditing && <ColorPicker value={editColor} onChange={setEditColor} />}
 
-                  {/* Assets in layer */}
+                  {/* Assets list */}
                   {layerAssets.length > 0 && (
                     <div className="space-y-0.5">
                       {layerAssets.map(a => (
                         <div key={a.id} className="flex items-center justify-between py-0.5 px-1.5 rounded bg-slate-50 text-[10px]">
                           <span className="font-mono font-semibold text-slate-700">{a.active_shelter_id || a.asset_id}</span>
                           <span className="text-slate-400">{a.city || ""}</span>
-                          <button
-                            onClick={() => onRemoveAsset(layer.id, a.id)}
-                            className="text-slate-300 hover:text-red-500 transition-colors"
-                          >
+                          <button onClick={() => onRemoveAsset(layer.id, a.id)} className="text-slate-300 hover:text-red-500 transition-colors">
                             <X className="w-3 h-3" />
                           </button>
                         </div>
                       ))}
                     </div>
                   )}
+                  {layerAssets.length === 0 && (
+                    <div className="text-[9px] text-slate-400 text-center py-1">No assets in this layer</div>
+                  )}
 
-                  {/* Add asset to layer */}
+                  {/* Add asset */}
                   {isAddingAsset ? (
                     <div className="space-y-1">
                       <Input
@@ -211,7 +272,7 @@ export default function LayersPanel({ layers, assets, onCreateLayer, onDeleteLay
                         {filteredAssets.filter(a => !assetIds.has(a.id)).slice(0, 30).map(a => (
                           <button
                             key={a.id}
-                            onClick={() => { onAddAsset(layer.id, a.id); }}
+                            onClick={() => onAddAsset(layer.id, a.id)}
                             className="w-full text-left text-[10px] px-1.5 py-0.5 rounded hover:bg-indigo-50 hover:text-indigo-700 transition-colors flex items-center gap-2"
                           >
                             <span className="font-mono font-semibold">{a.active_shelter_id || a.asset_id}</span>
