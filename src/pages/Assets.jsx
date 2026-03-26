@@ -61,7 +61,7 @@ export default function Assets() {
     },
   });
 
-  const handleSave = async (formData, attachments = []) => {
+  const handleSave = async (formData, attachments = [], childComponents = []) => {
     if (editingAsset) {
       updateMutation.mutate({ id: editingAsset.id, data: formData });
       if (attachments.length > 0) {
@@ -79,7 +79,6 @@ export default function Assets() {
         queryClient.invalidateQueries({ queryKey: ["assets"] });
       }
     } else {
-      // Check for duplicate asset_id or active_shelter_id
       const dupId = formData.asset_id && assets.some(a => a.asset_id === formData.asset_id);
       const dupShelter = formData.active_shelter_id && assets.some(a => a.active_shelter_id === formData.active_shelter_id);
       if (dupId || dupShelter) {
@@ -93,9 +92,19 @@ export default function Assets() {
         return;
       }
       const newAsset = await createMutation.mutateAsync(formData);
-      // Save attachments + audit after asset is created
-      if (attachments.length > 0 && newAsset?.id) {
-        const user = await base44.auth.me();
+      if (!newAsset?.id) return;
+      const user = await base44.auth.me();
+
+      // Save child components
+      if (childComponents.length > 0) {
+        for (const child of childComponents) {
+          await base44.entities.AssetChilds.create({ ...child, asset_id: newAsset.id });
+        }
+        queryClient.invalidateQueries({ queryKey: ["assetChilds"] });
+      }
+
+      // Save attachments
+      if (attachments.length > 0) {
         for (const file of attachments) {
           await base44.entities.AssetAttachments.create({
             asset_id: newAsset.id,

@@ -10,6 +10,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import ConfirmCloseDialog from "@/components/shared/ConfirmCloseDialog";
 import { Trash2, Upload, Loader2, Paperclip } from "lucide-react";
+import AssetChildrenSection from "@/components/assets/AssetChildrenSection";
 
 const CONTRACT_BASE_YEAR = 2023;
 
@@ -167,6 +168,7 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState({});
   const [confirmClose, setConfirmClose] = useState(false);
+  const [childComponents, setChildComponents] = useState([]);
 
   useEffect(() => {
     if (asset) {
@@ -287,12 +289,11 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
     else delete payload.longitude;
     if (payload.warranty_base_year !== "") payload.warranty_base_year = parseInt(payload.warranty_base_year);
     else delete payload.warranty_base_year;
-    // Remove delivery_year if present (legacy)
     delete payload.delivery_year;
 
     const attachments = payload.attachments || [];
     delete payload.attachments;
-    onSave(payload, attachments);
+    onSave(payload, attachments, childComponents);
     onOpenChange(false);
   };
 
@@ -338,6 +339,19 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
                 {errors.shelter_type && <p className="text-xs text-red-500">Required</p>}
               </div>
             </div>
+
+            {/* ── CHILD COMPONENTS ── */}
+            {form.shelter_type && (
+              <>
+                <SectionHeader title="Child Components (Auto Generated)" color="amber" />
+                <AssetChildrenSection
+                  shelterType={form.shelter_type}
+                  deliveryDate={form.delivery_date}
+                  onChange={setChildComponents}
+                  existingChildren={[]}
+                />
+              </>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
