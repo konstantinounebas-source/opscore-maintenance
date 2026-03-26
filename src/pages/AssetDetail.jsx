@@ -27,6 +27,7 @@ export default function AssetDetail() {
   const [showMore, setShowMore] = useState(false);
   const [childFormOpen, setChildFormOpen] = useState(false);
   const [editingChild, setEditingChild] = useState(null);
+  const editingChildRef = React.useRef(null);
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [childToMove, setChildToMove] = useState(null);
 
@@ -71,12 +72,30 @@ export default function AssetDetail() {
     },
   });
 
+  const CHILD_FIELD_LABELS = {
+    child_id: "Child ID",
+    category: "Category",
+    serial_number: "Serial Number",
+    installation_date: "Installation Date",
+    child_type: "Type",
+    description: "Description",
+    unit_price: "Unit Price (€)",
+    parent_asset_id: "Parent Asset",
+    status: "Status",
+  };
+
   const createChild = useMutation({
     mutationFn: (data) => base44.entities.ChildAssets.create(data),
-    onSuccess: async () => {
+    onSuccess: async (newChild) => {
       const user = await base44.auth.me();
-      await base44.entities.AssetTransactions.create({ asset_id: assetId, action: "Child Inserted", details: "New child asset added", user: user?.email });
+      await base44.entities.AssetTransactions.create({
+        asset_id: assetId,
+        action: "Child Added",
+        details: `Added child "${newChild.description || newChild.child_id}" — Category: ${newChild.category || "—"}, Type: ${newChild.child_type || "—"}, Serial: ${newChild.serial_number || "—"}`,
+        user: user?.email,
+      });
       queryClient.invalidateQueries({ queryKey: ["childAssets", assetId] });
+      queryClient.invalidateQueries({ queryKey: ["assetTransactions", assetId] });
       setChildFormOpen(false);
       toast({ title: "Child added" });
     },
@@ -84,14 +103,24 @@ export default function AssetDetail() {
 
   const updateChild = useMutation({
     mutationFn: ({ id, data }) => base44.entities.ChildAssets.update(id, data),
-    onSuccess: async (_, { id, data }) => {
+    onSuccess: async (updatedChild, { data }) => {
       const user = await base44.auth.me();
-      const changes = Object.entries(data).filter(([key, val]) => editingChild[key] !== val).map(([key, val]) => `${key}: ${editingChild[key]} → ${val}`).join(", ");
-      await base44.entities.AssetTransactions.create({ asset_id: assetId, action: "Child Asset Updated", details: changes || `Child ${data.child_id} modified`, user: user?.email });
+      const prev = editingChildRef.current;
+      const fieldChanges = Object.entries(data)
+        .filter(([key, val]) => prev && prev[key] !== val && CHILD_FIELD_LABELS[key])
+        .map(([key, val]) => `${CHILD_FIELD_LABELS[key]}: "${prev[key] || "—"}" → "${val || "—"}"`)
+        .join("; ");
+      await base44.entities.AssetTransactions.create({
+        asset_id: assetId,
+        action: "Child Updated",
+        details: fieldChanges || `Child "${data.description || data.child_id}" updated — no field changes detected`,
+        user: user?.email,
+      });
       queryClient.invalidateQueries({ queryKey: ["childAssets", assetId] });
       queryClient.invalidateQueries({ queryKey: ["assetTransactions", assetId] });
       setChildFormOpen(false);
       setEditingChild(null);
+      editingChildRef.current = null;
       toast({ title: "Child updated" });
     },
   });
@@ -107,6 +136,7 @@ export default function AssetDetail() {
 
   const handleChildSave = (data) => {
     if (editingChild) {
+      editingChildRef.current = editingChild; // snapshot before mutation
       updateChild.mutate({ id: editingChild.id, data });
     } else {
       createChild.mutate(data);
