@@ -67,6 +67,7 @@ export default function AssetDetail() {
       queryClient.invalidateQueries({ queryKey: ["asset", assetId] });
       queryClient.invalidateQueries({ queryKey: ["assetAttachments", assetId] });
       queryClient.invalidateQueries({ queryKey: ["assetTransactions", assetId] });
+      queryClient.invalidateQueries({ queryKey: ["childAssets", assetId] });
       setEditOpen(false);
       toast({ title: "Asset updated" });
     },

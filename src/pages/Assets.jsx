@@ -64,8 +64,11 @@ export default function Assets() {
   const handleSave = async (formData, attachments = [], childComponents = []) => {
     if (editingAsset) {
       updateMutation.mutate({ id: editingAsset.id, data: formData });
+      const user = await base44.auth.me();
+
+      // (Children are managed from AssetDetail page when editing)
+
       if (attachments.length > 0) {
-        const user = await base44.auth.me();
         for (const file of attachments) {
           await base44.entities.AssetAttachments.create({
             asset_id: editingAsset.id,
@@ -95,10 +98,18 @@ export default function Assets() {
       if (!newAsset?.id) return;
       const user = await base44.auth.me();
 
-      // Save child components
+      // Save child components (map AssetChildrenSection output → ChildAssets fields)
       if (childComponents.length > 0) {
         for (const child of childComponents) {
-          await base44.entities.ChildAssets.create({ ...child, asset_id: newAsset.id });
+          await base44.entities.ChildAssets.create({
+            child_id: child.child_catalog_id || `CHILD-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,
+            parent_asset_id: newAsset.id,
+            category: child.child_category_snapshot || "",
+            child_type: child.child_type_snapshot || "",
+            description: child.child_name_snapshot || "",
+            serial_number: child.serial_number || "",
+            installation_date: child.installation_date || "",
+          });
         }
         queryClient.invalidateQueries({ queryKey: ["childAssets"] });
       }

@@ -164,6 +164,11 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
   const docTypes = evidenceOptions.length ? evidenceOptions : defaultDocTypes;
 
   const { data: allAssets = [] } = useQuery({ queryKey: ["assets"], queryFn: () => base44.entities.Assets.list() });
+  const { data: existingChildAssets = [] } = useQuery({
+    queryKey: ["childAssets", asset?.id],
+    queryFn: () => base44.entities.ChildAssets.filter({ parent_asset_id: asset.id }),
+    enabled: !!asset?.id,
+  });
 
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState({});
@@ -340,8 +345,8 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
               </div>
             </div>
 
-            {/* ── CHILD COMPONENTS ── */}
-            {form.shelter_type && (
+            {/* ── CHILD COMPONENTS ── only shown for new assets */}
+            {form.shelter_type && !asset && (
               <>
                 <SectionHeader title="Child Components (Auto Generated)" color="amber" />
                 <AssetChildrenSection
