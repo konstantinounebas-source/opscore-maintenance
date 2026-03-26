@@ -252,7 +252,7 @@ export default function MultiMapView() {
               style={{ isolation: "isolate", minHeight: 0, height: "100%" }}
             >
               {/* Map label badge */}
-              <div className={`absolute top-1.5 left-1.5 z-[400] px-2 py-0.5 rounded-full text-[10px] font-bold border shadow-sm ${MAP_BADGE[i]}`}>
+              <div className={`absolute top-1.5 left-1.5 z-[600] px-2 py-0.5 rounded-full text-[10px] font-bold border shadow-sm ${MAP_BADGE[i]}`}>
                 Map {i + 1}
               </div>
 
@@ -260,7 +260,7 @@ export default function MultiMapView() {
               {panelCount > 1 && (
                 <button
                   onClick={() => removePanel(i)}
-                  className="absolute top-1.5 right-1.5 z-[400] w-5 h-5 rounded-full bg-white/90 border border-slate-300 text-slate-500 hover:text-red-500 hover:border-red-300 flex items-center justify-center shadow-sm transition-colors"
+                  className="absolute top-1.5 right-1.5 z-[600] w-5 h-5 rounded-full bg-white/90 border border-slate-300 text-slate-500 hover:text-red-500 hover:border-red-300 flex items-center justify-center shadow-sm transition-colors"
                   title="Remove map"
                 >
                   <X className="w-3 h-3" />
