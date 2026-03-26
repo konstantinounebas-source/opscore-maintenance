@@ -354,6 +354,7 @@ export default function MultiMapView() {
         workOrders={workOrders}
         onSave={handleSaveAssignment}
         onDelete={handleDeleteAssignment}
+        onWeekCreated={() => queryClient.invalidateQueries({ queryKey: ["planningWeeks"] })}
       />
     </div>
   );
