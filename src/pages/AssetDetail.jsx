@@ -9,6 +9,7 @@ import AuditLog from "@/components/shared/AuditLog";
 import FileUploader from "@/components/shared/FileUploader";
 import AssetFormDialog from "@/components/assets/AssetFormDialog";
 import ChildFormDialog from "@/components/assets/ChildFormDialog";
+import AddChildFromTemplateDialog from "@/components/assets/AddChildFromTemplateDialog";
 import MoveChildDialog from "@/components/childs/MoveChildDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ export default function AssetDetail() {
   const editingChildRef = React.useRef(null);
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [childToMove, setChildToMove] = useState(null);
+  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
 
   const { data: asset } = useQuery({ queryKey: ["asset", assetId], queryFn: () => base44.entities.Assets.filter({ id: assetId }).then(r => r[0]), enabled: !!assetId });
   const { data: children = [] } = useQuery({ queryKey: ["childAssets", assetId], queryFn: () => base44.entities.ChildAssets.filter({ parent_asset_id: assetId }), enabled: !!assetId });
@@ -326,7 +328,10 @@ export default function AssetDetail() {
           </TabsList>
 
           <TabsContent value="childs">
-            <div className="flex justify-end mb-3">
+            <div className="flex justify-end mb-3 gap-2">
+              <Button size="sm" variant="outline" className="gap-1.5 border-indigo-300 text-indigo-700 hover:bg-indigo-50" onClick={() => setTemplateDialogOpen(true)}>
+                <Plus className="w-3.5 h-3.5" /> Add from Type Template
+              </Button>
               <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 gap-1.5" onClick={() => { setEditingChild(null); setChildFormOpen(true); }}>
                 <Plus className="w-3.5 h-3.5" /> Add Child
               </Button>
@@ -384,6 +389,7 @@ export default function AssetDetail() {
 
       <ChildFormDialog open={childFormOpen} onOpenChange={setChildFormOpen} child={editingChild} parentAssetId={assetId} onSave={handleChildSave} />
       <MoveChildDialog open={moveDialogOpen} onOpenChange={setMoveDialogOpen} child={childToMove} assets={allAssets} currentAssetId={assetId} onMove={handleMoveChild} />
+      <AddChildFromTemplateDialog open={templateDialogOpen} onOpenChange={setTemplateDialogOpen} asset={asset} onSave={(data) => base44.entities.ChildAssets.create(data).then(async (newChild) => { const user = await base44.auth.me(); await base44.entities.AssetTransactions.create({ asset_id: assetId, action: "Child Added", details: `Added child "${newChild.description || newChild.child_id}" from template`, user: user?.email }); queryClient.invalidateQueries({ queryKey: ["childAssets", assetId] }); queryClient.invalidateQueries({ queryKey: ["assetTransactions", assetId] }); })} />
     </div>
   );
 }
