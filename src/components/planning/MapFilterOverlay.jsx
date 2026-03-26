@@ -198,7 +198,7 @@ export default function MapFilterOverlay({ state, onUpdate, assets, crews, layer
                 <SelectTrigger className="h-6 text-[10px] border-slate-200 w-full">
                   <SelectValue placeholder="Default" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent style={{ zIndex: 99999 }}>
                   {COLOR_BY_OPTIONS.map(o => (
                     <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
                   ))}
@@ -299,7 +299,7 @@ function FilterSelect({ label, value, onChange, options, placeholder }) {
         <SelectTrigger className="h-6 text-[10px] border-slate-200 flex-1">
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
-        <SelectContent className="max-h-48">
+        <SelectContent className="max-h-48" style={{ zIndex: 99999 }}>
           <SelectItem value="__all__">{placeholder}</SelectItem>
           {options.map(o => (
             <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>

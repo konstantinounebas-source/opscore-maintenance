@@ -41,7 +41,7 @@ function defaultPanelState() {
   };
 }
 
-function applyPanelFilters(assets, assignments, state) {
+function applyPanelFilters(assets, assignments, state, layers = []) {
   const weekAssignments = state.selectedWeekId
     ? assignments.filter(a => a.planning_week_id === state.selectedWeekId)
     : [];
@@ -51,7 +51,14 @@ function applyPanelFilters(assets, assignments, state) {
 
   const searchVal = (state.assetSearch || "").trim().toLowerCase();
 
+  // Build layer asset set if a layer filter is active
+  const layerAssetIds = state.filterLayerId
+    ? new Set((layers.find(l => l.id === state.filterLayerId)?.assetIds || []))
+    : null;
+
   const filteredAssets = assets.filter(a => {
+    // Layer filter
+    if (layerAssetIds && !layerAssetIds.has(a.id)) return false;
     // Asset status
     if (state.filterAssetStatus && a.status !== state.filterAssetStatus) return false;
     // Shelter type
@@ -187,8 +194,8 @@ export default function MultiMapView() {
 
   // Per-panel derived data (layer filter applied inside applyPanelFilters via assetSearch/filterLayerId — layer asset IDs passed to MultiMapInstance directly)
   const panelData = useMemo(() =>
-    panelStates.map(state => applyPanelFilters(assets, allAssignments, state)),
-    [panelStates, assets, allAssignments]
+    panelStates.map(state => applyPanelFilters(assets, allAssignments, state, layers)),
+    [panelStates, assets, allAssignments, layers]
   );
 
   // Resizable divider
