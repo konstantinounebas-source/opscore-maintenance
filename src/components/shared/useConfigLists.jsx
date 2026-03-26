@@ -3,10 +3,14 @@ import { base44 } from "@/api/base44Client";
 
 export function useConfigLists(listType) {
   const { data = [] } = useQuery({
-    queryKey: ["configLists", listType],
-    queryFn: () => base44.entities.ConfigLists.filter({ list_type: listType, is_active: true }),
+    queryKey: ["configLists"],
+    queryFn: () => base44.entities.ConfigLists.list(),
+    staleTime: 30000,
   });
-  return data.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)).map(item => item.value);
+  return data
+    .filter(item => item.list_type === listType && item.is_active !== false)
+    .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+    .map(item => item.value);
 }
 
 export function useAllConfigLists() {
