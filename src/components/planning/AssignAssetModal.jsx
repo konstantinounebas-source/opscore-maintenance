@@ -57,13 +57,8 @@ export default function AssignAssetModal({
   const [createdWeek, setCreatedWeek] = useState(null);
 
   // Config lists from Configuration module
-  const assignmentTypes = useConfigLists("Planning Assignment Types");
-  const assignmentStatuses = useConfigLists("Planning Assignment Statuses");
-
-  const FALLBACK_TYPES = ["Inspection", "Preventive", "Corrective", "Make Safe", "Review", "Mixed"];
-  const FALLBACK_STATUSES = ["Planned", "In Progress", "Completed", "Deferred", "Cancelled"];
-  const typeOptions = assignmentTypes.length ? assignmentTypes : FALLBACK_TYPES;
-  const statusOptions = assignmentStatuses.length ? assignmentStatuses : FALLBACK_STATUSES;
+  const typeOptions = useConfigLists("Planning Assignment Types");
+  const statusOptions = useConfigLists("Planning Assignment Statuses");
 
   useEffect(() => {
     if (existingAssignment) {

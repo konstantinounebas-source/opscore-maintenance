@@ -5,7 +5,7 @@ export function useConfigLists(listType) {
   const { data = [] } = useQuery({
     queryKey: ["configLists"],
     queryFn: () => base44.entities.ConfigLists.list(),
-    staleTime: 30000,
+    staleTime: 0,
   });
   return data
     .filter(item => item.list_type === listType && item.is_active !== false)
