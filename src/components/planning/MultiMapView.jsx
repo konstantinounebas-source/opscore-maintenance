@@ -6,7 +6,8 @@ import MapFilterOverlay from "./MapFilterOverlay";
 import MapSummaryStrip from "./MapSummaryStrip";
 import AssignAssetModal from "./AssignAssetModal";
 import PlanningAssignmentPanel from "./PlanningAssignmentPanel";
-import { Loader2, Plus, X, PanelRightClose, PanelRightOpen } from "lucide-react";
+import LayersPanel from "./LayersPanel";
+import { Loader2, Plus, X, PanelRightClose, PanelRightOpen, Layers } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const MIN_LEFT_PCT = 35;
@@ -34,6 +35,9 @@ function defaultPanelState() {
     filterAssigned: "",
     assetSearch: "",
     selectedAssetId: null,
+    markerColor: "",
+    colorBy: "",
+    filterLayerId: "",
   };
 }
 
@@ -99,8 +103,35 @@ export default function MultiMapView() {
     defaultPanelState(), defaultPanelState(), defaultPanelState(), defaultPanelState(),
   ]);
 
-  // Right-panel shared week selection (synced with first map by default)
+  // Right-panel shared week selection
   const [rightSelectedWeekId, setRightSelectedWeekId] = useState("");
+  // Right panel tab
+  const [rightTab, setRightTab] = useState("assets"); // "assets" | "layers"
+  // Layers stored in-session (no entity needed — stored as state with localStorage persistence)
+  const [layers, setLayers] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("planningLayers") || "[]"); } catch { return []; }
+  });
+
+  const saveLayers = (updated) => {
+    setLayers(updated);
+    try { localStorage.setItem("planningLayers", JSON.stringify(updated)); } catch {}
+  };
+
+  const handleCreateLayer = (data) => {
+    const newLayer = { id: Date.now().toString(), name: data.name, color: data.color, assetIds: [] };
+    saveLayers([...layers, newLayer]);
+  };
+  const handleDeleteLayer = (id) => saveLayers(layers.filter(l => l.id !== id));
+  const handleUpdateLayer = (id, data) => saveLayers(layers.map(l => l.id === id ? { ...l, ...data } : l));
+  const handleAddAssetToLayer = (layerId, assetId) => {
+    saveLayers(layers.map(l => l.id === layerId ? { ...l, assetIds: [...new Set([...(l.assetIds || []), assetId])] } : l));
+  };
+  const handleRemoveAssetFromLayer = (layerId, assetId) => {
+    saveLayers(layers.map(l => l.id === layerId ? { ...l, assetIds: (l.assetIds || []).filter(id => id !== assetId) } : l));
+  };
+
+  // Enrich layers with asset count for display
+  const enrichedLayers = useMemo(() => layers.map(l => ({ ...l, assetCount: (l.assetIds || []).length })), [layers]);
 
   // Assign modal state
   const [assignModal, setAssignModal] = useState({
@@ -154,7 +185,7 @@ export default function MultiMapView() {
 
   const isLoading = assetsLoading || assignmentsLoading;
 
-  // Per-panel derived data
+  // Per-panel derived data (layer filter applied inside applyPanelFilters via assetSearch/filterLayerId — layer asset IDs passed to MultiMapInstance directly)
   const panelData = useMemo(() =>
     panelStates.map(state => applyPanelFilters(assets, allAssignments, state)),
     [panelStates, assets, allAssignments]
@@ -295,6 +326,7 @@ export default function MultiMapView() {
                 onUpdate={(updates) => updatePanel(i, updates)}
                 assets={assets}
                 crews={crews}
+                layers={enrichedLayers}
               />
 
               {/* Map */}
@@ -303,6 +335,10 @@ export default function MultiMapView() {
                 assignments={filteredAssignments}
                 selectedAssetId={highlightedAssetId}
                 onSelectAsset={(asset) => handleAssetClick(i, asset)}
+                markerColor={state.markerColor}
+                colorBy={state.colorBy}
+                layers={enrichedLayers}
+                filterLayerId={state.filterLayerId}
               />
 
               {/* Bottom summary strip (replaces old color legend) */}
@@ -348,24 +384,55 @@ export default function MultiMapView() {
         </button>
       </div>
 
-      {/* RIGHT: Unified assignment panel */}
+      {/* RIGHT: Unified panel with tabs */}
       {!rightCollapsed && (
         <div
-          className="flex-1 overflow-hidden border-l border-slate-200"
+          className="flex-1 overflow-hidden border-l border-slate-200 flex flex-col"
           style={{ minWidth: `${MIN_RIGHT_PCT}%` }}
         >
-          <PlanningAssignmentPanel
-            assets={assets}
-            allAssignments={allAssignments}
-            weeks={weeks}
-            selectedWeekId={rightSelectedWeekId}
-            onSelectWeek={setRightSelectedWeekId}
-            highlightedAssetId={highlightedAssetId}
-            onHighlightAsset={setHighlightedAssetId}
-            onAssign={handleAssignFromTable}
-            onRemoveAssignment={handleRemoveFromTable}
-            onOpenAsset={handleOpenAsset}
-          />
+          {/* Tab switcher */}
+          <div className="flex border-b border-slate-200 bg-white shrink-0">
+            <button
+              onClick={() => setRightTab("assets")}
+              className={`flex-1 py-1.5 text-[11px] font-semibold transition-colors ${rightTab === "assets" ? "text-indigo-700 border-b-2 border-indigo-500 bg-indigo-50" : "text-slate-400 hover:text-slate-600"}`}
+            >
+              Assets
+            </button>
+            <button
+              onClick={() => setRightTab("layers")}
+              className={`flex-1 py-1.5 text-[11px] font-semibold transition-colors flex items-center justify-center gap-1 ${rightTab === "layers" ? "text-indigo-700 border-b-2 border-indigo-500 bg-indigo-50" : "text-slate-400 hover:text-slate-600"}`}
+            >
+              <Layers className="w-3 h-3" /> Layers {layers.length > 0 && <span className="text-[9px]">({layers.length})</span>}
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-hidden">
+            {rightTab === "assets" && (
+              <PlanningAssignmentPanel
+                assets={assets}
+                allAssignments={allAssignments}
+                weeks={weeks}
+                selectedWeekId={rightSelectedWeekId}
+                onSelectWeek={setRightSelectedWeekId}
+                highlightedAssetId={highlightedAssetId}
+                onHighlightAsset={setHighlightedAssetId}
+                onAssign={handleAssignFromTable}
+                onRemoveAssignment={handleRemoveFromTable}
+                onOpenAsset={handleOpenAsset}
+              />
+            )}
+            {rightTab === "layers" && (
+              <LayersPanel
+                layers={enrichedLayers}
+                assets={assets}
+                onCreateLayer={handleCreateLayer}
+                onDeleteLayer={handleDeleteLayer}
+                onUpdateLayer={handleUpdateLayer}
+                onAddAsset={handleAddAssetToLayer}
+                onRemoveAsset={handleRemoveAssetFromLayer}
+              />
+            )}
+          </div>
         </div>
       )}
 
