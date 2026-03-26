@@ -144,7 +144,7 @@ export default function AssignAssetModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto" style={{ zIndex: 1000 }}>
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto" style={{ zIndex: 9999 }}>
         <DialogHeader>
           <DialogTitle>{existingAssignment ? "Edit Assignment" : "Assign Asset to Week"}</DialogTitle>
         </DialogHeader>
@@ -221,7 +221,7 @@ export default function AssignAssetModal({
                 <Label className="text-xs">Assignment Type</Label>
                 <Select value={form.assignment_type || "__none__"} onValueChange={v => set("assignment_type", v === "__none__" ? "" : v)}>
                   <SelectTrigger className="mt-1 text-sm"><SelectValue placeholder="Select type…" /></SelectTrigger>
-                  <SelectContent>
+                  <SelectContent style={{ zIndex: 99999 }}>
                     <SelectItem value="__none__">— Select type —</SelectItem>
                     {typeOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
@@ -231,7 +231,7 @@ export default function AssignAssetModal({
                 <Label className="text-xs">Status</Label>
                 <Select value={form.assignment_status || "__none__"} onValueChange={v => set("assignment_status", v === "__none__" ? "" : v)}>
                   <SelectTrigger className="mt-1 text-sm"><SelectValue /></SelectTrigger>
-                  <SelectContent>
+                  <SelectContent style={{ zIndex: 99999 }}>
                     {statusOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -243,7 +243,7 @@ export default function AssignAssetModal({
               <Label className="text-xs">Priority</Label>
               <Select value={form.priority_bucket || "auto"} onValueChange={v => set("priority_bucket", v === "auto" ? "" : v)}>
                 <SelectTrigger className="mt-1 text-sm"><SelectValue placeholder="Auto from incident" /></SelectTrigger>
-                <SelectContent>
+                <SelectContent style={{ zIndex: 99999 }}>
                   <SelectItem value="auto">
                     Auto from linked incident{autoPriority ? ` (${autoPriority})` : ""}
                   </SelectItem>
@@ -290,7 +290,7 @@ export default function AssignAssetModal({
                 <Label className="text-xs">Link to Incident <span className="text-slate-400">(auto-fills priority)</span></Label>
                 <Select value={form.source_incident_id || "none"} onValueChange={v => set("source_incident_id", v === "none" ? "" : v)}>
                   <SelectTrigger className="mt-1 text-sm"><SelectValue placeholder="Select incident..." /></SelectTrigger>
-                  <SelectContent>
+                  <SelectContent style={{ zIndex: 99999 }}>
                     <SelectItem value="none">None</SelectItem>
                     {assetIncidents.map(i => (
                       <SelectItem key={i.id} value={i.id}>
@@ -306,7 +306,7 @@ export default function AssignAssetModal({
                 <Label className="text-xs">Link to Work Order (optional)</Label>
                 <Select value={form.source_work_order_id || "none"} onValueChange={v => set("source_work_order_id", v === "none" ? "" : v)}>
                   <SelectTrigger className="mt-1 text-sm"><SelectValue placeholder="Select work order..." /></SelectTrigger>
-                  <SelectContent>
+                  <SelectContent style={{ zIndex: 99999 }}>
                     <SelectItem value="none">None</SelectItem>
                     {assetWOs.map(w => (
                       <SelectItem key={w.id} value={w.id}>{w.work_order_id} — {w.title} ({w.status})</SelectItem>
