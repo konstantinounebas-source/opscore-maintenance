@@ -3,14 +3,14 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import MultiMapInstance from "./MultiMapInstance";
 import MapFilterOverlay from "./MapFilterOverlay";
-import MapColorLegend from "./MapColorLegend";
-import MapWeekPanel from "./MapWeekPanel";
+import MapSummaryStrip from "./MapSummaryStrip";
 import AssignAssetModal from "./AssignAssetModal";
-import { Loader2, Plus, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import PlanningAssignmentPanel from "./PlanningAssignmentPanel";
+import { Loader2, Plus, X, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
-const MIN_LEFT_PCT = 40;
-const MIN_RIGHT_PCT = 25;
+const MIN_LEFT_PCT = 35;
+const MIN_RIGHT_PCT = 20;
 
 const MAP_BORDER = [
   "border-indigo-300", "border-emerald-300", "border-amber-300", "border-purple-300"
@@ -22,21 +22,16 @@ const MAP_BADGE = [
   "bg-purple-100 text-purple-700 border-purple-200",
 ];
 
-const ASSET_STATE_MAP = {
-  "Active": ["Delivered", "Active"],
-  "Under Maintenance": ["Under Maintenance"],
-  "Installed": ["Installed"],
-};
-
 function defaultPanelState() {
   return {
     selectedWeekId: "",
-    filterStatus: "",
-    filterType: "",
-    filterPriority: "",
-    filterCrew: "",
+    filterAssetStatus: "",
+    filterAssignmentStatus: "",
+    filterShelterType: "",
     filterCity: "",
-    filterAssetState: "",
+    filterMunicipality: "",
+    filterCrew: "",
+    filterAssigned: "",
     assetSearch: "",
     selectedAssetId: null,
   };
@@ -50,31 +45,35 @@ function applyPanelFilters(assets, assignments, state) {
   const assignmentByAsset = {};
   weekAssignments.forEach(a => { assignmentByAsset[a.asset_id] = a; });
 
-  const searchLower = (state.assetSearch || "").trim().toLowerCase();
+  const searchVal = (state.assetSearch || "").trim().toLowerCase();
 
   const filteredAssets = assets.filter(a => {
-    if (state.filterAssetState) {
-      const allowed = ASSET_STATE_MAP[state.filterAssetState] || [state.filterAssetState];
-      if (!allowed.includes(a.status)) return false;
-    }
+    // Asset status
+    if (state.filterAssetStatus && a.status !== state.filterAssetStatus) return false;
+    // Shelter type
+    if (state.filterShelterType && a.shelter_type !== state.filterShelterType) return false;
+    // City
     if (state.filterCity && a.city !== state.filterCity) return false;
-
-    if (searchLower) {
+    // Municipality
+    if (state.filterMunicipality && a.municipality !== state.filterMunicipality) return false;
+    // Asset search (exact ID match or partial)
+    if (searchVal) {
       const match =
-        (a.active_shelter_id || "").toLowerCase() === searchLower ||
-        (a.asset_id || "").toLowerCase() === searchLower ||
-        (a.active_shelter_id || "").toLowerCase().includes(searchLower) ||
-        (a.asset_id || "").toLowerCase().includes(searchLower) ||
-        (a.city || "").toLowerCase().includes(searchLower) ||
-        (a.location_address || "").toLowerCase().includes(searchLower);
+        (a.active_shelter_id || "").toLowerCase() === searchVal ||
+        (a.asset_id || "").toLowerCase() === searchVal ||
+        (a.active_shelter_id || "").toLowerCase().includes(searchVal) ||
+        (a.asset_id || "").toLowerCase().includes(searchVal) ||
+        (a.city || "").toLowerCase().includes(searchVal);
       if (!match) return false;
     }
+    // Assigned / Unassigned toggle
+    if (state.filterAssigned === "Assigned" && !assignmentByAsset[a.id]) return false;
+    if (state.filterAssigned === "Unassigned" && assignmentByAsset[a.id]) return false;
 
+    // Assignment-specific filters (only apply when a week is selected)
     if (state.selectedWeekId) {
       const asgn = assignmentByAsset[a.id];
-      if (state.filterStatus && (!asgn || asgn.assignment_status !== state.filterStatus)) return false;
-      if (state.filterType && (!asgn || asgn.assignment_type !== state.filterType)) return false;
-      if (state.filterPriority && (!asgn || asgn.priority_bucket !== state.filterPriority)) return false;
+      if (state.filterAssignmentStatus && (!asgn || asgn.assignment_status !== state.filterAssignmentStatus)) return false;
       if (state.filterCrew && (!asgn || asgn.crew_id !== state.filterCrew)) return false;
     }
     return true;
@@ -88,7 +87,9 @@ function applyPanelFilters(assets, assignments, state) {
 
 export default function MultiMapView() {
   const queryClient = useQueryClient();
-  const [splitPct, setSplitPct] = useState(58);
+  const navigate = useNavigate();
+  const [splitPct, setSplitPct] = useState(62);
+  const [rightCollapsed, setRightCollapsed] = useState(false);
   const containerRef = useRef(null);
   const dragging = useRef(false);
 
@@ -98,10 +99,16 @@ export default function MultiMapView() {
     defaultPanelState(), defaultPanelState(), defaultPanelState(), defaultPanelState(),
   ]);
 
+  // Right-panel shared week selection (synced with first map by default)
+  const [rightSelectedWeekId, setRightSelectedWeekId] = useState("");
+
   // Assign modal state
   const [assignModal, setAssignModal] = useState({
-    open: false, panelIndex: null, asset: null, existingAssignment: null
+    open: false, panelIndex: null, asset: null, existingAssignment: null, week: null
   });
+
+  // Highlighted asset (synced between table and maps)
+  const [highlightedAssetId, setHighlightedAssetId] = useState(null);
 
   const updatePanel = useCallback((index, updates) => {
     setPanelStates(prev => {
@@ -111,16 +118,10 @@ export default function MultiMapView() {
     });
   }, []);
 
-  const addPanel = () => {
-    if (panelCount < 4) setPanelCount(c => c + 1);
-  };
+  const addPanel = () => { if (panelCount < 4) setPanelCount(c => c + 1); };
   const removePanel = (idx) => {
     setPanelCount(c => Math.max(1, c - 1));
-    setPanelStates(prev => {
-      const next = [...prev];
-      next[idx] = defaultPanelState();
-      return next;
-    });
+    setPanelStates(prev => { const next = [...prev]; next[idx] = defaultPanelState(); return next; });
   };
 
   // Shared data
@@ -173,6 +174,7 @@ export default function MultiMapView() {
       const rect = containerRef.current.getBoundingClientRect();
       const pct = ((e.clientX - rect.left) / rect.width) * 100;
       setSplitPct(Math.min(100 - MIN_RIGHT_PCT, Math.max(MIN_LEFT_PCT, pct)));
+      if (rightCollapsed) setRightCollapsed(false);
     };
     const onMouseUp = () => {
       if (dragging.current) {
@@ -187,16 +189,18 @@ export default function MultiMapView() {
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("mouseup", onMouseUp);
     };
-  }, []);
+  }, [rightCollapsed]);
 
-  // Handle asset click on map → open assign modal
+  // Handle asset click on map
   const handleAssetClick = useCallback((panelIndex, asset) => {
     const state = panelStates[panelIndex];
     if (state.selectedAssetId === asset.id) {
       updatePanel(panelIndex, { selectedAssetId: null });
+      setHighlightedAssetId(null);
       return;
     }
     updatePanel(panelIndex, { selectedAssetId: asset.id });
+    setHighlightedAssetId(asset.id);
     const week = weeks.find(w => w.id === state.selectedWeekId);
     const existingAssignment = panelData[panelIndex].assignmentByAsset[asset.id] || null;
     setAssignModal({ open: true, panelIndex, asset, existingAssignment, week });
@@ -216,6 +220,22 @@ export default function MultiMapView() {
     queryClient.invalidateQueries({ queryKey: ["planningAssignments"] });
   };
 
+  // From right panel: assign asset to week
+  const handleAssignFromTable = (asset) => {
+    const week = weeks.find(w => w.id === rightSelectedWeekId);
+    const existingAssignment = allAssignments.find(a => a.asset_id === asset.id && a.planning_week_id === rightSelectedWeekId) || null;
+    setAssignModal({ open: true, panelIndex: null, asset, existingAssignment, week });
+  };
+
+  const handleRemoveFromTable = async (asgn) => {
+    await base44.entities.PlanningAssignments.delete(asgn.id);
+    queryClient.invalidateQueries({ queryKey: ["planningAssignments"] });
+  };
+
+  const handleOpenAsset = (asset) => {
+    navigate(`/AssetDetail?id=${asset.id}`);
+  };
+
   if (isLoading) {
     return (
       <div className="flex-1 flex items-center justify-center bg-slate-50">
@@ -229,11 +249,11 @@ export default function MultiMapView() {
   const getGridClass = (count) => {
     if (count === 1) return "grid-cols-1 grid-rows-1";
     if (count === 2) return "grid-cols-2 grid-rows-1";
-    if (count === 3) return "grid-cols-2 grid-rows-2";
     return "grid-cols-2 grid-rows-2";
   };
 
   const activePanels = Array.from({ length: panelCount }, (_, i) => i);
+  const effectiveSplit = rightCollapsed ? 100 : splitPct;
 
   return (
     <div ref={containerRef} className="flex h-full overflow-hidden bg-slate-100">
@@ -241,7 +261,7 @@ export default function MultiMapView() {
       {/* LEFT: Maps grid */}
       <div
         className={`grid ${getGridClass(panelCount)} gap-1.5 p-1.5 flex-shrink-0`}
-        style={{ width: `${splitPct}%`, minWidth: `${MIN_LEFT_PCT}%`, overflow: "hidden" }}
+        style={{ width: `${effectiveSplit}%`, overflow: "hidden" }}
       >
         {activePanels.map(i => {
           const { filteredAssets, filteredAssignments, assignmentByAsset } = panelData[i];
@@ -269,7 +289,7 @@ export default function MultiMapView() {
                 </button>
               )}
 
-              {/* Filter overlay on top of map */}
+              {/* Filter overlay */}
               <MapFilterOverlay
                 state={state}
                 onUpdate={(updates) => updatePanel(i, updates)}
@@ -281,21 +301,23 @@ export default function MultiMapView() {
               <MultiMapInstance
                 assets={filteredAssets}
                 assignments={filteredAssignments}
-                selectedAssetId={state.selectedAssetId}
+                selectedAssetId={highlightedAssetId}
                 onSelectAsset={(asset) => handleAssetClick(i, asset)}
               />
 
-              {/* Color legend at bottom */}
-              <MapColorLegend assignments={filteredAssignments} />
+              {/* Bottom summary strip (replaces old color legend) */}
+              <MapSummaryStrip
+                assets={filteredAssets}
+                assignments={filteredAssignments}
+                selectedWeekId={state.selectedWeekId}
+              />
             </div>
           );
         })}
 
-        {/* Add map button — shown in the next empty cell if < 4 */}
+        {/* Add map button */}
         {panelCount < 4 && (
-          <div className={`relative rounded-lg border-2 border-dashed border-slate-300 bg-slate-50/60 flex items-center justify-center ${panelCount === 1 ? "" : ""}`}
-            style={{ minHeight: 100 }}
-          >
+          <div className="relative rounded-lg border-2 border-dashed border-slate-300 bg-slate-50/60 flex items-center justify-center" style={{ minHeight: 100 }}>
             <button
               onClick={addPanel}
               className="flex flex-col items-center gap-2 text-slate-400 hover:text-indigo-600 transition-colors group"
@@ -312,41 +334,49 @@ export default function MultiMapView() {
       {/* DIVIDER */}
       <div
         onMouseDown={onMouseDown}
-        className="w-1.5 flex-shrink-0 bg-slate-300 hover:bg-indigo-400 active:bg-indigo-500 cursor-col-resize transition-colors relative group"
+        className="w-1.5 flex-shrink-0 bg-slate-300 hover:bg-indigo-400 active:bg-indigo-500 cursor-col-resize transition-colors relative group flex items-center justify-center"
       >
-        <div className="absolute top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-          {[0,1,2,3,4].map(k => <div key={k} className="w-1 h-1 bg-indigo-300 rounded-full" />)}
-        </div>
+        <button
+          onClick={() => setRightCollapsed(v => !v)}
+          className="absolute z-10 w-5 h-8 bg-white border border-slate-300 rounded-full flex items-center justify-center shadow-sm hover:bg-indigo-50 hover:border-indigo-300 transition-colors pointer-events-auto"
+          title={rightCollapsed ? "Expand panel" : "Collapse panel"}
+        >
+          {rightCollapsed
+            ? <PanelRightOpen className="w-3 h-3 text-slate-500" />
+            : <PanelRightClose className="w-3 h-3 text-slate-500" />
+          }
+        </button>
       </div>
 
-      {/* RIGHT: Week + Assignment panels */}
-      <div
-        className={`grid ${getGridClass(panelCount)} gap-1.5 p-1.5 overflow-hidden flex-1`}
-        style={{ minWidth: `${MIN_RIGHT_PCT}%` }}
-      >
-        {activePanels.map(i => (
-          <MapWeekPanel
-            key={i}
-            panelIndex={i}
-            state={panelStates[i]}
-            onUpdate={(updates) => updatePanel(i, updates)}
-            panelData={panelData[i]}
+      {/* RIGHT: Unified assignment panel */}
+      {!rightCollapsed && (
+        <div
+          className="flex-1 overflow-hidden border-l border-slate-200"
+          style={{ minWidth: `${MIN_RIGHT_PCT}%` }}
+        >
+          <PlanningAssignmentPanel
             assets={assets}
+            allAssignments={allAssignments}
             weeks={weeks}
+            selectedWeekId={rightSelectedWeekId}
+            onSelectWeek={setRightSelectedWeekId}
+            highlightedAssetId={highlightedAssetId}
+            onHighlightAsset={setHighlightedAssetId}
+            onAssign={handleAssignFromTable}
+            onRemoveAssignment={handleRemoveFromTable}
+            onOpenAsset={handleOpenAsset}
           />
-        ))}
-        {/* Placeholder for add map slot on right */}
-        {panelCount < 4 && (
-          <div className="rounded-lg border-2 border-dashed border-slate-200 bg-slate-50/40" />
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Assign Asset Modal */}
       <AssignAssetModal
         open={assignModal.open}
         onOpenChange={(v) => {
           setAssignModal(prev => ({ ...prev, open: v }));
-          if (!v) updatePanel(assignModal.panelIndex ?? 0, { selectedAssetId: null });
+          if (!v && assignModal.panelIndex !== null) {
+            updatePanel(assignModal.panelIndex, { selectedAssetId: null });
+          }
         }}
         asset={assignModal.asset}
         week={assignModal.week}

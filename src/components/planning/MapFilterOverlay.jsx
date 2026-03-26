@@ -1,11 +1,10 @@
 import React, { useState } from "react";
-import { Filter, ChevronDown, ChevronUp } from "lucide-react";
+import { Filter, ChevronDown, ChevronUp, X } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-const STATUSES = ["Planned", "In Progress", "Completed", "Deferred"];
-const TYPES = ["Make Safe", "Corrective"];
-const PRIORITIES = ["P1", "P2"];
-const ASSET_STATES = ["Active", "Under Maintenance", "Installed"];
+const ASSET_STATUSES = ["Active", "Inactive", "Installed", "Pending Installation", "Under Maintenance", "Damaged", "Out of Service"];
+const ASSIGNMENT_STATUSES = ["Planned", "In Progress", "Completed", "Deferred"];
+const SHELTER_TYPES_FALLBACK = ["Standard Shelter", "Smart Shelter", "Solar Shelter"];
 
 export default function MapFilterOverlay({ state, onUpdate, assets, crews }) {
   const [open, setOpen] = useState(false);
@@ -13,6 +12,8 @@ export default function MapFilterOverlay({ state, onUpdate, assets, crews }) {
   const set = (key) => (v) => onUpdate({ [key]: v === "__all__" ? "" : v });
 
   const cities = [...new Set(assets.map(a => a.city).filter(Boolean))].sort();
+  const municipalities = [...new Set(assets.map(a => a.municipality).filter(Boolean))].sort();
+  const shelterTypes = [...new Set(assets.map(a => a.shelter_type).filter(Boolean))].sort();
   const activeCrew = crews.filter(c => c.is_active !== false);
 
   // Sorted asset list for dropdown
@@ -20,15 +21,16 @@ export default function MapFilterOverlay({ state, onUpdate, assets, crews }) {
     .sort((a, b) => (a.active_shelter_id || a.asset_id || "").localeCompare(b.active_shelter_id || b.asset_id || ""));
 
   const activeCount = [
-    state.filterAssetState, state.filterStatus, state.filterType,
-    state.filterPriority, state.filterCrew, state.filterCity, state.assetSearch
+    state.filterAssetStatus, state.filterAssignmentStatus, state.filterShelterType,
+    state.filterCity, state.filterMunicipality, state.filterCrew, state.assetSearch,
+    state.filterAssigned,
   ].filter(Boolean).length;
 
   const clearAll = (e) => {
     e.stopPropagation();
     onUpdate({
-      filterAssetState: "", filterStatus: "", filterType: "",
-      filterPriority: "", filterCrew: "", filterCity: "", assetSearch: ""
+      filterAssetStatus: "", filterAssignmentStatus: "", filterShelterType: "",
+      filterCity: "", filterMunicipality: "", filterCrew: "", assetSearch: "", filterAssigned: "",
     });
   };
 
@@ -67,82 +69,89 @@ export default function MapFilterOverlay({ state, onUpdate, assets, crews }) {
       {/* Dropdown panel */}
       {open && (
         <div className="bg-white border border-slate-200 border-t-0 rounded-b-lg shadow-xl p-2 space-y-1.5">
-          {/* Asset search dropdown */}
-          <Select value={state.assetSearch || "__all__"} onValueChange={v => onUpdate({ assetSearch: v === "__all__" ? "" : v })}>
-            <SelectTrigger className="h-6 text-[10px] border-slate-200 w-full">
-              <SelectValue placeholder="All asset IDs" />
-            </SelectTrigger>
-            <SelectContent className="max-h-48">
-              <SelectItem value="__all__">All asset IDs</SelectItem>
-              {assetOptions.map(a => (
-                <SelectItem key={a.id} value={a.active_shelter_id || a.asset_id}>
-                  {a.active_shelter_id || a.asset_id}{a.city ? ` – ${a.city}` : ""}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+
+          {/* Asset ID dropdown */}
+          <FilterSelect
+            label="Asset ID"
+            value={state.assetSearch}
+            onChange={v => onUpdate({ assetSearch: v === "__all__" ? "" : v })}
+            options={assetOptions.map(a => ({
+              value: a.active_shelter_id || a.asset_id,
+              label: `${a.active_shelter_id || a.asset_id}${a.city ? ` – ${a.city}` : ""}`
+            }))}
+            placeholder="All assets"
+          />
 
           <div className="grid grid-cols-2 gap-1.5">
-            {/* Asset State */}
-            <FilterSelect
-              label="Asset State"
-              value={state.filterAssetState}
-              onChange={set("filterAssetState")}
-              options={ASSET_STATES}
-              placeholder="All states"
-            />
-            {/* Status */}
-            <FilterSelect
-              label="Status"
-              value={state.filterStatus}
-              onChange={set("filterStatus")}
-              options={STATUSES}
-              placeholder="All statuses"
-            />
-            {/* Type */}
+            {/* Shelter Type */}
             <FilterSelect
               label="Type"
-              value={state.filterType}
-              onChange={set("filterType")}
-              options={TYPES}
+              value={state.filterShelterType}
+              onChange={set("filterShelterType")}
+              options={(shelterTypes.length ? shelterTypes : SHELTER_TYPES_FALLBACK).map(s => ({ value: s, label: s }))}
               placeholder="All types"
+            />
+            {/* Asset Status */}
+            <FilterSelect
+              label="Status"
+              value={state.filterAssetStatus}
+              onChange={set("filterAssetStatus")}
+              options={ASSET_STATUSES.map(s => ({ value: s, label: s }))}
+              placeholder="All statuses"
             />
             {/* City */}
             <FilterSelect
               label="City"
               value={state.filterCity}
               onChange={set("filterCity")}
-              options={cities}
+              options={cities.map(c => ({ value: c, label: c }))}
               placeholder="All cities"
+            />
+            {/* Municipality */}
+            <FilterSelect
+              label="District"
+              value={state.filterMunicipality}
+              onChange={set("filterMunicipality")}
+              options={municipalities.map(m => ({ value: m, label: m }))}
+              placeholder="All districts"
             />
           </div>
 
-          {/* Priority toggle + Crew on same row */}
+          {/* Assignment Status */}
           <div className="flex items-center gap-1.5">
-            <span className="text-[9px] text-slate-400 w-12 shrink-0">Priority</span>
+            <span className="text-[9px] text-slate-400 w-14 shrink-0">Assigned</span>
             <div className="flex gap-1">
-              {PRIORITIES.map(p => (
-                <button key={p}
-                  onClick={() => onUpdate({ filterPriority: state.filterPriority === p ? "" : p })}
-                  className={`text-[10px] font-bold px-2 py-0.5 rounded border transition-all ${
-                    state.filterPriority === p
-                      ? p === "P1" ? "bg-red-500 text-white border-red-500" : "bg-orange-500 text-white border-orange-500"
+              {["Assigned", "Unassigned"].map(opt => (
+                <button key={opt}
+                  onClick={() => onUpdate({ filterAssigned: state.filterAssigned === opt ? "" : opt })}
+                  className={`text-[9px] font-bold px-2 py-0.5 rounded border transition-all ${
+                    state.filterAssigned === opt
+                      ? opt === "Assigned" ? "bg-emerald-500 text-white border-emerald-500" : "bg-slate-500 text-white border-slate-500"
                       : "bg-white text-slate-500 border-slate-200 hover:border-slate-400"
-                  }`}>{p}</button>
+                  }`}>{opt}</button>
               ))}
             </div>
-            <div className="flex-1 min-w-0">
-              <Select value={state.filterCrew || "__all__"} onValueChange={set("filterCrew")}>
-                <SelectTrigger className="h-6 text-[10px] border-slate-200">
-                  <SelectValue placeholder="All crews" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__all__">All crews</SelectItem>
-                  {activeCrew.map(c => <SelectItem key={c.id} value={c.id}>{c.crew_name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
           </div>
+
+          {/* Assignment status */}
+          <FilterSelect
+            label="Asgn Status"
+            value={state.filterAssignmentStatus}
+            onChange={set("filterAssignmentStatus")}
+            options={ASSIGNMENT_STATUSES.map(s => ({ value: s, label: s }))}
+            placeholder="Any asgn status"
+          />
+
+          {/* Crew */}
+          {activeCrew.length > 0 && (
+            <FilterSelect
+              label="Crew"
+              value={state.filterCrew}
+              onChange={set("filterCrew")}
+              options={activeCrew.map(c => ({ value: c.id, label: c.crew_name }))}
+              placeholder="All crews"
+            />
+          )}
         </div>
       )}
     </div>
@@ -152,14 +161,16 @@ export default function MapFilterOverlay({ state, onUpdate, assets, crews }) {
 function FilterSelect({ label, value, onChange, options, placeholder }) {
   return (
     <div className="flex items-center gap-1">
-      <span className="text-[9px] text-slate-400 w-12 shrink-0">{label}</span>
+      <span className="text-[9px] text-slate-400 w-14 shrink-0">{label}</span>
       <Select value={value || "__all__"} onValueChange={onChange}>
         <SelectTrigger className="h-6 text-[10px] border-slate-200 flex-1">
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="max-h-48">
           <SelectItem value="__all__">{placeholder}</SelectItem>
-          {options.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+          {options.map(o => (
+            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+          ))}
         </SelectContent>
       </Select>
     </div>

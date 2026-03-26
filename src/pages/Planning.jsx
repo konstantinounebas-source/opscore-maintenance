@@ -359,7 +359,11 @@ export default function Planning() {
   if (viewMode === "multimap") {
     return (
       <div className="flex flex-col h-screen overflow-hidden">
-        <TopHeader title="Planning & Map Scheduler" subtitle="Multi-Map Operational View" />
+        <TopHeader title="Planning & Map Scheduler" subtitle="Multi-Map Operational View" actions={
+          <div className="flex items-center gap-2">
+            {ViewModeToggle}
+          </div>
+        } />
         <div className="flex-1 overflow-hidden">
           <MultiMapView />
         </div>
