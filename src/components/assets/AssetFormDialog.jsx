@@ -9,7 +9,7 @@ import { useConfigLists } from "@/components/shared/useConfigLists";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import ConfirmCloseDialog from "@/components/shared/ConfirmCloseDialog";
-import { Trash2, Upload, Loader2, Paperclip } from "lucide-react";
+import { Trash2, Upload, Loader2, Paperclip, Plus, ChevronDown } from "lucide-react";
 import AssetChildrenSection from "@/components/assets/AssetChildrenSection";
 
 const CONTRACT_BASE_YEAR = 2023;
@@ -174,6 +174,7 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
   const [errors, setErrors] = useState({});
   const [confirmClose, setConfirmClose] = useState(false);
   const [childComponents, setChildComponents] = useState([]);
+  const [showChildTemplate, setShowChildTemplate] = useState(false);
 
   useEffect(() => {
     if (asset) {
@@ -187,6 +188,7 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
       });
     } else {
       setForm(emptyForm);
+      setShowChildTemplate(false);
     }
     setErrors({});
   }, [asset, open]);
@@ -345,17 +347,33 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
               </div>
             </div>
 
-            {/* ── CHILD COMPONENTS ── only shown for new assets */}
+            {/* ── CHILD COMPONENTS ── only shown for new assets when shelter type is selected */}
             {form.shelter_type && !asset && (
-              <>
-                <SectionHeader title="Child Components (Auto Generated)" color="amber" />
-                <AssetChildrenSection
-                  shelterType={form.shelter_type}
-                  deliveryDate={form.delivery_date}
-                  onChange={setChildComponents}
-                  existingChildren={[]}
-                />
-              </>
+              !showChildTemplate ? (
+                <button
+                  type="button"
+                  onClick={() => setShowChildTemplate(true)}
+                  className="flex items-center gap-2 text-sm font-medium text-indigo-600 hover:text-indigo-800 border border-dashed border-indigo-300 rounded-lg px-4 py-2.5 w-full hover:bg-indigo-50 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Child Components from Type Template
+                </button>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between">
+                    <SectionHeader title="Child Components (from Type Template)" color="amber" />
+                    <button type="button" onClick={() => setShowChildTemplate(false)} className="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1">
+                      <ChevronDown className="w-3.5 h-3.5" /> Hide
+                    </button>
+                  </div>
+                  <AssetChildrenSection
+                    shelterType={form.shelter_type}
+                    deliveryDate={form.delivery_date}
+                    onChange={setChildComponents}
+                    existingChildren={[]}
+                  />
+                </>
+              )
             )}
 
             <div className="grid grid-cols-2 gap-4">
