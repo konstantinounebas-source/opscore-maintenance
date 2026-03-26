@@ -389,11 +389,13 @@ export default function AssetDetail() {
 }
 
 function Field({ label, value, children }) {
+  const hasValue = children != null || (value !== undefined && value !== null && value !== "");
+  if (!hasValue) return null;
   return (
     <div>
       <p className="text-xs text-slate-500 font-medium">{label}</p>
       <div className="text-sm font-semibold mt-1 text-slate-800">
-        {children ?? (value !== undefined && value !== null && value !== "" ? String(value) : "—")}
+        {children ?? String(value)}
       </div>
     </div>
   );

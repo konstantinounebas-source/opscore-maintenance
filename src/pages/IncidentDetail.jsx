@@ -153,8 +153,8 @@ export default function IncidentDetail() {
               <IField label="Incident Source" value={incident.incident_source} />
               <IField label="Work Order Ref" value={incident.work_order_reference} />
               <IField label="Initial Priority" value={incident.initial_priority} />
-              <IField label="OWR" value={incident.is_owr ? "Yes" : incident.is_owr === false ? "No" : null} />
-              <IField label="Requires Make-Safe" value={incident.requires_make_safe ? "Yes" : incident.requires_make_safe === false ? "No" : null} />
+              <IField label="OWR" value={incident.is_owr != null ? (incident.is_owr ? "Yes" : "No") : null} />
+              <IField label="Requires Make-Safe" value={incident.requires_make_safe != null ? (incident.requires_make_safe ? "Yes" : "No") : null} />
               <IField label="Approval Date" value={incident.approval_date} />
               <IField label="Authority Representative" value={incident.authority_representative} />
               {incident.subsystem_structural_selected && <IField label="Structural Issue" value={incident.subsystem_structural_issue} />}
@@ -235,11 +235,13 @@ export default function IncidentDetail() {
 }
 
 function IField({ label, value, children }) {
+  const hasValue = children != null || (value !== undefined && value !== null && value !== "");
+  if (!hasValue) return null;
   return (
     <div>
       <p className="text-xs text-slate-500 font-medium">{label}</p>
       <div className="text-sm font-semibold mt-1 text-slate-800">
-        {children ?? (value !== undefined && value !== null && value !== "" ? String(value) : "—")}
+        {children ?? String(value)}
       </div>
     </div>
   );
