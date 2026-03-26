@@ -18,6 +18,7 @@ export default function MapWeekPanel({
   const [listOpen, setListOpen] = useState(true);
 
   const selectedWeek = useMemo(() => weeks.find(w => w.id === state.selectedWeekId), [weeks, state.selectedWeekId]);
+  const selectedAsset = useMemo(() => state.selectedAssetId ? assets.find(a => a.id === state.selectedAssetId) : null, [assets, state.selectedAssetId]);
 
   const kpis = useMemo(() => ({
     planned:    filteredAssignments.filter(a => a.assignment_status === "Planned").length,
@@ -28,13 +29,31 @@ export default function MapWeekPanel({
     p2:         filteredAssignments.filter(a => a.priority_bucket === "P2").length,
   }), [filteredAssignments]);
 
+  // If no asset selected, show a compact placeholder
+  if (!selectedAsset) {
+    return (
+      <div className={`flex flex-col h-full rounded-lg border-2 ${theme.border} bg-white overflow-hidden`}>
+        <div className={`flex items-center gap-1.5 px-2.5 py-1.5 border-b shrink-0 ${theme.header}`}>
+          <div className={`w-2 h-2 rounded-full ${theme.dot}`} />
+          <span className="text-[11px] font-bold tracking-wide">Map {panelIndex + 1}</span>
+        </div>
+        <div className="flex-1 flex flex-col items-center justify-center text-center px-3 gap-2">
+          <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
+            <CalendarDays className="w-4 h-4 text-slate-400" />
+          </div>
+          <p className="text-[10px] text-slate-400 leading-relaxed">Click an asset on<br />Map {panelIndex + 1} to manage</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`flex flex-col h-full rounded-lg border-2 ${theme.border} bg-white overflow-hidden`}>
       {/* Header */}
       <div className={`flex items-center justify-between px-2.5 py-1.5 border-b shrink-0 ${theme.header}`}>
         <div className="flex items-center gap-1.5">
           <div className={`w-2 h-2 rounded-full ${theme.dot}`} />
-          <span className="text-[11px] font-bold tracking-wide">Panel {panelIndex + 1} — Map {panelIndex + 1}</span>
+          <span className="text-[11px] font-bold tracking-wide">Map {panelIndex + 1} — <span className="font-mono">{selectedAsset.active_shelter_id || selectedAsset.asset_id}</span></span>
         </div>
         {selectedWeek && (
           <span className="text-[9px] font-mono font-semibold opacity-60">{selectedWeek.week_code}</span>

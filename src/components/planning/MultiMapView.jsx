@@ -238,8 +238,8 @@ export default function MultiMapView() {
 
       {/* LEFT: Maps grid */}
       <div
-        className={`grid ${getGridClass(panelCount)} gap-1.5 p-1.5 overflow-hidden flex-shrink-0`}
-        style={{ width: `${splitPct}%`, minWidth: `${MIN_LEFT_PCT}%` }}
+        className={`grid ${getGridClass(panelCount)} gap-1.5 p-1.5 flex-shrink-0`}
+        style={{ width: `${splitPct}%`, minWidth: `${MIN_LEFT_PCT}%`, overflow: "hidden" }}
       >
         {activePanels.map(i => {
           const { filteredAssets, filteredAssignments, assignmentByAsset } = panelData[i];
@@ -249,7 +249,7 @@ export default function MultiMapView() {
             <div
               key={i}
               className={`relative rounded-lg overflow-hidden border-2 ${MAP_BORDER[i]} bg-white`}
-              style={{ isolation: "isolate", minHeight: 0 }}
+              style={{ isolation: "isolate", minHeight: 0, height: "100%" }}
             >
               {/* Map label badge */}
               <div className={`absolute top-1.5 left-1.5 z-[400] px-2 py-0.5 rounded-full text-[10px] font-bold border shadow-sm ${MAP_BADGE[i]}`}>
