@@ -38,6 +38,8 @@ export default function AssetDetail() {
   const { data: attachments = [] } = useQuery({ queryKey: ["assetAttachments", assetId], queryFn: () => base44.entities.AssetAttachments.filter({ asset_id: assetId }), enabled: !!assetId });
   const { data: transactions = [] } = useQuery({ queryKey: ["assetTransactions", assetId], queryFn: () => base44.entities.AssetTransactions.filter({ asset_id: assetId }), enabled: !!assetId });
   const { data: shipments = [] } = useQuery({ queryKey: ["assetShipments", assetId], queryFn: () => base44.entities.Shipments.filter({ parent_asset_id: assetId }), enabled: !!assetId });
+  const { data: outgoingShipments = [] } = useQuery({ queryKey: ["assetShipmentsSource", assetId], queryFn: () => base44.entities.Shipments.filter({ source_asset_id: assetId }), enabled: !!assetId });
+  const allShipments = [...shipments, ...outgoingShipments].filter((s, i, arr) => arr.findIndex(x => x.id === s.id) === i);
   const { data: allAssets = [] } = useQuery({ queryKey: ["allAssets"], queryFn: () => base44.entities.Assets.list() });
 
   const updateAsset = useMutation({
@@ -146,17 +148,39 @@ export default function AssetDetail() {
 
   const handleMoveChild = async (child, destinationAssetId) => {
     const user = await base44.auth.me();
+    const today = new Date().toISOString().split("T")[0];
     if (destinationAssetId === "unassigned") {
       await base44.entities.ChildAssets.update(child.id, { parent_asset_id: "", status: "Un-Assigned" });
-      await base44.entities.Shipments.create({ shipment_id: `SHP-${Date.now()}`, child_asset_id: child.id, parent_asset_id: assetId, status: "Returned", details: "Set as Un-Assigned" });
+      await base44.entities.Shipments.create({
+        shipment_id: `SHP-${Date.now()}`,
+        child_asset_id: child.id,
+        child_description: child.description || child.child_id,
+        source_asset_id: assetId,
+        parent_asset_id: "",
+        status: "Returned",
+        shipment_date: today,
+        details: `Returned to inventory from asset ${asset?.asset_id || assetId}`,
+      });
       await base44.entities.AssetTransactions.create({ asset_id: assetId, action: "Child Set Un-Assigned", details: `${child.child_id} set as Un-Assigned`, user: user?.email });
     } else {
+      const destAsset = allAssets.find(a => a.id === destinationAssetId);
       await base44.entities.ChildAssets.update(child.id, { parent_asset_id: destinationAssetId });
-      await base44.entities.Shipments.create({ shipment_id: `SHP-${Date.now()}`, child_asset_id: child.id, parent_asset_id: destinationAssetId, status: "Delivered", details: `Moved from ${assetId}` });
-      await base44.entities.AssetTransactions.create({ asset_id: assetId, action: "Child Moved", details: `${child.child_id} moved to ${destinationAssetId}`, user: user?.email });
+      await base44.entities.Shipments.create({
+        shipment_id: `SHP-${Date.now()}`,
+        child_asset_id: child.id,
+        child_description: child.description || child.child_id,
+        source_asset_id: assetId,
+        parent_asset_id: destinationAssetId,
+        status: "Delivered",
+        shipment_date: today,
+        details: `Moved from ${asset?.asset_id || assetId} to ${destAsset?.asset_id || destinationAssetId}`,
+      });
+      await base44.entities.AssetTransactions.create({ asset_id: assetId, action: "Child Moved", details: `${child.child_id} moved to ${destAsset?.asset_id || destinationAssetId}`, user: user?.email });
     }
     queryClient.invalidateQueries({ queryKey: ["childAssets", assetId] });
     queryClient.invalidateQueries({ queryKey: ["assetTransactions", assetId] });
+    queryClient.invalidateQueries({ queryKey: ["assetShipments", assetId] });
+    queryClient.invalidateQueries({ queryKey: ["assetShipmentsSource", assetId] });
     setMoveDialogOpen(false);
     setChildToMove(null);
     toast({ title: "Child asset moved" });
@@ -213,9 +237,25 @@ export default function AssetDetail() {
 
   const shipmentColumns = [
     { key: "shipment_id", label: "Shipment ID" },
-    { key: "child_asset_id", label: "Child Asset" },
+    { key: "child_description", label: "Child", render: (r) => <span>{r.child_description || r.child_asset_id}</span> },
+    {
+      key: "source_asset_id", label: "From",
+      render: (r) => {
+        const src = r.source_asset_id ? allAssets.find(a => a.id === r.source_asset_id) : null;
+        return <span className="text-xs">{src ? `${src.asset_id}` : (r.source_asset_id ? r.source_asset_id : "—")}</span>;
+      }
+    },
+    {
+      key: "parent_asset_id", label: "To",
+      render: (r) => {
+        if (!r.parent_asset_id) return <span className="text-xs text-slate-400">Inventory (Un-Assigned)</span>;
+        const dest = allAssets.find(a => a.id === r.parent_asset_id);
+        return <span className="text-xs">{dest ? `${dest.asset_id}` : r.parent_asset_id}</span>;
+      }
+    },
     { key: "status", label: "Status", render: (r) => <StatusBadge status={r.status} /> },
     { key: "shipment_date", label: "Date" },
+    { key: "details", label: "Details", render: (r) => <span className="text-xs text-slate-500">{r.details || "—"}</span> },
   ];
 
   return (
@@ -280,7 +320,7 @@ export default function AssetDetail() {
             <TabsTrigger value="childs">Childs ({children.length})</TabsTrigger>
             <TabsTrigger value="incidents">Incidents ({incidents.length})</TabsTrigger>
             <TabsTrigger value="workorders">Work Orders ({workOrders.length})</TabsTrigger>
-            <TabsTrigger value="shipments">Shipments ({shipments.length})</TabsTrigger>
+            <TabsTrigger value="shipments">Shipments ({allShipments.length})</TabsTrigger>
             <TabsTrigger value="documents">Documents ({attachments.length})</TabsTrigger>
             <TabsTrigger value="log">Audit Log ({transactions.length})</TabsTrigger>
           </TabsList>
@@ -303,7 +343,7 @@ export default function AssetDetail() {
           </TabsContent>
 
           <TabsContent value="shipments">
-            <DataTable columns={shipmentColumns} data={shipments} searchPlaceholder="Search shipments..." />
+            <DataTable columns={shipmentColumns} data={[...allShipments].sort((a, b) => new Date(b.created_date) - new Date(a.created_date))} searchPlaceholder="Search shipments..." />
           </TabsContent>
 
           <TabsContent value="documents">
