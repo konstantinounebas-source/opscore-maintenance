@@ -12,7 +12,7 @@ const PRESET_COLORS = [
 ];
 
 const COLOR_BY_OPTIONS = [
-  { value: "", label: "Default (assignment status)" },
+  { value: "__default__", label: "Default (assignment status)" },
   { value: "status", label: "Asset Status" },
   { value: "shelter_type", label: "Shelter Type" },
   { value: "city", label: "City" },
@@ -194,7 +194,7 @@ export default function MapFilterOverlay({ state, onUpdate, assets, crews, layer
           {tab === "color" && (
             <div className="p-2 space-y-2">
               <div className="text-[9px] text-slate-500 font-semibold uppercase tracking-wide">Color markers by</div>
-              <Select value={state.colorBy || ""} onValueChange={v => onUpdate({ colorBy: v, markerColor: "" })}>
+              <Select value={state.colorBy || "__default__"} onValueChange={v => onUpdate({ colorBy: v === "__default__" ? "" : v, markerColor: "" })}>
                 <SelectTrigger className="h-6 text-[10px] border-slate-200 w-full">
                   <SelectValue placeholder="Default" />
                 </SelectTrigger>
