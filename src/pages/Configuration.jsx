@@ -46,7 +46,6 @@ const CHILD_LIST_TYPES = [
 
 const ASSET_LIST_TYPES = [
   { key: "Asset Cities", label: "Cities" },
-  { key: "Asset Shelter Types", label: "Shelter Types" },
   { key: "Asset Child Categories", label: "Child Categories" },
   { key: "Asset Child Subcategories", label: "Child Subcategories" },
   { key: "Asset Status", label: "Status" },
