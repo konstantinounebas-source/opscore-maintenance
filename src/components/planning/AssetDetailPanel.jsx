@@ -61,7 +61,7 @@ export default function AssetDetailPanel({ asset, assignment, latestIncident, la
       <div className="px-4 py-3 border-b border-slate-100">
         <div className="flex items-center justify-between mb-2">
           <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-            Week Assignment {selectedWeek && <span className="text-indigo-500 font-mono ml-1">({selectedWeek.week_code})</span>}
+            Week Assignment
           </div>
           {!assignment && selectedWeek && (
             <Button size="sm" variant="outline" className="h-6 text-xs gap-1" onClick={() => onAssign(asset)}>
