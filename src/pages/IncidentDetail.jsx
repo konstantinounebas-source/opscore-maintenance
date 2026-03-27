@@ -16,6 +16,7 @@ import { ArrowLeft, Pencil, Send, ChevronDown, ChevronUp, Paperclip, Loader2, Ro
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import IncidentDocuments from "@/components/incidents/IncidentDocuments";
 import ResetIncidentDialog from "@/components/incidents/ResetIncidentDialog";
+import IncidentFormsTab from "@/components/incidents/IncidentFormsTab";
 
 export default function IncidentDetail() {
   const params = new URLSearchParams(window.location.search);
@@ -194,6 +195,7 @@ export default function IncidentDetail() {
                 <TabsTrigger value="documents" className="text-xs">
                   Documents {attachments.length + auditTrail.reduce((sum, e) => sum + (e.attachment_metadata?.length || 0) + (e.attachments?.length || 0), 0) > 0 && `(${attachments.length + auditTrail.reduce((sum, e) => sum + (e.attachment_metadata?.length || 0) + (e.attachments?.length || 0), 0)})`}
                 </TabsTrigger>
+                <TabsTrigger value="forms" className="text-xs">Forms</TabsTrigger>
               </TabsList>
               <span className="text-xs text-slate-400">{auditTrail.length + comments.length} entries</span>
             </div>
@@ -224,6 +226,10 @@ export default function IncidentDetail() {
 
             <TabsContent value="documents">
               <IncidentDocuments attachments={attachments} auditTrail={auditTrail} />
+            </TabsContent>
+
+            <TabsContent value="forms">
+              <IncidentFormsTab incidentId={incidentId} incident={incident} />
             </TabsContent>
           </Tabs>
         </div>

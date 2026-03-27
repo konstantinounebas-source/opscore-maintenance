@@ -192,11 +192,11 @@ function AutoBadge() {
 }
 
 // ── Main Component ────────────────────────────────────────────────────────────
-export default function IncidentReportForm({ submission, incidents = [], assets = [], onClose }) {
+export default function IncidentReportForm({ submission, incidents = [], assets = [], onClose, defaultIncidentId }) {
   const { toast } = useToast();
   const isEditing = !!submission;
 
-  const [linkedIncidentId, setLinkedIncidentId] = useState(submission?.incident_id || "");
+  const [linkedIncidentId, setLinkedIncidentId] = useState(submission?.incident_id || defaultIncidentId || "");
   const [linkedAssetId, setLinkedAssetId]       = useState(submission?.asset_id || "");
 
   const incident = useMemo(() => incidents.find(i => i.id === linkedIncidentId), [incidents, linkedIncidentId]);

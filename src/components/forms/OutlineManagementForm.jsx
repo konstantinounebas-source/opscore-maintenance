@@ -157,12 +157,12 @@ function deriveSubcategory(incident) {
 }
 
 // ── Main Form Component ────────────────────────────────────────────────────
-export default function OutlineManagementForm({ submission, incidents, assets, workOrders, crews, onClose }) {
+export default function OutlineManagementForm({ submission, incidents, assets, workOrders, crews, onClose, defaultIncidentId }) {
   const { toast } = useToast();
   const isEditing = !!submission;
 
   // ── Linked record selectors ──
-  const [linkedIncidentId, setLinkedIncidentId] = useState(submission?.incident_id || "");
+  const [linkedIncidentId, setLinkedIncidentId] = useState(submission?.incident_id || defaultIncidentId || "");
   const [linkedAssetId, setLinkedAssetId]       = useState(submission?.asset_id    || "");
 
   // ── Manual fields ──

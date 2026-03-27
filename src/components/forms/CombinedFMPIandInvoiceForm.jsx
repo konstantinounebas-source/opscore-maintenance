@@ -236,7 +236,7 @@ const emptyRow = () => ({
 });
 
 // ── Main Component ────────────────────────────────────────────────────────────
-export default function CombinedFMPIandInvoiceForm({ submission, incidents, assets, workOrders, crews, childAssets, onClose }) {
+export default function CombinedFMPIandInvoiceForm({ submission, incidents, assets, workOrders, crews, childAssets, onClose, defaultIncidentId }) {
   const { toast } = useToast();
   const isEditing = !!submission;
 
@@ -244,7 +244,7 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
   const [activeTab, setActiveTab] = useState("fmpi");
 
   // ── FMPI state ──
-  const [linkedIncidentId, setLinkedIncidentId] = useState(submission?.incident_id || "");
+  const [linkedIncidentId, setLinkedIncidentId] = useState(submission?.incident_id || defaultIncidentId || "");
   const [linkedAssetId, setLinkedAssetId] = useState(submission?.asset_id || "");
   const [linkedWOId, setLinkedWOId] = useState(submission?.work_order_id || "");
   const [outlineDate, setOutlineDate] = useState(submission?.fmp_outline_date || "");
