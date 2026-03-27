@@ -315,6 +315,11 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
     calcRepairDeadline(outlineDate, owrValue, null), [outlineDate, owrValue]);
 
   // ── Invoice calcs ──
+  // Only show children belonging to the linked asset
+  const filteredChildAssets = useMemo(() =>
+    linkedAssetId ? childAssets.filter(c => c.parent_asset_id === linkedAssetId) : childAssets,
+    [childAssets, linkedAssetId]
+  );
   const childMap = useMemo(() => Object.fromEntries(childAssets.map(c => [c.id, c])), [childAssets]);
   const rowAmounts = rows.map(r => {
     const up = parseFloat(r.unit_price) || 0;
@@ -383,9 +388,10 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
       asset_id: linkedAssetId,
       work_order_id: linkedWOId,
       status,
+      total_cost: totalCost,
       fmp_outline_date: outlineDate,
-      ektos_eggyhshs: owrValue,
-      apaiteitai_eggkrisi_ca: caValue,
+      ektos_eggyhshs: owrValue === "ΝΑΙ" ? "Yes" : owrValue === "ΟΧΙ" ? "No" : owrValue,
+      apaiteitai_eggkrisi_ca: caValue === "ΝΑΙ" ? "Yes" : caValue === "ΟΧΙ" ? "No" : caValue,
       submitted_at: status === "Submitted" ? new Date().toISOString() : submission?.submitted_at,
       form_data: {
         rows,
@@ -698,7 +704,7 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
                                 </SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value="_none">— Επιλογή —</SelectItem>
-                                  {childAssets.map(c => (
+                                  {filteredChildAssets.map(c => (
                                     <SelectItem key={c.id} value={c.id}>
                                       <span className="font-mono text-xs mr-1">{c.child_id}</span>
                                       {c.description || c.child_type || c.category}

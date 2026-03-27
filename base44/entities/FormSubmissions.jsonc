@@ -1,0 +1,91 @@
+{
+  "name": "FormSubmissions",
+  "type": "object",
+  "properties": {
+    "form_type": {
+      "type": "string",
+      "description": "Type/template of the form"
+    },
+    "form_name": {
+      "type": "string",
+      "description": "Display name of the form"
+    },
+    "incident_id": {
+      "type": "string",
+      "description": "FK \u2192 Incidents record ID"
+    },
+    "asset_id": {
+      "type": "string",
+      "description": "FK \u2192 Assets record ID"
+    },
+    "work_order_id": {
+      "type": "string",
+      "description": "FK \u2192 WorkOrders record ID"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Draft",
+        "Submitted",
+        "Approved",
+        "Rejected"
+      ],
+      "default": "Draft"
+    },
+    "total_cost": {
+      "type": "number",
+      "description": "Total cost of work items (top-level for querying)"
+    },
+    "proxthesmia_epivevaioshs_lhpsis": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "outline_plan": {
+      "type": "string"
+    },
+    "proxthesmia_fmpi": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "anammenomeni_proxthesmia_episkeuhs": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "fmp_outline_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "ektos_eggyhshs": {
+      "type": "string",
+      "enum": [
+        "Yes",
+        "No"
+      ],
+      "description": "\u0395\u03ba\u03c4\u03cc\u03c2 \u0395\u03b3\u03b3\u03cd\u03b7\u03c3\u03b7\u03c2 (OWR) \u2013 standardized Yes/No"
+    },
+    "apaiteitai_eggkrisi_ca": {
+      "type": "string",
+      "enum": [
+        "Yes",
+        "No"
+      ],
+      "default": "No"
+    },
+    "submitted_by": {
+      "type": "string"
+    },
+    "submitted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "form_data": {
+      "type": "object",
+      "description": "Form-specific field data (blob)"
+    }
+  },
+  "required": [
+    "form_type",
+    "incident_id",
+    "asset_id"
+  ]
+}

@@ -84,8 +84,12 @@ function AdminStepCard({ step, stepIndex, incident, onOpen }) {
           <span className="text-xs font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-500">N/A</span>
         )}
         {done && step.key === "ca_status" && incident.out_of_warranty === "Yes" && (
-          <span className={`text-xs font-medium px-2 py-0.5 rounded ${incident.ca_status === "Approved" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-            {incident.ca_status}
+          <span className={`text-xs font-medium px-2 py-0.5 rounded ${
+            incident.ca_status === "Approved"
+              ? "bg-green-100 text-green-700"
+              : "bg-red-100 text-red-700"
+          }`}>
+            {incident.ca_status === "Approved" ? "✓ Approved" : "✗ Not Approved"}
           </span>
         )}
         {done && step.key !== "ca_status" && <span className="text-xs text-green-600 font-medium">✓ Done</span>}
@@ -230,6 +234,23 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
       }
 
       if (key === "close_incident") {
+        // Prerequisite check before closing
+        if (!incident.confirmation_done) {
+          toast({ title: "Cannot close", description: "Confirmation of Receipt must be completed first." });
+          setSaving(false); return;
+        }
+        if (!incident.ompi_done) {
+          toast({ title: "Cannot close", description: "OMPI must be completed first." });
+          setSaving(false); return;
+        }
+        if (!incident.owr_fmpi_done) {
+          toast({ title: "Cannot close", description: "FMPI must be completed first." });
+          setSaving(false); return;
+        }
+        if (incident.out_of_warranty === "Yes" && incident.ca_status === "Pending") {
+          toast({ title: "Cannot close", description: "CA Approval must be set (Approved or Not Approved) for OWR incidents." });
+          setSaving(false); return;
+        }
         await base44.entities.Incidents.update(incidentId, { status: "Closed" });
         await addAudit("Incident Closed", formData.notes ? `Closing notes: ${formData.notes}` : "Incident closed and resolved.");
       } else if (Object.keys(incidentUpdates).length > 0) {

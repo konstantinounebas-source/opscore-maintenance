@@ -177,6 +177,11 @@ export default function WorkOrderFormF({ submission, incidents, assets, workOrde
     if (workOrder?.related_asset_id && !linkedAssetId) setLinkedAssetId(workOrder.related_asset_id);
   }, [workOrder]);
 
+  // Only show children belonging to the linked asset
+  const filteredChildAssets = useMemo(() =>
+    linkedAssetId ? childAssets.filter(c => c.parent_asset_id === linkedAssetId) : childAssets,
+    [childAssets, linkedAssetId]
+  );
   const childMap = useMemo(() => Object.fromEntries(childAssets.map(c => [c.id, c])), [childAssets]);
 
   // ── Row helpers ──
@@ -243,6 +248,7 @@ export default function WorkOrderFormF({ submission, incidents, assets, workOrde
       asset_id: linkedAssetId,
       work_order_id: linkedWOId,
       status,
+      total_cost: totalCost,
       submitted_at: status === "Submitted" ? new Date().toISOString() : submission?.submitted_at,
       form_data: {
         rows,
@@ -378,7 +384,7 @@ export default function WorkOrderFormF({ submission, incidents, assets, workOrde
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="_none">— Επιλογή —</SelectItem>
-                              {childAssets.map(c => (
+                              {filteredChildAssets.map(c => (
                                 <SelectItem key={c.id} value={c.id}>
                                   <span className="font-mono text-xs mr-1">{c.child_id}</span>
                                   {c.description || c.child_type || c.category || c.serial_number}
