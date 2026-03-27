@@ -224,12 +224,12 @@ function SlaNotesBlock() {
 }
 
 // ── Main component ─────────────────────────────────────────────────────────────
-export default function FullManagementPlanForm({ submission, incidents, assets, workOrders, crews, onClose }) {
+export default function FullManagementPlanForm({ submission, incidents, assets, workOrders, crews, onClose, defaultIncidentId }) {
   const { toast } = useToast();
   const isEditing = !!submission;
 
   // ── Linked record selectors ──
-  const [linkedIncidentId, setLinkedIncidentId] = useState(submission?.incident_id    || "");
+  const [linkedIncidentId, setLinkedIncidentId] = useState(submission?.incident_id    || defaultIncidentId || "");
   const [linkedAssetId,    setLinkedAssetId]    = useState(submission?.asset_id       || "");
   const [linkedWOId,       setLinkedWOId]       = useState(submission?.work_order_id  || "");
 

@@ -12,9 +12,11 @@ import FileUploader from "@/components/shared/FileUploader";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/AuthContext";
 import WorkOrderPanel from "@/components/incidents/WorkOrderPanel";
+import OutlineManagementForm from "@/components/forms/OutlineManagementForm";
+import FullManagementPlanForm from "@/components/forms/FullManagementPlanForm";
 import {
   CheckCircle2, Circle, Loader2, ChevronRight,
-  Paperclip, StickyNote, AlertTriangle, FileCheck, Lock
+  Paperclip, StickyNote, AlertTriangle, FileCheck, Lock, FileText
 } from "lucide-react";
 
 // ── Administrative steps in strict sequential order ──────────────────────────
@@ -102,6 +104,24 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
   const [formData, setFormData] = useState({ ca_status: "Approved" });
   const [saving, setSaving] = useState(false);
   const [person, setPerson] = useState("");
+  const [showEmbeddedForm, setShowEmbeddedForm] = useState(false);
+
+  // Data needed by embedded forms
+  const { data: allIncidents = [] } = useQuery({
+    queryKey: ["incidents"],
+    queryFn: () => base44.entities.Incidents.list(),
+    enabled: showEmbeddedForm,
+  });
+  const { data: allAssets = [] } = useQuery({
+    queryKey: ["assets"],
+    queryFn: () => base44.entities.Assets.list(),
+    enabled: showEmbeddedForm,
+  });
+  const { data: allWorkOrders = [] } = useQuery({
+    queryKey: ["allWorkOrders"],
+    queryFn: () => base44.entities.WorkOrders.list(),
+    enabled: showEmbeddedForm,
+  });
 
   const key = step.key;
 
@@ -225,6 +245,7 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
   const isDone = isStepDone(step, incident);
 
   return (
+    <>
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -299,10 +320,21 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
 
           {key === "create_ompi" && (
             <div className="space-y-2">
-              <Label className="text-xs flex items-center gap-1">
-                <Paperclip className="w-3 h-3" /> OMPI Document
-                {existingAttachments.length === 0 && <span className="text-red-500">*</span>}
-              </Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-xs flex items-center gap-1">
+                  <Paperclip className="w-3 h-3" /> OMPI Document
+                  {existingAttachments.length === 0 && <span className="text-red-500">*</span>}
+                </Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs gap-1.5 text-indigo-600 border-indigo-200 hover:bg-indigo-50"
+                  onClick={() => setShowEmbeddedForm(true)}
+                >
+                  <FileText className="w-3.5 h-3.5" /> Fill OMPI Form
+                </Button>
+              </div>
               {existingAttachments.length > 0 && (
                 <div className="p-2 bg-green-50 border border-green-200 rounded-lg space-y-1">
                   <p className="text-xs text-green-700 flex items-center gap-1 font-medium">
@@ -324,7 +356,18 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
 
           {key === "create_fmpi" && (
             <div className="space-y-1.5">
-              <Label className="text-xs flex items-center gap-1"><Paperclip className="w-3 h-3" /> Attachment (optional)</Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-xs flex items-center gap-1"><Paperclip className="w-3 h-3" /> Attachment (optional)</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs gap-1.5 text-indigo-600 border-indigo-200 hover:bg-indigo-50"
+                  onClick={() => setShowEmbeddedForm(true)}
+                >
+                  <FileText className="w-3.5 h-3.5" /> Fill FMPI Form
+                </Button>
+              </div>
               <FileUploader onUpload={fd => set("file", fd)} label={formData.file ? formData.file.file_name : "Upload FMPI Document"} />
             </div>
           )}
@@ -406,6 +449,37 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Embedded Form Dialog */}
+    {showEmbeddedForm && (
+      <Dialog open onOpenChange={() => setShowEmbeddedForm(false)}>
+        <DialogContent className="max-w-5xl w-full max-h-[95vh] overflow-y-auto p-0">
+          {key === "create_ompi" && (
+            <OutlineManagementForm
+              submission={null}
+              incidents={allIncidents}
+              assets={allAssets}
+              workOrders={allWorkOrders}
+              crews={[]}
+              onClose={() => setShowEmbeddedForm(false)}
+              defaultIncidentId={incidentId}
+            />
+          )}
+          {key === "create_fmpi" && (
+            <FullManagementPlanForm
+              submission={null}
+              incidents={allIncidents}
+              assets={allAssets}
+              workOrders={allWorkOrders}
+              crews={[]}
+              onClose={() => setShowEmbeddedForm(false)}
+              defaultIncidentId={incidentId}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    )}
+    </>
   );
 }
 
