@@ -227,8 +227,8 @@ export default function MultiMapView() {
 
   // Per-panel derived data (layer filter applied inside applyPanelFilters via assetSearch/filterLayerId — layer asset IDs passed to MultiMapInstance directly)
   const panelData = useMemo(() =>
-    panelStates.map(state => applyPanelFilters(assets, allAssignments, state, layers)),
-    [panelStates, assets, allAssignments, layers]
+    panelStates.map(state => applyPanelFilters(assets, allAssignments, state, enrichedLayers)),
+    [panelStates, assets, allAssignments, enrichedLayers]
   );
 
   // Resizable divider
