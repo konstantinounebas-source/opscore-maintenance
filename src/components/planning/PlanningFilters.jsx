@@ -4,8 +4,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Search, RotateCcw, Filter, ChevronDown, ChevronUp, Layers } from "lucide-react";
+import { Search, RotateCcw, Filter, ChevronDown, ChevronUp, Layers, X } from "lucide-react";
 import { countActiveFilters } from "./planningUtils";
+
+function FilterChip({ label, onRemove }) {
+  return (
+    <span className="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-full px-2 py-0.5 text-xs font-medium">
+      {label}
+      <button onClick={onRemove} className="hover:text-indigo-900 transition-colors"><X className="w-3 h-3" /></button>
+    </span>
+  );
+}
 
 const ALL = "all";
 
@@ -71,6 +80,25 @@ export default function PlanningFilters({ filters, onChange, onApply, onReset, a
         )}
       </div>
 
+      {/* Active filter chips — always visible when filters are set */}
+      {!expanded && activeCount > 0 && (
+        <div className="flex flex-wrap gap-1 pt-1">
+          {filters.city && <FilterChip label={`City: ${filters.city}`} onRemove={() => set("city", "")} />}
+          {filters.shelter_type && <FilterChip label={`Type: ${filters.shelter_type}`} onRemove={() => set("shelter_type", "")} />}
+          {filters.asset_status && <FilterChip label={`Condition: ${filters.asset_status}`} onRemove={() => set("asset_status", "")} />}
+          {filters.assignment_status && <FilterChip label={`Task: ${filters.assignment_status}`} onRemove={() => set("assignment_status", "")} />}
+          {filters.assignment_type && <FilterChip label={`Asgn Type: ${filters.assignment_type}`} onRemove={() => set("assignment_type", "")} />}
+          {filters.priority_bucket && <FilterChip label={`Priority: ${filters.priority_bucket}`} onRemove={() => set("priority_bucket", "")} />}
+          {filters.team_name && <FilterChip label={`Team: ${filters.team_name}`} onRemove={() => set("team_name", "")} />}
+          {filters.route_zone && <FilterChip label={`Zone: ${filters.route_zone}`} onRemove={() => set("route_zone", "")} />}
+          {filters.assigned_to && <FilterChip label={`Assignee: ${filters.assigned_to}`} onRemove={() => set("assigned_to", "")} />}
+          {filters.layer_id && <FilterChip label={`Layer active`} onRemove={() => set("layer_id", "")} />}
+          {filters.has_incident && <FilterChip label="Has Incident" onRemove={() => set("has_incident", false)} />}
+          {filters.has_work_order && <FilterChip label="Has Work Order" onRemove={() => set("has_work_order", false)} />}
+          {filters.show_unassigned_only && <FilterChip label="Unassigned Only" onRemove={() => set("show_unassigned_only", false)} />}
+        </div>
+      )}
+
       {expanded && (
         <>
           <div className="grid grid-cols-2 gap-2">
@@ -95,21 +123,21 @@ export default function PlanningFilters({ filters, onChange, onApply, onReset, a
               </Select>
             </div>
             <div>
-              <Label className="text-xs text-slate-500 mb-1 block">Asset Status</Label>
+              <Label className="text-xs text-slate-500 mb-1 block" title="Physical condition of the asset">Asset Condition</Label>
               <Select value={filters.asset_status || ALL} onValueChange={v => set("asset_status", v === ALL ? "" : v)}>
-                <SelectTrigger className="text-sm h-8"><SelectValue placeholder="All" /></SelectTrigger>
+                <SelectTrigger className="text-sm h-8"><SelectValue placeholder="All conditions" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={ALL}>All</SelectItem>
+                  <SelectItem value={ALL}>All conditions</SelectItem>
                   {assetStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label className="text-xs text-slate-500 mb-1 block">Assignment Status</Label>
+              <Label className="text-xs text-slate-500 mb-1 block" title="Progress of the assigned task for this week">Task Progress</Label>
               <Select value={filters.assignment_status || ALL} onValueChange={v => set("assignment_status", v === ALL ? "" : v)}>
-                <SelectTrigger className="text-sm h-8"><SelectValue placeholder="All" /></SelectTrigger>
+                <SelectTrigger className="text-sm h-8"><SelectValue placeholder="All task statuses" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={ALL}>All</SelectItem>
+                  <SelectItem value={ALL}>All task statuses</SelectItem>
                   {["Planned", "In Progress", "Completed", "Deferred", "Cancelled"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                 </SelectContent>
               </Select>

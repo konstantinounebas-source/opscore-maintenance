@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+// MapLayers entity used for layer persistence
 import { base44 } from "@/api/base44Client";
 import TopHeader from "@/components/layout/TopHeader";
 import PlanningMap from "@/components/planning/PlanningMap";
@@ -74,20 +75,52 @@ export default function Planning() {
   const [savingView, setSavingView]             = useState(false);
   const [singleViewTab, setSingleViewTab]       = useState("assignments"); // "assignments" | "layers"
 
-  // Shared layers state (persisted to localStorage, same as MultiMapView)
-  const [layers, setLayers] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("planningLayers") || "[]"); } catch { return []; }
+  // Shared layers state — persisted to backend entity
+  const { data: rawLayers = [] } = useQuery({ queryKey: ["mapLayers"], queryFn: () => base44.entities.MapLayers.list("-created_date") });
+
+  const createLayerMutation = useMutation({
+    mutationFn: (data) => base44.entities.MapLayers.create(data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["mapLayers"] }),
   });
-  const saveLayers = (updated) => {
-    setLayers(updated);
-    try { localStorage.setItem("planningLayers", JSON.stringify(updated)); } catch {}
+  const updateLayerMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.MapLayers.update(id, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["mapLayers"] }),
+  });
+  const deleteLayerMutation = useMutation({
+    mutationFn: (id) => base44.entities.MapLayers.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["mapLayers"] }),
+  });
+
+  const handleCreateLayer = (data) => {
+    createLayerMutation.mutate({ name: data.name, color: data.color, assignment_type: data.assignmentType || "", asset_ids: [], is_shared: true });
   };
-  const handleCreateLayer    = (data) => saveLayers([...layers, { id: Date.now().toString(), name: data.name, color: data.color, assetIds: [] }]);
-  const handleDeleteLayer    = (id) => saveLayers(layers.filter(l => l.id !== id));
-  const handleUpdateLayer    = (id, data) => saveLayers(layers.map(l => l.id === id ? { ...l, ...data } : l));
-  const handleAddAssetToLayer    = (layerId, assetId) => saveLayers(layers.map(l => l.id === layerId ? { ...l, assetIds: [...new Set([...(l.assetIds || []), assetId])] } : l));
-  const handleRemoveAssetFromLayer = (layerId, assetId) => saveLayers(layers.map(l => l.id === layerId ? { ...l, assetIds: (l.assetIds || []).filter(id => id !== assetId) } : l));
-  const enrichedLayers = useMemo(() => layers.map(l => ({ ...l, assetCount: (l.assetIds || []).length })), [layers]);
+  const handleDeleteLayer = (id) => deleteLayerMutation.mutate(id);
+  const handleUpdateLayer = (id, data) => {
+    const update = {};
+    if (data.name !== undefined) update.name = data.name;
+    if (data.color !== undefined) update.color = data.color;
+    updateLayerMutation.mutate({ id, data: update });
+  };
+  const handleAddAssetToLayer = (layerId, assetId) => {
+    const layer = rawLayers.find(l => l.id === layerId);
+    if (!layer) return;
+    const ids = [...new Set([...(layer.asset_ids || []), assetId])];
+    updateLayerMutation.mutate({ id: layerId, data: { asset_ids: ids } });
+  };
+  const handleRemoveAssetFromLayer = (layerId, assetId) => {
+    const layer = rawLayers.find(l => l.id === layerId);
+    if (!layer) return;
+    const ids = (layer.asset_ids || []).filter(id => id !== assetId);
+    updateLayerMutation.mutate({ id: layerId, data: { asset_ids: ids } });
+  };
+
+  // Normalize layers for child components (assetIds ← asset_ids)
+  const enrichedLayers = useMemo(() => rawLayers.map(l => ({
+    ...l,
+    assetIds: l.asset_ids || [],
+    assignmentType: l.assignment_type || "",
+    assetCount: (l.asset_ids || []).length,
+  })), [rawLayers]);
 
   // Auto-select active week
   useEffect(() => {

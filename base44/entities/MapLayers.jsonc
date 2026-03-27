@@ -1,0 +1,37 @@
+{
+  "name": "MapLayers",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Layer display name"
+    },
+    "color": {
+      "type": "string",
+      "description": "Hex color for the layer"
+    },
+    "assignment_type": {
+      "type": "string",
+      "description": "Optional assignment type this layer represents"
+    },
+    "asset_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Array of asset record IDs in this layer"
+    },
+    "created_by_user": {
+      "type": "string",
+      "description": "Email of user who created this layer"
+    },
+    "is_shared": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this layer is visible to all users"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

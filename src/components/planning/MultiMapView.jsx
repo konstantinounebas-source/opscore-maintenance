@@ -1,5 +1,5 @@
 import React, { useRef, useState, useCallback, useEffect, useMemo } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import MultiMapInstance from "./MultiMapInstance";
 import MapFilterOverlay from "./MapFilterOverlay";
@@ -7,7 +7,7 @@ import MapSummaryStrip from "./MapSummaryStrip";
 import AssignAssetModal from "./AssignAssetModal";
 import PlanningAssignmentPanel from "./PlanningAssignmentPanel";
 import LayersPanel from "./LayersPanel";
-import { Loader2, Plus, X, PanelRightClose, PanelRightOpen, Layers } from "lucide-react";
+import { Loader2, Plus, X, PanelRightClose, PanelRightOpen, Layers, Pencil, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const MIN_LEFT_PCT = 35;
@@ -38,6 +38,7 @@ function defaultPanelState() {
     markerColor: "",
     colorBy: "",
     filterLayerId: "",
+    title: "", // custom user-defined map title
   };
 }
 
@@ -114,31 +115,63 @@ export default function MultiMapView() {
   const [rightSelectedWeekId, setRightSelectedWeekId] = useState("");
   // Right panel tab
   const [rightTab, setRightTab] = useState("assets"); // "assets" | "layers"
-  // Layers stored in-session (no entity needed — stored as state with localStorage persistence)
-  const [layers, setLayers] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("planningLayers") || "[]"); } catch { return []; }
+  // Active map panel index (for right-panel week sync indicator)
+  const [activePanelIndex, setActivePanelIndex] = useState(null);
+
+  // Panel title editing state
+  const [editingTitleIdx, setEditingTitleIdx] = useState(null);
+  const [editingTitleVal, setEditingTitleVal] = useState("");
+
+  // ── Layers: persisted to backend entity ──────────────────────────────────────
+  const { data: rawLayers = [] } = useQuery({
+    queryKey: ["mapLayers"],
+    queryFn: () => base44.entities.MapLayers.list("-created_date"),
+    staleTime: 30000,
   });
 
-  const saveLayers = (updated) => {
-    setLayers(updated);
-    try { localStorage.setItem("planningLayers", JSON.stringify(updated)); } catch {}
-  };
+  const createLayerMutation = useMutation({
+    mutationFn: (data) => base44.entities.MapLayers.create(data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["mapLayers"] }),
+  });
+  const updateLayerMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.MapLayers.update(id, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["mapLayers"] }),
+  });
+  const deleteLayerMutation = useMutation({
+    mutationFn: (id) => base44.entities.MapLayers.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["mapLayers"] }),
+  });
 
   const handleCreateLayer = (data) => {
-    const newLayer = { id: Date.now().toString(), name: data.name, color: data.color, assetIds: [] };
-    saveLayers([...layers, newLayer]);
+    createLayerMutation.mutate({ name: data.name, color: data.color, assignment_type: data.assignmentType || "", asset_ids: [], is_shared: true });
   };
-  const handleDeleteLayer = (id) => saveLayers(layers.filter(l => l.id !== id));
-  const handleUpdateLayer = (id, data) => saveLayers(layers.map(l => l.id === id ? { ...l, ...data } : l));
+  const handleDeleteLayer = (id) => deleteLayerMutation.mutate(id);
+  const handleUpdateLayer = (id, data) => {
+    const update = {};
+    if (data.name !== undefined) update.name = data.name;
+    if (data.color !== undefined) update.color = data.color;
+    updateLayerMutation.mutate({ id, data: update });
+  };
   const handleAddAssetToLayer = (layerId, assetId) => {
-    saveLayers(layers.map(l => l.id === layerId ? { ...l, assetIds: [...new Set([...(l.assetIds || []), assetId])] } : l));
+    const layer = rawLayers.find(l => l.id === layerId);
+    if (!layer) return;
+    const ids = [...new Set([...(layer.asset_ids || []), assetId])];
+    updateLayerMutation.mutate({ id: layerId, data: { asset_ids: ids } });
   };
   const handleRemoveAssetFromLayer = (layerId, assetId) => {
-    saveLayers(layers.map(l => l.id === layerId ? { ...l, assetIds: (l.assetIds || []).filter(id => id !== assetId) } : l));
+    const layer = rawLayers.find(l => l.id === layerId);
+    if (!layer) return;
+    const ids = (layer.asset_ids || []).filter(id => id !== assetId);
+    updateLayerMutation.mutate({ id: layerId, data: { asset_ids: ids } });
   };
 
-  // Enrich layers with asset count for display
-  const enrichedLayers = useMemo(() => layers.map(l => ({ ...l, assetCount: (l.assetIds || []).length })), [layers]);
+  // Normalize layers: map asset_ids → assetIds for compatibility with child components
+  const enrichedLayers = useMemo(() => rawLayers.map(l => ({
+    ...l,
+    assetIds: l.asset_ids || [],
+    assignmentType: l.assignment_type || "",
+    assetCount: (l.asset_ids || []).length,
+  })), [rawLayers]);
 
   // Assign modal state
   const [assignModal, setAssignModal] = useState({
@@ -229,8 +262,16 @@ export default function MultiMapView() {
     };
   }, [rightCollapsed]);
 
+  // Save panel title
+  const handleSavePanelTitle = (idx) => {
+    updatePanel(idx, { title: editingTitleVal.trim() });
+    setEditingTitleIdx(null);
+    setEditingTitleVal("");
+  };
+
   // Handle asset click on map
   const handleAssetClick = useCallback((panelIndex, asset) => {
+    setActivePanelIndex(panelIndex);
     const state = panelStates[panelIndex];
     if (state.selectedAssetId === asset.id) {
       updatePanel(panelIndex, { selectedAssetId: null });
@@ -311,9 +352,31 @@ export default function MultiMapView() {
               className={`relative rounded-lg overflow-hidden border-2 ${MAP_BORDER[i]} bg-white`}
               style={{ isolation: "isolate", minHeight: 0, height: "100%" }}
             >
-              {/* Map label badge */}
-              <div className={`absolute top-1.5 left-1.5 z-[600] px-2 py-0.5 rounded-full text-[10px] font-bold border shadow-sm ${MAP_BADGE[i]}`}>
-                Map {i + 1}
+              {/* Map label badge + editable title */}
+              <div className={`absolute top-1.5 left-1.5 z-[600] flex items-center gap-1 group`}>
+                {editingTitleIdx === i ? (
+                  <div className="flex items-center gap-1 bg-white/95 border border-slate-300 rounded-lg shadow-md px-1.5 py-0.5">
+                    <input
+                      autoFocus
+                      value={editingTitleVal}
+                      onChange={e => setEditingTitleVal(e.target.value)}
+                      onKeyDown={e => { if (e.key === "Enter") handleSavePanelTitle(i); if (e.key === "Escape") setEditingTitleIdx(null); }}
+                      className="text-[10px] font-semibold outline-none bg-transparent w-32 text-slate-800"
+                      placeholder={`Map ${i + 1} title...`}
+                    />
+                    <button onClick={() => handleSavePanelTitle(i)} className="text-emerald-500 hover:text-emerald-700"><Check className="w-3 h-3" /></button>
+                    <button onClick={() => setEditingTitleIdx(null)} className="text-slate-400 hover:text-slate-600"><X className="w-3 h-3" /></button>
+                  </div>
+                ) : (
+                  <div
+                    className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border shadow-sm cursor-pointer ${MAP_BADGE[i]}`}
+                    onClick={() => { setEditingTitleIdx(i); setEditingTitleVal(panelStates[i].title || ""); }}
+                    title="Click to rename this map"
+                  >
+                    {panelStates[i].title || `Map ${i + 1}`}
+                    <Pencil className="w-2.5 h-2.5 opacity-0 group-hover:opacity-70 transition-opacity" />
+                  </div>
+                )}
               </div>
 
               {/* Remove panel button (only when >1 panel) */}
@@ -398,19 +461,42 @@ export default function MultiMapView() {
           style={{ minWidth: `${MIN_RIGHT_PCT}%` }}
         >
           {/* Tab switcher */}
-          <div className="flex border-b border-slate-200 bg-white shrink-0">
-            <button
-              onClick={() => setRightTab("assets")}
-              className={`flex-1 py-1.5 text-[11px] font-semibold transition-colors ${rightTab === "assets" ? "text-indigo-700 border-b-2 border-indigo-500 bg-indigo-50" : "text-slate-400 hover:text-slate-600"}`}
-            >
-              Assets
-            </button>
-            <button
-              onClick={() => setRightTab("layers")}
-              className={`flex-1 py-1.5 text-[11px] font-semibold transition-colors flex items-center justify-center gap-1 ${rightTab === "layers" ? "text-indigo-700 border-b-2 border-indigo-500 bg-indigo-50" : "text-slate-400 hover:text-slate-600"}`}
-            >
-              <Layers className="w-3 h-3" /> Layers {layers.length > 0 && <span className="text-[9px]">({layers.length})</span>}
-            </button>
+          <div className="flex border-b border-slate-200 bg-white shrink-0 flex-col">
+            <div className="flex">
+              <button
+                onClick={() => setRightTab("assets")}
+                className={`flex-1 py-1.5 text-[11px] font-semibold transition-colors ${rightTab === "assets" ? "text-indigo-700 border-b-2 border-indigo-500 bg-indigo-50" : "text-slate-400 hover:text-slate-600"}`}
+              >
+                Assets
+              </button>
+              <button
+                onClick={() => setRightTab("layers")}
+                className={`flex-1 py-1.5 text-[11px] font-semibold transition-colors flex items-center justify-center gap-1 ${rightTab === "layers" ? "text-indigo-700 border-b-2 border-indigo-500 bg-indigo-50" : "text-slate-400 hover:text-slate-600"}`}
+              >
+                <Layers className="w-3 h-3" /> Layers {enrichedLayers.length > 0 && <span className="text-[9px]">({enrichedLayers.length})</span>}
+              </button>
+            </div>
+            {/* Active map context indicator */}
+            {activePanelIndex !== null && panelStates[activePanelIndex] && (
+              <div
+                className={`px-2.5 py-1 text-[9px] font-semibold flex items-center gap-1.5 border-t border-slate-100 cursor-pointer hover:bg-slate-50 transition-colors ${MAP_BADGE[activePanelIndex]}`}
+                onClick={() => {
+                  const weekId = panelStates[activePanelIndex].selectedWeekId;
+                  if (weekId) setRightSelectedWeekId(weekId);
+                }}
+                title="Click to sync right panel to this map's week"
+              >
+                <span className={`w-2 h-2 rounded-full flex-shrink-0 ${MAP_BORDER[activePanelIndex].replace("border-","bg-")}`} />
+                Active: {panelStates[activePanelIndex].title || `Map ${activePanelIndex + 1}`}
+                {panelStates[activePanelIndex].selectedWeekId && (
+                  <span className="ml-auto text-slate-500 font-normal">
+                    {weeks.find(w => w.id === panelStates[activePanelIndex].selectedWeekId)?.week_code || ""}
+                    {" · "}
+                    <span className="underline">Sync week ↓</span>
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="flex-1 overflow-hidden">
