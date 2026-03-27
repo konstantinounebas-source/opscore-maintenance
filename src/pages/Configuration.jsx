@@ -9,7 +9,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Trash2, Pencil, Check, X, GripVertical, ToggleLeft, ToggleRight } from "lucide-react";
 import WorkflowConfig from "@/components/configuration/WorkflowConfig";
 import ChildLogicConfig from "@/components/configuration/ChildLogicConfig";
-import { FileText, Eye } from "lucide-react";
 
 const INCIDENT_LIST_TYPES = [
   { key: "Provinces", label: "Provinces" },
@@ -237,34 +236,6 @@ export default function Configuration() {
         <div className="bg-white rounded-xl border border-slate-200 p-6">
           <p className="text-xs text-slate-500 mb-6">Define and manage workflow actions, phases, SLA rules, and attachment requirements. Changes here are reflected immediately in all incident workflows.</p>
           <WorkflowConfig />
-        </div>
-
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <h2 className="text-sm font-semibold text-slate-900 mb-1">Forms</h2>
-          <p className="text-xs text-slate-500 mb-5">Electronic forms used across incident workflows. Click to preview or fill a form.</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {[
-              { id: "outline_management_incident_plan", name: "Outline Management Incident Plan (OMPI)", description: "Structured incident management outline with SLA tracking and decision logic." },
-              { id: "combined_fmpi_invoice",            name: "Full Management Plan (FMPI) & Invoice",  description: "Combined FMPI & Work Order Invoice with management plan details and pricing." },
-              { id: "make_safe_checklist",              name: "Make-Safe Checklist",                    description: "Smart Bus Shelters – Field safety checklist, PPE, LOTO, Make-Safe actions." },
-              { id: "incident_report",                  name: "Incident Report (Corrective Maintenance)",description: "Incident report form: damage logging, priority, OWR, Make-Safe, and approvals." },
-            ].map(form => (
-              <div key={form.id} className="flex items-start gap-3 p-4 rounded-lg border border-slate-200 bg-slate-50 hover:bg-white hover:border-indigo-200 transition-colors">
-                <div className="w-9 h-9 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center flex-shrink-0">
-                  <FileText className="w-4 h-4 text-indigo-600" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold text-slate-800 leading-snug">{form.name}</div>
-                  <div className="text-xs text-slate-500 mt-0.5 leading-relaxed">{form.description}</div>
-                  <div className="mt-2">
-                    <a href="/Forms" className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 font-medium">
-                      <Eye className="w-3 h-3" /> Open in Forms module
-                    </a>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
     </div>
