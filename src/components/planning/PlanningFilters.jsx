@@ -4,12 +4,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Search, RotateCcw, Filter, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, RotateCcw, Filter, ChevronDown, ChevronUp, Layers } from "lucide-react";
 import { countActiveFilters } from "./planningUtils";
 
 const ALL = "all";
 
-export default function PlanningFilters({ filters, onChange, onApply, onReset, assets, assignments, onSelectAsset }) {
+export default function PlanningFilters({ filters, onChange, onApply, onReset, assets, assignments, onSelectAsset, layers = [] }) {
   const [expanded, setExpanded] = useState(false);
 
   const cities        = [...new Set(assets.map(a => a.city).filter(Boolean))].sort();
@@ -171,6 +171,29 @@ export default function PlanningFilters({ filters, onChange, onApply, onReset, a
               </div>
             )}
           </div>
+
+          {layers.length > 0 && (
+            <div>
+              <Label className="text-xs text-slate-500 mb-1 block flex items-center gap-1"><Layers className="w-3 h-3" /> Layer Filter</Label>
+              <div className="flex flex-wrap gap-1">
+                <button
+                  onClick={() => set("layer_id", "")}
+                  className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${!filters.layer_id ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-slate-500 border-slate-200 hover:border-slate-400"}`}
+                >All</button>
+                {layers.map(l => (
+                  <button
+                    key={l.id}
+                    onClick={() => set("layer_id", filters.layer_id === l.id ? "" : l.id)}
+                    className={`text-xs px-2 py-0.5 rounded-full border transition-colors flex items-center gap-1 ${filters.layer_id === l.id ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-slate-500 border-slate-200 hover:border-slate-400"}`}
+                  >
+                    <span className="w-2 h-2 rounded-full" style={{ background: l.color || "#6B7280" }} />
+                    {l.name}
+                    <span className="text-[10px] opacity-70">({l.assetCount || 0})</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="flex gap-4 pt-1">
             <label className="flex items-center gap-2 cursor-pointer">

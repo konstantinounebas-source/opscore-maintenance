@@ -15,10 +15,11 @@ import PinLegend from "@/components/planning/PinLegend";
 
 import MultiWeekPlanningView from "@/pages/MultiWeekPlanningView";
 import MultiMapView from "@/components/planning/MultiMapView";
+import LayersPanel from "@/components/planning/LayersPanel";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, CalendarDays, Loader2, Download, AlertTriangle, Zap } from "lucide-react";
+import { Plus, CalendarDays, Loader2, Download, AlertTriangle, Zap, Layers } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import {
   EMPTY_FILTERS, computePinColor,
@@ -71,6 +72,22 @@ export default function Planning() {
   const [selectedAssignmentIds, setSelectedAssignmentIds] = useState([]);
   const [bulkSaving, setBulkSaving]             = useState(false);
   const [savingView, setSavingView]             = useState(false);
+  const [singleViewTab, setSingleViewTab]       = useState("assignments"); // "assignments" | "layers"
+
+  // Shared layers state (persisted to localStorage, same as MultiMapView)
+  const [layers, setLayers] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("planningLayers") || "[]"); } catch { return []; }
+  });
+  const saveLayers = (updated) => {
+    setLayers(updated);
+    try { localStorage.setItem("planningLayers", JSON.stringify(updated)); } catch {}
+  };
+  const handleCreateLayer    = (data) => saveLayers([...layers, { id: Date.now().toString(), name: data.name, color: data.color, assetIds: [] }]);
+  const handleDeleteLayer    = (id) => saveLayers(layers.filter(l => l.id !== id));
+  const handleUpdateLayer    = (id, data) => saveLayers(layers.map(l => l.id === id ? { ...l, ...data } : l));
+  const handleAddAssetToLayer    = (layerId, assetId) => saveLayers(layers.map(l => l.id === layerId ? { ...l, assetIds: [...new Set([...(l.assetIds || []), assetId])] } : l));
+  const handleRemoveAssetFromLayer = (layerId, assetId) => saveLayers(layers.map(l => l.id === layerId ? { ...l, assetIds: (l.assetIds || []).filter(id => id !== assetId) } : l));
+  const enrichedLayers = useMemo(() => layers.map(l => ({ ...l, assetCount: (l.assetIds || []).length })), [layers]);
 
   // Auto-select active week
   useEffect(() => {
@@ -112,6 +129,11 @@ export default function Planning() {
   const filteredAssets = useMemo(() => {
     return assets.filter(a => {
       const f = appliedFilters;
+      // Layer filter
+      if (f.layer_id) {
+        const layer = enrichedLayers.find(l => l.id === f.layer_id);
+        if (!layer || !(layer.assetIds || []).includes(a.id)) return false;
+      }
       const q = f.search?.toLowerCase();
       if (q && !a.asset_id?.toLowerCase().includes(q) && !a.asset_name?.toLowerCase().includes(q) &&
           !a.active_shelter_id?.toLowerCase().includes(q) && !a.location_address?.toLowerCase().includes(q)) return false;
@@ -489,10 +511,11 @@ export default function Planning() {
                 if (updated.search !== filters.search) setAppliedFilters(prev => ({ ...prev, search: updated.search }));
               }}
               onApply={() => setAppliedFilters({ ...filters })}
-              onReset={() => { setFilters(EMPTY_FILTERS); setAppliedFilters(EMPTY_FILTERS); setSelectedViewId(null); }}
+              onReset={() => { setFilters({ ...EMPTY_FILTERS, layer_id: "" }); setAppliedFilters({ ...EMPTY_FILTERS, layer_id: "" }); setSelectedViewId(null); }}
               assets={assets}
               assignments={weekAssignments}
               onSelectAsset={handleSelectAsset}
+              layers={enrichedLayers}
             />
             <div className="flex-1 min-h-[380px]">
               <PlanningMap
@@ -508,28 +531,32 @@ export default function Planning() {
 
         <div className="flex flex-col w-[42%] overflow-hidden bg-slate-50">
           <div className="bg-white border-b border-slate-200 px-3 flex items-center gap-0 overflow-x-auto shrink-0">
-            {TABS.map(tab => {
-              const badge = tab.id === "recommendations" && openRecsCount > 0 ? openRecsCount : null;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`px-3 py-2.5 text-xs font-medium whitespace-nowrap border-b-2 transition-colors flex items-center gap-1.5 ${
-                    activeTab === tab.id ? "border-indigo-500 text-indigo-700" : "border-transparent text-slate-500 hover:text-slate-700"
-                  }`}
-                >
-                  {tab.label}
-                  {badge && (
-                    <span className="bg-amber-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold text-[10px]">
-                      {badge > 9 ? "9+" : badge}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+            <button
+              onClick={() => setSingleViewTab("assignments")}
+              className={`px-3 py-2.5 text-xs font-medium whitespace-nowrap border-b-2 transition-colors flex items-center gap-1.5 ${singleViewTab === "assignments" ? "border-indigo-500 text-indigo-700" : "border-transparent text-slate-500 hover:text-slate-700"}`}
+            >
+              Assignments
+            </button>
+            <button
+              onClick={() => setSingleViewTab("layers")}
+              className={`px-3 py-2.5 text-xs font-medium whitespace-nowrap border-b-2 transition-colors flex items-center gap-1.5 ${singleViewTab === "layers" ? "border-indigo-500 text-indigo-700" : "border-transparent text-slate-500 hover:text-slate-700"}`}
+            >
+              <Layers className="w-3.5 h-3.5" /> Layers {enrichedLayers.length > 0 && <span className="text-[10px] text-slate-400">({enrichedLayers.length})</span>}
+            </button>
           </div>
           <div className="flex-1 overflow-y-auto p-4">
-            {activeTab === "assignments" && (
+            {singleViewTab === "layers" && (
+              <LayersPanel
+                layers={enrichedLayers}
+                assets={assets}
+                onCreateLayer={handleCreateLayer}
+                onDeleteLayer={handleDeleteLayer}
+                onUpdateLayer={handleUpdateLayer}
+                onAddAsset={handleAddAssetToLayer}
+                onRemoveAsset={handleRemoveAssetFromLayer}
+              />
+            )}
+            {singleViewTab === "assignments" && (
               <div className="space-y-4">
                 <div className="bg-white border border-slate-200 rounded-lg p-3">
                   <PlanningKPIBar assignments={weekAssignments} />
