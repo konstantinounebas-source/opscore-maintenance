@@ -13,7 +13,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/AuthContext";
 import WorkOrderPanel from "@/components/incidents/WorkOrderPanel";
 import OutlineManagementForm from "@/components/forms/OutlineManagementForm";
-import FullManagementPlanForm from "@/components/forms/FullManagementPlanForm";
+import CombinedFMPIandInvoiceForm from "@/components/forms/CombinedFMPIandInvoiceForm";
 import {
   CheckCircle2, Circle, Loader2, ChevronRight,
   Paperclip, StickyNote, AlertTriangle, FileCheck, Lock, FileText
@@ -120,6 +120,11 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
   const { data: allWorkOrders = [] } = useQuery({
     queryKey: ["allWorkOrders"],
     queryFn: () => base44.entities.WorkOrders.list(),
+    enabled: showEmbeddedForm,
+  });
+  const { data: allChildAssets = [] } = useQuery({
+    queryKey: ["allChildAssets"],
+    queryFn: () => base44.entities.ChildAssets.list(),
     enabled: showEmbeddedForm,
   });
 
@@ -465,12 +470,13 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
               />
             )}
             {key === "create_fmpi" && (
-              <FullManagementPlanForm
+              <CombinedFMPIandInvoiceForm
                 submission={null}
                 incidents={allIncidents}
                 assets={allAssets}
                 workOrders={allWorkOrders}
                 crews={[]}
+                childAssets={allChildAssets}
                 onClose={() => setShowEmbeddedForm(false)}
                 defaultIncidentId={incidentId}
               />
