@@ -136,12 +136,12 @@ export default function MapFilterOverlay({ state, onUpdate, assets, crews, layer
                   placeholder="All types"
                 />
                 <FilterSelect
-                   label="Condition"
-                   value={state.filterAssetStatus}
-                   onChange={set("filterAssetStatus")}
-                   options={ASSET_STATUSES.map(s => ({ value: s, label: s }))}
-                   placeholder="All conditions"
-                 />
+                  label="Status"
+                  value={state.filterAssetStatus}
+                  onChange={set("filterAssetStatus")}
+                  options={ASSET_STATUSES.map(s => ({ value: s, label: s }))}
+                  placeholder="All statuses"
+                />
                 <FilterSelect
                   label="City"
                   value={state.filterCity}
@@ -172,11 +172,11 @@ export default function MapFilterOverlay({ state, onUpdate, assets, crews, layer
                 </div>
               </div>
               <FilterSelect
-                label="Task Progress"
+                label="Asgn Status"
                 value={state.filterAssignmentStatus}
                 onChange={set("filterAssignmentStatus")}
                 options={ASSIGNMENT_STATUSES.map(s => ({ value: s, label: s }))}
-                placeholder="Any task status"
+                placeholder="Any asgn status"
               />
               {activeCrew.length > 0 && (
                 <FilterSelect
