@@ -12,6 +12,8 @@ import FileUploader from "@/components/shared/FileUploader";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/AuthContext";
 import WorkOrderPanel from "@/components/incidents/WorkOrderPanel";
+import EmbeddedOMPIForm from "@/components/incidents/EmbeddedOMPIForm";
+import EmbeddedFMPIForm from "@/components/incidents/EmbeddedFMPIForm";
 import {
   CheckCircle2, Circle, Loader2, ChevronRight,
   Paperclip, StickyNote, AlertTriangle, FileCheck, Lock
@@ -226,7 +228,7 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <span>{step.label}</span>
@@ -319,6 +321,7 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
                 onUpload={fd => set("file", fd)}
                 label={formData.file ? formData.file.file_name : existingAttachments.length > 0 ? "Upload additional (optional)" : "Upload OMPI Document"}
               />
+              <EmbeddedOMPIForm incident={incident} onSubmitted={() => {}} />
             </div>
           )}
 
@@ -326,6 +329,7 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
             <div className="space-y-1.5">
               <Label className="text-xs flex items-center gap-1"><Paperclip className="w-3 h-3" /> Attachment (optional)</Label>
               <FileUploader onUpload={fd => set("file", fd)} label={formData.file ? formData.file.file_name : "Upload FMPI Document"} />
+              <EmbeddedFMPIForm incident={incident} onSubmitted={() => {}} />
             </div>
           )}
 
