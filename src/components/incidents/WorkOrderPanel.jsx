@@ -11,9 +11,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import FileUploader from "@/components/shared/FileUploader";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/AuthContext";
+import MakeSafeChecklistForm from "@/components/forms/MakeSafeChecklistForm";
+import WorkOrderFormF from "@/components/forms/WorkOrderFormF";
 import {
   Plus, ChevronDown, ChevronUp, CheckCircle2, Clock,
-  Loader2, Paperclip, StickyNote, XCircle, Lock
+  Loader2, Paperclip, StickyNote, XCircle, Lock, FileText
 } from "lucide-react";
 
 const WO_TYPE_CONFIG = {
@@ -370,11 +372,33 @@ export default function WorkOrderPanel({ woType, incident, incidentId }) {
   const [showCreate, setShowCreate] = useState(false);
   const [closingWO, setClosingWO] = useState(null);
   const [checklistWO, setChecklistWO] = useState(null);
+  const [showEmbeddedForm, setShowEmbeddedForm] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: allWOs = [] } = useQuery({
     queryKey: ["workOrders", incidentId],
     queryFn: () => base44.entities.WorkOrders.filter({ incident_id: incidentId }),
+  });
+
+  const { data: allIncidents = [] } = useQuery({
+    queryKey: ["incidents"],
+    queryFn: () => base44.entities.Incidents.list(),
+    enabled: showEmbeddedForm,
+  });
+  const { data: allAssets = [] } = useQuery({
+    queryKey: ["assets"],
+    queryFn: () => base44.entities.Assets.list(),
+    enabled: showEmbeddedForm,
+  });
+  const { data: allWorkOrders = [] } = useQuery({
+    queryKey: ["allWorkOrders"],
+    queryFn: () => base44.entities.WorkOrders.list(),
+    enabled: showEmbeddedForm,
+  });
+  const { data: allChildAssets = [] } = useQuery({
+    queryKey: ["allChildAssets"],
+    queryFn: () => base44.entities.ChildAssets.list(),
+    enabled: showEmbeddedForm && woType === "corrective",
   });
 
   // Filter by WO type label
@@ -406,6 +430,14 @@ export default function WorkOrderPanel({ woType, incident, incidentId }) {
           )}
         </div>
         <div className="flex items-center gap-2">
+          {!isCorrectiveLocked && (woType === "make_safe" || woType === "corrective") && (
+            <button
+              onClick={e => { e.stopPropagation(); setShowEmbeddedForm(true); }}
+              className="flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-800 font-medium"
+            >
+              <FileText className="w-3.5 h-3.5" /> Fill Form
+            </button>
+          )}
           {!isCorrectiveLocked && (
             <button
               onClick={e => { e.stopPropagation(); setShowCreate(true); }}
@@ -459,6 +491,34 @@ export default function WorkOrderPanel({ woType, incident, incidentId }) {
           onClose={() => setChecklistWO(null)}
           onDone={() => setChecklistWO(null)}
         />
+      )}
+      {showEmbeddedForm && (
+        <Dialog open onOpenChange={() => setShowEmbeddedForm(false)}>
+          <DialogContent className="max-w-5xl w-full max-h-[95vh] overflow-y-auto p-0">
+            {woType === "make_safe" && (
+              <MakeSafeChecklistForm
+                submission={null}
+                incidents={allIncidents}
+                assets={allAssets}
+                workOrders={allWorkOrders}
+                onClose={() => setShowEmbeddedForm(false)}
+                defaultIncidentId={incidentId}
+              />
+            )}
+            {woType === "corrective" && (
+              <WorkOrderFormF
+                submission={null}
+                incidents={allIncidents}
+                assets={allAssets}
+                workOrders={allWorkOrders}
+                childAssets={allChildAssets}
+                crews={[]}
+                onClose={() => setShowEmbeddedForm(false)}
+                defaultIncidentId={incidentId}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );

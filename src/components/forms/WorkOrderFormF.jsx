@@ -140,13 +140,14 @@ const emptyRow = () => ({
 });
 
 // ── Main Component ────────────────────────────────────────────────────────────
-export default function WorkOrderFormF({ submission, incidents, assets, workOrders, crews, childAssets, onClose }) {
+export default function WorkOrderFormF({ submission, incidents, assets, workOrders, crews, childAssets, onClose, defaultIncidentId }) {
   const { toast } = useToast();
   const isEditing = !!submission;
 
   // ── Linked records ──
   const [linkedWOId,    setLinkedWOId]    = useState(submission?.work_order_id || "");
   const [linkedAssetId, setLinkedAssetId] = useState(submission?.asset_id      || "");
+  const linkedIncidentId = submission?.incident_id || defaultIncidentId || "";
 
   // ── Work lines ──
   const [rows, setRows] = useState(() => {
@@ -238,7 +239,7 @@ export default function WorkOrderFormF({ submission, incidents, assets, workOrde
     saveMutation.mutate({
       form_type: "work_order_form_f",
       form_name: "Work Order Invoice",
-      incident_id: submission?.incident_id || "",
+      incident_id: linkedIncidentId,
       asset_id: linkedAssetId,
       work_order_id: linkedWOId,
       status,

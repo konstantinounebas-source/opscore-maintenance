@@ -192,11 +192,11 @@ const defaultData = () => ({
 });
 
 // ── Main Component ────────────────────────────────────────────────────────────
-export default function MakeSafeChecklistForm({ submission, incidents, assets, workOrders, onClose }) {
+export default function MakeSafeChecklistForm({ submission, incidents, assets, workOrders, onClose, defaultIncidentId }) {
   const { toast } = useToast();
   const isEditing = !!submission;
 
-  const [linkedIncidentId, setLinkedIncidentId] = useState(submission?.incident_id || "");
+  const [linkedIncidentId, setLinkedIncidentId] = useState(submission?.incident_id || defaultIncidentId || "");
   const [linkedWOId, setLinkedWOId]             = useState(submission?.work_order_id || "");
   const [linkedAssetId, setLinkedAssetId]       = useState(submission?.asset_id || "");
 
