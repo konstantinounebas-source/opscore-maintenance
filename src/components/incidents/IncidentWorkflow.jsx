@@ -245,9 +245,9 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
   const isDone = isStepDone(step, incident);
 
   return (
-    <>
-    <Dialog open onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+    <React.Fragment>
+      <Dialog open onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <span>{step.label}</span>
@@ -447,39 +447,38 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
             </Button>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
-
-    {/* Embedded Form Dialog */}
-    {showEmbeddedForm && (
-      <Dialog open onOpenChange={() => setShowEmbeddedForm(false)}>
-        <DialogContent className="max-w-5xl w-full max-h-[95vh] overflow-y-auto p-0">
-          {key === "create_ompi" && (
-            <OutlineManagementForm
-              submission={null}
-              incidents={allIncidents}
-              assets={allAssets}
-              workOrders={allWorkOrders}
-              crews={[]}
-              onClose={() => setShowEmbeddedForm(false)}
-              defaultIncidentId={incidentId}
-            />
-          )}
-          {key === "create_fmpi" && (
-            <FullManagementPlanForm
-              submission={null}
-              incidents={allIncidents}
-              assets={allAssets}
-              workOrders={allWorkOrders}
-              crews={[]}
-              onClose={() => setShowEmbeddedForm(false)}
-              defaultIncidentId={incidentId}
-            />
-          )}
         </DialogContent>
       </Dialog>
-    )}
-    </>
+
+      {showEmbeddedForm && (
+        <Dialog open onOpenChange={() => setShowEmbeddedForm(false)}>
+          <DialogContent className="max-w-5xl w-full max-h-[95vh] overflow-y-auto p-0">
+            {key === "create_ompi" && (
+              <OutlineManagementForm
+                submission={null}
+                incidents={allIncidents}
+                assets={allAssets}
+                workOrders={allWorkOrders}
+                crews={[]}
+                onClose={() => setShowEmbeddedForm(false)}
+                defaultIncidentId={incidentId}
+              />
+            )}
+            {key === "create_fmpi" && (
+              <FullManagementPlanForm
+                submission={null}
+                incidents={allIncidents}
+                assets={allAssets}
+                workOrders={allWorkOrders}
+                crews={[]}
+                onClose={() => setShowEmbeddedForm(false)}
+                defaultIncidentId={incidentId}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+      )}
+    </React.Fragment>
   );
 }
 
