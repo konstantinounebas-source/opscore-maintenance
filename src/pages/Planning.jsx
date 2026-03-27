@@ -12,10 +12,7 @@ import AssignAssetModal from "@/components/planning/AssignAssetModal";
 import MapViewSelector from "@/components/planning/MapViewSelector";
 import BulkActionsBar from "@/components/planning/BulkActionsBar";
 import PinLegend from "@/components/planning/PinLegend";
-import CrewSchedulerTab from "@/components/planning/CrewSchedulerTab";
-import RoutesTab from "@/components/planning/RoutesTab";
-import RecommendationsTab from "@/components/planning/RecommendationsTab";
-import EnhancedComparisonTab from "@/components/planning/EnhancedComparisonTab";
+
 import MultiWeekPlanningView from "@/pages/MultiWeekPlanningView";
 import MultiMapView from "@/components/planning/MultiMapView";
 import { Button } from "@/components/ui/button";
@@ -32,10 +29,6 @@ import { format } from "date-fns";
 
 const TABS = [
   { id: "assignments", label: "Assignments" },
-  { id: "crew",        label: "Crew Scheduler" },
-  { id: "routes",      label: "Routes" },
-  { id: "recommendations", label: "Recommendations" },
-  { id: "comparison",  label: "Comparison" },
 ];
 
 const weekStatusBadge = (status) => {
@@ -592,60 +585,7 @@ export default function Planning() {
                 />
               </div>
             )}
-            {activeTab === "crew" && (
-              <CrewSchedulerTab
-                selectedWeekId={selectedWeekId}
-                weeks={weeks}
-                weekAssignments={weekAssignments}
-                allAssignments={allAssignments}
-                crews={crews}
-                assetsMap={assetsMap}
-                onRefresh={() => queryClient.invalidateQueries({ queryKey: ["planningAssignments"] })}
-              />
-            )}
-            {activeTab === "routes" && (
-              <RoutesTab
-                selectedWeekId={selectedWeekId}
-                weekAssignments={weekAssignments}
-                assetsMap={assetsMap}
-                crews={crews}
-                routes={routes}
-                routeStops={routeStops}
-                onRefresh={() => {
-                  queryClient.invalidateQueries({ queryKey: ["assignmentRoutes"] });
-                  queryClient.invalidateQueries({ queryKey: ["assignmentRouteStops"] });
-                }}
-              />
-            )}
-            {activeTab === "recommendations" && (
-              <RecommendationsTab
-                selectedWeekId={selectedWeekId}
-                weekAssignments={weekAssignments}
-                assetsMap={assetsMap}
-                incidentsByAsset={incidentsByAsset}
-                crews={crews}
-                crewsMap={crewsMap}
-                slaRules={slaRules}
-                recommendations={recommendations}
-                onNavigateToAsset={(assetId) => {
-                  const asset = assetsMap[assetId];
-                  if (asset) { handleSelectAsset(asset); setActiveTab("assignments"); }
-                }}
-              />
-            )}
-            {activeTab === "comparison" && (
-              <EnhancedComparisonTab
-                weekA={selectedWeek}
-                weekB={compWeek}
-                allAssignments={allAssignments}
-                assetsMap={assetsMap}
-                crews={crews}
-                recommendations={recommendations}
-                compWeekId={compWeekId}
-                setCompWeekId={setCompWeekId}
-                weeks={weeks}
-              />
-            )}
+
           </div>
         </div>
       </div>
