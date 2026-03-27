@@ -44,7 +44,7 @@ export default function PlanningWeekModal({ open, onOpenChange, week, onSave, on
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   const handleSave = async () => {
-    if (!form.week_code || !form.week_name || !form.start_date || !form.end_date) return;
+    if (!form.week_name || !form.start_date || !form.end_date) return;
     setSaving(true);
     await onSave(form);
     setSaving(false);
@@ -66,15 +66,9 @@ export default function PlanningWeekModal({ open, onOpenChange, week, onSave, on
           <DialogTitle>{week ? "Edit Planning Week" : "New Planning Week"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 pt-1">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs">Week Code *</Label>
-              <Input placeholder="W2026-14" value={form.week_code} onChange={e => set("week_code", e.target.value)} className="mt-1 text-sm" />
-            </div>
-            <div>
-              <Label className="text-xs">Week Name *</Label>
-              <Input placeholder="Week 14 - April" value={form.week_name} onChange={e => set("week_name", e.target.value)} className="mt-1 text-sm" />
-            </div>
+          <div>
+            <Label className="text-xs">Week Name *</Label>
+            <Input placeholder="Week 14 - April" value={form.week_name} onChange={e => set("week_name", e.target.value)} className="mt-1 text-sm" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -91,7 +85,7 @@ export default function PlanningWeekModal({ open, onOpenChange, week, onSave, on
               <Label className="text-xs">Status</Label>
               <Select value={form.status} onValueChange={v => set("status", v)}>
                 <SelectTrigger className="mt-1 text-sm"><SelectValue /></SelectTrigger>
-                <SelectContent>
+                <SelectContent style={{ zIndex: 1100 }}>
                   {["Draft", "Active", "Locked", "Archived"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                 </SelectContent>
               </Select>
@@ -122,7 +116,7 @@ export default function PlanningWeekModal({ open, onOpenChange, week, onSave, on
             <Button
               className="bg-indigo-600 hover:bg-indigo-700"
               onClick={handleSave}
-              disabled={saving || !form.week_code || !form.week_name || !form.start_date || !form.end_date}
+              disabled={saving || !form.week_name || !form.start_date || !form.end_date}
             >
               {saving && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
               {saving ? "Saving..." : week ? "Update" : "Create"}
