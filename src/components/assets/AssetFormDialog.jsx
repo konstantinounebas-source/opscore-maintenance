@@ -378,17 +378,6 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label className="text-xs">Category</Label>
-                <Select value={form.category} onValueChange={v => set("category", v)}>
-                  <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
-                  <SelectContent>
-                    {(categories.length ? categories : ["Bus Stop Shelter", "Tram Shelter", "Information Kiosk", "Other"]).map(c => (
-                      <SelectItem key={c} value={c}>{c}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
                 <Label className="text-xs">Status <span className="text-red-500">*</span></Label>
                 <Select value={form.status} onValueChange={v => set("status", v)}>
                   <SelectTrigger className={err("status")}><SelectValue placeholder="Select" /></SelectTrigger>
