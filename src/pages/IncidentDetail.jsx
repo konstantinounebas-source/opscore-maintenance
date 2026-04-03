@@ -56,6 +56,7 @@ export default function IncidentDetail() {
   });
 
   const handleEditSave = async (data, pendingFiles) => {
+    const isNewIncident = !incident;
     addAuditEntry("Incident Updated", "Incident details modified");
     updateIncident.mutate(data);
     if (pendingFiles?.length > 0) {
@@ -67,6 +68,7 @@ export default function IncidentDetail() {
           file_url: file.url,
           file_type: file.type,
           uploaded_by: user?.email,
+          is_initial_upload: isNewIncident,
         });
         await base44.entities.IncidentAuditTrail.create({
           incident_id: incidentId,
