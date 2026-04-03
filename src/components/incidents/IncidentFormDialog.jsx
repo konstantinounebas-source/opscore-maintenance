@@ -395,7 +395,7 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
             {/* Subsystems */}
             <div className="col-span-2 space-y-3">
               <Label className="text-xs font-semibold text-slate-700">
-                Επηρεαζόμενα Υποσυστήματα <span className="text-red-500">*</span>
+                Πιθανά Επηρεαζόμενα Υποσυστήματα <span className="text-red-500">*</span>
               </Label>
               {errors.subsystems && <p className="text-xs text-red-500">Επιλέξτε τουλάχιστον ένα υποσύστημα</p>}
 
