@@ -459,8 +459,14 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
               <Textarea className={err("damage_description")} value={form.damage_description} onChange={e => set("damage_description", e.target.value)} rows={3} />
             </Field>
 
-            <Field label="Εκτός Εγγύησης (OWR)" required>
-              <YesNoSelect value={form.is_owr} onChange={v => set("is_owr", v)} />
+            <Field label="Αρχική Αξιολόγηση Εγγύησης" required>
+              <Select value={form.is_owr === true ? "out" : form.is_owr === false ? "in" : ""} onValueChange={v => set("is_owr", v === "out" ? true : v === "in" ? false : null)}>
+                <SelectTrigger className={err("is_owr")}><SelectValue placeholder="Επιλογή..." /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="in">Εντός Εγγύησης</SelectItem>
+                  <SelectItem value="out">Εκτός Εγγύησης</SelectItem>
+                </SelectContent>
+              </Select>
               {errors.is_owr && <p className="text-xs text-red-500">Υποχρεωτικό</p>}
             </Field>
             <div />
