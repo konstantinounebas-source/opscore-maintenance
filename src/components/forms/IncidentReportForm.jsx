@@ -266,6 +266,7 @@ export default function IncidentReportForm({ submission, incidents = [], assets 
               file_name: f.name || f.url.split("/").pop(),
               file_type: isImage ? "Photo" : "Document",
               uploaded_by: null,
+              is_initial_upload: true,
             });
           }
         }

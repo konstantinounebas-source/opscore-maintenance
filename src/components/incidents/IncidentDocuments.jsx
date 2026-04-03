@@ -35,11 +35,11 @@ function DocItem({ url, name, uploadedBy, date }) {
 }
 
 export default function IncidentDocuments({ attachments = [], auditTrail = [] }) {
-  // Collect all docs: from IncidentAttachments + from audit trail attachment_metadata + legacy attachments
+  // Collect all docs: from IncidentAttachments (initial uploads only) + from audit trail attachment_metadata + legacy attachments
   const allDocs = [];
 
-  // Direct attachments
-  attachments.forEach(a => {
+  // Direct attachments (only initial uploads)
+  attachments.filter(a => a.is_initial_upload).forEach(a => {
     allDocs.push({ url: a.file_url, name: a.file_name, uploadedBy: a.uploaded_by, date: a.created_date, source: "Attachment" });
   });
 
