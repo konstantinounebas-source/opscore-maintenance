@@ -224,7 +224,34 @@ export default function WorkOrderFormF({ submission, incidents, assets, workOrde
       if (isEditing) return base44.entities.FormSubmissions.update(submission.id, data);
       return base44.entities.FormSubmissions.create(data);
     },
-    onSuccess: () => {
+    onSuccess: async (_, variables) => {
+      const incId = variables.incident_id;
+      if (incId) {
+        const allPhotos = [
+          ...(variables.form_data?.photos_before || []),
+          ...(variables.form_data?.photos_after || []),
+        ];
+        for (const f of allPhotos) {
+          if (f?.url) {
+            await base44.entities.IncidentAttachments.create({
+              incident_id: incId,
+              file_url: f.url,
+              file_name: f.name || f.url.split("/").pop(),
+              file_type: "Photo",
+              uploaded_by: null,
+            });
+          }
+        }
+        if (variables.form_data?.sig_upload?.url) {
+          await base44.entities.IncidentAttachments.create({
+            incident_id: incId,
+            file_url: variables.form_data.sig_upload.url,
+            file_name: variables.form_data.sig_upload.name || "Signature",
+            file_type: "Document",
+            uploaded_by: null,
+          });
+        }
+      }
       toast({ title: isEditing ? "Φόρμα ενημερώθηκε" : "Φόρμα αποθηκεύτηκε" });
       onClose();
     },

@@ -249,7 +249,39 @@ export default function MakeSafeChecklistForm({ submission, incidents, assets, w
       if (isEditing) return base44.entities.FormSubmissions.update(submission.id, data);
       return base44.entities.FormSubmissions.create(data);
     },
-    onSuccess: () => {
+    onSuccess: async (_, variables) => {
+      // Mirror all uploaded photos/files to IncidentAttachments so they appear in the Documents tab
+      const incId = variables.incident_id;
+      if (incId) {
+        const allPhotos = [
+          ...(variables.form_data?.photos_before || []),
+          ...(variables.form_data?.photos_after || []),
+        ];
+        for (const f of allPhotos) {
+          if (f?.url) {
+            await base44.entities.IncidentAttachments.create({
+              incident_id: incId,
+              file_url: f.url,
+              file_name: f.name || f.url.split("/").pop(),
+              file_type: "Photo",
+              uploaded_by: null,
+            });
+          }
+        }
+        // Also mirror signature uploads
+        const sigs = [variables.form_data?.sig_tech_upload, variables.form_data?.sig_hd_upload].filter(Boolean);
+        for (const s of sigs) {
+          if (s?.url) {
+            await base44.entities.IncidentAttachments.create({
+              incident_id: incId,
+              file_url: s.url,
+              file_name: s.name || "Signature",
+              file_type: "Document",
+              uploaded_by: null,
+            });
+          }
+        }
+      }
       toast({ title: isEditing ? "Φόρμα ενημερώθηκε" : "Φόρμα αποθηκεύτηκε" });
       onClose();
     },

@@ -253,7 +253,23 @@ export default function IncidentReportForm({ submission, incidents = [], assets 
       if (isEditing) return base44.entities.FormSubmissions.update(submission.id, data);
       return base44.entities.FormSubmissions.create(data);
     },
-    onSuccess: () => {
+    onSuccess: async (_, variables) => {
+      const incId = variables.incident_id;
+      if (incId) {
+        const attachments = variables.form_data?.attachments || [];
+        for (const f of attachments) {
+          if (f?.url) {
+            const isImage = f.type?.startsWith("image/") || /\.(jpg|jpeg|png|gif|webp)$/i.test(f.name || "");
+            await base44.entities.IncidentAttachments.create({
+              incident_id: incId,
+              file_url: f.url,
+              file_name: f.name || f.url.split("/").pop(),
+              file_type: isImage ? "Photo" : "Document",
+              uploaded_by: null,
+            });
+          }
+        }
+      }
       toast({ title: isEditing ? "Φόρμα ενημερώθηκε" : "Φόρμα αποθηκεύτηκε" });
       onClose();
     },
