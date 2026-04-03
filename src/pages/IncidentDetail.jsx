@@ -17,7 +17,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import IncidentDocuments from "@/components/incidents/IncidentDocuments";
 import ResetIncidentDialog from "@/components/incidents/ResetIncidentDialog";
 import IncidentFormSubmissions from "@/components/incidents/IncidentFormSubmissions";
-import InitialAttachments from "@/components/incidents/InitialAttachments";
 
 export default function IncidentDetail() {
   const params = new URLSearchParams(window.location.search);
@@ -175,8 +174,6 @@ export default function IncidentDetail() {
               <p className="text-sm text-slate-700">{incident.description}</p>
             </div>
           )}
-
-          {attachments.length > 0 && !showMore && <InitialAttachments attachments={attachments} />}
 
           <button
             onClick={() => setShowMore(v => !v)}

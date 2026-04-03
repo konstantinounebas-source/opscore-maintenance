@@ -1,0 +1,42 @@
+{
+  "name": "IncidentAttachments",
+  "type": "object",
+  "properties": {
+    "incident_id": {
+      "type": "string",
+      "description": "Reference to incident record ID"
+    },
+    "file_name": {
+      "type": "string",
+      "description": "Original file name"
+    },
+    "file_url": {
+      "type": "string",
+      "description": "URL of the uploaded file"
+    },
+    "file_type": {
+      "type": "string",
+      "enum": [
+        "Document",
+        "Photo",
+        "Other"
+      ],
+      "default": "Document",
+      "description": "Type of attachment"
+    },
+    "uploaded_by": {
+      "type": "string",
+      "description": "User who uploaded the file"
+    },
+    "is_initial_upload": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this attachment was uploaded during initial incident creation"
+    }
+  },
+  "required": [
+    "incident_id",
+    "file_url",
+    "file_name"
+  ]
+}
