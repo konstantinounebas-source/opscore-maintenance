@@ -110,6 +110,15 @@ export default function IncidentDetail() {
 
   const sortedAudit = [...auditTrail].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
 
+  // Calculate unique document count (same deduplication as IncidentDocuments)
+  const uniqueDocUrls = new Set();
+  attachments.forEach(a => uniqueDocUrls.add(a.file_url));
+  auditTrail.forEach(entry => {
+    (entry.attachment_metadata || []).forEach(meta => uniqueDocUrls.add(meta.url));
+    (entry.attachments || []).forEach(url => uniqueDocUrls.add(url));
+  });
+  const uniqueDocCount = uniqueDocUrls.size;
+
   return (
     <div>
       <TopHeader
@@ -217,7 +226,7 @@ export default function IncidentDetail() {
               <TabsList className="h-8">
                 <TabsTrigger value="audit" className="text-xs">Activity & Audit Trail</TabsTrigger>
                 <TabsTrigger value="documents" className="text-xs">
-                  Documents {attachments.length + auditTrail.reduce((sum, e) => sum + (e.attachment_metadata?.length || 0) + (e.attachments?.length || 0), 0) > 0 && `(${attachments.length + auditTrail.reduce((sum, e) => sum + (e.attachment_metadata?.length || 0) + (e.attachments?.length || 0), 0)})`}
+                  Documents {uniqueDocCount > 0 && `(${uniqueDocCount})`}
                 </TabsTrigger>
                 <TabsTrigger value="forms" className="text-xs">Forms</TabsTrigger>
               </TabsList>
