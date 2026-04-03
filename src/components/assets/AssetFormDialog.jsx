@@ -215,11 +215,9 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
     }));
   }, [form.warranty_base_year]);
 
-  // Auto-calculate preventive_inspection_date (6 years after CONTRACT_BASE_YEAR) and next_inspection_date (+1 year)
+  // Auto-calculate preventive_inspection_date (1/1/2029) and next_inspection_date (1/1/2030)
   useEffect(() => {
-    const preventive = new Date(CONTRACT_BASE_YEAR + 6, 0, 1).toISOString().split("T")[0];
-    const next = new Date(CONTRACT_BASE_YEAR + 7, 0, 1).toISOString().split("T")[0];
-    setForm(f => ({ ...f, preventive_inspection_date: preventive, next_inspection_date: next }));
+    setForm(f => ({ ...f, preventive_inspection_date: "2029-01-01", next_inspection_date: "2030-01-01" }));
   }, [open]);
 
   // Auto-fill fields when Active Shelter ID matches an existing asset
