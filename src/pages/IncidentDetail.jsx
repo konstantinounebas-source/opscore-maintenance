@@ -186,12 +186,12 @@ export default function IncidentDetail() {
             </div>
           )}
 
-          {/* Initial Attachments */}
-          {attachments.filter(a => a.is_initial_upload).length > 0 && (
+          {/* Attachments */}
+          {attachments.length > 0 && (
             <div className="mt-4 pt-4 border-t border-slate-100">
-              <p className="text-xs text-slate-500 font-medium mb-3">Initial Attachments</p>
+              <p className="text-xs text-slate-500 font-medium mb-3">Attachments</p>
               <div className="space-y-2">
-                {attachments.filter(a => a.is_initial_upload).map((att) => (
+                {attachments.map((att) => (
                   <div key={att.id} className="flex items-center gap-3 px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors">
                     <div className="h-8 w-8 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0">
                       {/\.(png|jpg|jpeg|gif|webp)$/i.test(att.file_name || att.file_url)
