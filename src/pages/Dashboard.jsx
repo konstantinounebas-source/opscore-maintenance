@@ -2,7 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import TopHeader from "@/components/layout/TopHeader";
-import { Clock } from "lucide-react";
+import { Clock, DatabaseBackup, Loader2, CheckCircle2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
 // Note: "Active Shelters" counts assets with status "Active" OR "Delivered"
 
 import SystemStatusCards from "@/components/dashboard/SystemStatusCards";
@@ -16,6 +18,23 @@ export default function Dashboard() {
   const { data: assets = [] }     = useQuery({ queryKey: ["assets"],     queryFn: () => base44.entities.Assets.list() });
   const { data: incidents = [] }  = useQuery({ queryKey: ["incidents"],  queryFn: () => base44.entities.Incidents.list() });
   const { data: workOrders = [] } = useQuery({ queryKey: ["workOrders"], queryFn: () => base44.entities.WorkOrders.list() });
+
+  const { toast } = useToast();
+  const [backfilling, setBackfilling] = useState(false);
+  const [backfillDone, setBackfillDone] = useState(false);
+
+  const handleBackfill = async () => {
+    setBackfilling(true);
+    setBackfillDone(false);
+    const res = await base44.functions.invoke("backfillIncidentAttachments", {});
+    setBackfilling(false);
+    if (res.data?.success) {
+      setBackfillDone(true);
+      toast({ title: `Backfill complete: ${res.data.created} new records created, ${res.data.skipped} already existed.` });
+    } else {
+      toast({ title: "Backfill failed", description: res.data?.error || "Unknown error" });
+    }
+  };
 
   const [now, setNow] = useState(new Date());
   useEffect(() => {
@@ -36,12 +55,24 @@ export default function Dashboard() {
         title="Dashboard"
         subtitle="Operational Command Center"
         actions={
+          <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleBackfill}
+            disabled={backfilling || backfillDone}
+            className="gap-1.5 text-xs"
+          >
+            {backfilling ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : backfillDone ? <CheckCircle2 className="w-3.5 h-3.5 text-green-600" /> : <DatabaseBackup className="w-3.5 h-3.5" />}
+            {backfilling ? "Syncing..." : backfillDone ? "Sync Done" : "Sync Old Docs"}
+          </Button>
           <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-1.5">
             <Clock className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
             <div>
               <span className="text-sm font-bold text-slate-900 tabular-nums">{greeceTime}</span>
               <span className="text-xs text-slate-400 ml-2">{greeceDate} · Athens</span>
             </div>
+          </div>
           </div>
         }
       />
