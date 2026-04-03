@@ -14,7 +14,7 @@ import FormsConfig from "@/components/configuration/FormsConfig";
 const INCIDENT_LIST_TYPES = [
   { key: "incident_person", label: "Confirmed By / Persons" },
   { key: "Provinces", label: "Provinces" },
-  { key: "Municipalities", label: "Municipalities" },
+  { key: "Municipalities", label: "Δήμος" },
   { key: "Incident Sources", label: "Incident Sources" },
   { key: "Structural Issues", label: "Structural Issues" },
   { key: "Electrical Issues", label: "Electrical Issues" },
