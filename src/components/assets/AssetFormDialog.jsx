@@ -215,12 +215,11 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
     }));
   }, [form.warranty_base_year]);
 
-  // Auto-calculate preventive_inspection_date (6 years after CONTRACT_BASE_YEAR)
+  // Auto-calculate preventive_inspection_date (6 years after CONTRACT_BASE_YEAR) and next_inspection_date (+1 year)
   useEffect(() => {
-    if (!form.preventive_inspection_date) {
-      const d = new Date(CONTRACT_BASE_YEAR + 6, 0, 1);
-      setForm(f => ({ ...f, preventive_inspection_date: d.toISOString().split("T")[0] }));
-    }
+    const preventive = new Date(CONTRACT_BASE_YEAR + 6, 0, 1).toISOString().split("T")[0];
+    const next = new Date(CONTRACT_BASE_YEAR + 7, 0, 1).toISOString().split("T")[0];
+    setForm(f => ({ ...f, preventive_inspection_date: preventive, next_inspection_date: next }));
   }, [open]);
 
   // Auto-fill fields when Active Shelter ID matches an existing asset
@@ -450,12 +449,12 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Preventive Inspection (6 years after 2023 contract)</Label>
-                <Input type="date" value={form.preventive_inspection_date} onChange={e => set("preventive_inspection_date", e.target.value)} />
+                <Input type="date" value={form.preventive_inspection_date} readOnly className="bg-slate-50 text-slate-500 cursor-not-allowed" />
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Next Inspection</Label>
-              <Input type="date" value={form.next_inspection_date} onChange={e => set("next_inspection_date", e.target.value)} />
+              <Label className="text-xs">Next Inspection <span className="text-slate-400 font-normal">(auto: 1 year after preventive inspection)</span></Label>
+              <Input type="date" value={form.next_inspection_date} readOnly className="bg-slate-50 text-slate-500 cursor-not-allowed" />
             </div>
 
             {/* Warranty dates — auto-filled, but still editable */}
