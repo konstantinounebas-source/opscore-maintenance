@@ -16,7 +16,7 @@ const ChildCatalogForm = memo(function ChildCatalogForm({ value, onChange, onSav
     <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 space-y-3">
       <div className="grid grid-cols-3 gap-3">
         <div>
-          <Label className="text-xs">Code *</Label>
+          <Label className="text-xs">Code</Label>
           <Input
             className="mt-1 h-8 text-xs"
             value={value.child_code || ""}
@@ -25,7 +25,7 @@ const ChildCatalogForm = memo(function ChildCatalogForm({ value, onChange, onSav
           />
         </div>
         <div>
-          <Label className="text-xs">Name *</Label>
+          <Label className="text-xs">Name</Label>
           <Input
             className="mt-1 h-8 text-xs"
             value={value.child_name || ""}
