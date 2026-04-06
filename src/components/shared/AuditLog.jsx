@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { getAthensTimestamp } from "@/lib/timeSync";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -85,7 +86,7 @@ function AuditEntry({ entry: initialEntry, queryKey }) {
         text: commentText,
         author: commentAuthor,
         author_name: commentAuthorName,
-        created_at: new Date().toISOString(),
+        created_at: getAthensTimestamp(),
       }],
     });
     await refreshEntry();
@@ -109,7 +110,7 @@ function AuditEntry({ entry: initialEntry, queryKey }) {
         name: file.name,
         author: user?.email,
         author_name: user?.full_name,
-        created_at: new Date().toISOString(),
+        created_at: getAthensTimestamp(),
       }],
     });
     await refreshEntry();

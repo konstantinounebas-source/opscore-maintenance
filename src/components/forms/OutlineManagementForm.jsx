@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { getAthensTimestamp } from "@/lib/timeSync";
 import TopHeader from "@/components/layout/TopHeader";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -224,6 +225,7 @@ export default function OutlineManagementForm({ submission, incidents, assets, w
       // Log to audit trail if submitted
       if (data.status === "Submitted") {
         const user = await base44.auth.me();
+        const timestamp = getAthensTimestamp();
         await base44.entities.IncidentAuditTrail.create({
           incident_id: linkedIncidentId,
           action: "Form Submitted",
@@ -234,7 +236,7 @@ export default function OutlineManagementForm({ submission, incidents, assets, w
             name: `${data.form_name} (Submitted)`,
             author: user?.email,
             author_name: user?.full_name,
-            created_at: new Date().toISOString(),
+            created_at: timestamp,
           }],
         });
       }
@@ -267,7 +269,7 @@ export default function OutlineManagementForm({ submission, incidents, assets, w
       comments: comments,
       ektos_eggyhshs: owrValue,
       apaiteitai_eggkrisi_ca: caValue,
-      submitted_at: status === "Submitted" ? new Date().toISOString() : submission?.submitted_at,
+      submitted_at: status === "Submitted" ? getAthensTimestamp() : submission?.submitted_at,
     });
   };
 
