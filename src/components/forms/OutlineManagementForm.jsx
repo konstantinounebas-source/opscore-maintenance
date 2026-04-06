@@ -201,6 +201,14 @@ export default function OutlineManagementForm({ submission, incidents, assets, w
     }
   }, [incident]);
 
+  // Auto-fill Προθεσμία Επιβεβαίωσης Λήψης from incident creation date
+  const reportDate = incident?.reported_date || incident?.first_report_date;
+  useEffect(() => {
+    if (reportDate && !proxEpivevaioshs) {
+      setProxEpivevaioshs(reportDate);
+    }
+  }, [reportDate]);
+
   const subsystem  = useMemo(() => deriveSubsystem(incident), [incident]);
   const subcategory = useMemo(() => deriveSubcategory(incident), [incident]);
 
