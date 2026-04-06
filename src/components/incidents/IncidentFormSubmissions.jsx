@@ -6,9 +6,9 @@ import { FileText, ExternalLink, Clock } from "lucide-react";
 import { format } from "date-fns";
 
 const FORM_TYPE_LABELS = {
-  outline_management:       "OMPI – Outline Management Plan",
+  outline_management_incident_plan: "Outline Management Incident Plan",
   combined_fmpi_invoice:    "FMPI & Pricing Order",
-  make_safe_checklist:      "Make Safe Checklist",
+  make_safe_checklist:      "MAKE-SAFE CHECKLIST ΠΕΔΙΟΥ",
   work_order_form_f:        "Work Order Invoice",
 };
 

@@ -167,9 +167,9 @@ export default function OutlineManagementForm({ submission, incidents, assets, w
 
   // ── Manual fields ──
   const [proxEpivevaioshs, setProxEpivevaioshs] = useState(submission?.proxthesmia_epivevaioshs_lhpsis || "");
-  const [outlinePlan, setOutlinePlan]           = useState(submission?.outline_plan || "");
   const [proxFmpi, setProxFmpi]                 = useState(submission?.proxthesmia_fmpi || "");
   const [proxEpiskeuhs, setProxEpiskeuhs]       = useState(submission?.anammenomeni_proxthesmia_episkeuhs || "");
+  const [comments, setComments]                 = useState(submission?.comments || "");
   const [owrValue, setOwrValue]                 = useState(submission?.ektos_eggyhshs || "");
   const [caValue, setCaValue]                   = useState(submission?.apaiteitai_eggkrisi_ca || "NO");
   const [formStatus, setFormStatus]             = useState(submission?.status || "Draft");
@@ -217,8 +217,29 @@ export default function OutlineManagementForm({ submission, incidents, assets, w
   // ── Save mutation ──
   const saveMutation = useMutation({
     mutationFn: async (data) => {
-      if (isEditing) return base44.entities.FormSubmissions.update(submission.id, data);
-      return base44.entities.FormSubmissions.create(data);
+      const result = isEditing
+        ? await base44.entities.FormSubmissions.update(submission.id, data)
+        : await base44.entities.FormSubmissions.create(data);
+      
+      // Log to audit trail if submitted
+      if (data.status === "Submitted") {
+        const user = await base44.auth.me();
+        await base44.entities.IncidentAuditTrail.create({
+          incident_id: linkedIncidentId,
+          action: "Form Submitted",
+          details: `${data.form_name} submitted`,
+          user: user?.email,
+          attachment_metadata: [{
+            url: result?.id ? `form:${result.id}:${data.form_type}` : "",
+            name: `${data.form_name} (Submitted)`,
+            author: user?.email,
+            author_name: user?.full_name,
+            created_at: new Date().toISOString(),
+          }],
+        });
+      }
+      
+      return result;
     },
     onSuccess: () => {
       toast({ title: isEditing ? "Φόρμα ενημερώθηκε" : "Φόρμα αποθηκεύτηκε" });
@@ -231,7 +252,6 @@ export default function OutlineManagementForm({ submission, incidents, assets, w
     if (!linkedIncidentId) { toast({ title: "Επιλέξτε περιστατικό", variant: "destructive" }); return; }
     if (!linkedAssetId)    { toast({ title: "Επιλέξτε asset", variant: "destructive" }); return; }
     if (!proxEpivevaioshs) { toast({ title: "Συμπληρώστε: Προθεσμία Επιβεβαίωσης Λήψης", variant: "destructive" }); return; }
-    if (!outlinePlan)      { toast({ title: "Συμπληρώστε: Outline Plan", variant: "destructive" }); return; }
     if (!proxFmpi)         { toast({ title: "Συμπληρώστε: Προθεσμία FMPI", variant: "destructive" }); return; }
     if (!proxEpiskeuhs)    { toast({ title: "Συμπληρώστε: Αναμενόμενη Προθεσμία Επισκευής", variant: "destructive" }); return; }
     if (!owrValue)         { toast({ title: "Επιλέξτε: Εκτός Εγγύησης (OWR)", variant: "destructive" }); return; }
@@ -242,9 +262,9 @@ export default function OutlineManagementForm({ submission, incidents, assets, w
       asset_id: linkedAssetId,
       status,
       proxthesmia_epivevaioshs_lhpsis: proxEpivevaioshs,
-      outline_plan: outlinePlan,
       proxthesmia_fmpi: proxFmpi,
       anammenomeni_proxthesmia_episkeuhs: proxEpiskeuhs,
+      comments: comments,
       ektos_eggyhshs: owrValue,
       apaiteitai_eggkrisi_ca: caValue,
       submitted_at: status === "Submitted" ? new Date().toISOString() : submission?.submitted_at,
@@ -395,8 +415,8 @@ export default function OutlineManagementForm({ submission, incidents, assets, w
                   className="text-sm mt-1" />
               </div>
               <div className="col-span-2 space-y-1">
-                <Label className="text-xs font-semibold text-slate-600">Outline Plan (το παρόν) *</Label>
-                <Textarea placeholder="Περιγράψτε το σχέδιο..." value={outlinePlan} onChange={e => setOutlinePlan(e.target.value)}
+                <Label className="text-xs font-semibold text-slate-600">Comments</Label>
+                <Textarea placeholder="Προσθέστε σχόλια (προαιρετικά)..." value={comments} onChange={e => setComments(e.target.value)}
                   className="text-sm mt-1" rows={3} />
               </div>
             </div>

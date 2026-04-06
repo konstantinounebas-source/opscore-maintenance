@@ -356,15 +356,15 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
   // ── Save ──
   const saveMutation = useMutation({
     mutationFn: async (data) => {
-      if (isEditing) return base44.entities.FormSubmissions.update(submission.id, data);
-      return base44.entities.FormSubmissions.create(data);
-    },
-    onSuccess: async (_, variables) => {
-      const incId = variables.incident_id;
+      const result = isEditing
+        ? await base44.entities.FormSubmissions.update(submission.id, data)
+        : await base44.entities.FormSubmissions.create(data);
+      
+      const incId = data.incident_id;
       if (incId) {
         const allPhotos = [
-          ...(variables.form_data?.photos_before || []),
-          ...(variables.form_data?.photos_after || []),
+          ...(data.form_data?.photos_before || []),
+          ...(data.form_data?.photos_after || []),
         ];
         for (const f of allPhotos) {
           if (f?.url) {
@@ -377,16 +377,38 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
             });
           }
         }
-        if (variables.form_data?.sig_upload?.url) {
+        if (data.form_data?.sig_upload?.url) {
           await base44.entities.IncidentAttachments.create({
             incident_id: incId,
-            file_url: variables.form_data.sig_upload.url,
-            file_name: variables.form_data.sig_upload.name || "Signature",
+            file_url: data.form_data.sig_upload.url,
+            file_name: data.form_data.sig_upload.name || "Signature",
             file_type: "Document",
             uploaded_by: null,
           });
         }
       }
+      
+      // Log to audit trail if submitted
+      if (data.status === "Submitted") {
+        const user = await base44.auth.me();
+        await base44.entities.IncidentAuditTrail.create({
+          incident_id: incId,
+          action: "Form Submitted",
+          details: `${data.form_name} submitted`,
+          user: user?.email,
+          attachment_metadata: [{
+            url: result?.id ? `form:${result.id}:${data.form_type}` : "",
+            name: `${data.form_name} (Submitted)`,
+            author: user?.email,
+            author_name: user?.full_name,
+            created_at: new Date().toISOString(),
+          }],
+        });
+      }
+      
+      return result;
+    },
+    onSuccess: () => {
       toast({ title: isEditing ? "Φόρμα ενημερώθηκε" : "Φόρμα αποθηκεύτηκε" });
       onClose();
     },
