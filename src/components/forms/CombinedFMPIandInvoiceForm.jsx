@@ -263,7 +263,6 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
   const [sigDate, setSigDate] = useState(submission?.form_data?.sig_date || "");
   const [sigUpload, setSigUpload] = useState(submission?.form_data?.sig_upload || null);
   const [photosBefore, setPhotosBefore] = useState(submission?.form_data?.photos_before || []);
-  const [photosAfter, setPhotosAfter] = useState(submission?.form_data?.photos_after || []);
 
   // ── OWR → CA lock ──
   const caAutoLocked = owrValue === "ΟΧΙ";
@@ -372,7 +371,6 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
       if (incId) {
         const allPhotos = [
           ...(data.form_data?.photos_before || []),
-          ...(data.form_data?.photos_after || []),
         ];
         for (const f of allPhotos) {
           if (f?.url) {
@@ -435,9 +433,6 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
     if (hasEmptyChild) { toast({ title: "Επιλέξτε Child για κάθε γραμμή εργασίας", variant: "destructive" }); return; }
     const hasZeroQty = rows.some(r => !r.qty || Number(r.qty) <= 0);
     if (hasZeroQty) { toast({ title: "Η ποσότητα πρέπει να είναι > 0", variant: "destructive" }); return; }
-    if (status === "Submitted" && photosAfter.length === 0) {
-      toast({ title: "Απαιτούνται φωτογραφίες μετά την αποκατάσταση", variant: "destructive" }); return;
-    }
 
     saveMutation.mutate({
       form_type: "combined_fmpi_invoice",
@@ -452,16 +447,15 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
       apaiteitai_eggkrisi_ca: caValue === "ΝΑΙ" ? "Yes" : caValue === "ΟΧΙ" ? "No" : caValue,
       submitted_at: status === "Submitted" ? getAthensTimestamp() : submission?.submitted_at,
       form_data: {
-        rows,
-        total_cost: totalCost,
-        photos_before: photosBefore,
-        photos_after: photosAfter,
-        comments,
-        sig_name: sigName,
-        sig_service: sigService,
-        sig_date: sigDate,
-        sig_upload: sigUpload,
-      },
+         rows,
+         total_cost: totalCost,
+         photos_before: photosBefore,
+         comments,
+         sig_name: sigName,
+         sig_service: sigService,
+         sig_date: sigDate,
+         sig_upload: sigUpload,
+       },
     });
   };
 
@@ -849,12 +843,6 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
                     files={photosBefore}
                     onChange={setPhotosBefore}
                     required={false}
-                  />
-                  <PhotoUploadArea
-                    label="ΦΩΤΟΓΡΑΦΙΕΣ ΜΕΤΑ ΤΗΝ ΑΠΟΚΑΤΑΣΤΑΣΗ"
-                    files={photosAfter}
-                    onChange={setPhotosAfter}
-                    required={true}
                   />
                 </div>
               </Section>
