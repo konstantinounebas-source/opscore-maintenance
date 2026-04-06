@@ -211,13 +211,25 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
 
       if (key === "create_fmpi") {
         if (formData.file) await uploadAttachment(formData.file);
+        if (formData.pricing_order_file) await uploadAttachment(formData.pricing_order_file);
         incidentUpdates.owr_fmpi_done = true;
         const details = `FMPI created${formData.notes ? `: ${formData.notes}` : ""}${!incident.is_owr ? " — CA Approval required" : ""}`;
-        await addAudit(
-          "FMPI Created",
-          details,
-          formData.file ? { attachments: [formData.file.file_url], attachment_names: [formData.file.file_name] } : {}
-        );
+        const attachmentData = {};
+        if (formData.file || formData.pricing_order_file) {
+          const attachmentUrls = [];
+          const attachmentNames = [];
+          if (formData.file) {
+            attachmentUrls.push(formData.file.file_url);
+            attachmentNames.push(formData.file.file_name);
+          }
+          if (formData.pricing_order_file) {
+            attachmentUrls.push(formData.pricing_order_file.file_url);
+            attachmentNames.push(formData.pricing_order_file.file_name);
+          }
+          attachmentData.attachments = attachmentUrls;
+          attachmentData.attachment_names = attachmentNames;
+        }
+        await addAudit("FMPI Created", details, attachmentData);
       }
 
       if (key === "ca_status") {
@@ -381,7 +393,7 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
           )}
 
           {key === "create_fmpi" && (
-            <div className="space-y-1.5">
+            <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <Label className="text-xs flex items-center gap-1"><Paperclip className="w-3 h-3" /> Attachment (optional)</Label>
                 <Button
@@ -394,7 +406,14 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
                   <FileText className="w-3.5 h-3.5" /> Fill FMPI Form
                 </Button>
               </div>
-              <FileUploader onUpload={fd => set("file", fd)} label={formData.file ? formData.file.file_name : "Upload FMPI Document"} />
+              <div className="space-y-1.5">
+                <Label className="text-xs flex items-center gap-1"><Paperclip className="w-3 h-3" /> Upload FMPI Document (optional)</Label>
+                <FileUploader onUpload={fd => set("file", fd)} label={formData.file ? formData.file.file_name : "Upload FMPI Document"} />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs flex items-center gap-1"><Paperclip className="w-3 h-3" /> Upload Pricing Order Document (optional)</Label>
+                <FileUploader onUpload={fd => set("pricing_order_file", fd)} label={formData.pricing_order_file ? formData.pricing_order_file.file_name : "Upload Pricing Order Document"} />
+              </div>
             </div>
           )}
 
