@@ -76,7 +76,7 @@ function ChildCatalogTab({ catalog, queryClient }) {
         </div>
       </div>
 
-      {adding && <BlankForm value={form} onChange={setForm} onSave={() => createMutation.mutate(form)} onCancel={() => { setAdding(false); setForm({}); }} saving={createMutation.isPending} />}
+      {adding && <BlankForm key="add-form" value={form} onChange={setForm} onSave={() => createMutation.mutate(form)} onCancel={() => { setAdding(false); setForm({}); }} saving={createMutation.isPending} />}
 
       <div className="border rounded-lg overflow-hidden">
         <table className="w-full text-xs">
