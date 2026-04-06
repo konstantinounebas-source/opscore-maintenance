@@ -109,9 +109,15 @@ const PROCESS_STEPS = [
   "Επιβεβαίωση λήψης περιστατικού και αποστολή σχετικής ενημέρωσης προς την ΑΑ (CA).",
   "Άμεση τεχνική διερεύνηση και εκτίμηση απαιτούμενων εργασιών. Αξιολόγηση του προβλήματος βάσει των στοιχείων που υποβλήθηκαν (φωτογραφίες, βίντεο, αναφορές).",
   "Εφόσον απαιτείται, επίσκεψη στον χώρο για περαιτέρω διερεύνηση και τεκμηρίωση.",
+  "Αποστολή Full management plan & workorder προς έγκριση απο την ΑΑ.",
   "Επισκευή / επιδιόρθωση των προβλημάτων εντός των χρονικών ορίων του SLA, όπου αυτό είναι άμεσα εφικτό.",
   "Αποστολή τελικής φόρμας αναφοράς με φωτογραφίες μετά την επισκευή / επιδιόρθωση, για ενημέρωση της ΑΑ.",
 ];
+
+const SLA_NOTES = `Σημειώσεις SLA:
+• FMPI σε περίπτωση Out of warranty μόνο για έγκριση απο την Α.Α: Χαμηλή → +7 ημέρες από την επιβεβαίωση λήψης της αναφοράς
+• Επισκευή: 21 ημέρες απο την ημερομηνία έγκρισης της αναθέτουσας αρχής - εφόσον είναι εκτός εγγύησης / Αν είναι εντός εγγύησης 28 ημέρες απο την ημερομηνία αποστολής του outline management plan
+Θα γίνεται κάθε προσπάθεια από πλευράς του εργολάβου για διεκπεραίωση των εργασιών εντός των καθορισμένων συμβατικών χρονοδιαγραμμάτων – ανάλογα με την επίσπευση των εγκρίσεων και εξουσιοδοτήσεων των εργασιών από τρίτα μέρη`;
 
 function StaticProcessBlock() {
   return (
@@ -121,7 +127,7 @@ function StaticProcessBlock() {
         <h3 className="text-sm font-semibold text-indigo-800">Διαδικασία Διαχείρισης Περιστατικού</h3>
         <span className="ml-auto text-xs text-indigo-400 font-medium px-2 py-0.5 bg-indigo-50 border border-indigo-100 rounded-full">Σταθερό</span>
       </div>
-      <div className="p-5">
+      <div className="p-5 space-y-6">
         <ol className="space-y-3">
           {PROCESS_STEPS.map((step, i) => (
             <li key={i} className="flex gap-3 text-sm text-slate-700 leading-relaxed">
@@ -132,6 +138,10 @@ function StaticProcessBlock() {
             </li>
           ))}
         </ol>
+        <div className="border-t pt-4">
+          <p className="text-xs font-semibold text-slate-600 mb-2">Σημειώσεις SLA:</p>
+          <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-line">{SLA_NOTES}</p>
+        </div>
       </div>
     </div>
   );
@@ -230,10 +240,6 @@ export default function OutlineManagementForm({ submission, incidents, assets, w
   const handleSave = (status = formStatus) => {
     if (!linkedIncidentId) { toast({ title: "Επιλέξτε περιστατικό", variant: "destructive" }); return; }
     if (!linkedAssetId)    { toast({ title: "Επιλέξτε asset", variant: "destructive" }); return; }
-    if (!proxEpivevaioshs) { toast({ title: "Συμπληρώστε: Προθεσμία Επιβεβαίωσης Λήψης", variant: "destructive" }); return; }
-    if (!outlinePlan)      { toast({ title: "Συμπληρώστε: Outline Plan", variant: "destructive" }); return; }
-    if (!proxFmpi)         { toast({ title: "Συμπληρώστε: Προθεσμία FMPI", variant: "destructive" }); return; }
-    if (!proxEpiskeuhs)    { toast({ title: "Συμπληρώστε: Αναμενόμενη Προθεσμία Επισκευής", variant: "destructive" }); return; }
     if (!owrValue)         { toast({ title: "Επιλέξτε: Εκτός Εγγύησης (OWR)", variant: "destructive" }); return; }
     saveMutation.mutate({
       form_type: "outline_management_incident_plan",
@@ -360,50 +366,8 @@ export default function OutlineManagementForm({ submission, incidents, assets, w
             </div>
           </Section>
 
-          {/* Section 2: SLA – Κύριες Ημερομηνίες */}
-          <div className="bg-white rounded-xl border border-blue-200 overflow-hidden">
-            <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-blue-100 bg-blue-50/60">
-              <Calendar className="w-4 h-4 text-blue-600" />
-              <h3 className="text-sm font-semibold text-blue-800">2. SLA – Κύριες Ημερομηνίες</h3>
-              <span className="ml-auto text-xs text-blue-500 font-medium px-2 py-0.5 bg-blue-50 border border-blue-100 rounded-full">
-                Χειροκίνητη εισαγωγή
-              </span>
-            </div>
-            <div className="p-5 grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-blue-500" />
-                  Προθεσμία Επιβεβαίωσης Λήψης *
-                </Label>
-                <Input type="datetime-local" value={proxEpivevaioshs} onChange={e => setProxEpivevaioshs(e.target.value)}
-                  className="text-sm mt-1" />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-blue-500" />
-                  Προθεσμία FMPI (Αν απαιτείται) *
-                </Label>
-                <Input type="datetime-local" value={proxFmpi} onChange={e => setProxFmpi(e.target.value)}
-                  className="text-sm mt-1" />
-              </div>
-              <div className="col-span-2 space-y-1">
-                <Label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-blue-500" />
-                  Αναμενόμενη Προθεσμία Επισκευής *
-                </Label>
-                <Input type="datetime-local" value={proxEpiskeuhs} onChange={e => setProxEpiskeuhs(e.target.value)}
-                  className="text-sm mt-1" />
-              </div>
-              <div className="col-span-2 space-y-1">
-                <Label className="text-xs font-semibold text-slate-600">Outline Plan (το παρόν) *</Label>
-                <Textarea placeholder="Περιγράψτε το σχέδιο..." value={outlinePlan} onChange={e => setOutlinePlan(e.target.value)}
-                  className="text-sm mt-1" rows={3} />
-              </div>
-            </div>
-          </div>
-
-          {/* Section 3: Operational Details */}
-          <Section title="3. Operational Details" icon={Wrench}>
+          {/* Section 2: Operational Details */}
+          <Section title="2. Operational Details" icon={Wrench}>
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2 space-y-1">
                 <Label className="text-xs font-medium text-slate-500">Απαιτείται Make Safe:</Label>
@@ -427,8 +391,8 @@ export default function OutlineManagementForm({ submission, incidents, assets, w
             </div>
           </Section>
 
-          {/* Section 4: Decision Logic */}
-          <Section title="4. Decision Logic" accent="border-amber-200">
+          {/* Section 3: Decision Logic */}
+          <Section title="3. Decision Logic" accent="border-amber-200">
             <div className="space-y-4">
               {/* OWR */}
               <div className={`rounded-lg p-4 border transition-colors ${owrValue === "YES" ? "bg-amber-50 border-amber-200" : owrValue === "NO" ? "bg-emerald-50 border-emerald-200" : "bg-slate-50 border-slate-200"}`}>
@@ -474,7 +438,7 @@ export default function OutlineManagementForm({ submission, incidents, assets, w
             </div>
           </Section>
 
-          {/* Section 5: Static Process Block */}
+          {/* Section 4: Static Process Block */}
           <StaticProcessBlock />
 
           {/* Bottom actions */}
