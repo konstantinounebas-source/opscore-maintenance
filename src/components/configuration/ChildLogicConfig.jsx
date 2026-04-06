@@ -109,13 +109,14 @@ function ChildCatalogTab({ catalog, queryClient }) {
 
 // ── Shelter Types Tab ──────────────────────────────────────────────
 function ShelterTypesTab({ shelterTypeDefs, queryClient }) {
+  const [editing, setEditing] = useState(null);
   const createMutation = useMutation({
     mutationFn: (d) => base44.entities.ShelterTypeDefinitions.create(d),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["shelterTypeDefs"] })
   });
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.ShelterTypeDefinitions.update(id, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["shelterTypeDefs"] })
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["shelterTypeDefs"] }); setEditing(null); }
   });
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.ShelterTypeDefinitions.delete(id),
@@ -149,16 +150,46 @@ function ShelterTypesTab({ shelterTypeDefs, queryClient }) {
             {shelterTypeDefs.length === 0 && <tr><td colSpan={4} className="px-3 py-6 text-center text-slate-400">No shelter types defined. Use the buttons above to create them.</td></tr>}
             {shelterTypeDefs.map(s => (
               <tr key={s.id} className={`hover:bg-slate-50 ${!s.active ? "opacity-50" : ""}`}>
-                <td className="px-3 py-2 font-mono font-semibold text-slate-700">{s.shelter_type_code}</td>
-                <td className="px-3 py-2 text-slate-700">{s.shelter_type_name}</td>
-                <td className="px-3 py-2">
-                  <button onClick={() => updateMutation.mutate({ id: s.id, data: { active: !s.active } })}>
-                    {s.active ? <ToggleRight className="w-4 h-4 text-green-500" /> : <ToggleLeft className="w-4 h-4 text-slate-400" />}
-                  </button>
-                </td>
-                <td className="px-3 py-2">
-                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-red-400 hover:text-red-600" onClick={() => deleteMutation.mutate(s.id)}><Trash2 className="w-3 h-3" /></Button>
-                </td>
+                {editing?.id === s.id ? (
+                  <td colSpan={4} className="p-2">
+                    <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 space-y-3">
+                      <div className="grid grid-cols-3 gap-3">
+                        <div>
+                          <Label className="text-xs">Code</Label>
+                          <Input className="mt-1 h-8 text-xs" value={editing.shelter_type_code} onChange={(e) => setEditing({ ...editing, shelter_type_code: e.target.value })} />
+                        </div>
+                        <div className="col-span-2">
+                          <Label className="text-xs">Name</Label>
+                          <Input className="mt-1 h-8 text-xs" value={editing.shelter_type_name} onChange={(e) => setEditing({ ...editing, shelter_type_name: e.target.value })} />
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 h-7 text-xs" onClick={() => updateMutation.mutate({ id: s.id, data: editing })} disabled={updateMutation.isPending}>
+                          <Check className="w-3 h-3 mr-1" />Save
+                        </Button>
+                        <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setEditing(null)}>
+                          <X className="w-3 h-3 mr-1" />Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  </td>
+                ) : (
+                  <>
+                    <td className="px-3 py-2 font-mono font-semibold text-slate-700">{s.shelter_type_code}</td>
+                    <td className="px-3 py-2 text-slate-700">{s.shelter_type_name}</td>
+                    <td className="px-3 py-2">
+                      <button onClick={() => updateMutation.mutate({ id: s.id, data: { active: !s.active } })}>
+                        {s.active ? <ToggleRight className="w-4 h-4 text-green-500" /> : <ToggleLeft className="w-4 h-4 text-slate-400" />}
+                      </button>
+                    </td>
+                    <td className="px-3 py-2">
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setEditing({ ...s })}><Pencil className="w-3 h-3" /></Button>
+                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-red-400 hover:text-red-600" onClick={() => deleteMutation.mutate(s.id)}><Trash2 className="w-3 h-3" /></Button>
+                      </div>
+                    </td>
+                  </>
+                )}
               </tr>
             ))}
           </tbody>
