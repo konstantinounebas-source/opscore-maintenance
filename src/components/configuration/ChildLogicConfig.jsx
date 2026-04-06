@@ -222,6 +222,20 @@ function TypeTemplatesTab({ templates, catalog, shelterTypeDefs, queryClient }) 
   const availableTypes = shelterTypeDefs.length ? shelterTypeDefs.map(s => s.shelter_type_code) : SHELTER_TYPES;
   const usedChildIds = new Set(typeRows.map(r => r.child_catalog_id));
 
+  const autoPopulate = () => {
+    const matchingChildren = catalog.filter(c => c.active && c.child_type === selectedType && !usedChildIds.has(c.id));
+    matchingChildren.forEach((child, idx) => {
+      createMutation.mutate({ 
+        shelter_type_code: selectedType, 
+        child_catalog_id: child.id, 
+        default_included: true, 
+        mandatory: false, 
+        display_order: (typeRows.length || 0) + idx, 
+        active: true 
+      });
+    });
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
@@ -231,6 +245,9 @@ function TypeTemplatesTab({ templates, catalog, shelterTypeDefs, queryClient }) 
           <SelectContent>{availableTypes.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
         </Select>
         <Badge variant="secondary" className="text-xs">{typeRows.length} children</Badge>
+        <Button size="sm" variant="outline" className="h-8 text-xs" onClick={autoPopulate} disabled={catalog.filter(c => c.active && c.child_type === selectedType && !usedChildIds.has(c.id)).length === 0}>
+          Auto-populate
+        </Button>
       </div>
 
       <div className="border rounded-lg overflow-hidden">
