@@ -1,0 +1,51 @@
+{
+  "name": "ChildCatalog",
+  "type": "object",
+  "properties": {
+    "child_code": {
+      "type": "string",
+      "description": "Unique child code"
+    },
+    "child_name": {
+      "type": "string",
+      "description": "Child component name"
+    },
+    "child_category": {
+      "type": "string",
+      "description": "Category (Glass, Seating, Lighting, etc.)"
+    },
+    "child_type": {
+      "type": "string",
+      "description": "Specific type"
+    },
+    "serial_number": {
+      "type": "string",
+      "description": "Default/reference serial number"
+    },
+    "unit_price": {
+      "type": "number",
+      "description": "Unit price excl. VAT (EUR)"
+    },
+    "default_warranty_months": {
+      "type": "number",
+      "description": "Warranty duration in months"
+    },
+    "warranty_start_rule": {
+      "type": "string",
+      "enum": [
+        "asset_delivery_date",
+        "child_installation_date",
+        "manual"
+      ],
+      "default": "asset_delivery_date",
+      "description": "How warranty start date is determined"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "child_name"
+  ]
+}
