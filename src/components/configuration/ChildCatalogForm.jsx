@@ -95,7 +95,7 @@ const ChildCatalogForm = memo(function ChildCatalogForm({ value, onChange, onSav
         </div>
       </div>
       <div className="flex gap-2">
-        <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 h-7 text-xs" onClick={onSave} disabled={saving || !value.child_code?.trim() || !value.child_name?.trim()}>
+        <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 h-7 text-xs" onClick={onSave} disabled={saving || !value.child_name?.trim()}>
           <Check className="w-3 h-3 mr-1" />
           Save
         </Button>
