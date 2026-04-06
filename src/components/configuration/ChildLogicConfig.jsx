@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, Pencil, Check, X, ToggleLeft, ToggleRight, Upload, Download } from "lucide-react";
+import ChildCatalogForm from "./ChildCatalogForm";
 
 const SHELTER_TYPES = ["A1","A2","Refurbished","B","C1","C2","C3","D1","D2","Bicycle racks"];
 const WARRANTY_START_RULES = [
@@ -35,30 +36,7 @@ function ChildCatalogTab({ catalog, queryClient }) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["childCatalog"] })
   });
 
-  const BlankForm = ({ value, onChange, onSave, onCancel, saving }) => (
-    <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 space-y-3">
-      <div className="grid grid-cols-3 gap-3">
-        <div><Label className="text-xs">Code *</Label><Input className="mt-1 h-8 text-xs" value={value.child_code || ""} onChange={e => onChange({ ...value, child_code: e.target.value })} placeholder="e.g. GLS-REAR" /></div>
-        <div><Label className="text-xs">Name *</Label><Input className="mt-1 h-8 text-xs" value={value.child_name || ""} onChange={e => onChange({ ...value, child_name: e.target.value })} placeholder="e.g. Rear Glass Panel" /></div>
-        <div><Label className="text-xs">Category</Label><Input className="mt-1 h-8 text-xs" value={value.child_category || ""} onChange={e => onChange({ ...value, child_category: e.target.value })} placeholder="Glass, Seating, Lighting..." /></div>
-        <div><Label className="text-xs">Type</Label><Input className="mt-1 h-8 text-xs" value={value.child_type || ""} onChange={e => onChange({ ...value, child_type: e.target.value })} /></div>
-        <div><Label className="text-xs">Serial Number</Label><Input className="mt-1 h-8 text-xs" value={value.serial_number || ""} onChange={e => onChange({ ...value, serial_number: e.target.value })} placeholder="e.g. SN-001" /></div>
-        <div><Label className="text-xs">Unit Price (€)</Label><Input type="number" className="mt-1 h-8 text-xs" value={value.unit_price || ""} onChange={e => onChange({ ...value, unit_price: parseFloat(e.target.value) || undefined })} placeholder="0.00" /></div>
-        <div><Label className="text-xs">Warranty (months)</Label><Input type="number" className="mt-1 h-8 text-xs" value={value.default_warranty_months || ""} onChange={e => onChange({ ...value, default_warranty_months: parseInt(e.target.value) })} /></div>
-        <div>
-          <Label className="text-xs">Warranty Start Rule</Label>
-          <Select value={value.warranty_start_rule || "asset_delivery_date"} onValueChange={v => onChange({ ...value, warranty_start_rule: v })}>
-            <SelectTrigger className="mt-1 h-8 text-xs"><SelectValue /></SelectTrigger>
-            <SelectContent>{WARRANTY_START_RULES.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}</SelectContent>
-          </Select>
-        </div>
-      </div>
-      <div className="flex gap-2">
-        <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 h-7 text-xs" onClick={onSave} disabled={saving || !value.child_code || !value.child_name}><Check className="w-3 h-3 mr-1" />Save</Button>
-        <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={onCancel}><X className="w-3 h-3 mr-1" />Cancel</Button>
-      </div>
-    </div>
-  );
+
 
   return (
     <div className="space-y-3">
@@ -76,7 +54,7 @@ function ChildCatalogTab({ catalog, queryClient }) {
         </div>
       </div>
 
-      {adding && <BlankForm key="add-form" value={form} onChange={setForm} onSave={() => createMutation.mutate(form)} onCancel={() => { setAdding(false); setForm({}); }} saving={createMutation.isPending} />}
+      {adding && <ChildCatalogForm value={form} onChange={setForm} onSave={() => createMutation.mutate(form)} onCancel={() => { setAdding(false); setForm({}); }} saving={createMutation.isPending} />}
 
       <div className="border rounded-lg overflow-hidden">
         <table className="w-full text-xs">
@@ -93,9 +71,9 @@ function ChildCatalogTab({ catalog, queryClient }) {
               <tr key={item.id} className={`hover:bg-slate-50 ${!item.active ? "opacity-50" : ""}`}>
                 {editing?.id === item.id ? (
                   <td colSpan={10} className="p-2">
-                    <BlankForm value={editing} onChange={setEditing}
-                      onSave={() => updateMutation.mutate({ id: item.id, data: editing })}
-                      onCancel={() => setEditing(null)} saving={updateMutation.isPending} />
+                   <ChildCatalogForm value={editing} onChange={setEditing}
+                     onSave={() => updateMutation.mutate({ id: item.id, data: editing })}
+                     onCancel={() => setEditing(null)} saving={updateMutation.isPending} />
                   </td>
                 ) : (
                   <>
