@@ -38,6 +38,10 @@ export default function AssetDetail() {
   const { data: incidents = [] } = useQuery({ queryKey: ["assetIncidents", assetId], queryFn: () => base44.entities.Incidents.filter({ related_asset_id: assetId }), enabled: !!assetId });
   const { data: workOrders = [] } = useQuery({ queryKey: ["assetWorkOrders", assetId], queryFn: () => base44.entities.WorkOrders.filter({ related_asset_id: assetId }), enabled: !!assetId });
   const { data: attachments = [] } = useQuery({ queryKey: ["assetAttachments", assetId], queryFn: () => base44.entities.AssetAttachments.filter({ asset_id: assetId }), enabled: !!assetId });
+  const { data: incidentAttachments = [] } = useQuery({ queryKey: ["incidentAttachments", assetId], queryFn: () => {
+    if (!incidents || incidents.length === 0) return [];
+    return Promise.all(incidents.map(inc => base44.entities.IncidentAttachments.filter({ incident_id: inc.id }))).then(results => results.flat());
+  }, enabled: !!assetId && incidents && incidents.length > 0 });
   const { data: transactions = [] } = useQuery({ queryKey: ["assetTransactions", assetId], queryFn: () => base44.entities.AssetTransactions.filter({ asset_id: assetId }), enabled: !!assetId });
   const { data: shipments = [] } = useQuery({ queryKey: ["assetShipments", assetId], queryFn: () => base44.entities.Shipments.filter({ parent_asset_id: assetId }), enabled: !!assetId });
   const { data: outgoingShipments = [] } = useQuery({ queryKey: ["assetShipmentsSource", assetId], queryFn: () => base44.entities.Shipments.filter({ source_asset_id: assetId }), enabled: !!assetId });
@@ -323,7 +327,7 @@ export default function AssetDetail() {
             <TabsTrigger value="incidents">Incidents ({incidents.length})</TabsTrigger>
             <TabsTrigger value="workorders">Work Orders ({workOrders.length})</TabsTrigger>
             <TabsTrigger value="shipments">Shipments ({allShipments.length})</TabsTrigger>
-            <TabsTrigger value="documents">Documents ({attachments.length})</TabsTrigger>
+            <TabsTrigger value="documents">Documents ({attachments.length + incidentAttachments.length})</TabsTrigger>
             <TabsTrigger value="log">Audit Log ({transactions.length})</TabsTrigger>
           </TabsList>
 
@@ -356,24 +360,53 @@ export default function AssetDetail() {
               <FileUploader onUpload={uploadAttachment} label="Upload Document" />
             </div>
             <div className="bg-white rounded-xl border border-slate-200 divide-y">
-              {attachments.length === 0 && <p className="text-sm text-slate-400 py-8 text-center">No documents uploaded</p>}
-              {attachments.map(att => (
-                <div key={att.id} className="flex items-center justify-between px-5 py-3">
-                  <div className="flex items-center gap-3">
-                    {att.file_type === "Photo" ? <Image className="w-4 h-4 text-indigo-500" /> : <FileText className="w-4 h-4 text-slate-500" />}
-                    <div>
-                      <p className="text-sm font-medium text-slate-900">{att.file_name}</p>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {att.doc_label && <span className="text-xs bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-medium">{att.doc_label}</span>}
-                        <p className="text-xs text-slate-400">{att.file_size || "—"} · {att.uploaded_by || "—"} · {att.created_date ? format(new Date(att.created_date), "MMM d, yyyy") : "—"}</p>
+              {attachments.length === 0 && incidentAttachments.length === 0 && <p className="text-sm text-slate-400 py-8 text-center">No documents uploaded</p>}
+              
+              {attachments.length > 0 && (
+                <>
+                  <div className="px-5 py-3 bg-slate-50 font-semibold text-sm text-slate-700">Asset Documents</div>
+                  {attachments.map(att => (
+                    <div key={att.id} className="flex items-center justify-between px-5 py-3">
+                      <div className="flex items-center gap-3">
+                        {att.file_type === "Photo" ? <Image className="w-4 h-4 text-indigo-500" /> : <FileText className="w-4 h-4 text-slate-500" />}
+                        <div>
+                          <p className="text-sm font-medium text-slate-900">{att.file_name}</p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {att.doc_label && <span className="text-xs bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-medium">{att.doc_label}</span>}
+                            <p className="text-xs text-slate-400">{att.file_size || "—"} · {att.uploaded_by || "—"} · {att.created_date ? format(new Date(att.created_date), "MMM d, yyyy") : "—"}</p>
+                          </div>
+                        </div>
                       </div>
+                      <a href={att.file_url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-700">
+                        <ExternalLink className="w-4 h-4" />
+                      </a>
                     </div>
-                  </div>
-                  <a href={att.file_url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-700">
-                    <ExternalLink className="w-4 h-4" />
-                  </a>
-                </div>
-              ))}
+                  ))}
+                </>
+              )}
+
+              {incidentAttachments.length > 0 && (
+                <>
+                  <div className="px-5 py-3 bg-slate-50 font-semibold text-sm text-slate-700">Documents from Incidents</div>
+                  {incidentAttachments.map(att => (
+                    <div key={att.id} className="flex items-center justify-between px-5 py-3">
+                      <div className="flex items-center gap-3">
+                        {att.file_type === "Photo" ? <Image className="w-4 h-4 text-indigo-500" /> : <FileText className="w-4 h-4 text-slate-500" />}
+                        <div>
+                          <p className="text-sm font-medium text-slate-900">{att.file_name}</p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-medium">From Incident</span>
+                            <p className="text-xs text-slate-400">{att.file_size || "—"} · {att.uploaded_by || "—"} · {att.created_date ? format(new Date(att.created_date), "MMM d, yyyy") : "—"}</p>
+                          </div>
+                        </div>
+                      </div>
+                      <a href={att.file_url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-700">
+                        <ExternalLink className="w-4 h-4" />
+                      </a>
+                    </div>
+                  ))}
+                </>
+              )}
             </div>
           </TabsContent>
 
