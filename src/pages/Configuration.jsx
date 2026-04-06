@@ -10,6 +10,7 @@ import { Plus, Trash2, Pencil, Check, X, GripVertical, ToggleLeft, ToggleRight }
 import WorkflowConfig from "@/components/configuration/WorkflowConfig";
 import ChildLogicConfig from "@/components/configuration/ChildLogicConfig";
 import FormsConfig from "@/components/configuration/FormsConfig";
+import ImportDataDialog from "@/components/configuration/ImportDataDialog";
 
 const INCIDENT_LIST_TYPES = [
   { key: "incident_person", label: "Confirmed By / Persons" },
@@ -198,12 +199,31 @@ function ListManager({ listTypes, allItems, queryClient }) {
 
 export default function Configuration() {
   const queryClient = useQueryClient();
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
 
   const { data: allItems = [] } = useQuery({ queryKey: ["configLists"], queryFn: () => base44.entities.ConfigLists.list() });
 
+  const handleImportComplete = () => {
+    queryClient.invalidateQueries({ queryKey: ["childCatalog"] });
+    queryClient.invalidateQueries({ queryKey: ["typeTemplates"] });
+    setImportDialogOpen(false);
+  };
+
   return (
     <div>
-      <TopHeader title="Configuration" />
+      <TopHeader 
+        title="Configuration" 
+        actions={
+          <Button className="bg-indigo-600 hover:bg-indigo-700" onClick={() => setImportDialogOpen(true)}>
+            Import Excel Data
+          </Button>
+        }
+      />
+      <ImportDataDialog 
+        isOpen={importDialogOpen} 
+        onClose={() => setImportDialogOpen(false)}
+        onImportComplete={handleImportComplete}
+      />
       <div className="p-6 space-y-6">
         <div className="bg-white rounded-xl border border-slate-200 p-6">
           <h2 className="text-sm font-semibold text-slate-900 mb-1">Manage Dropdown Lists of Incident</h2>

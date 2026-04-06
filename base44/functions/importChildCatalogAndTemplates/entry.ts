@@ -24,14 +24,17 @@ Deno.serve(async (req) => {
       type: 'object',
       properties: {
         'Import_Code': { type: 'string' },
+        'Source_Reference_Code': { type: 'string' },
         'Name': { type: 'string' },
         'Category': { type: 'string' },
-        'Type': { type: 'string' },
+        'Shelter_Type': { type: 'string' },
         'Serial': { type: 'string' },
         'Price_EUR': { type: 'number' },
         'Warranty_Months': { type: 'number' },
         'Warranty_Start_Rule': { type: 'string' },
-        'Active': { type: 'string' }
+        'Technical_Ref': { type: 'string' },
+        'Description': { type: 'string' },
+        'Notes': { type: 'string' }
       }
     };
 
@@ -55,7 +58,8 @@ Deno.serve(async (req) => {
         'Import_Code': { type: 'string' },
         'Display_Order': { type: 'number' },
         'Default_Inclusion': { type: 'string' },
-        'Mandatory': { type: 'string' }
+        'Mandatory': { type: 'string' },
+        'Notes': { type: 'string' }
       }
     };
 
