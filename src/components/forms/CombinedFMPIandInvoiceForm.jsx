@@ -298,13 +298,6 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
     }
   }, [linkedIncidentId, workOrders]);
 
-  // Auto-fill sigDate from incident creation date
-  useEffect(() => {
-    if (reportDate && !sigDate) {
-      setSigDate(reportDate);
-    }
-  }, [reportDate]);
-
   const subsystem = useMemo(() => deriveSubsystem(incident), [incident]);
   const subcategory = useMemo(() => deriveSubcategory(incident), [incident]);
 
@@ -313,6 +306,13 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
   const isHighPriority = priority === "P1";
 
   const reportDate = incident?.reported_date || incident?.first_report_date;
+
+  // Auto-fill sigDate from incident creation date
+  useEffect(() => {
+    if (reportDate && !sigDate) {
+      setSigDate(reportDate);
+    }
+  }, [reportDate, sigDate]);
 
   // ── SLA calculations ──
   const confirmationDeadline = useMemo(() =>
