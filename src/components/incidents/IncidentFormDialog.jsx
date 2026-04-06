@@ -184,7 +184,6 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
     if (!form.reported_by_name) e.reported_by_name = true;
     if (form.phone_available && !form.reported_by_phone) e.reported_by_phone = true;
     if (form.email_available && !form.reported_by_email) e.reported_by_email = true;
-    if (!form.incident_source) e.incident_source = true;
     if (form.incident_source === "Work Order" && !form.work_order_reference) e.work_order_reference = true;
     if (form.incident_source === "ΆΛΛΟ" && !form.incident_source_other) e.incident_source_other = true;
     if (!form.subsystem_structural_selected && !form.subsystem_electrical_selected && !form.subsystem_electronic_selected && !form.subsystem_other_selected) e.subsystems = true;
@@ -368,7 +367,7 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
             </Field>
             <div />
 
-            <Field label="Προέλευση Αναφοράς Συμβάντος" required colSpan={2}>
+            <Field label="Προέλευση Αναφοράς Συμβάντος" colSpan={2}>
               <Select value={form.incident_source} onValueChange={v => set("incident_source", v)}>
                 <SelectTrigger className={err("incident_source")}><SelectValue placeholder="Επιλογή..." /></SelectTrigger>
                 <SelectContent>{incidentSources.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
