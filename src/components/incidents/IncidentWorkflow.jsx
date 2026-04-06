@@ -25,6 +25,7 @@ const ADMIN_STEPS = [
   { key: "create_ompi",             label: "Outline Management Plan (OMPI)", flag: "ompi_done" },
   { key: "create_fmpi",             label: "Full Management Plan (FMPI)",    flag: "owr_fmpi_done" },
   { key: "ca_status",               label: "CA Status",                      flag: "ca_status_done" },
+  { key: "photos_after_fixing",     label: "Photos after Fixing",            flag: "photos_after_fixing_done" },
   { key: "close_incident",          label: "Close Incident",                 flag: null },
 ];
 
@@ -245,27 +246,49 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
         await addAudit("CA Status Set", auditDetails, auditExtra);
       }
 
+      if (key === "photos_after_fixing") {
+        const attachmentUrls = [];
+        const attachmentNames = [];
+        if (formData.photos_after && Array.isArray(formData.photos_after)) {
+          for (const photo of formData.photos_after) {
+            if (photo?.url) {
+              await uploadAttachment({ file_url: photo.url, file_name: photo.name || "Photo", file_type: "Photo" });
+              attachmentUrls.push(photo.url);
+              attachmentNames.push(photo.name || "Photo");
+            }
+          }
+        }
+        incidentUpdates.photos_after_fixing_done = true;
+        const auditDetails = `Photos after fixing uploaded${formData.notes ? ` — ${formData.notes}` : ""}`;
+        const auditExtra = attachmentUrls.length > 0 ? { attachments: attachmentUrls, attachment_names: attachmentNames } : {};
+        await addAudit("Photos after Fixing", auditDetails, auditExtra);
+      }
+
       if (key === "close_incident") {
-        // Prerequisite check before closing
-        if (!incident.confirmation_done) {
-          toast({ title: "Cannot close", description: "Confirmation of Receipt must be completed first." });
-          setSaving(false); return;
-        }
-        if (!incident.ompi_done) {
-          toast({ title: "Cannot close", description: "OMPI must be completed first." });
-          setSaving(false); return;
-        }
-        if (!incident.owr_fmpi_done) {
-          toast({ title: "Cannot close", description: "FMPI must be completed first." });
-          setSaving(false); return;
-        }
-        if (incident.out_of_warranty === "Yes" && incident.ca_status === "Pending") {
-          toast({ title: "Cannot close", description: "CA Approval must be set (Approved or Not Approved) for OWR incidents." });
-          setSaving(false); return;
-        }
-        await base44.entities.Incidents.update(incidentId, { status: "Closed" });
-        await addAudit("Incident Closed", formData.notes ? `Closing notes: ${formData.notes}` : "Incident closed and resolved.");
-      } else if (Object.keys(incidentUpdates).length > 0) {
+         // Prerequisite check before closing
+         if (!incident.confirmation_done) {
+           toast({ title: "Cannot close", description: "Confirmation of Receipt must be completed first." });
+           setSaving(false); return;
+         }
+         if (!incident.ompi_done) {
+           toast({ title: "Cannot close", description: "OMPI must be completed first." });
+           setSaving(false); return;
+         }
+         if (!incident.owr_fmpi_done) {
+           toast({ title: "Cannot close", description: "FMPI must be completed first." });
+           setSaving(false); return;
+         }
+         if (incident.out_of_warranty === "Yes" && incident.ca_status === "Pending") {
+           toast({ title: "Cannot close", description: "CA Approval must be set (Approved or Not Approved) for OWR incidents." });
+           setSaving(false); return;
+         }
+         if (!incident.photos_after_fixing_done) {
+           toast({ title: "Cannot close", description: "Photos after Fixing must be completed first." });
+           setSaving(false); return;
+         }
+         await base44.entities.Incidents.update(incidentId, { status: "Closed" });
+         await addAudit("Incident Closed", formData.notes ? `Closing notes: ${formData.notes}` : "Incident closed and resolved.");
+       } else if (Object.keys(incidentUpdates).length > 0) {
         await base44.entities.Incidents.update(incidentId, incidentUpdates);
       }
 
@@ -356,6 +379,43 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
             </div>
           )}
 
+          {key === "photos_after_fixing" && (
+            <div className="space-y-3">
+              <p className="text-xs text-slate-500">
+                Upload photos documenting the corrective work completed on the bus shelter(s).
+              </p>
+              <div className="space-y-1.5">
+                <Label className="text-xs flex items-center gap-1">
+                  <Paperclip className="w-3 h-3" /> Photos after Fixing *
+                </Label>
+                <FileUploader 
+                  onUpload={fd => {
+                    const photos = formData.photos_after || [];
+                    set("photos_after", [...photos, { name: fd.file_name, url: fd.file_url }]);
+                  }}
+                  label="Upload Photos"
+                  multiple
+                />
+                {formData.photos_after && formData.photos_after.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {formData.photos_after.map((photo, idx) => (
+                      <div key={idx} className="relative group">
+                        <img src={photo.url} alt="After fixing" className="w-20 h-20 object-cover rounded-lg border border-slate-200" />
+                        <button
+                          type="button"
+                          onClick={() => set("photos_after", formData.photos_after.filter((_, i) => i !== idx))}
+                          className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <span className="text-xs">×</span>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {key === "create_ompi" && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -417,7 +477,7 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
             </div>
           )}
 
-          {key !== "confirmation_of_receipt" && key !== "ca_status" && (
+          {key !== "confirmation_of_receipt" && key !== "ca_status" && key !== "photos_after_fixing" && (
             <div className="space-y-1.5">
               <Label className="text-xs flex items-center gap-1">
                 <StickyNote className="w-3 h-3" />
@@ -433,7 +493,7 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
             </div>
           )}
 
-          {key === "ca_status" && (
+          {(key === "ca_status" || key === "photos_after_fixing") && (
             <div className="space-y-1.5">
               <Label className="text-xs flex items-center gap-1">
                 <StickyNote className="w-3 h-3" /> Notes (optional)

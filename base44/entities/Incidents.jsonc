@@ -1,0 +1,251 @@
+{
+  "name": "Incidents",
+  "type": "object",
+  "properties": {
+    "incident_id": {
+      "type": "string",
+      "description": "Unique incident identifier"
+    },
+    "title": {
+      "type": "string",
+      "description": "Incident title or subject"
+    },
+    "related_asset_id": {
+      "type": "string",
+      "description": "Reference to related asset record ID"
+    },
+    "related_asset_name": {
+      "type": "string",
+      "description": "Name of the related asset for display"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Open",
+        "In Progress",
+        "On Hold",
+        "Resolved",
+        "Closed"
+      ],
+      "default": "Open"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "Critical",
+        "High",
+        "Medium",
+        "Low"
+      ],
+      "default": "Medium"
+    },
+    "ca_status": {
+      "type": "string",
+      "enum": [
+        "Pending",
+        "Approved",
+        "Not Approved"
+      ],
+      "default": "Pending",
+      "description": "CA Approval Status"
+    },
+    "out_of_warranty": {
+      "type": "string",
+      "enum": [
+        "Yes",
+        "No"
+      ],
+      "description": "Whether the incident is out of warranty"
+    },
+    "category": {
+      "type": "string"
+    },
+    "reported_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "assigned_to": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "issue_date": {
+      "type": "string",
+      "format": "date",
+      "description": "\u0397\u03bc\u03b5\u03c1\u03bf\u03bc\u03b7\u03bd\u03af\u03b1 \u0388\u03ba\u03b4\u03bf\u03c3\u03b7\u03c2"
+    },
+    "reported_by_org": {
+      "type": "string",
+      "description": "\u039f\u03c1\u03b3\u03b1\u03bd\u03b9\u03c3\u03bc\u03cc\u03c2 \u0391\u03bd\u03b1\u03c6\u03ad\u03c1\u03bf\u03bd\u03c4\u03bf\u03c2"
+    },
+    "reported_by_name": {
+      "type": "string",
+      "description": "\u0391\u03bd\u03b1\u03c6\u03ad\u03c1\u03c9\u03bd - \u038c\u03bd\u03bf\u03bc\u03b1"
+    },
+    "phone_available": {
+      "type": "boolean"
+    },
+    "reported_by_phone": {
+      "type": "string"
+    },
+    "email_available": {
+      "type": "boolean"
+    },
+    "reported_by_email": {
+      "type": "string"
+    },
+    "incident_reporting_method": {
+      "type": "string",
+      "description": "\u03a4\u03c1\u03cc\u03c0\u03bf\u03c2 \u0391\u03bd\u03b1\u03c6\u03bf\u03c1\u03ac\u03c2"
+    },
+    "province": {
+      "type": "string",
+      "description": "\u0395\u03c0\u03b1\u03c1\u03c7\u03af\u03b1 / City (auto from asset.city)"
+    },
+    "municipality": {
+      "type": "string",
+      "description": "\u0394\u03ae\u03bc\u03bf\u03c2 / Municipality (auto from asset.municipality)"
+    },
+    "shelter_type": {
+      "type": "string",
+      "description": "\u03a4\u03cd\u03c0\u03bf\u03c2 \u03a3\u03c4\u03ac\u03c3\u03b7\u03c2 (auto from asset.shelter_type)"
+    },
+    "active_shelter_id": {
+      "type": "string",
+      "description": "\u0391\u03c1\u03b9\u03b8\u03bc\u03cc\u03c2 \u03a3\u03c4\u03ac\u03c3\u03b7\u03c2"
+    },
+    "location_address": {
+      "type": "string",
+      "description": "\u0394\u03b9\u03b5\u03cd\u03b8\u03c5\u03bd\u03c3\u03b7 \u03a3\u03c4\u03ac\u03c3\u03b7\u03c2"
+    },
+    "first_report_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "detection_time": {
+      "type": "string",
+      "description": "\u038f\u03c1\u03b1 \u0395\u03bd\u03c4\u03bf\u03c0\u03b9\u03c3\u03bc\u03bf\u03cd"
+    },
+    "incident_source": {
+      "type": "string",
+      "description": "\u03a0\u03c1\u03bf\u03ad\u03bb\u03b5\u03c5\u03c3\u03b7 \u0391\u03bd\u03b1\u03c6\u03bf\u03c1\u03ac\u03c2 \u03a3\u03c5\u03bc\u03b2\u03ac\u03bd\u03c4\u03bf\u03c2"
+    },
+    "work_order_reference": {
+      "type": "string"
+    },
+    "incident_source_other": {
+      "type": "string"
+    },
+    "subsystem_structural_selected": {
+      "type": "boolean"
+    },
+    "subsystem_structural_issue": {
+      "type": "string"
+    },
+    "subsystem_electrical_selected": {
+      "type": "boolean"
+    },
+    "subsystem_electrical_issue": {
+      "type": "string"
+    },
+    "subsystem_electronic_selected": {
+      "type": "boolean"
+    },
+    "subsystem_electronic_issue": {
+      "type": "string"
+    },
+    "subsystem_other_selected": {
+      "type": "boolean"
+    },
+    "subsystem_other_issue": {
+      "type": "string"
+    },
+    "damage_description": {
+      "type": "string"
+    },
+    "probable_cause": {
+      "type": "string"
+    },
+    "probable_cause_other": {
+      "type": "string"
+    },
+    "evidence_type": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "evidence_files": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "initial_priority": {
+      "type": "string",
+      "enum": [
+        "P1",
+        "P2"
+      ]
+    },
+    "is_owr": {
+      "type": "boolean"
+    },
+    "requires_make_safe": {
+      "type": "boolean"
+    },
+    "approval_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "authority_representative": {
+      "type": "string"
+    },
+    "ompi_done": {
+      "type": "boolean",
+      "default": false
+    },
+    "confirmation_done": {
+      "type": "boolean",
+      "default": false,
+      "description": "Confirmation of Receipt sent"
+    },
+    "inspection_done": {
+      "type": "boolean",
+      "default": false
+    },
+    "make_safe_done": {
+      "type": "boolean",
+      "default": false
+    },
+    "owr_fmpi_done": {
+      "type": "boolean",
+      "default": false
+    },
+    "photos_after_fixing_done": {
+      "type": "boolean",
+      "default": false
+    },
+    "corrective_done": {
+      "type": "boolean",
+      "default": false
+    },
+    "checklist_done": {
+      "type": "boolean",
+      "default": false
+    },
+    "revisit_done": {
+      "type": "boolean",
+      "default": false
+    },
+    "finalise_done": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "incident_id",
+    "title"
+  ]
+}
