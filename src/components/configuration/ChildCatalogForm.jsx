@@ -12,9 +12,15 @@ const WARRANTY_START_RULES = [
 ];
 
 const ChildCatalogForm = memo(function ChildCatalogForm({ value, onChange, onSave, onCancel, saving }) {
+  const pricingType = value.pricing_type || "Individual";
+  const showUnitPrice = pricingType === "Individual";
+  const showBundlePrice = pricingType === "Bundle Parent";
+  const isBundleChild = pricingType === "Bundle Child";
+  const requiresBundle = pricingType !== "Individual";
+
   return (
     <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 space-y-3">
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-4 gap-3">
         <div>
           <Label className="text-xs">Code</Label>
           <Input
@@ -60,16 +66,6 @@ const ChildCatalogForm = memo(function ChildCatalogForm({ value, onChange, onSav
           />
         </div>
         <div>
-          <Label className="text-xs">Unit Price (€)</Label>
-          <Input
-            type="number"
-            className="mt-1 h-8 text-xs"
-            value={value.unit_price || ""}
-            onChange={(e) => onChange({ ...value, unit_price: parseFloat(e.target.value) || undefined })}
-            placeholder="0.00"
-          />
-        </div>
-        <div>
           <Label className="text-xs">Warranty (months)</Label>
           <Input
             type="number"
@@ -93,9 +89,74 @@ const ChildCatalogForm = memo(function ChildCatalogForm({ value, onChange, onSav
             </SelectContent>
           </Select>
         </div>
+        <div>
+          <Label className="text-xs">Pricing Type</Label>
+          <Select value={pricingType} onValueChange={(v) => onChange({ ...value, pricing_type: v, bundle_code: v === "Individual" ? undefined : value.bundle_code })}>
+            <SelectTrigger className="mt-1 h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Individual">Individual</SelectItem>
+              <SelectItem value="Bundle Parent">Bundle Parent</SelectItem>
+              <SelectItem value="Bundle Child">Bundle Child</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        {showUnitPrice && (
+          <div>
+            <Label className="text-xs">Unit Price (€)</Label>
+            <Input
+              type="number"
+              className="mt-1 h-8 text-xs"
+              value={value.unit_price || ""}
+              onChange={(e) => onChange({ ...value, unit_price: parseFloat(e.target.value) || undefined })}
+              placeholder="0.00"
+            />
+          </div>
+        )}
+        {requiresBundle && (
+          <div>
+            <Label className="text-xs">Bundle Code {requiresBundle ? "*" : ""}</Label>
+            <Input
+              className="mt-1 h-8 text-xs"
+              value={value.bundle_code || ""}
+              onChange={(e) => onChange({ ...value, bundle_code: e.target.value })}
+              placeholder="e.g. BUNDLE-001"
+            />
+          </div>
+        )}
+        {showBundlePrice && (
+          <div>
+            <Label className="text-xs">Bundle Price (€) *</Label>
+            <Input
+              type="number"
+              className="mt-1 h-8 text-xs"
+              value={value.bundle_price || ""}
+              onChange={(e) => onChange({ ...value, bundle_price: parseFloat(e.target.value) || undefined })}
+              placeholder="0.00"
+            />
+          </div>
+        )}
+        {isBundleChild && (
+          <div>
+            <Label className="text-xs">Unit Price (€)</Label>
+            <Input
+              type="number"
+              className="mt-1 h-8 text-xs"
+              value="0"
+              disabled
+              placeholder="Auto-set to 0"
+            />
+          </div>
+        )}
       </div>
       <div className="flex gap-2">
-        <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 h-7 text-xs" onClick={onSave} disabled={saving || !value.child_name?.trim()}>
+        <Button 
+          size="sm" 
+          className="bg-indigo-600 hover:bg-indigo-700 h-7 text-xs" 
+          onClick={onSave} 
+          disabled={saving || !value.child_name?.trim() || (requiresBundle && !value.bundle_code?.trim()) || (showBundlePrice && !value.bundle_price)}
+        >
           <Check className="w-3 h-3 mr-1" />
           Save
         </Button>

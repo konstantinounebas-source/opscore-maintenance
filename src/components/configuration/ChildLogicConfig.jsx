@@ -60,8 +60,8 @@ function ChildCatalogTab({ catalog, queryClient }) {
         <table className="w-full text-xs">
           <thead className="bg-slate-50 border-b">
             <tr>
-              {["Code","Name","Category","Type","Serial No.","Price (€)","Warranty","Start Rule","Active",""].map(h => (
-                <th key={h} className="px-3 py-2 text-left font-semibold text-slate-600">{h}</th>
+              {["Code","Name","Category","Type","Pricing","Bundle","Price (€)","Warranty","Start Rule","Active",""].map(h => (
+                <th key={h} className="px-3 py-2 text-left font-semibold text-slate-600 text-xs">{h}</th>
               ))}
             </tr>
           </thead>
@@ -81,8 +81,9 @@ function ChildCatalogTab({ catalog, queryClient }) {
                     <td className="px-3 py-2 font-medium text-slate-800">{item.child_name}</td>
                     <td className="px-3 py-2 text-slate-600">{item.child_category}</td>
                     <td className="px-3 py-2 text-slate-600">{item.child_type}</td>
-                    <td className="px-3 py-2 font-mono text-slate-500">{item.serial_number || "—"}</td>
-                    <td className="px-3 py-2 text-slate-600">{item.unit_price != null ? `€${item.unit_price.toLocaleString()}` : "—"}</td>
+                    <td className="px-3 py-2 text-xs"><Badge variant="outline">{item.pricing_type || "Individual"}</Badge></td>
+                    <td className="px-3 py-2 font-mono text-slate-500 text-xs">{item.bundle_code || "—"}</td>
+                    <td className="px-3 py-2 text-slate-600">{item.pricing_type === "Bundle Parent" ? `€${item.bundle_price?.toLocaleString()}` : item.unit_price != null ? `€${item.unit_price.toLocaleString()}` : "—"}</td>
                     <td className="px-3 py-2">{item.default_warranty_months} mo</td>
                     <td className="px-3 py-2 text-slate-500">{WARRANTY_START_RULES.find(r => r.value === item.warranty_start_rule)?.label || item.warranty_start_rule}</td>
                     <td className="px-3 py-2">

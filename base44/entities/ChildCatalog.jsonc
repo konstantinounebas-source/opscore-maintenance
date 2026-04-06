@@ -40,6 +40,24 @@
       "default": "asset_delivery_date",
       "description": "How warranty start date is determined"
     },
+    "pricing_type": {
+      "type": "string",
+      "enum": [
+        "Individual",
+        "Bundle Parent",
+        "Bundle Child"
+      ],
+      "default": "Individual",
+      "description": "Pricing model for this component"
+    },
+    "bundle_code": {
+      "type": "string",
+      "description": "Code identifying the bundle (required for Bundle Parent and Bundle Child)"
+    },
+    "bundle_price": {
+      "type": "number",
+      "description": "Total price for entire bundle (only for Bundle Parent)"
+    },
     "active": {
       "type": "boolean",
       "default": true
