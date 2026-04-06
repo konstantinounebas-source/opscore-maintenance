@@ -25,7 +25,6 @@ const ADMIN_STEPS = [
   { key: "create_ompi",             label: "Outline Management Plan (OMPI)", flag: "ompi_done" },
   { key: "create_fmpi",             label: "Full Management Plan (FMPI)",    flag: "owr_fmpi_done" },
   { key: "ca_status",               label: "CA Status",                      flag: "ca_status_done" },
-  { key: "photos_after_fixing",     label: "Photos after Fixing",            flag: "photos_after_fixing_done" },
   { key: "close_incident",          label: "Close Incident",                 flag: null },
 ];
 
@@ -176,7 +175,7 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
   };
 
   const handleSubmit = async () => {
-    if (key !== "ca_status" && !person.trim()) {
+    if (key !== "ca_status" && key !== "close_incident" && !person.trim()) {
       toast({ title: "Person required", description: "Please enter the responsible person." });
       return;
     }
@@ -246,7 +245,8 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
         await addAudit("CA Status Set", auditDetails, auditExtra);
       }
 
-      if (key === "photos_after_fixing") {
+      if (key === "close_incident") {
+        // Handle optional photos before closing
         const attachmentUrls = [];
         const attachmentNames = [];
         if (formData.photos_after && Array.isArray(formData.photos_after)) {
@@ -258,13 +258,9 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
             }
           }
         }
-        incidentUpdates.photos_after_fixing_done = true;
-        const auditDetails = `Photos after fixing uploaded${formData.notes ? ` — ${formData.notes}` : ""}`;
-        const auditExtra = attachmentUrls.length > 0 ? { attachments: attachmentUrls, attachment_names: attachmentNames } : {};
-        await addAudit("Photos after Fixing", auditDetails, auditExtra);
-      }
-
-      if (key === "close_incident") {
+        if (attachmentUrls.length > 0) {
+          incidentUpdates.photos_after_fixing_done = true;
+        }
          // Prerequisite check before closing
          if (!incident.confirmation_done) {
            toast({ title: "Cannot close", description: "Confirmation of Receipt must be completed first." });
@@ -280,10 +276,6 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
          }
          if (incident.out_of_warranty === "Yes" && incident.ca_status === "Pending") {
            toast({ title: "Cannot close", description: "CA Approval must be set (Approved or Not Approved) for OWR incidents." });
-           setSaving(false); return;
-         }
-         if (!incident.photos_after_fixing_done) {
-           toast({ title: "Cannot close", description: "Photos after Fixing must be completed first." });
            setSaving(false); return;
          }
          await base44.entities.Incidents.update(incidentId, { status: "Closed" });
@@ -379,42 +371,7 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
             </div>
           )}
 
-          {key === "photos_after_fixing" && (
-            <div className="space-y-3">
-              <p className="text-xs text-slate-500">
-                Upload photos documenting the corrective work completed on the bus shelter(s).
-              </p>
-              <div className="space-y-1.5">
-                <Label className="text-xs flex items-center gap-1">
-                  <Paperclip className="w-3 h-3" /> Photos after Fixing *
-                </Label>
-                <FileUploader 
-                  onUpload={fd => {
-                    const photos = formData.photos_after || [];
-                    set("photos_after", [...photos, { name: fd.file_name, url: fd.file_url }]);
-                  }}
-                  label="Upload Photos"
-                  multiple
-                />
-                {formData.photos_after && formData.photos_after.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {formData.photos_after.map((photo, idx) => (
-                      <div key={idx} className="relative group">
-                        <img src={photo.url} alt="After fixing" className="w-20 h-20 object-cover rounded-lg border border-slate-200" />
-                        <button
-                          type="button"
-                          onClick={() => set("photos_after", formData.photos_after.filter((_, i) => i !== idx))}
-                          className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <span className="text-xs">×</span>
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+
 
           {key === "create_ompi" && (
             <div className="space-y-2">
@@ -477,11 +434,10 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
             </div>
           )}
 
-          {key !== "confirmation_of_receipt" && key !== "ca_status" && key !== "photos_after_fixing" && (
+          {key !== "confirmation_of_receipt" && key !== "ca_status" && key !== "close_incident" && (
             <div className="space-y-1.5">
               <Label className="text-xs flex items-center gap-1">
-                <StickyNote className="w-3 h-3" />
-                {key === "close_incident" ? "Closing Notes" : "Notes"}
+                <StickyNote className="w-3 h-3" /> Notes
               </Label>
               <Textarea
                 placeholder="Add notes..."
@@ -493,7 +449,7 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
             </div>
           )}
 
-          {(key === "ca_status" || key === "photos_after_fixing") && (
+          {key === "ca_status" && (
             <div className="space-y-1.5">
               <Label className="text-xs flex items-center gap-1">
                 <StickyNote className="w-3 h-3" /> Notes (optional)
@@ -508,7 +464,7 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
             </div>
           )}
 
-          {key !== "ca_status" && (
+          {key !== "ca_status" && key !== "close_incident" && (
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold">Out of Warranty</Label>
               <Select value={formData.out_of_warranty || ""} onValueChange={v => set("out_of_warranty", v)}>
@@ -526,7 +482,56 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
             </div>
           )}
 
-          {key !== "ca_status" && <div className="space-y-1.5 border-t pt-3">
+          {key === "close_incident" && (
+            <div className="space-y-3">
+              <p className="text-xs text-slate-500">
+                Upload photos documenting the corrective work completed (optional).
+              </p>
+              <div className="space-y-1.5">
+                <Label className="text-xs flex items-center gap-1">
+                  <Paperclip className="w-3 h-3" /> Photos after Fixing (optional)
+                </Label>
+                <FileUploader 
+                  onUpload={fd => {
+                    const photos = formData.photos_after || [];
+                    set("photos_after", [...photos, { name: fd.file_name, url: fd.file_url }]);
+                  }}
+                  label="Upload Photos"
+                  multiple
+                />
+                {formData.photos_after && formData.photos_after.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {formData.photos_after.map((photo, idx) => (
+                      <div key={idx} className="relative group">
+                        <img src={photo.url} alt="After fixing" className="w-20 h-20 object-cover rounded-lg border border-slate-200" />
+                        <button
+                          type="button"
+                          onClick={() => set("photos_after", formData.photos_after.filter((_, i) => i !== idx))}
+                          className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <span className="text-xs">×</span>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs flex items-center gap-1">
+                  <StickyNote className="w-3 h-3" /> Closing Notes
+                </Label>
+                <Textarea
+                  placeholder="Add closing notes..."
+                  rows={2}
+                  value={formData.notes || ""}
+                  onChange={e => set("notes", e.target.value)}
+                  className="text-sm"
+                />
+              </div>
+            </div>
+          )}
+
+          {key !== "ca_status" && key !== "close_incident" && <div className="space-y-1.5 border-t pt-3">
             <Label className="text-xs font-semibold">Confirmed By *</Label>
             {personList.length > 0 && (
               <Select value={personList.includes(person) ? person : "__manual__"} onValueChange={v => { if (v !== "__manual__") setPerson(v); }}>
@@ -545,7 +550,7 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
             <Button
               className={key === "close_incident" ? "bg-red-600 hover:bg-red-700" : "bg-indigo-600 hover:bg-indigo-700"}
               onClick={handleSubmit}
-              disabled={saving || (key !== "ca_status" && !person.trim())}
+              disabled={saving || (key !== "ca_status" && key !== "close_incident" && !person.trim())}
             >
               {saving && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
               {saving ? "Saving..." : key === "close_incident" ? "Close Incident" : "Confirm"}
