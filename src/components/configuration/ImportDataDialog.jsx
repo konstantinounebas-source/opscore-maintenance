@@ -18,6 +18,12 @@ export default function ImportDataDialog({ isOpen, onClose, onImportComplete }) 
     setResult(null);
 
     try {
+      // Clear existing data first
+      const clearRes = await base44.functions.invoke('clearChildData', {});
+      if (!clearRes.data.success) {
+        throw new Error('Failed to clear existing data');
+      }
+
       // Upload file to get URL
       const uploadRes = await base44.integrations.Core.UploadFile({ file });
       
@@ -27,7 +33,11 @@ export default function ImportDataDialog({ isOpen, onClose, onImportComplete }) 
       });
 
       if (importRes.data.success) {
-        setResult(importRes.data);
+        setResult({
+          ...importRes.data,
+          templatesCleared: clearRes.data.templatesDeleted,
+          catalogsCleared: clearRes.data.catalogsDeleted
+        });
         onImportComplete?.();
       } else {
         setError(importRes.data.error || 'Import failed');
@@ -92,8 +102,10 @@ export default function ImportDataDialog({ isOpen, onClose, onImportComplete }) 
                 <h3 className="font-semibold text-green-800">Import Successful</h3>
               </div>
               <div className="space-y-2 text-sm text-green-700">
-                <p>✓ {result.childCatalogCount} Child Catalog records created/updated</p>
-                <p>✓ {result.typeTemplatesCount} Type Templates records created</p>
+                {result.catalogsCleared > 0 && <p>✓ Cleared {result.catalogsCleared} old catalog records</p>}
+                {result.templatesCleared > 0 && <p>✓ Cleared {result.templatesCleared} old template records</p>}
+                <p>✓ {result.childCatalogCount} new Child Catalog records imported</p>
+                <p>✓ {result.typeTemplatesCount} new Type Templates records imported</p>
               </div>
               <Button onClick={onClose} className="w-full mt-4">
                 Close
