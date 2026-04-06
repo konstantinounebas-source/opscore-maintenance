@@ -69,7 +69,7 @@ function CreateWOModal({ woType, incident, incidentId, onClose, onDone }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const config = WO_TYPE_CONFIG[woType];
-  const [formData, setFormData] = useState({});
+  const [formData, setFormData] = useState({ files: [] });
   const [saving, setSaving] = useState(false);
   const [person, setPerson] = useState("");
 
@@ -109,14 +109,18 @@ function CreateWOModal({ woType, incident, incidentId, onClose, onDone }) {
         });
         woCreated = true;
 
-        if (formData.file) {
-          await base44.entities.IncidentAttachments.create({
-            file_url: formData.file.file_url,
-            file_name: formData.file.file_name,
-            file_type: formData.file.file_type || "Document",
-            incident_id: incidentId,
-            uploaded_by: user?.email,
-          });
+        if (formData.files && formData.files.length > 0) {
+          await Promise.all(
+            formData.files.map(file =>
+              base44.entities.IncidentAttachments.create({
+                file_url: file.file_url,
+                file_name: file.file_name,
+                file_type: file.file_type || "Document",
+                incident_id: incidentId,
+                uploaded_by: user?.email,
+              })
+            )
+          );
         }
       }
 
@@ -127,7 +131,10 @@ function CreateWOModal({ woType, incident, incidentId, onClose, onDone }) {
           ? `WO created${formData.notes ? `: ${formData.notes}` : ""}${formData.assigned_to ? ` — Assigned: ${formData.assigned_to}` : ""}`
           : "Make Safe assessed — not required",
         user: person || user?.email,
-        ...(formData.file ? { attachments: [formData.file.file_url], attachment_names: [formData.file.file_name] } : {}),
+        ...(formData.files && formData.files.length > 0 ? { 
+          attachments: formData.files.map(f => f.file_url), 
+          attachment_names: formData.files.map(f => f.file_name) 
+        } : {}),
       });
 
       queryClient.invalidateQueries({ queryKey: ["workOrders", incidentId] });
@@ -172,8 +179,27 @@ function CreateWOModal({ woType, incident, incidentId, onClose, onDone }) {
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs flex items-center gap-1"><Paperclip className="w-3 h-3" /> Attachment (optional)</Label>
-                <FileUploader onUpload={fd => set("file", fd)} label={formData.file ? formData.file.file_name : "Upload File"} />
+                <Label className="text-xs flex items-center gap-1"><Paperclip className="w-3 h-3" /> Attachments (optional)</Label>
+                <FileUploader 
+                  onUpload={fd => set("files", [...(formData.files || []), fd])} 
+                  label="Upload Files" 
+                />
+                {formData.files && formData.files.length > 0 && (
+                  <div className="space-y-1.5">
+                    {formData.files.map((file, idx) => (
+                      <div key={idx} className="flex items-center justify-between bg-slate-50 p-2 rounded border border-slate-200">
+                        <span className="text-xs text-slate-600 truncate">{file.file_name}</span>
+                        <button
+                          type="button"
+                          onClick={() => set("files", formData.files.filter((_, i) => i !== idx))}
+                          className="text-xs text-red-600 hover:text-red-700 font-medium"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </>
           )}
