@@ -13,6 +13,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/AuthContext";
 import MakeSafeChecklistForm from "@/components/forms/MakeSafeChecklistForm";
 import WorkOrderFormF from "@/components/forms/WorkOrderFormF";
+import WorkOrderDownloadButton from "@/components/shared/WorkOrderDownloadButton";
 import {
   Plus, ChevronDown, ChevronUp, CheckCircle2, Clock,
   Loader2, Paperclip, StickyNote, XCircle, Lock, FileText
@@ -24,7 +25,7 @@ const WO_TYPE_CONFIG = {
   corrective:  { label: "Corrective WO",  prefix: "CORR",  priority: "Medium",   color: "text-blue-700 bg-blue-50 border-blue-200" },
 };
 
-function WOCard({ wo, onClose, onSubmitChecklist }) {
+function WOCard({ wo, onClose, onSubmitChecklist, incidentId, woType }) {
   const statusColors = {
     "Open": "bg-amber-50 text-amber-700 border-amber-200",
     "In Progress": "bg-blue-50 text-blue-700 border-blue-200",
@@ -46,16 +47,19 @@ function WOCard({ wo, onClose, onSubmitChecklist }) {
           <p className="text-xs text-slate-400 mt-0.5 truncate">{wo.description}</p>
         )}
       </div>
-      {!isCompleted && (
-        <div className="flex gap-1 flex-shrink-0">
-          <Button size="sm" variant="outline" className="h-7 text-xs px-2" onClick={() => onSubmitChecklist(wo)}>
-            Checklist
-          </Button>
-          <Button size="sm" variant="outline" className="h-7 text-xs px-2 text-green-700 border-green-300 hover:bg-green-50" onClick={() => onClose(wo)}>
-            Close WO
-          </Button>
-        </div>
-      )}
+      <div className="flex gap-1 flex-shrink-0">
+        <WorkOrderDownloadButton workOrderId={wo.id} workOrderType={woType} incidentId={incidentId} />
+        {!isCompleted && (
+          <>
+            <Button size="sm" variant="outline" className="h-7 text-xs px-2" onClick={() => onSubmitChecklist(wo)}>
+              Checklist
+            </Button>
+            <Button size="sm" variant="outline" className="h-7 text-xs px-2 text-green-700 border-green-300 hover:bg-green-50" onClick={() => onClose(wo)}>
+              Close WO
+            </Button>
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -462,6 +466,8 @@ export default function WorkOrderPanel({ woType, incident, incidentId }) {
                 wo={wo}
                 onClose={setClosingWO}
                 onSubmitChecklist={setChecklistWO}
+                incidentId={incidentId}
+                woType={woType}
               />
             ))
           )}
