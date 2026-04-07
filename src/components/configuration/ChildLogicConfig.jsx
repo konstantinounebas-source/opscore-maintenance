@@ -54,7 +54,7 @@ function ChildCatalogTab({ catalog, queryClient }) {
         </div>
       </div>
 
-      {adding && <ChildCatalogForm value={form} onChange={setForm} onSave={() => createMutation.mutate(form)} onCancel={() => { setAdding(false); setForm({}); }} saving={createMutation.isPending} allChildren={catalog} />}
+      {adding && <ChildCatalogForm value={form} onChange={setForm} onSave={() => createMutation.mutate(form)} onCancel={() => { setAdding(false); setForm({}); }} saving={createMutation.isPending} />}
 
       <div className="border rounded-lg overflow-hidden">
         <table className="w-full text-xs">
@@ -73,7 +73,7 @@ function ChildCatalogTab({ catalog, queryClient }) {
                   <td colSpan={10} className="p-2">
                    <ChildCatalogForm value={editing} onChange={setEditing}
                      onSave={() => updateMutation.mutate({ id: item.id, data: editing })}
-                     onCancel={() => setEditing(null)} saving={updateMutation.isPending} allChildren={catalog} />
+                     onCancel={() => setEditing(null)} saving={updateMutation.isPending} />
                   </td>
                 ) : (
                   <>
@@ -83,8 +83,8 @@ function ChildCatalogTab({ catalog, queryClient }) {
                     <td className="px-3 py-2 text-slate-600">{item.child_type}</td>
                     <td className="px-3 py-2 text-xs"><Badge variant="outline">{item.pricing_type || "Individual"}</Badge></td>
                     <td className="px-3 py-2 font-mono text-slate-500 text-xs">
-                      {item.pricing_type === "Bundle" && item.bundled_child_ids?.length > 0
-                        ? catalog.filter(c => item.bundled_child_ids.includes(c.id)).map(c => c.child_code).join(", ")
+                      {item.pricing_type === "Bundle" && item.bundle_items?.length > 0
+                        ? item.bundle_items.map(bi => bi.child_code || bi.child_name).join(", ")
                         : "—"}
                     </td>
                     <td className="px-3 py-2 text-slate-600">{item.pricing_type === "Bundle" ? `€${item.bundle_price?.toLocaleString()}` : item.unit_price != null ? `€${item.unit_price.toLocaleString()}` : "—"}</td>
