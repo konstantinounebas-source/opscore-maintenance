@@ -85,6 +85,11 @@ function ChildCatalogTab({ catalog, queryClient }) {
             if (!form.child_type?.trim()) {
               dataToSave.child_type = types.length === 1 ? types[0] : types.join(",");
             }
+            // Set category based on bundle items
+            const categories = [...new Set(form.bundle_items.map(item => item.child_category).filter(Boolean))];
+            if (!form.child_category?.trim()) {
+              dataToSave.child_category = categories.length === 1 ? categories[0] : categories.join(",");
+            }
           }
           if (!form.child_name?.trim()) {
             dataToSave.child_name = "Bundle";
@@ -121,6 +126,11 @@ function ChildCatalogTab({ catalog, queryClient }) {
                             const types = [...new Set(editing.bundle_items.map(bi => bi.child_type).filter(Boolean))];
                             if (!editing.child_type?.trim()) {
                               dataToSave.child_type = types.length === 1 ? types[0] : types.join(",");
+                            }
+                            // Set category based on bundle items
+                            const categories = [...new Set(editing.bundle_items.map(bi => bi.child_category).filter(Boolean))];
+                            if (!editing.child_category?.trim()) {
+                              dataToSave.child_category = categories.length === 1 ? categories[0] : categories.join(",");
                             }
                           }
                           if (!editing.child_name?.trim()) {
