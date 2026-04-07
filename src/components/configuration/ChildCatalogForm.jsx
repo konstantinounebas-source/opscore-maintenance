@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Check, X, Plus, Trash2 } from "lucide-react";
+import { Check, X, Plus, Trash2, Pencil } from "lucide-react";
 
 const WARRANTY_START_RULES = [
   { value: "asset_delivery_date", label: "Asset Delivery Date" },
@@ -16,13 +16,21 @@ const ChildCatalogForm = memo(function ChildCatalogForm({ value, onChange, onSav
   const isBundle = pricingType === "Bundle";
   const bundleItems = value.bundle_items || [];
   const [newBundleItem, setNewBundleItem] = useState({ child_name: "", child_code: "", child_category: "", child_type: "", unit_price: "" });
+  const [editingIndex, setEditingIndex] = useState(null);
 
   const addBundleItem = () => {
     if (newBundleItem.child_name?.trim()) {
-      onChange({ 
-        ...value, 
-        bundle_items: [...bundleItems, newBundleItem] 
-      });
+      if (editingIndex !== null) {
+        const updated = [...bundleItems];
+        updated[editingIndex] = newBundleItem;
+        onChange({ ...value, bundle_items: updated });
+        setEditingIndex(null);
+      } else {
+        onChange({ 
+          ...value, 
+          bundle_items: [...bundleItems, newBundleItem] 
+        });
+      }
       setNewBundleItem({ child_name: "", child_code: "", child_category: "", child_type: "", unit_price: "" });
     }
   };
@@ -32,6 +40,16 @@ const ChildCatalogForm = memo(function ChildCatalogForm({ value, onChange, onSav
       ...value, 
       bundle_items: bundleItems.filter((_, i) => i !== idx) 
     });
+  };
+
+  const editBundleItem = (idx) => {
+    setNewBundleItem(bundleItems[idx]);
+    setEditingIndex(idx);
+  };
+
+  const cancelEdit = () => {
+    setNewBundleItem({ child_name: "", child_code: "", child_category: "", child_type: "", unit_price: "" });
+    setEditingIndex(null);
   };
 
   return (
@@ -188,18 +206,29 @@ const ChildCatalogForm = memo(function ChildCatalogForm({ value, onChange, onSav
                   placeholder="0.00"
                 />
               </div>
-              <div className="flex items-end">
+              <div className="flex items-end gap-1">
                 <Button
                   type="button"
                   size="sm"
                   variant="outline"
-                  className="h-7 text-xs w-full gap-1"
+                  className="h-7 text-xs flex-1 gap-1"
                   onClick={addBundleItem}
                   disabled={!newBundleItem.child_name?.trim()}
                 >
                   <Plus className="w-3 h-3" />
-                  Add
+                  {editingIndex !== null ? "Update" : "Add"}
                 </Button>
+                {editingIndex !== null && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 text-xs"
+                    onClick={cancelEdit}
+                  >
+                    <X className="w-3 h-3" />
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -208,7 +237,7 @@ const ChildCatalogForm = memo(function ChildCatalogForm({ value, onChange, onSav
           {bundleItems.length > 0 && (
             <div className="space-y-1 max-h-32 overflow-y-auto">
               {bundleItems.map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between bg-white border border-indigo-100 rounded px-2 py-1.5">
+                <div key={idx} className={`flex items-center justify-between bg-white border rounded px-2 py-1.5 ${editingIndex === idx ? "border-indigo-400 bg-indigo-50" : "border-indigo-100"}`}>
                   <div className="flex-1 flex gap-2 text-xs">
                     <span className="font-mono text-slate-600 w-16">{item.child_code}</span>
                     <span className="font-medium text-slate-800 flex-1">{item.child_name}</span>
@@ -216,15 +245,26 @@ const ChildCatalogForm = memo(function ChildCatalogForm({ value, onChange, onSav
                     <span className="text-slate-500">{item.child_type}</span>
                     <span className="font-mono text-slate-700 w-16 text-right">€{parseFloat(item.unit_price || 0).toFixed(2)}</span>
                   </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-5 w-5 p-0 text-red-400 hover:text-red-600"
-                    onClick={() => removeBundleItem(idx)}
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-5 w-5 p-0 text-indigo-400 hover:text-indigo-600"
+                      onClick={() => editBundleItem(idx)}
+                    >
+                      <Pencil className="w-3 h-3" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-5 w-5 p-0 text-red-400 hover:text-red-600"
+                      onClick={() => removeBundleItem(idx)}
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
