@@ -136,7 +136,7 @@ function ChildCatalogTab({ catalog, queryClient }) {
         </div>
       </div>
 
-      {adding && <ChildCatalogForm value={form} onChange={setForm} allCatalog={catalog} onSave={() => {
+      {adding && <ChildCatalogForm value={form} onChange={setForm} allCatalog={catalog} onCancel={() => { setAdding(false); setForm({}); }} onSave={() => {
         const dataToSave = { ...form };
         if (form.pricing_type === "Bundle") {
           if (form.bundle_items?.length > 0) {
@@ -178,6 +178,7 @@ function ChildCatalogTab({ catalog, queryClient }) {
                 {editing?.id === item.id ? (
                   <td colSpan={9} className="p-2">
                    <ChildCatalogForm value={editing} onChange={setEditing} allCatalog={catalog}
+                      onCancel={() => setEditing(null)}
                       onSave={() => {
                         const dataToSave = { ...editing };
                         if (editing.pricing_type === "Bundle") {
