@@ -291,7 +291,7 @@ const ChildCatalogForm = memo(function ChildCatalogForm({ value, onChange, onSav
           size="sm" 
           className="bg-indigo-600 hover:bg-indigo-700 h-7 text-xs" 
           onClick={onSave} 
-          disabled={saving || !value.child_name?.trim() || (isBundle && (!bundleItems.length || !value.bundle_price || isNaN(parseFloat(value.bundle_price))))}
+          disabled={saving || !value.child_name?.trim() || (isBundle && (!bundleItems.length || parseFloat(value.bundle_price || 0) <= 0))}
         >
           <Check className="w-3 h-3 mr-1" />
           Save
