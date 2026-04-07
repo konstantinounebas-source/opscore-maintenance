@@ -19,15 +19,8 @@ const ChildCatalogForm = memo(function ChildCatalogForm({ value, onChange, onSav
     queryFn: () => base44.entities.ConfigLists.list(),
   });
 
-  const configCategories = configLists.filter(c => c.list_type === "child_category" && c.is_active).map(c => c.value);
-  const configTypes = configLists.filter(c => c.list_type === "child_type" && c.is_active).map(c => c.value);
-
-  // Fallback to unique values from existing catalog if ConfigLists is empty
-  const existingCategories = [...new Set(allCatalog.map(c => c.child_category).filter(Boolean))];
-  const existingTypes = [...new Set(allCatalog.map(c => c.child_type).filter(Boolean))];
-
-  const categories = (configCategories.length > 0 ? configCategories : existingCategories).sort();
-  const types = (configTypes.length > 0 ? configTypes : existingTypes).sort();
+  const categories = configLists.filter(c => c.list_type === "child_category" && c.is_active).map(c => c.value).sort();
+  const types = configLists.filter(c => c.list_type === "child_type" && c.is_active).map(c => c.value).sort();
 
   const pricingType = value.pricing_type || "Individual";
   const isBundle = pricingType === "Bundle";
