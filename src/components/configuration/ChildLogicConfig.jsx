@@ -74,9 +74,19 @@ function ChildCatalogTab({ catalog, queryClient }) {
 
       {adding && <ChildCatalogForm value={form} onChange={setForm} onSave={() => {
         const dataToSave = { ...form };
-        if (form.pricing_type === "Bundle" && form.bundle_items?.length > 0 && !form.child_name?.trim()) {
-          const codes = form.bundle_items.map(item => item.child_code).join(",");
-          dataToSave.child_name = `bundled ${codes}`;
+        if (form.pricing_type === "Bundle") {
+          if (form.bundle_items?.length > 0) {
+            const codes = form.bundle_items.map(item => item.child_code).join(",");
+            if (!form.child_code?.trim()) {
+              dataToSave.child_code = codes;
+            }
+          }
+          if (!form.child_name?.trim()) {
+            dataToSave.child_name = "Bundle";
+          }
+          if (!form.child_type?.trim()) {
+            dataToSave.child_type = "Bundle";
+          }
         }
         createMutation.mutate(dataToSave);
       }} onCancel={() => { setAdding(false); setForm({}); }} saving={createMutation.isPending} />}
@@ -97,15 +107,25 @@ function ChildCatalogTab({ catalog, queryClient }) {
                 {editing?.id === item.id ? (
                   <td colSpan={9} className="p-2">
                    <ChildCatalogForm value={editing} onChange={setEditing}
-                     onSave={() => {
-                       const dataToSave = { ...editing };
-                       if (editing.pricing_type === "Bundle" && editing.bundle_items?.length > 0 && !editing.child_name?.trim()) {
-                         const codes = editing.bundle_items.map(bi => bi.child_code).join(",");
-                         dataToSave.child_name = `bundled ${codes}`;
-                       }
-                       updateMutation.mutate({ id: item.id, data: dataToSave });
-                     }}
-                     onCancel={() => setEditing(null)} saving={updateMutation.isPending} />
+                      onSave={() => {
+                        const dataToSave = { ...editing };
+                        if (editing.pricing_type === "Bundle") {
+                          if (editing.bundle_items?.length > 0) {
+                            const codes = editing.bundle_items.map(bi => bi.child_code).join(",");
+                            if (!editing.child_code?.trim()) {
+                              dataToSave.child_code = codes;
+                            }
+                          }
+                          if (!editing.child_name?.trim()) {
+                            dataToSave.child_name = "Bundle";
+                          }
+                          if (!editing.child_type?.trim()) {
+                            dataToSave.child_type = "Bundle";
+                          }
+                        }
+                        updateMutation.mutate({ id: item.id, data: dataToSave });
+                      }}
+                      onCancel={() => setEditing(null)} saving={updateMutation.isPending} />
                   </td>
                 ) : (
                   <>
