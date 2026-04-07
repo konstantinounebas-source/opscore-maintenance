@@ -136,7 +136,7 @@ function ChildCatalogTab({ catalog, queryClient }) {
         </div>
       </div>
 
-      {adding && <ChildCatalogForm value={form} onChange={setForm} onSave={() => {
+      {adding && <ChildCatalogForm value={form} onChange={setForm} allCatalog={catalog} onSave={() => {
         const dataToSave = { ...form };
         if (form.pricing_type === "Bundle") {
           if (form.bundle_items?.length > 0) {
@@ -177,7 +177,7 @@ function ChildCatalogTab({ catalog, queryClient }) {
               <tr key={item.id} className={`hover:bg-slate-50 ${!item.active ? "opacity-50" : ""}`}>
                 {editing?.id === item.id ? (
                   <td colSpan={9} className="p-2">
-                   <ChildCatalogForm value={editing} onChange={setEditing}
+                   <ChildCatalogForm value={editing} onChange={setEditing} allCatalog={catalog}
                       onSave={() => {
                         const dataToSave = { ...editing };
                         if (editing.pricing_type === "Bundle") {
