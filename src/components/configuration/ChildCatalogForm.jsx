@@ -201,8 +201,8 @@ const ChildCatalogForm = memo(function ChildCatalogForm({ value, onChange, onSav
                 <Input
                   type="number"
                   className="mt-1 h-7 text-xs"
-                  value={newBundleItem.unit_price}
-                  onChange={(e) => setNewBundleItem({ ...newBundleItem, unit_price: parseFloat(e.target.value) || "" })}
+                  value={newBundleItem.unit_price || ""}
+                  onChange={(e) => setNewBundleItem({ ...newBundleItem, unit_price: e.target.value ? parseFloat(e.target.value) : null })}
                   placeholder="0.00"
                 />
               </div>
