@@ -55,25 +55,25 @@ const ChildCatalogForm = memo(function ChildCatalogForm({ value, onChange, onSav
   return (
     <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 space-y-3">
       <div className="grid grid-cols-3 gap-3">
-        <div>
-          <Label className="text-xs">Code *</Label>
-          <Input
-            className="mt-1 h-8 text-xs"
-            value={value.child_code || ""}
-            onChange={(e) => onChange({ ...value, child_code: e.target.value })}
-            placeholder="e.g. GLS-REAR"
-          />
-        </div>
-        <div>
-          <Label className="text-xs">Name *</Label>
+         <div>
+           <Label className="text-xs">Name *</Label>
           <Input
             className="mt-1 h-8 text-xs"
             value={value.child_name || ""}
             onChange={(e) => onChange({ ...value, child_name: e.target.value })}
             placeholder="e.g. Rear Glass Panel"
           />
-        </div>
-        <div>
+          </div>
+          <div>
+          <Label className="text-xs">Code</Label>
+          <Input
+            className="mt-1 h-8 text-xs"
+            value={value.child_code || ""}
+            onChange={(e) => onChange({ ...value, child_code: e.target.value })}
+            placeholder="Auto-generated for bundles"
+          />
+          </div>
+          <div>
           <Label className="text-xs">Category</Label>
           <Input
             className="mt-1 h-8 text-xs"
