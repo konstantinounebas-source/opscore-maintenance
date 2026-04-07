@@ -48,13 +48,20 @@ function ChildCatalogTab({ catalog, queryClient }) {
               ...catalog.map(c => `${c.child_code},${c.child_name},${c.child_category || ""},${c.child_type || ""},${c.default_warranty_months || ""},${c.warranty_start_rule || ""}`)].join("\n");
             const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "child_catalog.csv"; a.click();
           }}><Download className="w-3 h-3" />Export CSV</Button>
-          <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 h-7 text-xs gap-1" onClick={() => { setAdding(true); setForm({ warranty_start_rule: "asset_delivery_date", active: true }); }}>
+          <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 h-7 text-xs gap-1" onClick={() => { setAdding(true); setForm({ warranty_start_rule: "asset_delivery_date", active: true, pricing_type: "Individual" }); }}>
             <Plus className="w-3 h-3" />Add Child
           </Button>
         </div>
       </div>
 
-      {adding && <ChildCatalogForm value={form} onChange={setForm} onSave={() => createMutation.mutate(form)} onCancel={() => { setAdding(false); setForm({}); }} saving={createMutation.isPending} />}
+      {adding && <ChildCatalogForm value={form} onChange={setForm} onSave={() => {
+        const dataToSave = { ...form };
+        if (form.pricing_type === "Bundle" && form.bundle_items?.length > 0 && !form.child_name?.trim()) {
+          const codes = form.bundle_items.map(item => item.child_code).join(",");
+          dataToSave.child_name = `bundled ${codes}`;
+        }
+        createMutation.mutate(dataToSave);
+      }} onCancel={() => { setAdding(false); setForm({}); }} saving={createMutation.isPending} />}
 
       <div className="border rounded-lg overflow-hidden">
         <table className="w-full text-xs">
@@ -72,7 +79,14 @@ function ChildCatalogTab({ catalog, queryClient }) {
                 {editing?.id === item.id ? (
                   <td colSpan={10} className="p-2">
                    <ChildCatalogForm value={editing} onChange={setEditing}
-                     onSave={() => updateMutation.mutate({ id: item.id, data: editing })}
+                     onSave={() => {
+                       const dataToSave = { ...editing };
+                       if (editing.pricing_type === "Bundle" && editing.bundle_items?.length > 0 && !editing.child_name?.trim()) {
+                         const codes = editing.bundle_items.map(bi => bi.child_code).join(",");
+                         dataToSave.child_name = `bundled ${codes}`;
+                       }
+                       updateMutation.mutate({ id: item.id, data: dataToSave });
+                     }}
                      onCancel={() => setEditing(null)} saving={updateMutation.isPending} />
                   </td>
                 ) : (
@@ -84,7 +98,7 @@ function ChildCatalogTab({ catalog, queryClient }) {
                     <td className="px-3 py-2 text-xs"><Badge variant="outline">{item.pricing_type || "Individual"}</Badge></td>
                     <td className="px-3 py-2 font-mono text-slate-500 text-xs">
                       {item.pricing_type === "Bundle" && item.bundle_items?.length > 0
-                        ? item.bundle_items.map(bi => bi.child_code || bi.child_name).join(", ")
+                        ? item.bundle_items.map(bi => bi.child_code || bi.child_name).join(",")
                         : "—"}
                     </td>
                     <td className="px-3 py-2 text-slate-600">{item.pricing_type === "Bundle" ? `€${item.bundle_price?.toLocaleString()}` : item.unit_price != null ? `€${item.unit_price.toLocaleString()}` : "—"}</td>
