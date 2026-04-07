@@ -85,17 +85,17 @@ function ChildCatalogTab({ catalog, queryClient }) {
         <table className="w-full text-xs">
           <thead className="bg-slate-50 border-b">
             <tr>
-              {["Code","Name","Category","Type","Pricing","Bundle","Price (€)","Warranty","Start Rule","Active",""].map(h => (
+              {["Code","Name","Category","Type","Pricing","Price (€)","Warranty","Start Rule","Active",""].map(h => (
                 <th key={h} className="px-3 py-2 text-left font-semibold text-slate-600 text-xs">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {catalog.length === 0 && <tr><td colSpan={10} className="px-3 py-6 text-center text-slate-400">No children defined yet</td></tr>}
+            {catalog.length === 0 && <tr><td colSpan={9} className="px-3 py-6 text-center text-slate-400">No children defined yet</td></tr>}
             {catalog.map(item => (
               <tr key={item.id} className={`hover:bg-slate-50 ${!item.active ? "opacity-50" : ""}`}>
                 {editing?.id === item.id ? (
-                  <td colSpan={10} className="p-2">
+                  <td colSpan={9} className="p-2">
                    <ChildCatalogForm value={editing} onChange={setEditing}
                      onSave={() => {
                        const dataToSave = { ...editing };
@@ -114,11 +114,6 @@ function ChildCatalogTab({ catalog, queryClient }) {
                     <td className="px-3 py-2 text-slate-600">{item.child_category}</td>
                     <td className="px-3 py-2 text-slate-600">{item.child_type}</td>
                     <td className="px-3 py-2 text-xs"><Badge variant="outline">{item.pricing_type || "Individual"}</Badge></td>
-                    <td className="px-3 py-2 font-mono text-slate-500 text-xs">
-                      {item.pricing_type === "Bundle" && item.bundle_items?.length > 0
-                        ? item.bundle_items.map(bi => bi.child_code || bi.child_name).join(",")
-                        : "—"}
-                    </td>
                     <td className="px-3 py-2 text-slate-600">{item.pricing_type === "Bundle" ? `€${item.bundle_price?.toLocaleString()}` : item.unit_price != null ? `€${item.unit_price.toLocaleString()}` : "—"}</td>
                     <td className="px-3 py-2">{item.default_warranty_months} mo</td>
                     <td className="px-3 py-2 text-slate-500">{WARRANTY_START_RULES.find(r => r.value === item.warranty_start_rule)?.label || item.warranty_start_rule}</td>
