@@ -15,7 +15,7 @@ const ChildCatalogForm = memo(function ChildCatalogForm({ value, onChange, onSav
   const pricingType = value.pricing_type || "Individual";
   const isBundle = pricingType === "Bundle";
   const bundleItems = value.bundle_items || [];
-  const [newBundleItem, setNewBundleItem] = useState({ child_name: "", child_code: "", child_category: "", unit_price: "" });
+  const [newBundleItem, setNewBundleItem] = useState({ child_name: "", child_code: "", child_category: "", child_type: "", unit_price: "" });
 
   const addBundleItem = () => {
     if (newBundleItem.child_name?.trim()) {
@@ -23,7 +23,7 @@ const ChildCatalogForm = memo(function ChildCatalogForm({ value, onChange, onSav
         ...value, 
         bundle_items: [...bundleItems, newBundleItem] 
       });
-      setNewBundleItem({ child_name: "", child_code: "", child_category: "", unit_price: "" });
+      setNewBundleItem({ child_name: "", child_code: "", child_category: "", child_type: "", unit_price: "" });
     }
   };
 
@@ -137,7 +137,7 @@ const ChildCatalogForm = memo(function ChildCatalogForm({ value, onChange, onSav
           
           {/* Add new bundle item */}
           <div className="border border-indigo-300 bg-white rounded-lg p-2 space-y-2">
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-6 gap-2">
               <div>
                 <Label className="text-xs">Code</Label>
                 <Input
@@ -166,6 +166,16 @@ const ChildCatalogForm = memo(function ChildCatalogForm({ value, onChange, onSav
                   value={newBundleItem.child_category}
                   onChange={(e) => setNewBundleItem({ ...newBundleItem, child_category: e.target.value })}
                   placeholder="Category"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Type</Label>
+                <Input
+                  type="text"
+                  className="mt-1 h-7 text-xs"
+                  value={newBundleItem.child_type}
+                  onChange={(e) => setNewBundleItem({ ...newBundleItem, child_type: e.target.value })}
+                  placeholder="Type"
                 />
               </div>
               <div>
@@ -203,6 +213,7 @@ const ChildCatalogForm = memo(function ChildCatalogForm({ value, onChange, onSav
                     <span className="font-mono text-slate-600 w-16">{item.child_code}</span>
                     <span className="font-medium text-slate-800 flex-1">{item.child_name}</span>
                     <span className="text-slate-500">{item.child_category}</span>
+                    <span className="text-slate-500">{item.child_type}</span>
                     <span className="font-mono text-slate-700 w-16 text-right">€{parseFloat(item.unit_price || 0).toFixed(2)}</span>
                   </div>
                   <Button
@@ -240,7 +251,7 @@ const ChildCatalogForm = memo(function ChildCatalogForm({ value, onChange, onSav
           size="sm" 
           className="bg-indigo-600 hover:bg-indigo-700 h-7 text-xs" 
           onClick={onSave} 
-          disabled={saving || !value.child_name?.trim() || (isBundle && (!bundleItems.length || !value.bundle_price))}
+          disabled={saving || !value.child_name?.trim() || (isBundle && (!bundleItems.length || !value.bundle_price || isNaN(parseFloat(value.bundle_price))))}
         >
           <Check className="w-3 h-3 mr-1" />
           Save
