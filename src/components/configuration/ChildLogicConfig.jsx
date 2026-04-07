@@ -80,12 +80,14 @@ function ChildCatalogTab({ catalog, queryClient }) {
             if (!form.child_code?.trim()) {
               dataToSave.child_code = codes;
             }
+            // Set type based on bundle items
+            const types = [...new Set(form.bundle_items.map(item => item.child_type).filter(Boolean))];
+            if (!form.child_type?.trim()) {
+              dataToSave.child_type = types.length === 1 ? types[0] : types.join(",");
+            }
           }
           if (!form.child_name?.trim()) {
             dataToSave.child_name = "Bundle";
-          }
-          if (!form.child_type?.trim()) {
-            dataToSave.child_type = "Bundle";
           }
         }
         createMutation.mutate(dataToSave);
@@ -115,12 +117,14 @@ function ChildCatalogTab({ catalog, queryClient }) {
                             if (!editing.child_code?.trim()) {
                               dataToSave.child_code = codes;
                             }
+                            // Set type based on bundle items
+                            const types = [...new Set(editing.bundle_items.map(bi => bi.child_type).filter(Boolean))];
+                            if (!editing.child_type?.trim()) {
+                              dataToSave.child_type = types.length === 1 ? types[0] : types.join(",");
+                            }
                           }
                           if (!editing.child_name?.trim()) {
                             dataToSave.child_name = "Bundle";
-                          }
-                          if (!editing.child_type?.trim()) {
-                            dataToSave.child_type = "Bundle";
                           }
                         }
                         updateMutation.mutate({ id: item.id, data: dataToSave });
