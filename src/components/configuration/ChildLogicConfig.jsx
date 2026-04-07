@@ -24,9 +24,20 @@ function ChildCatalogTab({ catalog, queryClient }) {
   const [form, setForm] = useState({});
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(0);
+  const [filterType, setFilterType] = useState("");
+  const [filterCategory, setFilterCategory] = useState("");
 
-  const paginatedCatalog = catalog.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
-  const totalPages = Math.ceil(catalog.length / itemsPerPage);
+  const uniqueTypes = [...new Set(catalog.map(c => c.child_type).filter(Boolean))].sort();
+  const uniqueCategories = [...new Set(catalog.map(c => c.child_category).filter(Boolean))].sort();
+
+  const filteredCatalog = catalog.filter(item => {
+    if (filterType && item.child_type !== filterType) return false;
+    if (filterCategory && item.child_category !== filterCategory) return false;
+    return true;
+  });
+
+  const paginatedCatalog = filteredCatalog.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
+  const totalPages = Math.ceil(filteredCatalog.length / itemsPerPage);
 
   const createMutation = useMutation({
     mutationFn: (d) => {
@@ -62,15 +73,45 @@ function ChildCatalogTab({ catalog, queryClient }) {
 
 
   const handleItemsPerPageChange = (val) => {
-    setItemsPerPage(val === "all" ? catalog.length : val);
+    setItemsPerPage(val === "all" ? filteredCatalog.length : val);
+    setCurrentPage(0);
+  };
+
+  const handleFilterTypeChange = (val) => {
+    setFilterType(val === "clear" ? "" : val);
+    setCurrentPage(0);
+  };
+
+  const handleFilterCategoryChange = (val) => {
+    setFilterCategory(val === "clear" ? "" : val);
     setCurrentPage(0);
   };
 
   return (
     <div className="space-y-3">
-      <div className="flex justify-between items-center">
-        <p className="text-xs text-slate-500">{catalog.length} child components defined</p>
-        <div className="flex gap-2 items-center">
+      <div className="flex justify-between items-center gap-3 flex-wrap">
+        <p className="text-xs text-slate-500">{filteredCatalog.length} of {catalog.length} child components</p>
+        <div className="flex gap-2 items-center flex-wrap">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-slate-500">Type:</span>
+            <Select value={filterType} onValueChange={handleFilterTypeChange}>
+              <SelectTrigger className="w-32 h-7 text-xs"><SelectValue placeholder="All types" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="clear">All types</SelectItem>
+                {uniqueTypes.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-slate-500">Category:</span>
+            <Select value={filterCategory} onValueChange={handleFilterCategoryChange}>
+              <SelectTrigger className="w-32 h-7 text-xs"><SelectValue placeholder="All categories" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="clear">All categories</SelectItem>
+                {uniqueCategories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="flex items-center gap-1.5">
             <span className="text-xs text-slate-500">Show:</span>
             <Select value={itemsPerPage.toString()} onValueChange={handleItemsPerPageChange}>
