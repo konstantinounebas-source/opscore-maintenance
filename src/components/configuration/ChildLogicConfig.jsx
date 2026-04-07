@@ -22,6 +22,11 @@ function ChildCatalogTab({ catalog, queryClient }) {
   const [editing, setEditing] = useState(null);
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState({});
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(0);
+
+  const paginatedCatalog = catalog.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
+  const totalPages = Math.ceil(catalog.length / itemsPerPage);
 
   const createMutation = useMutation({
     mutationFn: (d) => {
@@ -56,11 +61,29 @@ function ChildCatalogTab({ catalog, queryClient }) {
 
 
 
+  const handleItemsPerPageChange = (val) => {
+    setItemsPerPage(val === "all" ? catalog.length : val);
+    setCurrentPage(0);
+  };
+
   return (
     <div className="space-y-3">
       <div className="flex justify-between items-center">
         <p className="text-xs text-slate-500">{catalog.length} child components defined</p>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-slate-500">Show:</span>
+            <Select value={itemsPerPage.toString()} onValueChange={handleItemsPerPageChange}>
+              <SelectTrigger className="w-20 h-7 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="40">40</SelectItem>
+                <SelectItem value="80">80</SelectItem>
+                <SelectItem value="all">All</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => {
             const csv = ["child_code,child_name,child_category,child_type,default_warranty_months,warranty_start_rule",
               ...catalog.map(c => `${c.child_code},${c.child_name},${c.child_category || ""},${c.child_type || ""},${c.default_warranty_months || ""},${c.warranty_start_rule || ""}`)].join("\n");
@@ -109,7 +132,7 @@ function ChildCatalogTab({ catalog, queryClient }) {
           </thead>
           <tbody className="divide-y divide-slate-100">
             {catalog.length === 0 && <tr><td colSpan={9} className="px-3 py-6 text-center text-slate-400">No children defined yet</td></tr>}
-            {catalog.map(item => (
+            {paginatedCatalog.map(item => (
               <tr key={item.id} className={`hover:bg-slate-50 ${!item.active ? "opacity-50" : ""}`}>
                 {editing?.id === item.id ? (
                   <td colSpan={9} className="p-2">
@@ -169,6 +192,20 @@ function ChildCatalogTab({ catalog, queryClient }) {
           </tbody>
         </table>
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-slate-500">Page {currentPage + 1} of {totalPages}</p>
+          <div className="flex gap-1">
+            <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setCurrentPage(Math.max(0, currentPage - 1))} disabled={currentPage === 0}>
+              ← Prev
+            </Button>
+            <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setCurrentPage(Math.min(totalPages - 1, currentPage + 1))} disabled={currentPage === totalPages - 1}>
+              Next →
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
