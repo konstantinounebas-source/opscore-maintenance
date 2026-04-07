@@ -40,8 +40,8 @@ const PLANNING_LIST_TYPES = [
 ];
 
 const CHILD_LIST_TYPES = [
-  { key: "Child Category", label: "Category" },
-  { key: "Child Type", label: "Child Type" },
+  { key: "child_category", label: "Category" },
+  { key: "child_type", label: "Child Type" },
   { key: "Child Parent Asset", label: "Parent Asset" },
   { key: "Child Status", label: "Status" },
 ];
