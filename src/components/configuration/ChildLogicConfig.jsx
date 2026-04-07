@@ -24,11 +24,29 @@ function ChildCatalogTab({ catalog, queryClient }) {
   const [form, setForm] = useState({});
 
   const createMutation = useMutation({
-    mutationFn: (d) => base44.entities.ChildCatalog.create(d),
+    mutationFn: (d) => {
+      // Normalize bundle_items prices to proper numbers
+      if (d.bundle_items?.length > 0) {
+        d.bundle_items = d.bundle_items.map(item => ({
+          ...item,
+          unit_price: item.unit_price != null ? parseFloat(item.unit_price) : null
+        }));
+      }
+      return base44.entities.ChildCatalog.create(d);
+    },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["childCatalog"] }); setAdding(false); setForm({}); }
   });
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.ChildCatalog.update(id, data),
+    mutationFn: ({ id, data }) => {
+      // Normalize bundle_items prices to proper numbers
+      if (data.bundle_items?.length > 0) {
+        data.bundle_items = data.bundle_items.map(item => ({
+          ...item,
+          unit_price: item.unit_price != null ? parseFloat(item.unit_price) : null
+        }));
+      }
+      return base44.entities.ChildCatalog.update(id, data);
+    },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["childCatalog"] }); setEditing(null); }
   });
   const deleteMutation = useMutation({
