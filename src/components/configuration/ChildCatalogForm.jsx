@@ -19,8 +19,14 @@ const ChildCatalogForm = memo(function ChildCatalogForm({ value, onChange, onSav
     queryFn: () => base44.entities.ConfigLists.list(),
   });
 
-  const categories = configLists.filter(c => c.list_type === "child_category" && c.is_active).map(c => c.value).sort();
-  const types = configLists.filter(c => c.list_type === "child_type" && c.is_active).map(c => c.value).sort();
+  const configCategories = configLists.filter(c => c.list_type === "child_category" && c.is_active).map(c => c.value);
+  const configTypes = configLists.filter(c => c.list_type === "child_type" && c.is_active).map(c => c.value);
+  
+  const existingCategories = [...new Set(allCatalog.map(c => c.child_category).filter(Boolean))];
+  const existingTypes = [...new Set(allCatalog.map(c => c.child_type).filter(Boolean))];
+  
+  const categories = [...new Set([...configCategories, ...existingCategories])].sort();
+  const types = [...new Set([...configTypes, ...existingTypes])].sort();
 
   const pricingType = value.pricing_type || "Individual";
   const isBundle = pricingType === "Bundle";
