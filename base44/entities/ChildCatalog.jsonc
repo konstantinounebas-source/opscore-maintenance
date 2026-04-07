@@ -44,19 +44,21 @@
       "type": "string",
       "enum": [
         "Individual",
-        "Bundle Parent",
-        "Bundle Child"
+        "Bundle"
       ],
       "default": "Individual",
       "description": "Pricing model for this component"
     },
-    "bundle_code": {
-      "type": "string",
-      "description": "Code identifying the bundle (required for Bundle Parent and Bundle Child)"
+    "bundled_child_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs of children included in this bundle (for Bundle pricing_type only)"
     },
     "bundle_price": {
       "type": "number",
-      "description": "Total price for entire bundle (only for Bundle Parent)"
+      "description": "Total price for entire bundle (only for Bundle pricing_type)"
     },
     "active": {
       "type": "boolean",

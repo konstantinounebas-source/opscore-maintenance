@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Check, X } from "lucide-react";
+import { Check, X, ChevronDown } from "lucide-react";
 
 const WARRANTY_START_RULES = [
   { value: "asset_delivery_date", label: "Asset Delivery Date" },
@@ -11,12 +11,11 @@ const WARRANTY_START_RULES = [
   { value: "manual", label: "Manual" },
 ];
 
-const ChildCatalogForm = memo(function ChildCatalogForm({ value, onChange, onSave, onCancel, saving }) {
+const ChildCatalogForm = memo(function ChildCatalogForm({ value, onChange, onSave, onCancel, saving, allChildren = [] }) {
   const pricingType = value.pricing_type || "Individual";
-  const showUnitPrice = pricingType === "Individual";
-  const showBundlePrice = pricingType === "Bundle Parent";
-  const isBundleChild = pricingType === "Bundle Child";
-  const requiresBundle = pricingType !== "Individual";
+  const isBundle = pricingType === "Bundle";
+  const bundledIds = value.bundled_child_ids || [];
+  const availableChildren = allChildren.filter(c => c.id !== value.id && c.pricing_type !== "Bundle");
 
   return (
     <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 space-y-3">
@@ -91,18 +90,17 @@ const ChildCatalogForm = memo(function ChildCatalogForm({ value, onChange, onSav
         </div>
         <div>
           <Label className="text-xs">Pricing Type</Label>
-          <Select value={pricingType} onValueChange={(v) => onChange({ ...value, pricing_type: v, bundle_code: v === "Individual" ? undefined : value.bundle_code })}>
+          <Select value={pricingType} onValueChange={(v) => onChange({ ...value, pricing_type: v, bundled_child_ids: v === "Bundle" ? [] : undefined })}>
             <SelectTrigger className="mt-1 h-8 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="Individual">Individual</SelectItem>
-              <SelectItem value="Bundle Parent">Bundle Parent</SelectItem>
-              <SelectItem value="Bundle Child">Bundle Child</SelectItem>
+              <SelectItem value="Bundle">Bundle</SelectItem>
             </SelectContent>
           </Select>
         </div>
-        {showUnitPrice && (
+        {!isBundle && (
           <div>
             <Label className="text-xs">Unit Price (€)</Label>
             <Input
@@ -114,48 +112,49 @@ const ChildCatalogForm = memo(function ChildCatalogForm({ value, onChange, onSav
             />
           </div>
         )}
-        {requiresBundle && (
-          <div>
-            <Label className="text-xs">Bundle Code {requiresBundle ? "*" : ""}</Label>
-            <Input
-              className="mt-1 h-8 text-xs"
-              value={value.bundle_code || ""}
-              onChange={(e) => onChange({ ...value, bundle_code: e.target.value })}
-              placeholder="e.g. BUNDLE-001"
-            />
-          </div>
-        )}
-        {showBundlePrice && (
-          <div>
-            <Label className="text-xs">Bundle Price (€) *</Label>
-            <Input
-              type="number"
-              className="mt-1 h-8 text-xs"
-              value={value.bundle_price || ""}
-              onChange={(e) => onChange({ ...value, bundle_price: parseFloat(e.target.value) || undefined })}
-              placeholder="0.00"
-            />
-          </div>
-        )}
-        {isBundleChild && (
-          <div>
-            <Label className="text-xs">Unit Price (€)</Label>
-            <Input
-              type="number"
-              className="mt-1 h-8 text-xs"
-              value="0"
-              disabled
-              placeholder="Auto-set to 0"
-            />
-          </div>
-        )}
       </div>
+      {isBundle && (
+        <div className="border-t border-indigo-200 pt-3 space-y-3">
+          <p className="text-xs font-semibold text-indigo-700">Bundle Contents</p>
+          <div className="space-y-2 max-h-40 overflow-y-auto">
+            {availableChildren.map(child => (
+              <label key={child.id} className="flex items-center gap-2 text-xs cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={bundledIds.includes(child.id)}
+                  onChange={(e) => {
+                    const newIds = e.target.checked 
+                      ? [...bundledIds, child.id]
+                      : bundledIds.filter(id => id !== child.id);
+                    onChange({ ...value, bundled_child_ids: newIds });
+                  }}
+                  className="w-4 h-4"
+                />
+                <span className="text-slate-700">{child.child_code} - {child.child_name}</span>
+                <span className="text-slate-400">€{child.unit_price || 0}</span>
+              </label>
+            ))}
+          </div>
+          <div className="grid grid-cols-2 gap-3 pt-2 border-t border-indigo-200">
+            <div>
+              <Label className="text-xs">Bundle Price (€) *</Label>
+              <Input
+                type="number"
+                className="mt-1 h-8 text-xs"
+                value={value.bundle_price || ""}
+                onChange={(e) => onChange({ ...value, bundle_price: parseFloat(e.target.value) || undefined })}
+                placeholder="0.00"
+              />
+            </div>
+          </div>
+        </div>
+      )}
       <div className="flex gap-2">
         <Button 
           size="sm" 
           className="bg-indigo-600 hover:bg-indigo-700 h-7 text-xs" 
           onClick={onSave} 
-          disabled={saving || !value.child_name?.trim() || (requiresBundle && !value.bundle_code?.trim()) || (showBundlePrice && !value.bundle_price)}
+          disabled={saving || !value.child_name?.trim() || (isBundle && (!bundledIds.length || !value.bundle_price))}
         >
           <Check className="w-3 h-3 mr-1" />
           Save
