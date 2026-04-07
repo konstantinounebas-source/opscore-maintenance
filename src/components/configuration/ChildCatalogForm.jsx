@@ -1,4 +1,6 @@
 import React, { memo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +14,14 @@ const WARRANTY_START_RULES = [
 ];
 
 const ChildCatalogForm = memo(function ChildCatalogForm({ value, onChange, onSave, onCancel, saving }) {
+  const { data: configLists = [] } = useQuery({
+    queryKey: ["configLists"],
+    queryFn: () => base44.entities.ConfigLists.list(),
+  });
+
+  const categories = configLists.filter(c => c.list_type === "child_category" && c.is_active).map(c => c.value).sort();
+  const types = configLists.filter(c => c.list_type === "child_type" && c.is_active).map(c => c.value).sort();
+
   const pricingType = value.pricing_type || "Individual";
   const isBundle = pricingType === "Bundle";
   const bundleItems = value.bundle_items || [];
@@ -74,21 +84,26 @@ const ChildCatalogForm = memo(function ChildCatalogForm({ value, onChange, onSav
           />
           </div>
           <div>
-          <Label className="text-xs">Category</Label>
-          <Input
-            className="mt-1 h-8 text-xs"
-            value={value.child_category || ""}
-            onChange={(e) => onChange({ ...value, child_category: e.target.value })}
-            placeholder="Glass, Seating, Lighting..."
-          />
-        </div>
-        <div>
-          <Label className="text-xs">Type</Label>
-          <Input
-            className="mt-1 h-8 text-xs"
-            value={value.child_type || ""}
-            onChange={(e) => onChange({ ...value, child_type: e.target.value })}
-          />
+            <Label className="text-xs">Category</Label>
+            <Select value={value.child_category || ""} onValueChange={(v) => onChange({ ...value, child_category: v })}>
+              <SelectTrigger className="mt-1 h-8 text-xs">
+                <SelectValue placeholder="Select category..." />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Type</Label>
+            <Select value={value.child_type || ""} onValueChange={(v) => onChange({ ...value, child_type: v })}>
+              <SelectTrigger className="mt-1 h-8 text-xs">
+                <SelectValue placeholder="Select type..." />
+              </SelectTrigger>
+              <SelectContent>
+                {types.map(typ => <SelectItem key={typ} value={typ}>{typ}</SelectItem>)}
+              </SelectContent>
+            </Select>
         </div>
         <div>
           <Label className="text-xs">Serial Number</Label>
@@ -178,23 +193,25 @@ const ChildCatalogForm = memo(function ChildCatalogForm({ value, onChange, onSav
               </div>
               <div>
                 <Label className="text-xs">Category</Label>
-                <Input
-                  type="text"
-                  className="mt-1 h-7 text-xs"
-                  value={newBundleItem.child_category}
-                  onChange={(e) => setNewBundleItem({ ...newBundleItem, child_category: e.target.value })}
-                  placeholder="Category"
-                />
+                <Select value={newBundleItem.child_category || ""} onValueChange={(v) => setNewBundleItem({ ...newBundleItem, child_category: v })}>
+                  <SelectTrigger className="mt-1 h-7 text-xs">
+                    <SelectValue placeholder="Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label className="text-xs">Type</Label>
-                <Input
-                  type="text"
-                  className="mt-1 h-7 text-xs"
-                  value={newBundleItem.child_type}
-                  onChange={(e) => setNewBundleItem({ ...newBundleItem, child_type: e.target.value })}
-                  placeholder="Type"
-                />
+                <Select value={newBundleItem.child_type || ""} onValueChange={(v) => setNewBundleItem({ ...newBundleItem, child_type: v })}>
+                  <SelectTrigger className="mt-1 h-7 text-xs">
+                    <SelectValue placeholder="Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {types.map(typ => <SelectItem key={typ} value={typ}>{typ}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label className="text-xs">Price (€)</Label>

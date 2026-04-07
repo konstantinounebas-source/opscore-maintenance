@@ -48,6 +48,14 @@ const FORM_FIELDS = {
       { key: "form_wo_sig_services", label: "Service / Position (Signature)" },
     ],
   },
+  child_catalog: {
+    label: "Child Catalog",
+    description: "Configure dropdown options for Child Category and Type in the Child Catalog.",
+    lists: [
+      { key: "child_category", label: "Category" },
+      { key: "child_type",     label: "Type" },
+    ],
+  },
 };
 
 // ── Single list manager ───────────────────────────────────────────────────────
