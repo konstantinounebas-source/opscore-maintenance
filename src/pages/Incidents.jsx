@@ -71,7 +71,7 @@ export default function Incidents() {
 
   const filteredIncidents = useMemo(() => {
     return incidents.filter(i => {
-      const hasWO = workOrders.some(wo => wo.incident_id === i.id || wo.incident_id === i.incident_id);
+      const hasWO = workOrders.some(wo => (wo.incident_id === i.id || wo.incident_id === i.incident_id) && /corrective/i.test(wo.title || ""));
       if (filterStatus !== "all" && i.status !== filterStatus) return false;
       if (filterPriority !== "all" && i.initial_priority !== filterPriority) return false;
       if (filterWO === "yes" && !hasWO) return false;
@@ -145,9 +145,9 @@ export default function Incidents() {
     {
       key: "has_wo",
       label: "WO",
-      accessor: (r) => workOrders.some(wo => wo.incident_id === r.id || wo.incident_id === r.incident_id) ? "Yes" : "No",
+      accessor: (r) => workOrders.some(wo => (wo.incident_id === r.id || wo.incident_id === r.incident_id) && /corrective/i.test(wo.title || "")) ? "Yes" : "No",
       render: (r) => {
-        const hasWO = workOrders.some(wo => wo.incident_id === r.id || wo.incident_id === r.incident_id);
+        const hasWO = workOrders.some(wo => (wo.incident_id === r.id || wo.incident_id === r.incident_id) && /corrective/i.test(wo.title || ""));
         return hasWO ? (
           <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">Yes</span>
         ) : (
