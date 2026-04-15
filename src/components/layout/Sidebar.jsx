@@ -13,7 +13,7 @@ const navItems = [
   ]},
   { path: "/Incidents", label: "Incidents", icon: AlertTriangle },
   { path: "/WorkOrders", label: "Work Orders", icon: Wrench },
-  { path: "/Planning", label: "Planning", icon: MapPin, submenu: [
+  { path: "/Planning", label: "Planning Workbench", icon: MapPin, submenu: [
     { path: "/Crews", label: "Crews", icon: Users },
     { path: "/SLAConfig", label: "SLA Rules", icon: ShieldCheck },
   ]},

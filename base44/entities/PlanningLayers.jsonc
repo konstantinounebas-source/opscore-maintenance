@@ -1,0 +1,44 @@
+{
+  "name": "PlanningLayers",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Layer display name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Optional description"
+    },
+    "color": {
+      "type": "string",
+      "description": "Hex color for map pins"
+    },
+    "icon": {
+      "type": "string",
+      "description": "Optional icon name"
+    },
+    "membership_mode": {
+      "type": "string",
+      "enum": [
+        "manual",
+        "rule_based"
+      ],
+      "default": "manual"
+    },
+    "rule_definition_json": {
+      "type": "string",
+      "description": "JSON rule for auto-membership"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "created_by": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "name": "PlanningLayerAssets",
+  "type": "object",
+  "properties": {
+    "planning_layer_id": {
+      "type": "string",
+      "description": "FK -> PlanningLayers"
+    },
+    "asset_id": {
+      "type": "string",
+      "description": "FK -> Assets"
+    }
+  },
+  "required": [
+    "planning_layer_id",
+    "asset_id"
+  ]
+}
