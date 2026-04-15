@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, FileText, Clock, CheckCircle2, XCircle, Eye, Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import html2pdf from "html2pdf.js";
 import OutlineManagementForm from "@/components/forms/OutlineManagementForm";
 import CombinedFMPIandInvoiceForm from "@/components/forms/CombinedFMPIandInvoiceForm";
 import MakeSafeChecklistForm from "@/components/forms/MakeSafeChecklistForm";
@@ -61,9 +62,6 @@ async function downloadFormPDF(submissionId, formName) {
     }
     
     const { html, fileName } = response.data;
-    
-    // Dynamic import of html2pdf
-    const { default: html2pdf } = await import('html2pdf.js');
     
     const element = document.createElement('div');
     element.innerHTML = html;
