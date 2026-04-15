@@ -175,7 +175,7 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
   };
 
   const handleSubmit = async () => {
-    if (key !== "ca_status" && key !== "close_incident" && !person.trim()) {
+    if (key !== "close_incident" && !person.trim()) {
       toast({ title: "Person required", description: "Please enter the responsible person." });
       return;
     }
@@ -450,18 +450,33 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
           )}
 
           {key === "ca_status" && (
-            <div className="space-y-1.5">
-              <Label className="text-xs flex items-center gap-1">
-                <StickyNote className="w-3 h-3" /> Notes (optional)
-              </Label>
-              <Textarea
-                placeholder="Add notes..."
-                rows={2}
-                value={formData.notes || ""}
-                onChange={e => set("notes", e.target.value)}
-                className="text-sm"
-              />
-            </div>
+            <>
+              <div className="space-y-1.5">
+                <Label className="text-xs flex items-center gap-1">
+                  <StickyNote className="w-3 h-3" /> Notes (optional)
+                </Label>
+                <Textarea
+                  placeholder="Add notes..."
+                  rows={2}
+                  value={formData.notes || ""}
+                  onChange={e => set("notes", e.target.value)}
+                  className="text-sm"
+                />
+              </div>
+              <div className="space-y-1.5 border-t pt-3">
+                <Label className="text-xs font-semibold">Confirmed By *</Label>
+                {personList.length > 0 && (
+                  <Select value={personList.includes(person) ? person : "__manual__"} onValueChange={v => { if (v !== "__manual__") setPerson(v); }}>
+                    <SelectTrigger className="mb-1"><SelectValue placeholder="Select from list..." /></SelectTrigger>
+                    <SelectContent>
+                      {personList.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                      <SelectItem value="__manual__">— Manual Entry —</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+                <Input placeholder="Enter person name..." value={person} onChange={e => setPerson(e.target.value)} className="text-sm" />
+              </div>
+            </>
           )}
 
           {key !== "ca_status" && key !== "close_incident" && (
@@ -550,7 +565,7 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
             <Button
               className={key === "close_incident" ? "bg-red-600 hover:bg-red-700" : "bg-indigo-600 hover:bg-indigo-700"}
               onClick={handleSubmit}
-              disabled={saving || (key !== "ca_status" && key !== "close_incident" && !person.trim())}
+              disabled={saving || (key !== "close_incident" && !person.trim())}
             >
               {saving && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
               {saving ? "Saving..." : key === "close_incident" ? "Close Incident" : "Confirm"}
