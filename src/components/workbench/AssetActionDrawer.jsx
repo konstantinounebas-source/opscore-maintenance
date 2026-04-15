@@ -383,13 +383,6 @@ function WeekPickerField({ weeks, value, onChange }) {
     }
   };
 
-  // Build disabled dates: only days within any known week are selectable
-  const weekIntervals = weeks
-    .filter(w => w.start_date && w.end_date)
-    .map(w => ({ start: parseISO(w.start_date), end: parseISO(w.end_date) }));
-
-  const isDisabled = (date) => !weekIntervals.some(iv => isWithinInterval(date, iv));
-
   return (
     <div>
       <Label className="text-xs">Planning Week</Label>
@@ -414,7 +407,6 @@ function WeekPickerField({ weeks, value, onChange }) {
           <Calendar
             mode="single"
             onSelect={handleDaySelect}
-            disabled={isDisabled}
             initialFocus
           />
           {weeks.length === 0 && (
