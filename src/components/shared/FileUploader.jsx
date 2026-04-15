@@ -47,13 +47,24 @@ export default function FileUploader({ onUpload, label = "Upload File" }) {
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className={`transition-colors ${dragOver ? "bg-slate-100 border-2 border-dashed border-slate-400 rounded" : ""}`}
+      onClick={() => fileRef.current?.click()}
+      className={`border-2 border-dashed rounded-lg p-3 text-center cursor-pointer transition-colors ${
+        dragOver ? "border-indigo-400 bg-indigo-50" : "border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/30"
+      }`}
     >
       <input ref={fileRef} type="file" className="hidden" onChange={handleFile} multiple />
-      <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
-        {uploading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
-        {label}
-      </Button>
+      {uploading ? (
+        <div className="flex items-center justify-center gap-2 text-xs text-indigo-600 font-medium">
+          <Loader2 className="w-4 h-4 animate-spin" /> Uploading...
+        </div>
+      ) : dragOver ? (
+        <p className="text-xs text-indigo-600 font-medium">Drop files here...</p>
+      ) : (
+        <div className="flex items-center justify-center gap-2 text-xs text-slate-500">
+          <Upload className="w-4 h-4 text-slate-400" />
+          <span>{label} — drag & drop or click</span>
+        </div>
+      )}
     </div>
   );
 }

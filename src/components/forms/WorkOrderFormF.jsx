@@ -106,23 +106,33 @@ function PhotoUploadArea({ label, files, onChange, required }) {
         ) : (
           <p className="text-xs text-slate-500">Σύρτε & αφήστε ή κλικ για μεταφόρτωση</p>
         )}
-        <input ref={inputRef} type="file" multiple accept="image/*" className="hidden"
+        <input ref={inputRef} type="file" multiple className="hidden"
           onChange={e => handleFiles(e.target.files)} />
       </div>
       {files.length > 0 && (
         <div className="flex flex-wrap gap-2 mt-2">
-          {files.map((f, i) => (
-            <div key={i} className="relative group">
-              <img src={f.url} alt={f.name} className="w-20 h-20 object-cover rounded-lg border border-slate-200" />
-              <button
-                type="button"
-                onClick={() => remove(i)}
-                className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </div>
-          ))}
+          {files.map((f, i) => {
+            const isImage = /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(f.name) || f.url?.match(/\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i);
+            return (
+              <div key={i} className="relative group">
+                {isImage ? (
+                  <img src={f.url} alt={f.name} className="w-20 h-20 object-cover rounded-lg border border-slate-200" />
+                ) : (
+                  <div className="flex items-center gap-1.5 px-2 py-1.5 bg-slate-100 border border-slate-200 rounded-lg text-xs text-slate-600 max-w-[140px]">
+                    <Image className="w-3 h-3 flex-shrink-0 text-slate-400" />
+                    <span className="truncate">{f.name}</span>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => remove(i)}
+                  className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
