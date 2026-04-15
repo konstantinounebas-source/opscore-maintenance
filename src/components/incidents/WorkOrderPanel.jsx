@@ -181,7 +181,7 @@ function CreateWOModal({ woType, incident, incidentId, onClose, onDone }) {
               <div className="space-y-1.5">
                 <Label className="text-xs flex items-center gap-1"><Paperclip className="w-3 h-3" /> Attachments (optional)</Label>
                 <FileUploader 
-                  onUpload={fd => set("files", [...(formData.files || []), fd])} 
+                  onUpload={fd => setFormData(prev => ({ ...prev, files: [...(prev.files || []), fd] }))} 
                   label="Upload Files" 
                 />
                 {formData.files && formData.files.length > 0 && (
@@ -373,7 +373,7 @@ function ChecklistModal({ wo, incidentId, onClose, onDone }) {
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs flex items-center gap-1"><Paperclip className="w-3 h-3" /> Attachments (optional)</Label>
-            <FileUploader onUpload={fd => setFiles(prev => [...prev, fd])} label="Upload Checklist File" />
+            <FileUploader onUpload={fd => setFiles(prev => [...prev, fd])} label="Upload Files" />
             {files.length > 0 && (
               <div className="space-y-1.5 mt-1">
                 {files.map((f, idx) => (
