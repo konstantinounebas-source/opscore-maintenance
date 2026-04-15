@@ -4,7 +4,7 @@ import { X, Maximize2, RotateCcw, ChevronDown, ChevronUp, Layers } from "lucide-
 import MapFilterBar from "./MapFilterBar";
 import MapColorModeSelector from "./MapColorModeSelector";
 import MapLegend from "./MapLegend";
-import MapLayerManager from "./MapLayerManager";
+import VisualLayerManager from "./VisualLayerManager";
 import WorkbenchMap from "./WorkbenchMap";
 import AssetActionDrawer from "./AssetActionDrawer";
 import { EMPTY_MAP_FILTERS, applyMapFilters, getLegendEntries } from "./workbenchUtils";
@@ -33,6 +33,7 @@ export default function MapWorkspaceCard({
   const [filters, setFilters] = useState({ ...EMPTY_MAP_FILTERS });
   const [colorMode, setColorMode] = useState("default");
   const [visibleLayerIds, setVisibleLayerIds] = useState([]);
+  const [activeVisualRule, setActiveVisualRule] = useState(null);
   const [selectedAsset, setSelectedAsset] = useState(null);
   const [showLayers, setShowLayers] = useState(false);
 
@@ -46,6 +47,7 @@ export default function MapWorkspaceCard({
     setFilters({ ...EMPTY_MAP_FILTERS });
     setColorMode("default");
     setVisibleLayerIds([]);
+    setActiveVisualRule(null);
     setSelectedAsset(null);
   };
 
@@ -65,8 +67,8 @@ export default function MapWorkspaceCard({
   );
 
   const legendEntries = useMemo(() =>
-    getLegendEntries(colorMode, layers, filteredAssets, allAssignments, incidentsByAsset, workOrdersByAsset, layerAssets),
-    [colorMode, layers, filteredAssets, allAssignments, incidentsByAsset, workOrdersByAsset, layerAssets]
+    getLegendEntries(colorMode, layers, filteredAssets, allAssignments, incidentsByAsset, workOrdersByAsset, layerAssets, activeVisualRule),
+    [colorMode, layers, filteredAssets, allAssignments, incidentsByAsset, workOrdersByAsset, layerAssets, activeVisualRule]
   );
 
   const currentAssignment = selectedAsset ? (assignmentByAssetId[selectedAsset.id] || null) : null;
@@ -110,14 +112,21 @@ export default function MapWorkspaceCard({
 
         {/* Layer manager (collapsed by default) */}
         {showLayers && (
-          <div className="px-3 py-2 border-b border-slate-100 bg-slate-50 shrink-0 max-h-48 overflow-y-auto">
-            <MapLayerManager
-              layers={layers}
+          <div className="px-3 py-2 border-b border-slate-100 bg-slate-50 shrink-0 max-h-64 overflow-y-auto">
+            <VisualLayerManager
+              manualLayers={layers}
+              visualRules={activeVisualRule ? [activeVisualRule] : []}
               layerAssets={layerAssets}
+              allAssets={allAssets}
+              allAssignments={allAssignments}
+              incidentsByAsset={incidentsByAsset}
+              workOrdersByAsset={workOrdersByAsset}
               visibleLayerIds={visibleLayerIds}
+              activeVisualRule={activeVisualRule}
               onToggleLayer={toggleLayer}
-              onCreateLayer={onCreateLayer}
-              onDeleteLayer={onDeleteLayer}
+              onCreateManualLayer={onCreateLayer}
+              onDeleteManualLayer={onDeleteLayer}
+              onSetVisualRule={setActiveVisualRule}
               compact
             />
           </div>
@@ -135,6 +144,7 @@ export default function MapWorkspaceCard({
             layerAssets={layerAssets}
             incidentsByAsset={incidentsByAsset}
             workOrdersByAsset={workOrdersByAsset}
+            activeVisualRule={activeVisualRule}
           />
           <MapLegend entries={legendEntries} />
         </div>

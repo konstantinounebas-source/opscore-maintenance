@@ -57,9 +57,51 @@ const PRIORITY_COLORS = {
   "Low":      "#84CC16",
 };
 
+// ─── Visual rule color mapping ────────────────────────────────────────────────
+const VISUAL_RULE_COLORS = ["#6366F1","#EC4899","#F59E0B","#10B981","#3B82F6","#EF4444","#8B5CF6","#06B6D4","#F97316","#84CC16"];
+
+function getVisualRuleColor(asset, assignment, rule, incidentsByAsset, workOrdersByAsset) {
+  if (!rule || !rule.field || !rule.values) return "#CBD5E1";
+
+  const ruleIndex = (value) => rule.values.indexOf(value);
+  const getColor = (idx) => idx >= 0 ? VISUAL_RULE_COLORS[idx % VISUAL_RULE_COLORS.length] : "#CBD5E1";
+
+  switch (rule.field) {
+    case "assignment_status":
+      return assignment ? getColor(ruleIndex(assignment.assignment_status)) : "#CBD5E1";
+    case "assignment_type":
+      return assignment ? getColor(ruleIndex(assignment.assignment_type)) : "#CBD5E1";
+    case "priority_bucket":
+      return assignment ? getColor(ruleIndex(assignment.priority_bucket)) : "#CBD5E1";
+    case "team_name":
+      return assignment ? getColor(ruleIndex(assignment.team_name)) : "#CBD5E1";
+    case "assigned_to":
+      return assignment ? getColor(ruleIndex(assignment.assigned_to)) : "#CBD5E1";
+    case "asset_status":
+      return getColor(ruleIndex(asset.status));
+    case "city":
+      return getColor(ruleIndex(asset.city));
+    case "shelter_type":
+      return getColor(ruleIndex(asset.shelter_type));
+    case "has_incident":
+      const hasInc = (incidentsByAsset[asset.id]?.length > 0) ? "Yes" : "No";
+      return getColor(ruleIndex(hasInc));
+    case "has_work_order":
+      const hasWO = (workOrdersByAsset[asset.id]?.length > 0) ? "Yes" : "No";
+      return getColor(ruleIndex(hasWO));
+    default:
+      return "#CBD5E1";
+  }
+}
+
 // ─── Main pin color resolver ───────────────────────────────────────────────────
 
-export function getMapPinColor({ asset, assignment, colorMode, layers, layerAssets, incidentsByAsset, workOrdersByAsset }) {
+export function getMapPinColor({ asset, assignment, colorMode, layers, layerAssets, incidentsByAsset, workOrdersByAsset, activeVisualRule }) {
+  // Visual rule takes precedence if active
+  if (activeVisualRule) {
+    return getVisualRuleColor(asset, assignment, activeVisualRule, incidentsByAsset, workOrdersByAsset);
+  }
+
   switch (colorMode) {
     case "city":
       return getCityColor(asset.city);
@@ -112,7 +154,14 @@ export function getMapPinColor({ asset, assignment, colorMode, layers, layerAsse
 
 // ─── Legend entries per color mode ────────────────────────────────────────────
 
-export function getLegendEntries(colorMode, layers, assets, assignments, incidentsByAsset, workOrdersByAsset, layerAssets) {
+export function getLegendEntries(colorMode, layers, assets, assignments, incidentsByAsset, workOrdersByAsset, layerAssets, activeVisualRule) {
+  if (activeVisualRule) {
+    return activeVisualRule.values.map((val, idx) => ({
+      label: val,
+      color: VISUAL_RULE_COLORS[idx % VISUAL_RULE_COLORS.length]
+    }));
+  }
+
   switch (colorMode) {
     case "assignment_status":
       return Object.entries(ASSIGNMENT_STATUS_COLORS).map(([label, color]) => ({ label, color }))

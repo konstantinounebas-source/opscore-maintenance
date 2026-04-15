@@ -30,6 +30,7 @@ export default function WorkbenchMap({
   layerAssets,
   incidentsByAsset,
   workOrdersByAsset,
+  activeVisualRule,
 }) {
   const assignmentByAsset = useMemo(() => {
     const m = {};
@@ -48,6 +49,7 @@ export default function WorkbenchMap({
         layerAssets,
         incidentsByAsset,
         workOrdersByAsset,
+        activeVisualRule,
       });
       return {
         asset: a,
@@ -58,7 +60,7 @@ export default function WorkbenchMap({
         isSelected: a.id === selectedAssetId,
       };
     }),
-    [assets, assignmentByAsset, colorMode, layers, layerAssets, incidentsByAsset, workOrdersByAsset, selectedAssetId]
+    [assets, assignmentByAsset, colorMode, layers, layerAssets, incidentsByAsset, workOrdersByAsset, selectedAssetId, activeVisualRule]
   );
 
   const fitKey = useMemo(() => assets.map(a => a.id).join(","), [assets]);
