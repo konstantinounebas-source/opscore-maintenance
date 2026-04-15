@@ -124,7 +124,7 @@ export default function MapWorkspaceCard({
         )}
 
         {/* Map canvas — fills remaining space */}
-        <div className="flex-1 relative overflow-hidden p-1.5 min-h-0">
+        <div className="relative overflow-hidden p-1.5" style={{ flex: "1 1 0", minHeight: 0, height: 0 }}>
           <WorkbenchMap
             assets={filteredAssets}
             allAssignments={allAssignments}

@@ -76,7 +76,7 @@ export default function WorkbenchMap({
   }
 
   return (
-    <div className="flex-1 rounded-lg overflow-hidden border border-slate-200" style={{ isolation: "isolate", minHeight: 0 }}>
+    <div className="rounded-lg overflow-hidden border border-slate-200" style={{ isolation: "isolate", height: "100%", width: "100%" }}>
       <MapContainer center={defaultCenter} zoom={10} style={{ height: "100%", width: "100%" }} scrollWheelZoom={true}>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
