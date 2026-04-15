@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Clock, User, MessageSquare, Paperclip, Download, ChevronDown, ChevronUp, FileText, ImageIcon, Eye, Loader2, ExternalLink } from "lucide-react";
+import { Clock, User, MessageSquare, Paperclip, Download, ChevronDown, ChevronUp, FileText, ImageIcon, Eye, Loader2, ExternalLink, AlertCircle } from "lucide-react";
+import { toast } from "sonner";
 import { format } from "date-fns";
 
 // Parse a "form:submissionId:formType" virtual URL
@@ -28,28 +29,39 @@ function FormRefItem({ submissionId, name }) {
 
   const handleDownload = async () => {
     setDownloading(true);
-    const { appId, token, functionsVersion, appBaseUrl } = appParams;
-    const baseUrl = appBaseUrl || `https://appfunctions.base44.com`;
-    const fetchUrl = `${baseUrl}/api/apps/${appId}/functions/generateFormPDF`;
-    const res = await fetch(fetchUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-        ...(functionsVersion ? { 'X-Functions-Version': functionsVersion } : {}),
-      },
-      body: JSON.stringify({ submissionId }),
-    });
-    const blob = await res.blob();
-    const blobUrl = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = blobUrl;
-    a.download = `${(name || 'form').replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '')}.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(blobUrl);
-    setDownloading(false);
+    try {
+      const { appId, token, functionsVersion, appBaseUrl } = appParams;
+      const baseUrl = appBaseUrl || `https://appfunctions.base44.com`;
+      const fetchUrl = `${baseUrl}/api/apps/${appId}/functions/generateFormPDF`;
+      const res = await fetch(fetchUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+          ...(functionsVersion ? { 'X-Functions-Version': functionsVersion } : {}),
+        },
+        body: JSON.stringify({ submissionId }),
+      });
+      if (!res.ok) {
+        const errText = await res.text();
+        toast.error(`PDF generation failed: ${errText}`);
+        setDownloading(false);
+        return;
+      }
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = `${(name || 'form').replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '')}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      toast.error(`Download failed: ${err.message}`);
+    } finally {
+      setDownloading(false);
+    }
   };
 
   return (
