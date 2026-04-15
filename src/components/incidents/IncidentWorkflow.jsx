@@ -246,26 +246,22 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
       }
 
       if (key === "close_incident") {
-        // Handle optional photos before closing
+        // Photos required
+        if (!formData.photos_after || formData.photos_after.length === 0) {
+          toast({ title: "Photos required", description: "Please upload at least one photo after fixing." });
+          setSaving(false); return;
+        }
+        // Upload photos
         const attachmentUrls = [];
         const attachmentNames = [];
-        if (formData.photos_after && Array.isArray(formData.photos_after)) {
-          for (const photo of formData.photos_after) {
-            if (photo?.url) {
-              await uploadAttachment({ file_url: photo.url, file_name: photo.name || "Photo", file_type: "Photo" });
-              attachmentUrls.push(photo.url);
-              attachmentNames.push(photo.name || "Photo");
-            }
+        for (const photo of formData.photos_after) {
+          if (photo?.url) {
+            await uploadAttachment({ file_url: photo.url, file_name: photo.name || "Photo", file_type: "Photo" });
+            attachmentUrls.push(photo.url);
+            attachmentNames.push(photo.name || "Photo");
           }
         }
-        if (attachmentUrls.length > 0) {
-          incidentUpdates.photos_after_fixing_done = true;
-        }
-         // Photos required
-         if (!formData.photos_after || formData.photos_after.length === 0) {
-           toast({ title: "Photos required", description: "Please upload at least one photo after fixing." });
-           setSaving(false); return;
-         }
+        incidentUpdates.photos_after_fixing_done = true;
          // Prerequisite check before closing
          if (!incident.confirmation_done) {
            toast({ title: "Cannot close", description: "Confirmation of Receipt must be completed first." });
@@ -284,7 +280,10 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
            setSaving(false); return;
          }
          await base44.entities.Incidents.update(incidentId, { status: "Closed" });
-         await addAudit("Incident Closed", formData.notes ? `Closing notes: ${formData.notes}` : "Incident closed and resolved.");
+         const auditExtra = attachmentUrls.length > 0
+           ? { attachments: attachmentUrls, attachment_names: attachmentNames }
+           : {};
+         await addAudit("Incident Closed", formData.notes ? `Closing notes: ${formData.notes}` : "Incident closed and resolved.", auditExtra);
        } else if (Object.keys(incidentUpdates).length > 0) {
         await base44.entities.Incidents.update(incidentId, incidentUpdates);
       }
@@ -505,7 +504,7 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
           {key === "close_incident" && (
             <div className="space-y-3">
               <p className="text-xs text-slate-500">
-                Upload photos documenting the corrective work completed (optional).
+                Upload photos documenting the corrective work completed.
               </p>
               <div className="space-y-1.5">
                 <Label className="text-xs flex items-center gap-1">
