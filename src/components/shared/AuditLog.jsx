@@ -14,6 +14,21 @@ import { format } from "date-fns";
 function AttachmentItem({ url, name }) {
   const isImage = /\.(png|jpg|jpeg|gif|webp)$/i.test(name || url);
   const displayName = name || url.split("/").pop() || "Attachment";
+
+  const handleDownload = async (e) => {
+    e.preventDefault();
+    const res = await fetch(url);
+    const blob = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = blobUrl;
+    a.download = displayName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(blobUrl);
+  };
+
   return (
     <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 bg-slate-50">
       {isImage
@@ -26,10 +41,10 @@ function AttachmentItem({ url, name }) {
           className="p-1 rounded hover:bg-indigo-100 text-slate-400 hover:text-indigo-600 transition-colors">
           <Eye className="h-3.5 w-3.5" />
         </a>
-        <a href={url} download={name} title="Download"
+        <button onClick={handleDownload} title="Download"
           className="p-1 rounded hover:bg-indigo-100 text-slate-400 hover:text-indigo-600 transition-colors">
           <Download className="h-3.5 w-3.5" />
-        </a>
+        </button>
       </div>
     </div>
   );
