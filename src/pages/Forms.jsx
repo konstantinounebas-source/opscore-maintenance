@@ -55,29 +55,28 @@ async function downloadFormPDF(submissionId, formName) {
   
   try {
     const response = await base44.functions.invoke('generateFormPDF', { submissionId });
-    console.log("[Forms.downloadFormPDF] Response:", response);
     
-    // The response.data contains the binary PDF data
-    if (!response.data) {
-      throw new Error("No PDF data returned");
+    if (!response.data || !response.data.html) {
+      throw new Error("No HTML content returned");
     }
     
-    // Convert response data to blob
-    const blob = new Blob([response.data], { type: 'application/pdf' });
-    console.log("[Forms.downloadFormPDF] Blob size:", blob.size);
+    const { html, fileName } = response.data;
     
-    if (blob.size === 0) {
-      throw new Error("PDF generation returned empty file");
-    }
+    // Dynamic import of html2pdf
+    const { default: html2pdf } = await import('html2pdf.js');
     
-    const blobUrl = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = blobUrl;
-    a.download = `${(formName || 'form').replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '')}_${submissionId}.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(blobUrl);
+    const element = document.createElement('div');
+    element.innerHTML = html;
+    
+    const opt = {
+      margin: 10,
+      filename: fileName,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+    };
+    
+    await html2pdf().set(opt).from(element).save();
     console.log("[Forms.downloadFormPDF] Download completed successfully");
   } catch (err) {
     console.error("[Forms.downloadFormPDF] Error:", err);

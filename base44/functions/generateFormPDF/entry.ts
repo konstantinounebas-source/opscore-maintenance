@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-import { jsPDF } from 'npm:jspdf@4.0.0';
+import html2pdf from 'npm:html2pdf.js@0.10.1';
 
 Deno.serve(async (req) => {
   try {
@@ -31,7 +31,6 @@ Deno.serve(async (req) => {
 
     console.log("[generateFormPDF] Fetching submission:", submissionId);
 
-    // Fetch submission by ID
     let sub;
     try {
       sub = await base44.entities.FormSubmissions.get(submissionId);
@@ -47,116 +46,93 @@ Deno.serve(async (req) => {
 
     console.log("[generateFormPDF] Submission found, form_type:", sub.form_type);
 
-    // Fetch related incident and asset
     let incident = null;
     let asset = null;
     if (sub.incident_id) {
       try {
         incident = await base44.entities.Incidents.get(sub.incident_id);
-        console.log("[generateFormPDF] Fetched incident:", sub.incident_id);
       } catch (err) {
-        console.warn("[generateFormPDF] Could not fetch incident:", sub.incident_id, err.message);
+        console.warn("[generateFormPDF] Could not fetch incident:", err.message);
       }
     }
     if (sub.asset_id) {
       try {
         asset = await base44.entities.Assets.get(sub.asset_id);
-        console.log("[generateFormPDF] Fetched asset:", sub.asset_id);
       } catch (err) {
-        console.warn("[generateFormPDF] Could not fetch asset:", sub.asset_id, err.message);
+        console.warn("[generateFormPDF] Could not fetch asset:", err.message);
       }
     }
 
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    let y = 20;
+    // Build HTML content with proper Unicode support
+    let html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          body { font-family: Arial, sans-serif; color: #000; margin: 0; padding: 20px; }
+          .header { background: #284fa0; color: white; padding: 15px 20px; margin: -20px -20px 20px -20px; }
+          .header h1 { margin: 0; font-size: 18px; }
+          .header p { margin: 5px 0 0 0; font-size: 11px; }
+          .section { margin: 15px 0; }
+          .section h2 { border-bottom: 2px solid #284fa0; color: #284fa0; font-size: 13px; margin: 0 0 10px 0; padding-bottom: 5px; }
+          .field { display: flex; margin: 8px 0; font-size: 11px; }
+          .label { font-weight: bold; width: 150px; color: #3c3c3c; }
+          .value { flex: 1; word-wrap: break-word; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>${escapeHtml(sub.form_name || 'Form Submission')}</h1>
+          <p>Status: ${escapeHtml(sub.status || 'Draft')} | Generated: ${new Date().toLocaleString()}</p>
+        </div>
 
-    const checkPage = () => {
-      if (y > pageHeight - 25) { doc.addPage(); y = 20; }
-    };
+        <div class="section">
+          <h2>Submission Details</h2>
+          <div class="field"><div class="label">Form Type:</div><div class="value">${escapeHtml(sub.form_type || '—')}</div></div>
+          <div class="field"><div class="label">Form Name:</div><div class="value">${escapeHtml(sub.form_name || '—')}</div></div>
+          <div class="field"><div class="label">Status:</div><div class="value">${escapeHtml(sub.status || '—')}</div></div>
+          <div class="field"><div class="label">Submitted By:</div><div class="value">${escapeHtml(sub.submitted_by || sub.created_by || '—')}</div></div>
+          <div class="field"><div class="label">Created Date:</div><div class="value">${sub.created_date ? new Date(sub.created_date).toLocaleString() : '—'}</div></div>
+          ${sub.submitted_at ? `<div class="field"><div class="label">Submitted At:</div><div class="value">${new Date(sub.submitted_at).toLocaleString()}</div></div>` : ''}
+        </div>
+    `;
 
-    const addLine = (label, value) => {
-      checkPage();
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(60, 60, 60);
-      doc.text(String(label), 20, y);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(0, 0, 0);
-      const wrapped = doc.splitTextToSize(String(value ?? '—'), pageWidth - 90);
-      doc.text(wrapped, 85, y);
-      y += Math.max(wrapped.length * 6, 7);
-    };
-
-    const addSection = (title) => {
-      checkPage();
-      y += 5;
-      doc.setFontSize(11);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(40, 70, 160);
-      doc.text(title, 20, y);
-      y += 2;
-      doc.setDrawColor(40, 70, 160);
-      doc.setLineWidth(0.3);
-      doc.line(20, y, pageWidth - 20, y);
-      doc.setTextColor(0, 0, 0);
-      doc.setFontSize(10);
-      y += 6;
-    };
-
-    // ── Header ──
-    doc.setFillColor(40, 70, 160);
-    doc.rect(0, 0, pageWidth, 28, 'F');
-    doc.setFontSize(15);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(255, 255, 255);
-    doc.text(sub.form_name || 'Form Submission', 20, 16);
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Status: ${sub.status || 'Draft'}   |   Generated: ${new Date().toLocaleString()}`, 20, 24);
-    doc.setTextColor(0, 0, 0);
-    y = 38;
-
-    // ── Submission Details ──
-    addSection('Submission Details');
-    addLine('Form Type:', sub.form_type || '—');
-    addLine('Form Name:', sub.form_name || '—');
-    addLine('Status:', sub.status || '—');
-    addLine('Submitted By:', sub.submitted_by || sub.created_by || '—');
-    addLine('Created Date:', sub.created_date ? new Date(sub.created_date).toLocaleString() : '—');
-    if (sub.submitted_at) addLine('Submitted At:', new Date(sub.submitted_at).toLocaleString());
-
-    // ── Incident Information ──
     if (incident) {
-      addSection('Incident Information');
-      addLine('Incident ID:', incident.incident_id);
-      addLine('Title:', incident.title);
-      addLine('Status:', incident.status);
-      addLine('Priority:', incident.priority);
-      addLine('Asset:', incident.related_asset_name || '—');
-      addLine('Location:', incident.location_address || '—');
-      addLine('City:', incident.province || incident.city || '—');
-      addLine('Municipality:', incident.municipality || '—');
-      addLine('Shelter Type:', incident.shelter_type || '—');
-      addLine('Reported Date:', incident.reported_date || '—');
-      addLine('OWR:', incident.out_of_warranty || '—');
-      if (incident.description) addLine('Description:', incident.description);
+      html += `
+        <div class="section">
+          <h2>Incident Information</h2>
+          <div class="field"><div class="label">Incident ID:</div><div class="value">${escapeHtml(incident.incident_id)}</div></div>
+          <div class="field"><div class="label">Title:</div><div class="value">${escapeHtml(incident.title)}</div></div>
+          <div class="field"><div class="label">Status:</div><div class="value">${escapeHtml(incident.status)}</div></div>
+          <div class="field"><div class="label">Priority:</div><div class="value">${escapeHtml(incident.priority)}</div></div>
+          <div class="field"><div class="label">Asset:</div><div class="value">${escapeHtml(incident.related_asset_name || '—')}</div></div>
+          <div class="field"><div class="label">Location:</div><div class="value">${escapeHtml(incident.location_address || '—')}</div></div>
+          <div class="field"><div class="label">City:</div><div class="value">${escapeHtml(incident.province || incident.city || '—')}</div></div>
+          <div class="field"><div class="label">Municipality:</div><div class="value">${escapeHtml(incident.municipality || '—')}</div></div>
+          <div class="field"><div class="label">Shelter Type:</div><div class="value">${escapeHtml(incident.shelter_type || '—')}</div></div>
+          <div class="field"><div class="label">Reported Date:</div><div class="value">${escapeHtml(incident.reported_date || '—')}</div></div>
+          <div class="field"><div class="label">OWR:</div><div class="value">${escapeHtml(incident.out_of_warranty || '—')}</div></div>
+          ${incident.description ? `<div class="field"><div class="label">Description:</div><div class="value">${escapeHtml(incident.description)}</div></div>` : ''}
+        </div>
+      `;
     }
 
-    // ── Asset Information ──
     if (asset) {
-      addSection('Asset Information');
-      addLine('Asset ID:', asset.asset_id);
-      addLine('Category:', asset.category || '—');
-      addLine('Shelter Type:', asset.shelter_type || '—');
-      addLine('Location:', asset.location_address || '—');
-      addLine('City:', asset.city || '—');
-      addLine('Municipality:', asset.municipality || '—');
-      addLine('Status:', asset.status || '—');
+      html += `
+        <div class="section">
+          <h2>Asset Information</h2>
+          <div class="field"><div class="label">Asset ID:</div><div class="value">${escapeHtml(asset.asset_id)}</div></div>
+          <div class="field"><div class="label">Category:</div><div class="value">${escapeHtml(asset.category || '—')}</div></div>
+          <div class="field"><div class="label">Shelter Type:</div><div class="value">${escapeHtml(asset.shelter_type || '—')}</div></div>
+          <div class="field"><div class="label">Location:</div><div class="value">${escapeHtml(asset.location_address || '—')}</div></div>
+          <div class="field"><div class="label">City:</div><div class="value">${escapeHtml(asset.city || '—')}</div></div>
+          <div class="field"><div class="label">Municipality:</div><div class="value">${escapeHtml(asset.municipality || '—')}</div></div>
+          <div class="field"><div class="label">Status:</div><div class="value">${escapeHtml(asset.status || '—')}</div></div>
+        </div>
+      `;
     }
 
-    // ── Form-Level Fields ──
     const topLevelFields = [
       ['Εκτός Εγγύησης (OWR):', sub.ektos_eggyhshs],
       ['Απαιτείται Έγκριση CA:', sub.apaiteitai_eggkrisi_ca],
@@ -169,11 +145,13 @@ Deno.serve(async (req) => {
     ].filter(([, v]) => v != null && v !== '');
 
     if (topLevelFields.length > 0) {
-      addSection('Form Fields');
-      topLevelFields.forEach(([label, value]) => addLine(label, value));
+      html += '<div class="section"><h2>Form Fields</h2>';
+      topLevelFields.forEach(([label, value]) => {
+        html += `<div class="field"><div class="label">${escapeHtml(label)}</div><div class="value">${escapeHtml(String(value))}</div></div>`;
+      });
+      html += '</div>';
     }
 
-    // ── Form Data (blob) ──
     if (sub.form_data && typeof sub.form_data === 'object') {
       const formDataEntries = [];
       const flatten = (obj, prefix = '') => {
@@ -190,35 +168,28 @@ Deno.serve(async (req) => {
       };
       flatten(sub.form_data);
       if (formDataEntries.length > 0) {
-        addSection('Additional Form Data');
-        formDataEntries.forEach(([label, val]) => addLine(label, val));
+        html += '<div class="section"><h2>Additional Form Data</h2>';
+        formDataEntries.forEach(([label, val]) => {
+          html += `<div class="field"><div class="label">${escapeHtml(label)}</div><div class="value">${escapeHtml(String(val))}</div></div>`;
+        });
+        html += '</div>';
       }
     }
 
-    // ── Footer on all pages ──
-    doc.setFontSize(8);
-    doc.setTextColor(150, 150, 150);
-    const totalPages = doc.internal.pages.length - 1;
-    for (let p = 1; p <= totalPages; p++) {
-      doc.setPage(p);
-      doc.text(`Page ${p} of ${totalPages}`, pageWidth - 30, pageHeight - 8);
-      doc.text(`${sub.form_name || 'Form Submission'}`, 20, pageHeight - 8);
-    }
+    html += '</body></html>';
 
-    const pdfBytes = doc.output('arraybuffer');
     const fileName = `${(sub.form_name || 'form').replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '')}_${submissionId}.pdf`;
+    
+    console.log("[generateFormPDF] PDF generated successfully");
+    return Response.json({ success: true, html, fileName });
 
-    console.log("[generateFormPDF] PDF generated successfully, size:", pdfBytes.byteLength, "bytes");
-
-    return new Response(pdfBytes, {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${fileName}"`,
-      },
-    });
   } catch (error) {
-    console.error("[generateFormPDF] Error generating PDF:", error.message, error.stack);
+    console.error("[generateFormPDF] Error:", error.message, error.stack);
     return Response.json({ error: `PDF generation failed: ${error.message}` }, { status: 500 });
   }
 });
+
+function escapeHtml(text) {
+  const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+  return String(text).replace(/[&<>"']/g, m => map[m]);
+}
