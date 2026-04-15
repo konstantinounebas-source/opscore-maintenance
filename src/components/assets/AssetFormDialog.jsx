@@ -43,7 +43,7 @@ function SectionHeader({ title, color = "slate" }) {
   );
 }
 
-// Per-type file uploader with drag-and-drop
+// Per-type file uploader with drag-and-drop and multiple files
 function DocTypeUploader({ label, files = [], onAdd, onRemove }) {
   const fileRef = useRef(null);
   const [uploading, setUploading] = useState(false);
@@ -53,35 +53,42 @@ function DocTypeUploader({ label, files = [], onAdd, onRemove }) {
     if (!file) return;
     setUploading(true);
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    const isImage = file.type.startsWith("image/");
     onAdd({
       file_url,
       file_name: file.name,
       file_size: `${(file.size / 1024).toFixed(1)} KB`,
-      file_type: file.type.startsWith("image/") ? "Photo" : "Document",
+      file_type: isImage ? "Photo" : "Document",
       doc_label: label,
+      preview: isImage ? file_url : null,
     });
     setUploading(false);
     if (fileRef.current) fileRef.current.value = "";
   };
 
-  const handleFile = async (e) => {
-    const file = e.target.files?.[0];
-    await upload(file);
+  const handleFiles = async (fileList) => {
+    if (!fileList) return;
+    for (const file of fileList) {
+      await upload(file);
+    }
+  };
+
+  const handleFileInput = async (e) => {
+    await handleFiles(e.target.files);
   };
 
   const handleDrop = async (e) => {
     e.preventDefault();
     setDragging(false);
-    const file = e.dataTransfer.files?.[0];
-    await upload(file);
+    await handleFiles(e.dataTransfer.files);
   };
 
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium text-slate-700">{label}</span>
         <div className="flex items-center gap-1">
-          <input ref={fileRef} type="file" className="hidden" onChange={handleFile} />
+          <input ref={fileRef} type="file" multiple className="hidden" onChange={handleFileInput} />
           <Button
             type="button"
             variant="ghost"
@@ -91,7 +98,7 @@ function DocTypeUploader({ label, files = [], onAdd, onRemove }) {
             disabled={uploading}
           >
             {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-            Add File
+            Add Files
           </Button>
         </div>
       </div>
@@ -108,21 +115,25 @@ function DocTypeUploader({ label, files = [], onAdd, onRemove }) {
             <Loader2 className="w-3.5 h-3.5 animate-spin" /> Uploading...
           </span>
         ) : (
-          <span className="text-slate-400">Drop file here or click to browse</span>
+          <span className="text-slate-400">Drop files here or click to browse</span>
         )}
       </div>
       {files.length > 0 && (
-        <div className="space-y-1">
+        <div className="space-y-2">
           {files.map((f, i) => (
-            <div key={i} className="flex items-center justify-between px-2.5 py-1.5 bg-white rounded border border-slate-200">
-              <div className="flex items-center gap-2 min-w-0">
-                <Paperclip className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
-                <span className="text-xs text-slate-700 truncate">{f.file_name}</span>
-                <span className="text-xs text-slate-400">{f.file_size}</span>
+            <div key={i} className="flex items-start gap-2 px-2.5 py-1.5 bg-white rounded border border-slate-200">
+              {f.preview ? (
+                <img src={f.preview} alt="preview" className="h-12 w-12 object-cover rounded flex-shrink-0" />
+              ) : (
+                <Paperclip className="w-5 h-5 text-slate-400 flex-shrink-0 mt-0.5" />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-slate-700 truncate font-medium">{f.file_name}</p>
+                <p className="text-xs text-slate-400">{f.file_size}</p>
               </div>
               <Button
                 type="button" variant="ghost" size="sm"
-                className="ml-1 p-1 h-auto text-red-400 hover:text-red-600"
+                className="ml-1 p-1 h-auto text-red-400 hover:text-red-600 flex-shrink-0"
                 onClick={() => onRemove(i)}
               >
                 <Trash2 className="w-3.5 h-3.5" />

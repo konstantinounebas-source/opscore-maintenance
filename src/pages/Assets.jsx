@@ -76,7 +76,14 @@ export default function Assets() {
             file_url: file.file_url,
             file_type: file.file_type,
             file_size: file.file_size,
+            doc_label: file.doc_label,
             uploaded_by: user?.email,
+          });
+          await base44.entities.AssetTransactions.create({
+            asset_id: editingAsset.id,
+            action: "Document Uploaded",
+            details: `${file.doc_label || file.file_type || "Document"}: ${file.file_name}`,
+            user: user?.email,
           });
         }
         queryClient.invalidateQueries({ queryKey: ["assets"] });
