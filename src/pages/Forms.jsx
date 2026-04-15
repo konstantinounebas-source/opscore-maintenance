@@ -52,36 +52,19 @@ const FORM_TEMPLATES = [
 
 async function downloadFormPDF(submissionId, formName) {
   console.log("[Forms.downloadFormPDF] Starting download for submission:", submissionId);
-  const { appId, token, functionsVersion, appBaseUrl } = appParams;
-  const baseUrl = appBaseUrl || `https://appfunctions.base44.com`;
-  const url = `${baseUrl}/api/apps/${appId}/functions/generateFormPDF`;
   
   try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-        ...(functionsVersion ? { 'X-Functions-Version': functionsVersion } : {}),
-      },
-      body: JSON.stringify({ submissionId }),
-    });
+    const response = await base44.functions.invoke('generateFormPDF', { submissionId });
+    console.log("[Forms.downloadFormPDF] Response:", response);
     
-    if (!res.ok) {
-      const errText = await res.text();
-      console.error("[Forms.downloadFormPDF] HTTP error:", res.status, errText);
-      throw new Error(`PDF generation failed (${res.status}): ${errText}`);
+    // The response.data contains the binary PDF data
+    if (!response.data) {
+      throw new Error("No PDF data returned");
     }
     
-    const contentType = res.headers.get('content-type');
-    console.log("[Forms.downloadFormPDF] Response content-type:", contentType);
-    
-    if (!contentType || !contentType.includes('application/pdf')) {
-      console.warn("[Forms.downloadFormPDF] Unexpected content-type, expected PDF");
-    }
-    
-    const blob = await res.blob();
-    console.log("[Forms.downloadFormPDF] Blob size:", blob.size, "type:", blob.type);
+    // Convert response data to blob
+    const blob = new Blob([response.data], { type: 'application/pdf' });
+    console.log("[Forms.downloadFormPDF] Blob size:", blob.size);
     
     if (blob.size === 0) {
       throw new Error("PDF generation returned empty file");
