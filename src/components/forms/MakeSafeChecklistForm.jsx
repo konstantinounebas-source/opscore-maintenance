@@ -329,20 +329,7 @@ export default function MakeSafeChecklistForm({ submission, incidents, assets, w
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label className="text-xs font-medium text-slate-600">Work Order</Label>
-                <Select value={linkedWOId || "_none"} onValueChange={v => setLinkedWOId(v === "_none" ? "" : v)}>
-                  <SelectTrigger className="mt-1 text-sm"><SelectValue placeholder="Επιλογή WO..." /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="_none">— Επιλογή —</SelectItem>
-                    {workOrders.map(w => (
-                      <SelectItem key={w.id} value={w.id}>
-                        <span className="font-mono text-xs mr-1">{w.work_order_id}</span>{w.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <ReadOnlyField label="Work Order" value={workOrder?.work_order_id} />
               <div>
                 <Label className="text-xs font-medium text-slate-600">Asset / Στάση</Label>
                 <Select value={linkedAssetId || "_none"} onValueChange={v => setLinkedAssetId(v === "_none" ? "" : v)}>
