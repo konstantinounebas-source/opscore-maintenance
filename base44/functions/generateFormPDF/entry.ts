@@ -3,33 +3,68 @@ import { jsPDF } from 'npm:jspdf@4.0.0';
 
 Deno.serve(async (req) => {
   try {
+    console.log("[generateFormPDF] Received request");
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
 
     if (!user) {
+      console.error("[generateFormPDF] User not authenticated");
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { submissionId } = await req.json();
+    console.log("[generateFormPDF] User authenticated:", user.email);
+
+    let requestBody;
+    try {
+      requestBody = await req.json();
+    } catch (err) {
+      console.error("[generateFormPDF] Failed to parse JSON:", err.message);
+      return Response.json({ error: 'Invalid JSON request body' }, { status: 400 });
+    }
+
+    const { submissionId } = requestBody;
 
     if (!submissionId) {
-      return Response.json({ error: 'Missing submissionId' }, { status: 400 });
+      console.error("[generateFormPDF] Missing submissionId");
+      return Response.json({ error: 'Missing submissionId parameter' }, { status: 400 });
     }
 
+    console.log("[generateFormPDF] Fetching submission:", submissionId);
+
     // Fetch submission by ID
-    const sub = await base44.entities.FormSubmissions.get(submissionId);
-    if (!sub) {
-      return Response.json({ error: 'Submission not found' }, { status: 404 });
+    let sub;
+    try {
+      sub = await base44.entities.FormSubmissions.get(submissionId);
+    } catch (err) {
+      console.error("[generateFormPDF] Error fetching submission:", err.message);
+      return Response.json({ error: `Failed to fetch submission: ${err.message}` }, { status: 500 });
     }
+
+    if (!sub) {
+      console.error("[generateFormPDF] Submission not found:", submissionId);
+      return Response.json({ error: `Submission ${submissionId} not found` }, { status: 404 });
+    }
+
+    console.log("[generateFormPDF] Submission found, form_type:", sub.form_type);
 
     // Fetch related incident and asset
     let incident = null;
     let asset = null;
     if (sub.incident_id) {
-      try { incident = await base44.entities.Incidents.get(sub.incident_id); } catch {}
+      try {
+        incident = await base44.entities.Incidents.get(sub.incident_id);
+        console.log("[generateFormPDF] Fetched incident:", sub.incident_id);
+      } catch (err) {
+        console.warn("[generateFormPDF] Could not fetch incident:", sub.incident_id, err.message);
+      }
     }
     if (sub.asset_id) {
-      try { asset = await base44.entities.Assets.get(sub.asset_id); } catch {}
+      try {
+        asset = await base44.entities.Assets.get(sub.asset_id);
+        console.log("[generateFormPDF] Fetched asset:", sub.asset_id);
+      } catch (err) {
+        console.warn("[generateFormPDF] Could not fetch asset:", sub.asset_id, err.message);
+      }
     }
 
     const doc = new jsPDF();
@@ -171,15 +206,19 @@ Deno.serve(async (req) => {
     }
 
     const pdfBytes = doc.output('arraybuffer');
+    const fileName = `${(sub.form_name || 'form').replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '')}_${submissionId}.pdf`;
+
+    console.log("[generateFormPDF] PDF generated successfully, size:", pdfBytes.byteLength, "bytes");
 
     return new Response(pdfBytes, {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${(sub.form_name || 'form').replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '')}.pdf"`,
+        'Content-Disposition': `attachment; filename="${fileName}"`,
       },
     });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error("[generateFormPDF] Error generating PDF:", error.message, error.stack);
+    return Response.json({ error: `PDF generation failed: ${error.message}` }, { status: 500 });
   }
 });

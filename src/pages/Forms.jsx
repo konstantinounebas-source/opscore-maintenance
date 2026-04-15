@@ -51,42 +51,76 @@ const FORM_TEMPLATES = [
 ];
 
 async function downloadFormPDF(submissionId, formName) {
+  console.log("[Forms.downloadFormPDF] Starting download for submission:", submissionId);
   const { appId, token, functionsVersion, appBaseUrl } = appParams;
   const baseUrl = appBaseUrl || `https://appfunctions.base44.com`;
   const url = `${baseUrl}/api/apps/${appId}/functions/generateFormPDF`;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-      ...(functionsVersion ? { 'X-Functions-Version': functionsVersion } : {}),
-    },
-    body: JSON.stringify({ submissionId }),
-  });
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`PDF generation failed (${res.status}): ${errText}`);
+  
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        ...(functionsVersion ? { 'X-Functions-Version': functionsVersion } : {}),
+      },
+      body: JSON.stringify({ submissionId }),
+    });
+    
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error("[Forms.downloadFormPDF] HTTP error:", res.status, errText);
+      throw new Error(`PDF generation failed (${res.status}): ${errText}`);
+    }
+    
+    const contentType = res.headers.get('content-type');
+    console.log("[Forms.downloadFormPDF] Response content-type:", contentType);
+    
+    if (!contentType || !contentType.includes('application/pdf')) {
+      console.warn("[Forms.downloadFormPDF] Unexpected content-type, expected PDF");
+    }
+    
+    const blob = await res.blob();
+    console.log("[Forms.downloadFormPDF] Blob size:", blob.size, "type:", blob.type);
+    
+    if (blob.size === 0) {
+      throw new Error("PDF generation returned empty file");
+    }
+    
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = `${(formName || 'form').replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '')}_${submissionId}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(blobUrl);
+    console.log("[Forms.downloadFormPDF] Download completed successfully");
+  } catch (err) {
+    console.error("[Forms.downloadFormPDF] Error:", err);
+    throw err;
   }
-  const blob = await res.blob();
-  const blobUrl = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = blobUrl;
-  a.download = `${(formName || 'form').replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '')}.pdf`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(blobUrl);
 }
+
+// Map form_type to component
+const FORM_TYPE_COMPONENT = {
+  outline_management_incident_plan: "OutlineManagementForm",
+  combined_fmpi_invoice: "CombinedFMPIandInvoiceForm",
+  make_safe_checklist: "MakeSafeChecklistForm",
+  incident_report: "IncidentReportForm",
+};
 
 export default function Forms() {
   const urlParams = new URLSearchParams(window.location.search);
-  const preloadSubmissionId = urlParams.get("submission");
+  // Support both ?submission= and ?submissionId= for backward compatibility
+  const preloadSubmissionId = urlParams.get("submission") || urlParams.get("submissionId");
 
   const [view, setView] = useState("list"); // "list" | "new" | "edit"
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [editingSubmission, setEditingSubmission] = useState(null);
   const [preloaded, setPreloaded] = useState(false);
   const [downloadingId, setDownloadingId] = useState(null);
+  const [error, setError] = useState(null);
 
   const { data: submissions = [], refetch } = useQuery({
     queryKey: ["formSubmissions"],
@@ -113,16 +147,38 @@ export default function Forms() {
     queryFn: () => base44.entities.ChildAssets.list(),
   });
 
-  // Auto-open submission from URL param
+  // Auto-open submission from URL param or direct fetch
   useEffect(() => {
-    if (!preloaded && preloadSubmissionId && submissions.length > 0) {
-      const sub = submissions.find(s => s.id === preloadSubmissionId);
-      if (sub) {
-        handleEdit(sub);
+    if (preloaded || !preloadSubmissionId) return;
+
+    const loadSubmission = async () => {
+      try {
+        const sub = submissions.find(s => s.id === preloadSubmissionId);
+        if (sub) {
+          console.log("[Forms] Preloading submission from list:", preloadSubmissionId, "form_type:", sub.form_type);
+          handleEdit(sub);
+        } else {
+          // Fetch directly if not in list
+          console.log("[Forms] Fetching submission by ID:", preloadSubmissionId);
+          const fetchedSub = await base44.entities.FormSubmissions.get(preloadSubmissionId);
+          if (fetchedSub) {
+            console.log("[Forms] Fetched submission:", fetchedSub.id, "form_type:", fetchedSub.form_type);
+            handleEdit(fetchedSub);
+          } else {
+            setError(`Submission ${preloadSubmissionId} not found`);
+            console.error("[Forms] Submission not found:", preloadSubmissionId);
+          }
+        }
+        setPreloaded(true);
+      } catch (err) {
+        setError(`Failed to load submission: ${err.message}`);
+        console.error("[Forms] Error loading submission:", err);
         setPreloaded(true);
       }
-    }
-  }, [submissions, preloadSubmissionId, preloaded]);
+    };
+
+    loadSubmission();
+  }, [preloadSubmissionId, submissions, preloaded]);
 
   const handleNew = (template) => {
     setSelectedTemplate(template);
@@ -148,6 +204,7 @@ export default function Forms() {
     setDownloadingId(sub.id);
     try {
       await downloadFormPDF(sub.id, sub.form_name);
+      toast.success("PDF downloaded successfully");
     } catch (err) {
       toast.error(err.message || "PDF download failed");
     } finally {
@@ -155,11 +212,11 @@ export default function Forms() {
     }
   };
 
-  const incidentMap = Object.fromEntries(incidents.map(i => [i.id, i]));
-  const assetMap    = Object.fromEntries(assets.map(a => [a.id, a]));
-
-  if (view === "new" || view === "edit") {
+  // Render the correct form component based on form_type
+  const renderFormComponent = () => {
     const formType = editingSubmission?.form_type || selectedTemplate?.id;
+    console.log("[Forms.renderFormComponent] Rendering form type:", formType);
+
     if (formType === "combined_fmpi_invoice") {
       return (
         <CombinedFMPIandInvoiceForm
@@ -194,16 +251,45 @@ export default function Forms() {
         />
       );
     }
+    if (formType === "outline_management_incident_plan") {
+      return (
+        <OutlineManagementForm
+          submission={editingSubmission}
+          incidents={incidents}
+          assets={assets}
+          workOrders={workOrders}
+          crews={crews}
+          onClose={handleClose}
+        />
+      );
+    }
+
+    // Unknown form type
+    console.error("[Forms.renderFormComponent] Unknown form type:", formType);
     return (
-      <OutlineManagementForm
-        submission={editingSubmission}
-        incidents={incidents}
-        assets={assets}
-        workOrders={workOrders}
-        crews={crews}
-        onClose={handleClose}
-      />
+      <div className="flex flex-col min-h-screen bg-slate-50">
+        <TopHeader title="Form" subtitle="Error" />
+        <div className="p-6 max-w-2xl mx-auto w-full">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-red-800 font-medium">Unknown Form Type</p>
+            <p className="text-red-700 text-sm mt-2">Form type "{formType}" is not recognized.</p>
+            <button
+              onClick={handleClose}
+              className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
+            >
+              Go Back
+            </button>
+          </div>
+        </div>
+      </div>
     );
+  };
+
+  const incidentMap = Object.fromEntries(incidents.map(i => [i.id, i]));
+  const assetMap    = Object.fromEntries(assets.map(a => [a.id, a]));
+
+  if (view === "new" || view === "edit") {
+    return renderFormComponent();
   }
 
   return (
@@ -211,6 +297,20 @@ export default function Forms() {
       <TopHeader title="Forms" subtitle="Structured Electronic Forms" />
 
       <div className="p-6 space-y-6 max-w-6xl mx-auto w-full">
+        {/* Error display */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+            <div className="text-red-700 flex-1">
+              <p className="font-medium">{error}</p>
+            </div>
+            <button
+              onClick={() => setError(null)}
+              className="text-red-400 hover:text-red-600 text-lg"
+            >
+              ×
+            </button>
+          </div>
+        )}
         {/* Templates */}
         <div>
           <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Available Form Templates</h2>

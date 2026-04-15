@@ -20,16 +20,18 @@ function parseFormRef(url) {
   return { submissionId: parts[1], formType: parts[2] };
 }
 
-function FormRefItem({ submissionId, name }) {
+function FormRefItem({ submissionId, formType, name }) {
   const [downloading, setDownloading] = useState(false);
 
   const handleOpenForm = () => {
-    window.open(`/Forms?submission=${submissionId}`, "_blank");
+    console.log("[AuditLog.FormRefItem] Opening form:", submissionId, "formType:", formType);
+    window.open(`/Forms?submissionId=${submissionId}`, "_blank");
   };
 
   const handleDownload = async () => {
     setDownloading(true);
     try {
+      console.log("[AuditLog.FormRefItem.handleDownload] Starting download for submission:", submissionId);
       const { appId, token, functionsVersion, appBaseUrl } = appParams;
       const baseUrl = appBaseUrl || `https://appfunctions.base44.com`;
       const fetchUrl = `${baseUrl}/api/apps/${appId}/functions/generateFormPDF`;
@@ -42,22 +44,36 @@ function FormRefItem({ submissionId, name }) {
         },
         body: JSON.stringify({ submissionId }),
       });
+      
       if (!res.ok) {
         const errText = await res.text();
+        console.error("[AuditLog.FormRefItem.handleDownload] HTTP error:", res.status, errText);
         toast.error(`PDF generation failed: ${errText}`);
-        setDownloading(false);
         return;
       }
+      
+      const contentType = res.headers.get('content-type');
+      console.log("[AuditLog.FormRefItem.handleDownload] Content-type:", contentType);
+      
       const blob = await res.blob();
+      console.log("[AuditLog.FormRefItem.handleDownload] Blob size:", blob.size);
+      
+      if (blob.size === 0) {
+        toast.error("PDF generation returned empty file");
+        return;
+      }
+      
       const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = blobUrl;
-      a.download = `${(name || 'form').replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '')}.pdf`;
+      a.download = `${(name || 'form').replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '')}_${submissionId}.pdf`;
       document.body.appendChild(a);
       a.click();
       a.remove();
       URL.revokeObjectURL(blobUrl);
+      console.log("[AuditLog.FormRefItem.handleDownload] Download completed");
     } catch (err) {
+      console.error("[AuditLog.FormRefItem.handleDownload] Error:", err);
       toast.error(`Download failed: ${err.message}`);
     } finally {
       setDownloading(false);
@@ -67,13 +83,13 @@ function FormRefItem({ submissionId, name }) {
   return (
     <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-indigo-200 bg-indigo-50">
       <FileText className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
-      <span className="truncate max-w-[140px] text-xs text-indigo-700 font-medium">{name || "Form Submission"}</span>
+      <span className="truncate max-w-[140px] text-xs text-indigo-700 font-medium" title={name}>{name || "Form Submission"}</span>
       <div className="flex items-center gap-1 ml-auto">
-        <button onClick={handleOpenForm} title="View Form"
+        <button onClick={handleOpenForm} title="View Form in editor"
           className="p-1 rounded hover:bg-indigo-200 text-indigo-400 hover:text-indigo-700 transition-colors">
           <ExternalLink className="h-3.5 w-3.5" />
         </button>
-        <button onClick={handleDownload} disabled={downloading} title="Download PDF"
+        <button onClick={handleDownload} disabled={downloading} title="Download as PDF"
           className="p-1 rounded hover:bg-indigo-200 text-indigo-400 hover:text-indigo-700 transition-colors disabled:opacity-50">
           {downloading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
         </button>
@@ -86,7 +102,8 @@ function AttachmentItem({ url, name }) {
   const formRef = parseFormRef(url);
 
   if (formRef) {
-    return <FormRefItem submissionId={formRef.submissionId} name={name} />;
+    console.log("[AuditLog.AttachmentItem] Parsed form reference:", formRef);
+    return <FormRefItem submissionId={formRef.submissionId} formType={formRef.formType} name={name} />;
   }
 
   const isImage = /\.(png|jpg|jpeg|gif|webp)$/i.test(name || url);
