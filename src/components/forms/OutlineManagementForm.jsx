@@ -327,15 +327,16 @@ export default function OutlineManagementForm({ submission, incidents, assets, w
         }
       }
       
-      // Log to audit trail if submitted
-      if (data.status === "Submitted") {
-        const user = await base44.auth.me();
-        const timestamp = getAthensTimestamp();
-        await base44.entities.IncidentAuditTrail.create({
-          incident_id: linkedIncidentId,
-          action: "Form Submitted",
-          details: `${data.form_name} submitted`,
-          user: user?.email,
+      // Log to audit trail (always, not just on submit)
+      const user = await base44.auth.me();
+      const timestamp = getAthensTimestamp();
+      const allFiles = (data.form_data?.attachments || []).filter(f => f?.url);
+      await base44.entities.IncidentAuditTrail.create({
+        incident_id: linkedIncidentId,
+        action: data.status === "Submitted" ? "Form Submitted" : "Form Saved",
+        details: `${data.form_name} – ${data.status}`,
+        user: user?.email,
+        ...(data.status === "Submitted" ? {
           attachment_metadata: [{
             url: result?.id ? `form:${result.id}:${data.form_type}` : "",
             name: `${data.form_name} (Submitted)`,
@@ -343,8 +344,12 @@ export default function OutlineManagementForm({ submission, incidents, assets, w
             author_name: user?.full_name,
             created_at: timestamp,
           }],
-        });
-      }
+        } : {}),
+        ...(allFiles.length > 0 ? {
+          attachments: allFiles.map(f => f.url),
+          attachment_names: allFiles.map(f => f.name || f.url.split("/").pop()),
+        } : {}),
+      });
       
       return result;
     },

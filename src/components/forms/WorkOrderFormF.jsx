@@ -234,7 +234,7 @@ export default function WorkOrderFormF({ submission, incidents, assets, workOrde
       if (isEditing) return base44.entities.FormSubmissions.update(submission.id, data);
       return base44.entities.FormSubmissions.create(data);
     },
-    onSuccess: async (_, variables) => {
+    onSuccess: async (result, variables) => {
       const incId = variables.incident_id;
       if (incId) {
         const allPhotos = [
@@ -261,6 +261,24 @@ export default function WorkOrderFormF({ submission, incidents, assets, workOrde
             uploaded_by: null,
           });
         }
+
+        // Build full list of all uploaded files for audit trail
+        const allFiles = [
+          ...allPhotos,
+          ...(variables.form_data?.sig_upload ? [variables.form_data.sig_upload] : []),
+        ].filter(f => f?.url);
+
+        const user = await base44.auth.me();
+        await base44.entities.IncidentAuditTrail.create({
+          incident_id: incId,
+          action: "Form Saved",
+          details: `${variables.form_name} – ${variables.status}`,
+          user: user?.email,
+          ...(allFiles.length > 0 ? {
+            attachments: allFiles.map(f => f.url),
+            attachment_names: allFiles.map(f => f.name || f.url.split("/").pop()),
+          } : {}),
+        });
       }
       toast({ title: isEditing ? "Φόρμα ενημερώθηκε" : "Φόρμα αποθηκεύτηκε" });
       onClose();
