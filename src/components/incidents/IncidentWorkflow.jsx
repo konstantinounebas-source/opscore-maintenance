@@ -261,6 +261,11 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
         if (attachmentUrls.length > 0) {
           incidentUpdates.photos_after_fixing_done = true;
         }
+         // Photos required
+         if (!formData.photos_after || formData.photos_after.length === 0) {
+           toast({ title: "Photos required", description: "Please upload at least one photo after fixing." });
+           setSaving(false); return;
+         }
          // Prerequisite check before closing
          if (!incident.confirmation_done) {
            toast({ title: "Cannot close", description: "Confirmation of Receipt must be completed first." });
@@ -504,7 +509,7 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
               </p>
               <div className="space-y-1.5">
                 <Label className="text-xs flex items-center gap-1">
-                  <Paperclip className="w-3 h-3" /> Photos after Fixing (optional)
+                  <Paperclip className="w-3 h-3" /> Photos after Fixing <span className="text-red-500 ml-0.5">*</span>
                 </Label>
                 <FileUploader 
                   onUpload={fd => {
