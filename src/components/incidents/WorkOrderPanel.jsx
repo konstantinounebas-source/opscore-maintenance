@@ -313,7 +313,7 @@ function ChecklistModal({ wo, incidentId, onClose, onDone }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [notes, setNotes] = useState("");
-  const [file, setFile] = useState(null);
+  const [files, setFiles] = useState([]);
   const [person, setPerson] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -329,18 +329,24 @@ function ChecklistModal({ wo, incidentId, onClose, onDone }) {
     if (!person.trim()) { toast({ title: "Person required" }); return; }
     setSaving(true);
     try {
-      if (file) {
-        await base44.entities.IncidentAttachments.create({
-          ...file, incident_id: incidentId, uploaded_by: user?.email
-        });
+      if (files.length > 0) {
+        await Promise.all(
+          files.map(f =>
+            base44.entities.IncidentAttachments.create({
+              ...f, incident_id: incidentId, uploaded_by: user?.email
+            })
+          )
+        );
       }
       await base44.entities.IncidentAuditTrail.create({
         incident_id: incidentId,
         action: "WO Checklist Submitted",
         details: `WO ${wo.work_order_id}${notes ? `: ${notes}` : ""}`,
         user: person || user?.email,
-        attachments: file ? [file.file_url] : [],
-        attachment_names: file ? [file.file_name] : [],
+        ...(files.length > 0 ? {
+          attachments: files.map(f => f.file_url),
+          attachment_names: files.map(f => f.file_name),
+        } : {}),
       });
       queryClient.invalidateQueries({ queryKey: ["incidentAudit", incidentId] });
       queryClient.invalidateQueries({ queryKey: ["incidentAttachments", incidentId] });
@@ -366,8 +372,19 @@ function ChecklistModal({ wo, incidentId, onClose, onDone }) {
             <Textarea placeholder="Add comments..." rows={2} value={notes} onChange={e => setNotes(e.target.value)} className="text-sm" />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs flex items-center gap-1"><Paperclip className="w-3 h-3" /> Attachment (optional)</Label>
-            <FileUploader onUpload={fd => setFile(fd)} label={file ? file.file_name : "Upload Checklist File"} />
+            <Label className="text-xs flex items-center gap-1"><Paperclip className="w-3 h-3" /> Attachments (optional)</Label>
+            <FileUploader onUpload={fd => setFiles(prev => [...prev, fd])} label="Upload Checklist File" />
+            {files.length > 0 && (
+              <div className="space-y-1.5 mt-1">
+                {files.map((f, idx) => (
+                  <div key={idx} className="flex items-center justify-between bg-slate-50 p-2 rounded border border-slate-200">
+                    <span className="text-xs text-slate-600 truncate">{f.file_name}</span>
+                    <button type="button" onClick={() => setFiles(prev => prev.filter((_, i) => i !== idx))}
+                      className="text-xs text-red-600 hover:text-red-700 font-medium">Remove</button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           <div className="space-y-1.5 border-t pt-3">
             <Label className="text-xs font-semibold">Confirmed By *</Label>
