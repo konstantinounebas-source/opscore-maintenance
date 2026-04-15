@@ -145,13 +145,27 @@ export default function MakeSafeChecklistForm({ submission, incidents, assets, w
     }
   }, [incident, workOrder]);
 
-  // Auto-fill WO from incident
+  // Auto-create WO from incident if not exists
   useEffect(() => {
-    if (!linkedWOId && incident?.work_order_reference) {
-      const wo = workOrders.find(w => w.work_order_id === incident.work_order_reference);
-      if (wo) setLinkedWOId(wo.id);
-    }
-  }, [incident]);
+    const createWO = async () => {
+      if (linkedIncidentId && !linkedWOId && incident) {
+        try {
+          const newWO = await base44.entities.WorkOrders.create({
+            work_order_id: `WO-${Date.now()}`,
+            incident_id: linkedIncidentId,
+            title: `Make-Safe WO for ${incident.incident_id}`,
+            related_asset_id: incident.related_asset_id,
+            status: "Open",
+            priority: incident.priority || "Medium",
+          });
+          setLinkedWOId(newWO.id);
+        } catch (err) {
+          console.error("Error creating work order:", err);
+        }
+      }
+    };
+    createWO();
+  }, [linkedIncidentId]);
 
   const set = (key, val) => setFd(prev => ({ ...prev, [key]: val }));
 
