@@ -8,10 +8,38 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Clock, User, MessageSquare, Paperclip, Download, ChevronDown, ChevronUp, FileText, ImageIcon, Eye, Loader2 } from "lucide-react";
+import { Clock, User, MessageSquare, Paperclip, Download, ChevronDown, ChevronUp, FileText, ImageIcon, Eye, Loader2, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 
+// Parse a "form:submissionId:formType" virtual URL
+function parseFormRef(url) {
+  if (!url || !url.startsWith("form:")) return null;
+  const parts = url.split(":");
+  return { submissionId: parts[1], formType: parts[2] };
+}
+
 function AttachmentItem({ url, name }) {
+  const formRef = parseFormRef(url);
+
+  // Form submission reference — open the Forms page filtered to this submission
+  if (formRef) {
+    const handleOpenForm = () => {
+      window.open(`/Forms?submission=${formRef.submissionId}`, "_blank");
+    };
+    return (
+      <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-indigo-200 bg-indigo-50">
+        <FileText className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
+        <span className="truncate max-w-[160px] text-xs text-indigo-700 font-medium">{name || "Form Submission"}</span>
+        <div className="flex items-center gap-1 ml-auto">
+          <button onClick={handleOpenForm} title="View Form"
+            className="p-1 rounded hover:bg-indigo-200 text-indigo-400 hover:text-indigo-700 transition-colors">
+            <ExternalLink className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const isImage = /\.(png|jpg|jpeg|gif|webp)$/i.test(name || url);
   const displayName = name || url.split("/").pop() || "Attachment";
 

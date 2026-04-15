@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import TopHeader from "@/components/layout/TopHeader";
@@ -49,9 +49,13 @@ const FORM_TEMPLATES = [
 ];
 
 export default function Forms() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const preloadSubmissionId = urlParams.get("submission");
+
   const [view, setView] = useState("list"); // "list" | "new" | "edit"
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [editingSubmission, setEditingSubmission] = useState(null);
+  const [preloaded, setPreloaded] = useState(false);
 
   const { data: submissions = [], refetch } = useQuery({
     queryKey: ["formSubmissions"],
@@ -77,6 +81,17 @@ export default function Forms() {
     queryKey: ["childAssets"],
     queryFn: () => base44.entities.ChildAssets.list(),
   });
+
+  // Auto-open submission from URL param
+  useEffect(() => {
+    if (!preloaded && preloadSubmissionId && submissions.length > 0) {
+      const sub = submissions.find(s => s.id === preloadSubmissionId);
+      if (sub) {
+        handleEdit(sub);
+        setPreloaded(true);
+      }
+    }
+  }, [submissions, preloadSubmissionId, preloaded]);
 
   const handleNew = (template) => {
     setSelectedTemplate(template);
