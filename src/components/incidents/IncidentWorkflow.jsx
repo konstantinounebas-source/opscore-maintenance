@@ -139,6 +139,12 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
     queryFn: () => base44.entities.IncidentAttachments.filter({ incident_id: incidentId }),
   });
 
+  const { data: incidentWorkOrders = [] } = useQuery({
+    queryKey: ["workOrders", incidentId],
+    queryFn: () => base44.entities.WorkOrders.filter({ incident_id: incidentId }),
+    enabled: key === "close_incident",
+  });
+
   const { data: personList = [] } = useQuery({
     queryKey: ["configList", "incident_person"],
     queryFn: async () => {
@@ -249,6 +255,12 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
         // Photos required
         if (!formData.photos_after || formData.photos_after.length === 0) {
           toast({ title: "Photos required", description: "Please upload at least one photo after fixing." });
+          setSaving(false); return;
+        }
+        // All work orders must be closed
+        const openWOs = incidentWorkOrders.filter(w => w.status !== "Completed" && w.status !== "Cancelled");
+        if (openWOs.length > 0) {
+          toast({ title: "Open Work Orders", description: `Please close all work orders before closing the incident. (${openWOs.length} still open)` });
           setSaving(false); return;
         }
         // Upload photos
@@ -503,6 +515,12 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
 
           {key === "close_incident" && (
             <div className="space-y-3">
+              {incidentWorkOrders.filter(w => w.status !== "Completed" && w.status !== "Cancelled").length > 0 && (
+                <div className="p-2.5 bg-red-50 border border-red-200 rounded text-xs text-red-700 flex items-center gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
+                  {incidentWorkOrders.filter(w => w.status !== "Completed" && w.status !== "Cancelled").length} work order(s) are still open. All work orders must be closed before closing the incident.
+                </div>
+              )}
               <p className="text-xs text-slate-500">
                 Upload photos documenting the corrective work completed.
               </p>
