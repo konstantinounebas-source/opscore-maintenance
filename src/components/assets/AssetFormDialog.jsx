@@ -49,28 +49,27 @@ function DocTypeUploader({ label, files = [], onAdd, onRemove }) {
   const [uploading, setUploading] = useState(false);
   const [dragging, setDragging] = useState(false);
 
-  const upload = async (file) => {
-    if (!file) return;
-    setUploading(true);
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    const isImage = file.type.startsWith("image/");
-    onAdd({
-      file_url,
-      file_name: file.name,
-      file_size: `${(file.size / 1024).toFixed(1)} KB`,
-      file_type: isImage ? "Photo" : "Document",
-      doc_label: label,
-      preview: isImage ? file_url : null,
-    });
-    setUploading(false);
-    if (fileRef.current) fileRef.current.value = "";
-  };
+
 
   const handleFiles = async (fileList) => {
     if (!fileList) return;
-    for (const file of fileList) {
-      await upload(file);
-    }
+    setUploading(true);
+    const uploads = Array.from(fileList).map(file =>
+      base44.integrations.Core.UploadFile({ file }).then(({ file_url }) => {
+        const isImage = file.type.startsWith("image/");
+        onAdd({
+          file_url,
+          file_name: file.name,
+          file_size: `${(file.size / 1024).toFixed(1)} KB`,
+          file_type: isImage ? "Photo" : "Document",
+          doc_label: label,
+          preview: isImage ? file_url : null,
+        });
+      })
+    );
+    await Promise.all(uploads);
+    setUploading(false);
+    if (fileRef.current) fileRef.current.value = "";
   };
 
   const handleFileInput = async (e) => {
