@@ -12,10 +12,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ArrowLeft, Save, Send, Lock, Plus, Trash2, AlertTriangle,
-  CheckCircle2, Upload, Image, X, Info, Euro, Calendar, Wrench, Clock
+  CheckCircle2, Upload, X, Info, Euro, Calendar, Wrench, Clock
 } from "lucide-react";
 import { format, addBusinessDays, addDays } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
+import FileUploadArea from "@/components/shared/FileUploadArea";
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 function fmtDate(d) {
@@ -142,99 +143,7 @@ function deriveSubcategory(incident) {
   return parts.filter(Boolean).join(", ") || "—";
 }
 
-// ── Photo upload area ─────────────────────────────────────────────────────────
-function PhotoUploadArea({ label, files, onChange, required }) {
-  const inputRef = useRef();
-  const [dragging, setDragging] = useState(false);
-  const [uploading, setUploading] = useState(false);
 
-  const handleFiles = async (fileList) => {
-    setUploading(true);
-    const uploaded = [];
-    for (const file of Array.from(fileList)) {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      uploaded.push({ name: file.name, url: file_url });
-    }
-    onChange([...files, ...uploaded]);
-    setUploading(false);
-  };
-
-  const onDrop = (e) => {
-    e.preventDefault();
-    setDragging(false);
-    if (e.dataTransfer.files?.length) handleFiles(e.dataTransfer.files);
-  };
-
-  const remove = (idx) => {
-    const copy = [...files];
-    copy.splice(idx, 1);
-    onChange(copy);
-  };
-
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2">
-        <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">{label}</Label>
-        {required && files.length === 0 && (
-          <span className="flex items-center gap-1 text-xs text-amber-600 font-medium">
-            <AlertTriangle className="w-3 h-3" /> Απαιτείται
-          </span>
-        )}
-        {files.length > 0 && (
-          <span className="flex items-center gap-1 text-xs text-emerald-600 font-medium">
-            <CheckCircle2 className="w-3 h-3" /> {files.length} αρχείο{files.length !== 1 ? "α" : ""}
-          </span>
-        )}
-      </div>
-      <div
-        className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
-          dragging ? "border-indigo-400 bg-indigo-50" : "border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/30"
-        }`}
-        onClick={() => inputRef.current?.click()}
-        onDragOver={e => { e.preventDefault(); setDragging(true); }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={onDrop}
-      >
-        <Upload className={`w-5 h-5 mx-auto mb-1 ${dragging ? "text-indigo-500" : "text-slate-400"}`} />
-        {uploading ? (
-          <p className="text-xs text-indigo-600 font-medium">Μεταφόρτωση...</p>
-        ) : dragging ? (
-          <p className="text-xs text-indigo-600 font-medium">Αφήστε εδώ...</p>
-        ) : (
-          <p className="text-xs text-slate-500">Σύρτε & αφήστε ή κλικ για μεταφόρτωση</p>
-        )}
-        <input ref={inputRef} type="file" multiple className="hidden"
-          onChange={e => handleFiles(e.target.files)} />
-      </div>
-      {files.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-2">
-          {files.map((f, i) => {
-            const isImage = /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(f.name) || f.url?.match(/\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i);
-            return (
-              <div key={i} className="relative group">
-                {isImage ? (
-                  <img src={f.url} alt={f.name} className="w-20 h-20 object-cover rounded-lg border border-slate-200" />
-                ) : (
-                  <div className="flex items-center gap-1.5 px-2 py-1.5 bg-slate-100 border border-slate-200 rounded-lg text-xs text-slate-600 max-w-[140px]">
-                    <Upload className="w-3 h-3 flex-shrink-0 text-slate-400" />
-                    <span className="truncate">{f.name}</span>
-                  </div>
-                )}
-                <button
-                  type="button"
-                  onClick={() => remove(i)}
-                  className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
 
 // ── Empty work row ────────────────────────────────────────────────────────────
 const emptyRow = () => ({
@@ -378,57 +287,51 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
         : await base44.entities.FormSubmissions.create(data);
       
       const incId = data.incident_id;
-      if (incId) {
-        const allPhotos = [
-          ...(data.form_data?.photos_before || []),
-        ];
-        for (const f of allPhotos) {
-          if (f?.url) {
-            await base44.entities.IncidentAttachments.create({
-              incident_id: incId,
-              file_url: f.url,
-              file_name: f.name || f.url.split("/").pop(),
-              file_type: "Photo",
-              uploaded_by: null,
-            });
-          }
-        }
-        if (data.form_data?.sig_upload?.url) {
-          await base44.entities.IncidentAttachments.create({
-            incident_id: incId,
-            file_url: data.form_data.sig_upload.url,
-            file_name: data.form_data.sig_upload.name || "Signature",
-            file_type: "Document",
-            uploaded_by: null,
-          });
-        }
-      }
-      
-      // Log to audit trail (always, not just on submit)
       const user = await base44.auth.me();
       const timestamp = getAthensTimestamp();
+
       const allFiles = [
         ...(data.form_data?.photos_before || []),
         ...(data.form_data?.sig_upload ? [data.form_data.sig_upload] : []),
       ].filter(f => f?.url);
+
+      // Mirror attachments to IncidentAttachments
+      if (incId && allFiles.length > 0) {
+        await Promise.all(allFiles.map(f =>
+          base44.entities.IncidentAttachments.create({
+            incident_id: incId,
+            file_url: f.url,
+            file_name: f.name || f.url.split("/").pop(),
+            file_type: /\.(jpg|jpeg|png|gif|webp)$/i.test(f.name || "") ? "Photo" : "Document",
+            uploaded_by: user?.email,
+          })
+        ));
+      }
+
+      // Build attachment_metadata for audit trail
+      const auditAttachments = [
+        ...(data.status === "Submitted" && result?.id ? [{
+          url: `form:${result.id}:${data.form_type}`,
+          name: `${data.form_name} (Submitted)`,
+          author: user?.email,
+          author_name: user?.full_name,
+          created_at: timestamp,
+        }] : []),
+        ...allFiles.map(f => ({
+          url: f.url,
+          name: f.name || f.url.split("/").pop(),
+          author: user?.email,
+          author_name: user?.full_name,
+          created_at: timestamp,
+        })),
+      ];
+
       await base44.entities.IncidentAuditTrail.create({
         incident_id: incId,
         action: data.status === "Submitted" ? "Form Submitted" : "Form Saved",
         details: `${data.form_name} – ${data.status}`,
         user: user?.email,
-        ...(data.status === "Submitted" ? {
-          attachment_metadata: [{
-            url: result?.id ? `form:${result.id}:${data.form_type}` : "",
-            name: `${data.form_name} (Submitted)`,
-            author: user?.email,
-            author_name: user?.full_name,
-            created_at: timestamp,
-          }],
-        } : {}),
-        ...(allFiles.length > 0 ? {
-          attachments: allFiles.map(f => f.url),
-          attachment_names: allFiles.map(f => f.name || f.url.split("/").pop()),
-        } : {}),
+        ...(auditAttachments.length > 0 ? { attachment_metadata: auditAttachments } : {}),
       });
       
       return result;
@@ -855,14 +758,11 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
 
               {/* SECTION 4: Photos */}
               <Section title="Φωτογραφικά Αποδεικτικά">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <PhotoUploadArea
-                    label="ΦΩΤΟΓΡΑΦΙΑ ΑΠΟ ΠΡΟΗΓΟΥΜΕΝΗ ΚΑΤΑΣΤΑΣΗ – 1Η ΕΠΙΘΕΩΡΗΣΗ"
-                    files={photosBefore}
-                    onChange={setPhotosBefore}
-                    required={false}
-                  />
-                </div>
+                <FileUploadArea
+                  label="ΦΩΤΟΓΡΑΦΙΑ ΑΠΟ ΠΡΟΗΓΟΥΜΕΝΗ ΚΑΤΑΣΤΑΣΗ – 1Η ΕΠΙΘΕΩΡΗΣΗ"
+                  files={photosBefore}
+                  onChange={setPhotosBefore}
+                />
               </Section>
 
               {/* SECTION 5: Comments */}

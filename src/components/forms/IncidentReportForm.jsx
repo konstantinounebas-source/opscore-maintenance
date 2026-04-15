@@ -1,14 +1,16 @@
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { getAthensTimestamp } from "@/lib/timeSync";
 import TopHeader from "@/components/layout/TopHeader";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Save, Send, Upload, X, AlertTriangle, CheckCircle2, ShieldAlert, Info, Lock } from "lucide-react";
+import { ArrowLeft, Save, Send, AlertTriangle, CheckCircle2, ShieldAlert, Info, Lock } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import FileUploadArea from "@/components/shared/FileUploadArea";
 
 // ── Sub-systems with sub-categories ──────────────────────────────────────────
 const SUBSYSTEMS = {
@@ -36,7 +38,6 @@ const SUBSYSTEMS = {
   ],
 };
 
-// ── Section wrapper ───────────────────────────────────────────────────────────
 function Section({ number, title, accent, children }) {
   return (
     <div className={`bg-white rounded-xl border ${accent || "border-slate-200"} overflow-hidden`}>
@@ -50,7 +51,6 @@ function Section({ number, title, accent, children }) {
   );
 }
 
-// ── Field row ─────────────────────────────────────────────────────────────────
 function Field({ label, required, children }) {
   return (
     <div className="space-y-1">
@@ -62,107 +62,23 @@ function Field({ label, required, children }) {
   );
 }
 
-// ── File upload area ──────────────────────────────────────────────────────────
-function FileUploadArea({ files, onChange }) {
-  const inputRef = useRef();
-  const [uploading, setUploading] = useState(false);
-  const [dragging, setDragging] = useState(false);
-
-  const handleFiles = async (fileList) => {
-    setUploading(true);
-    const uploaded = [];
-    for (const file of Array.from(fileList)) {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      uploaded.push({ name: file.name, url: file_url, type: file.type });
-    }
-    onChange([...files, ...uploaded]);
-    setUploading(false);
-  };
-
-  const onDrop = (e) => {
-    e.preventDefault();
-    setDragging(false);
-    if (e.dataTransfer.files?.length) handleFiles(e.dataTransfer.files);
-  };
-
-  const remove = (idx) => { const c = [...files]; c.splice(idx, 1); onChange(c); };
-  const isImage = (f) => f.type?.startsWith("image/") || /\.(jpg|jpeg|png|gif|webp)$/i.test(f.name);
-
+function AutoBadge() {
   return (
-    <div className="space-y-3">
-      <div
-        className={`border-2 border-dashed rounded-lg p-5 text-center cursor-pointer transition-colors ${
-          dragging
-            ? "border-indigo-400 bg-indigo-50 scale-[1.01]"
-            : "border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/30"
-        }`}
-        onClick={() => inputRef.current?.click()}
-        onDragOver={e => { e.preventDefault(); setDragging(true); }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={onDrop}
-      >
-        <Upload className={`w-6 h-6 mx-auto mb-1.5 ${dragging ? "text-indigo-500" : "text-slate-400"}`} />
-        {uploading ? (
-          <p className="text-sm text-indigo-600 font-medium">Μεταφόρτωση...</p>
-        ) : dragging ? (
-          <p className="text-sm text-indigo-600 font-medium">Αφήστε τα αρχεία εδώ...</p>
-        ) : (
-          <>
-            <p className="text-sm text-slate-600 font-medium">Σύρτε & αφήστε ή κλικ για επισύναψη</p>
-            <p className="text-xs text-slate-400 mt-0.5">Εικόνες και έγγραφα</p>
-          </>
-        )}
-        <input ref={inputRef} type="file" multiple accept="image/*,.pdf,.doc,.docx" className="hidden"
-          onChange={e => handleFiles(e.target.files)} />
-      </div>
-
-      {files.length > 0 && (
-        <div className="space-y-2">
-          <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-medium">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            {files.length} αρχείο{files.length !== 1 ? "α" : ""} επισυνάφθηκε{files.length !== 1 ? "ν" : ""}
-          </div>
-          {/* Image previews */}
-          <div className="flex flex-wrap gap-2">
-            {files.filter(isImage).map((f, i) => (
-              <div key={i} className="relative group">
-                <img src={f.url} alt={f.name} className="w-20 h-20 object-cover rounded-lg border border-slate-200" />
-                <button type="button" onClick={() => remove(files.indexOf(f))}
-                  className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <X className="w-3 h-3" />
-                </button>
-              </div>
-            ))}
-          </div>
-          {/* Non-image files */}
-          {files.filter(f => !isImage(f)).map((f, i) => (
-            <div key={i} className="flex items-center justify-between px-3 py-2 bg-slate-50 rounded-lg border border-slate-200 text-sm">
-              <span className="text-slate-700 truncate">{f.name}</span>
-              <button type="button" onClick={() => remove(files.indexOf(f))}
-                className="ml-2 text-slate-400 hover:text-red-500 transition-colors flex-shrink-0">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+    <span className="inline-flex items-center gap-1 text-xs text-indigo-600 font-medium bg-indigo-50 border border-indigo-200 rounded px-1.5 py-0.5 ml-1">
+      <Lock className="w-2.5 h-2.5" /> auto
+    </span>
   );
 }
 
-// ── Default state ─────────────────────────────────────────────────────────────
 const defaultData = () => ({
-  // Section 1
   issue_date: "",
   reporter_name: "",
   reporter_phone: "",
   reporter_email: "",
-  // Section 2
   province: "",
   municipality: "",
   stop_number: "",
   stop_address: "",
-  // Section 3
   first_report_date: "",
   detection_time: "",
   incident_source: "",
@@ -173,25 +89,13 @@ const defaultData = () => ({
   probable_cause: "",
   probable_cause_other: "",
   attachments: [],
-  // Section 4
   priority: "",
   owr: "",
   make_safe: "",
-  // Section 5
   approval_date: "",
   authority_representative: "",
 });
 
-// ── Auto-fill badge ───────────────────────────────────────────────────────────
-function AutoBadge() {
-  return (
-    <span className="inline-flex items-center gap-1 text-xs text-indigo-600 font-medium bg-indigo-50 border border-indigo-200 rounded px-1.5 py-0.5 ml-1">
-      <Lock className="w-2.5 h-2.5" /> auto
-    </span>
-  );
-}
-
-// ── Main Component ────────────────────────────────────────────────────────────
 export default function IncidentReportForm({ submission, incidents = [], assets = [], onClose }) {
   const { toast } = useToast();
   const isEditing = !!submission;
@@ -209,7 +113,6 @@ export default function IncidentReportForm({ submission, incidents = [], assets 
 
   const set = (key, val) => setFd(prev => ({ ...prev, [key]: val }));
 
-  // ── Auto-fill from linked incident / asset ────────────────────────────────
   useEffect(() => {
     if (!incident) return;
     setFd(prev => ({
@@ -222,7 +125,6 @@ export default function IncidentReportForm({ submission, incidents = [], assets 
       first_report_date: prev.first_report_date || incident.first_report_date || incident.reported_date || "",
       detection_time:    prev.detection_time    || incident.detection_time || "",
     }));
-    // Also try to link asset from incident
     if (!linkedAssetId && incident.related_asset_id) setLinkedAssetId(incident.related_asset_id);
   }, [linkedIncidentId]);
 
@@ -237,40 +139,67 @@ export default function IncidentReportForm({ submission, incidents = [], assets 
     }));
   }, [linkedAssetId]);
 
-  // Reset subsystem detail when subsystem changes
   const setSubsystem = (val) => setFd(prev => ({ ...prev, subsystem: val, subsystem_detail: "" }));
-
   const subCategories = SUBSYSTEMS[fd.subsystem] || [];
 
-  // ── Visual indicator helpers ──
   const priorityP1 = fd.priority === "P1";
   const owrYes     = fd.owr === "ΝΑΙ";
   const makeSafeYes = fd.make_safe === "ΝΑΙ";
 
-  // ── Save ──
   const saveMutation = useMutation({
     mutationFn: async (data) => {
-      if (isEditing) return base44.entities.FormSubmissions.update(submission.id, data);
-      return base44.entities.FormSubmissions.create(data);
-    },
-    onSuccess: async (_, variables) => {
-      const incId = variables.incident_id;
-      if (incId) {
-        const attachments = variables.form_data?.attachments || [];
-        for (const f of attachments) {
-          if (f?.url) {
-            const isImage = f.type?.startsWith("image/") || /\.(jpg|jpeg|png|gif|webp)$/i.test(f.name || "");
-            await base44.entities.IncidentAttachments.create({
-              incident_id: incId,
-              file_url: f.url,
-              file_name: f.name || f.url.split("/").pop(),
-              file_type: isImage ? "Photo" : "Document",
-              uploaded_by: null,
-              is_initial_upload: true,
-            });
-          }
-        }
+      const result = isEditing
+        ? await base44.entities.FormSubmissions.update(submission.id, data)
+        : await base44.entities.FormSubmissions.create(data);
+
+      const incId = data.incident_id;
+      const user = await base44.auth.me();
+      const timestamp = getAthensTimestamp();
+      const allFiles = (data.form_data?.attachments || []).filter(f => f?.url);
+
+      if (incId && allFiles.length > 0) {
+        await Promise.all(allFiles.map(f =>
+          base44.entities.IncidentAttachments.create({
+            incident_id: incId,
+            file_url: f.url,
+            file_name: f.name || f.url.split("/").pop(),
+            file_type: /\.(jpg|jpeg|png|gif|webp)$/i.test(f.name || "") ? "Photo" : "Document",
+            uploaded_by: user?.email,
+            is_initial_upload: true,
+          })
+        ));
       }
+
+      const auditAttachments = [
+        ...(data.status === "Submitted" && result?.id ? [{
+          url: `form:${result.id}:${data.form_type}`,
+          name: `${data.form_name} (Submitted)`,
+          author: user?.email,
+          author_name: user?.full_name,
+          created_at: timestamp,
+        }] : []),
+        ...allFiles.map(f => ({
+          url: f.url,
+          name: f.name || f.url.split("/").pop(),
+          author: user?.email,
+          author_name: user?.full_name,
+          created_at: timestamp,
+        })),
+      ];
+
+      if (incId) {
+        await base44.entities.IncidentAuditTrail.create({
+          incident_id: incId,
+          action: data.status === "Submitted" ? "Form Submitted" : "Form Saved",
+          details: `${data.form_name} – ${data.status}`,
+          user: user?.email,
+          ...(auditAttachments.length > 0 ? { attachment_metadata: auditAttachments } : {}),
+        });
+      }
+
+      return result;
+    },
+    onSuccess: () => {
       toast({ title: isEditing ? "Φόρμα ενημερώθηκε" : "Φόρμα αποθηκεύτηκε" });
       onClose();
     },
@@ -350,7 +279,7 @@ export default function IncidentReportForm({ submission, incidents = [], assets 
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-4xl mx-auto p-6 space-y-5">
 
-          {/* ── Linked records ── */}
+          {/* Linked records */}
           {(incidents.length > 0 || assets.length > 0) && (
             <div className="bg-white rounded-xl border border-indigo-100 p-5 space-y-3">
               <h3 className="text-sm font-semibold text-indigo-800 flex items-center gap-2">
@@ -392,13 +321,13 @@ export default function IncidentReportForm({ submission, incidents = [], assets 
               </div>
               {(incident || asset) && (
                 <p className="text-xs text-indigo-500 flex items-center gap-1 mt-1">
-                  <CheckCircle2 className="w-3 h-3" /> Τα διαθέσιμα πεδία συμπληρώθηκαν αυτόματα. Μπορείτε να τα τροποποιήσετε.
+                  <CheckCircle2 className="w-3 h-3" /> Τα διαθέσιμα πεδία συμπληρώθηκαν αυτόματα.
                 </p>
               )}
             </div>
           )}
 
-          {/* ── Visual Indicators ── */}
+          {/* Visual Indicators */}
           {(priorityP1 || owrYes || makeSafeYes) && (
             <div className="flex flex-wrap gap-2">
               {priorityP1 && (
@@ -419,9 +348,6 @@ export default function IncidentReportForm({ submission, incidents = [], assets 
             </div>
           )}
 
-          {/* ══════════════════════════════════════════════════════════════════
-              1. Γενικές Πληροφορίες
-          ══════════════════════════════════════════════════════════════════ */}
           <Section number="1" title="Γενικές Πληροφορίες">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="Ημερομηνία Έκδοσης" required>
@@ -442,9 +368,6 @@ export default function IncidentReportForm({ submission, incidents = [], assets 
             </div>
           </Section>
 
-          {/* ══════════════════════════════════════════════════════════════════
-              2. Στοιχεία Τοποθεσίας
-          ══════════════════════════════════════════════════════════════════ */}
           <Section number="2" title="Στοιχεία Τοποθεσίας">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="Επαρχία" required>
@@ -466,11 +389,7 @@ export default function IncidentReportForm({ submission, incidents = [], assets 
             </div>
           </Section>
 
-          {/* ══════════════════════════════════════════════════════════════════
-              3. Περιγραφή Προβλήματος / Συμβάντος
-          ══════════════════════════════════════════════════════════════════ */}
           <Section number="3" title="Περιγραφή Προβλήματος / Συμβάντος">
-            {/* Date / Time / Source */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <Field label="Ημερομηνία Πρώτης Αναφοράς" required>
                 <Input type="date" value={fd.first_report_date} onChange={e => set("first_report_date", e.target.value)} className="text-sm mt-1" />
@@ -499,7 +418,6 @@ export default function IncidentReportForm({ submission, incidents = [], assets 
               </Field>
             )}
 
-            {/* Subsystem */}
             <div className="border-t border-slate-100 pt-4">
               <p className="text-xs font-bold text-slate-600 uppercase tracking-wide mb-3">Επηρεαζόμενο Υποσύστημα</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -514,7 +432,6 @@ export default function IncidentReportForm({ submission, incidents = [], assets 
                     </SelectContent>
                   </Select>
                 </Field>
-
                 {fd.subsystem && (
                   <Field label="Λεπτομέρεια / Κατηγορία Βλάβης">
                     <Select value={fd.subsystem_detail || "_none"} onValueChange={v => set("subsystem_detail", v === "_none" ? "" : v)}>
@@ -531,7 +448,6 @@ export default function IncidentReportForm({ submission, incidents = [], assets 
               </div>
             </div>
 
-            {/* Damage + Cause */}
             <Field label="Περιγραφή Βλάβης / Ζημιάς" required>
               <Textarea value={fd.damage_description} onChange={e => set("damage_description", e.target.value)}
                 placeholder="Περιγράψτε αναλυτικά τη βλάβη ή τη ζημιά..." rows={4} className="text-sm mt-1" />
@@ -559,21 +475,15 @@ export default function IncidentReportForm({ submission, incidents = [], assets 
               )}
             </div>
 
-            {/* Attachments */}
             <div className="border-t border-slate-100 pt-4">
-              <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wide block mb-2">
-                Συνημμένα Αποδεικτικά
-              </Label>
               <FileUploadArea
+                label="Συνημμένα Αποδεικτικά"
                 files={fd.attachments}
                 onChange={v => set("attachments", v)}
               />
             </div>
           </Section>
 
-          {/* ══════════════════════════════════════════════════════════════════
-              4. Κατάταξη Προτεραιότητας
-          ══════════════════════════════════════════════════════════════════ */}
           <Section number="4" title="Κατάταξη Προτεραιότητας">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <Field label="Πρώτη Αξιολόγηση Προτεραιότητας" required>
@@ -587,15 +497,6 @@ export default function IncidentReportForm({ submission, incidents = [], assets 
                     <SelectItem value="P2">P2</SelectItem>
                   </SelectContent>
                 </Select>
-                {fd.priority && (
-                  <div className={`mt-1.5 inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full ${
-                    priorityP1
-                      ? "bg-red-100 text-red-700"
-                      : "bg-amber-100 text-amber-700"
-                  }`}>
-                    {fd.priority}
-                  </div>
-                )}
               </Field>
 
               <Field label="Εκτός Εγγύησης (OWR)" required>
@@ -609,13 +510,6 @@ export default function IncidentReportForm({ submission, incidents = [], assets 
                     <SelectItem value="ΟΧΙ">ΟΧΙ</SelectItem>
                   </SelectContent>
                 </Select>
-                {fd.owr && (
-                  <div className={`mt-1.5 inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${
-                    owrYes ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"
-                  }`}>
-                    {owrYes ? "OWR – Εκτός Εγγύησης" : "Εντός Εγγύησης"}
-                  </div>
-                )}
               </Field>
 
               <Field label="Απαιτεί Άμεση Ασφάλιση Χώρου (Make-Safe)" required>
@@ -629,18 +523,10 @@ export default function IncidentReportForm({ submission, incidents = [], assets 
                     <SelectItem value="ΟΧΙ">ΟΧΙ</SelectItem>
                   </SelectContent>
                 </Select>
-                {makeSafeYes && (
-                  <div className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-red-100 text-red-700">
-                    <ShieldAlert className="w-3 h-3" /> Απαιτείται Make-Safe
-                  </div>
-                )}
               </Field>
             </div>
           </Section>
 
-          {/* ══════════════════════════════════════════════════════════════════
-              5. Εγκρίσεις & Επαλήθευση
-          ══════════════════════════════════════════════════════════════════ */}
           <Section number="5" title="Εγκρίσεις & Επαλήθευση">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="Ημερομηνία" required>
@@ -651,8 +537,6 @@ export default function IncidentReportForm({ submission, incidents = [], assets 
                   placeholder="Ονοματεπώνυμο..." className="text-sm mt-1" />
               </Field>
             </div>
-
-            {/* Static SLA note */}
             <div className="flex items-start gap-3 bg-blue-50 border border-blue-200 rounded-lg p-4 mt-2">
               <Info className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
               <p className="text-sm text-blue-700 leading-relaxed">
@@ -661,7 +545,6 @@ export default function IncidentReportForm({ submission, incidents = [], assets 
             </div>
           </Section>
 
-          {/* Bottom actions */}
           <div className="flex justify-end gap-3 pt-2 pb-8">
             <Button variant="outline" onClick={onClose}>Άκυρο</Button>
             <Button variant="outline" onClick={() => handleSave("Draft")} disabled={saveMutation.isPending} className="gap-1.5">
