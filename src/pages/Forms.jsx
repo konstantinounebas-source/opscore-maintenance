@@ -6,6 +6,7 @@ import TopHeader from "@/components/layout/TopHeader";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, FileText, Clock, CheckCircle2, XCircle, Eye, Download, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { format } from "date-fns";
 import OutlineManagementForm from "@/components/forms/OutlineManagementForm";
 import CombinedFMPIandInvoiceForm from "@/components/forms/CombinedFMPIandInvoiceForm";
@@ -62,6 +63,10 @@ async function downloadFormPDF(submissionId, formName) {
     },
     body: JSON.stringify({ submissionId }),
   });
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`PDF generation failed (${res.status}): ${errText}`);
+  }
   const blob = await res.blob();
   const blobUrl = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -141,8 +146,13 @@ export default function Forms() {
 
   const handleDownload = async (sub) => {
     setDownloadingId(sub.id);
-    await downloadFormPDF(sub.id, sub.form_name);
-    setDownloadingId(null);
+    try {
+      await downloadFormPDF(sub.id, sub.form_name);
+    } catch (err) {
+      toast.error(err.message || "PDF download failed");
+    } finally {
+      setDownloadingId(null);
+    }
   };
 
   const incidentMap = Object.fromEntries(incidents.map(i => [i.id, i]));
