@@ -185,7 +185,7 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
       toast({ title: "Person required", description: "Please enter the responsible person." });
       return;
     }
-    if (key === "create_ompi" && !formData.file && existingAttachments.length === 0) {
+    if (key === "create_ompi" && (!formData.files || formData.files.length === 0) && existingAttachments.length === 0) {
       toast({ title: "Attachment required", description: "Please upload the OMPI document." });
       return;
     }
@@ -206,49 +206,36 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
       }
 
       if (key === "create_ompi") {
-        if (formData.file) await uploadAttachment(formData.file);
+        const ompiFiles = formData.files || [];
+        for (const f of ompiFiles) await uploadAttachment(f);
         incidentUpdates.ompi_done = true;
         await addAudit(
           "OMPI Created",
           `OMPI created${formData.notes ? `: ${formData.notes}` : ""}`,
-          formData.file ? { attachments: [formData.file.file_url], attachment_names: [formData.file.file_name] } : {}
+          ompiFiles.length > 0 ? { attachments: ompiFiles.map(f => f.file_url), attachment_names: ompiFiles.map(f => f.file_name) } : {}
         );
       }
 
       if (key === "create_fmpi") {
-        if (formData.file) await uploadAttachment(formData.file);
-        if (formData.pricing_order_file) await uploadAttachment(formData.pricing_order_file);
+        const fmpiFiles = formData.files || [];
+        for (const f of fmpiFiles) await uploadAttachment(f);
         incidentUpdates.owr_fmpi_done = true;
         const details = `FMPI created${formData.notes ? `: ${formData.notes}` : ""}${!incident.is_owr ? " — CA Approval required" : ""}`;
-        const attachmentData = {};
-        if (formData.file || formData.pricing_order_file) {
-          const attachmentUrls = [];
-          const attachmentNames = [];
-          if (formData.file) {
-            attachmentUrls.push(formData.file.file_url);
-            attachmentNames.push(formData.file.file_name);
-          }
-          if (formData.pricing_order_file) {
-            attachmentUrls.push(formData.pricing_order_file.file_url);
-            attachmentNames.push(formData.pricing_order_file.file_name);
-          }
-          attachmentData.attachments = attachmentUrls;
-          attachmentData.attachment_names = attachmentNames;
-        }
-        await addAudit("FMPI Created", details, attachmentData);
+        await addAudit(
+          "FMPI Created", details,
+          fmpiFiles.length > 0 ? { attachments: fmpiFiles.map(f => f.file_url), attachment_names: fmpiFiles.map(f => f.file_name) } : {}
+        );
       }
 
       if (key === "ca_status") {
         const caVal = formData.ca_status || "Approved";
         incidentUpdates.ca_status = caVal;
         const auditDetails = `CA Status set to: ${caVal}${formData.notes ? ` — ${formData.notes}` : ""}`;
-        const auditExtra = {};
-        if (formData.ca_invoice) {
-          await uploadAttachment(formData.ca_invoice);
-          auditExtra.attachments = [formData.ca_invoice.file_url];
-          auditExtra.attachment_names = [formData.ca_invoice.file_name];
-        }
-        await addAudit("CA Status Set", auditDetails, auditExtra);
+        const caFiles = formData.files || [];
+        for (const f of caFiles) await uploadAttachment(f);
+        await addAudit("CA Status Set", auditDetails,
+          caFiles.length > 0 ? { attachments: caFiles.map(f => f.file_url), attachment_names: caFiles.map(f => f.file_name) } : {}
+        );
       }
 
       if (key === "close_incident") {
@@ -382,7 +369,17 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
                 <Label className="text-xs flex items-center gap-1">
                   <Paperclip className="w-3 h-3" /> Signed Invoice (optional)
                 </Label>
-                <FileUploader onUpload={fd => set("ca_invoice", fd)} label={formData.ca_invoice ? formData.ca_invoice.file_name : "Upload Document"} />
+                <FileUploader onUpload={fd => set("files", [...(formData.files || []), fd])} label="Upload Document" />
+              {(formData.files || []).length > 0 && (
+                <div className="space-y-1 mt-1">
+                  {formData.files.map((f, i) => (
+                    <div key={i} className="flex items-center justify-between bg-slate-50 p-2 rounded border border-slate-200">
+                      <span className="text-xs text-slate-600 truncate">{f.file_name}</span>
+                      <button type="button" onClick={() => set("files", formData.files.filter((_, j) => j !== i))} className="text-xs text-red-600 hover:text-red-700 font-medium">Remove</button>
+                    </div>
+                  ))}
+                </div>
+              )}
               </div>
             </div>
           )}
@@ -419,9 +416,19 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
                 </div>
               )}
               <FileUploader
-                onUpload={fd => set("file", fd)}
-                label={formData.file ? formData.file.file_name : existingAttachments.length > 0 ? "Upload additional (optional)" : "Upload OMPI Document"}
+                onUpload={fd => set("files", [...(formData.files || []), fd])}
+                label={existingAttachments.length > 0 ? "Upload additional (optional)" : "Upload OMPI Document"}
               />
+              {(formData.files || []).length > 0 && (
+                <div className="space-y-1 mt-1">
+                  {formData.files.map((f, i) => (
+                    <div key={i} className="flex items-center justify-between bg-slate-50 p-2 rounded border border-slate-200">
+                      <span className="text-xs text-slate-600 truncate">{f.file_name}</span>
+                      <button type="button" onClick={() => set("files", formData.files.filter((_, j) => j !== i))} className="text-xs text-red-600 hover:text-red-700 font-medium">Remove</button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -440,12 +447,18 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
                 </Button>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs flex items-center gap-1"><Paperclip className="w-3 h-3" /> Upload FMPI Document (optional)</Label>
-                <FileUploader onUpload={fd => set("file", fd)} label={formData.file ? formData.file.file_name : "Upload FMPI Document"} />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs flex items-center gap-1"><Paperclip className="w-3 h-3" /> Upload Pricing Order Document (optional)</Label>
-                <FileUploader onUpload={fd => set("pricing_order_file", fd)} label={formData.pricing_order_file ? formData.pricing_order_file.file_name : "Upload Pricing Order Document"} />
+                <Label className="text-xs flex items-center gap-1"><Paperclip className="w-3 h-3" /> Upload FMPI / Pricing Order Documents (optional)</Label>
+                <FileUploader onUpload={fd => set("files", [...(formData.files || []), fd])} label="Upload Documents" />
+                {(formData.files || []).length > 0 && (
+                  <div className="space-y-1 mt-1">
+                    {formData.files.map((f, i) => (
+                      <div key={i} className="flex items-center justify-between bg-slate-50 p-2 rounded border border-slate-200">
+                        <span className="text-xs text-slate-600 truncate">{f.file_name}</span>
+                        <button type="button" onClick={() => set("files", formData.files.filter((_, j) => j !== i))} className="text-xs text-red-600 hover:text-red-700 font-medium">Remove</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}
