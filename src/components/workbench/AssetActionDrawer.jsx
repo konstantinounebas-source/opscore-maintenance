@@ -4,11 +4,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import {
   X, MapPin, AlertCircle, Wrench, CalendarDays,
-  Plus, Layers, ChevronRight, Loader2, CheckCircle2, Clock
+  Plus, Layers, ChevronRight, Loader2, CheckCircle2, Clock, ChevronDown
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, parseISO, isWithinInterval } from "date-fns";
 import { useConfigLists } from "@/components/shared/useConfigLists";
 import { computePriorityBucket, computePinColor } from "@/components/planning/planningUtils";
 
@@ -164,20 +166,11 @@ export default function AssetActionDrawer({
         {/* ── ASSIGN TAB ───────────────────────────────── */}
         {tab === "assign" && (
           <div className="space-y-3">
-            <div>
-              <Label className="text-xs">Planning Week</Label>
-              <Select value={form.planning_week_id || "__none__"} onValueChange={v => set("planning_week_id", v === "__none__" ? "" : v)}>
-                <SelectTrigger className="mt-1 text-sm h-8"><SelectValue placeholder="Select a week..." /></SelectTrigger>
-                <SelectContent style={{ zIndex: 99999 }}>
-                  <SelectItem value="__none__">— Select week —</SelectItem>
-                  {weeks.map(w => (
-                    <SelectItem key={w.id} value={w.id}>
-                      <span className="font-mono text-xs">{w.week_code}</span> — {w.week_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <WeekPickerField
+              weeks={weeks}
+              value={form.planning_week_id}
+              onChange={v => set("planning_week_id", v)}
+            />
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <Label className="text-xs">Type</Label>
@@ -366,6 +359,75 @@ function EmptyState({ icon: IconComp, label }) {
     <div className="flex flex-col items-center justify-center py-8 text-slate-400">
       <IconComp className="h-8 w-8 mb-2 opacity-30" />
       <p className="text-xs">{label}</p>
+    </div>
+  );
+}
+
+function WeekPickerField({ weeks, value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const selectedWeek = weeks.find(w => w.id === value);
+
+  const handleDaySelect = (date) => {
+    if (!date) return;
+    // Find a week whose start_date <= date <= end_date
+    const matched = weeks.find(w => {
+      if (!w.start_date || !w.end_date) return false;
+      return isWithinInterval(date, {
+        start: parseISO(w.start_date),
+        end: parseISO(w.end_date),
+      });
+    });
+    if (matched) {
+      onChange(matched.id);
+      setOpen(false);
+    }
+  };
+
+  // Build disabled dates: only days within any known week are selectable
+  const weekIntervals = weeks
+    .filter(w => w.start_date && w.end_date)
+    .map(w => ({ start: parseISO(w.start_date), end: parseISO(w.end_date) }));
+
+  const isDisabled = (date) => !weekIntervals.some(iv => isWithinInterval(date, iv));
+
+  return (
+    <div>
+      <Label className="text-xs">Planning Week</Label>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <button className="mt-1 w-full flex items-center justify-between border border-input rounded-md px-3 h-8 text-xs bg-white hover:bg-slate-50 transition-colors">
+            {selectedWeek ? (
+              <span className="truncate">
+                <span className="font-mono text-[10px] text-slate-400 mr-1">{selectedWeek.week_code}</span>
+                {selectedWeek.week_name}
+              </span>
+            ) : (
+              <span className="text-slate-400">Pick a date to select a week...</span>
+            )}
+            <ChevronDown className="h-3.5 w-3.5 text-slate-400 shrink-0 ml-1" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="p-0 w-auto" style={{ zIndex: 99999 }} align="start">
+          <div className="p-3 border-b border-slate-100">
+            <p className="text-xs text-slate-500">Select any date — the matching planning week will be chosen automatically.</p>
+          </div>
+          <Calendar
+            mode="single"
+            onSelect={handleDaySelect}
+            disabled={isDisabled}
+            initialFocus
+          />
+          {weeks.length === 0 && (
+            <p className="text-xs text-slate-400 p-3 text-center">No planning weeks defined yet.</p>
+          )}
+        </PopoverContent>
+      </Popover>
+      {selectedWeek && (
+        <p className="text-[10px] text-indigo-600 mt-1">
+          {selectedWeek.week_code} · {selectedWeek.start_date} → {selectedWeek.end_date}
+          {selectedWeek.status === "Active" && <span className="ml-1 bg-emerald-100 text-emerald-700 px-1 rounded">Active</span>}
+        </p>
+      )}
     </div>
   );
 }
