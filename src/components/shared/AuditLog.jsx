@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { appParams } from "@/lib/app-params";
 import { getAthensTimestamp } from "@/lib/timeSync";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -12,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Clock, User, MessageSquare, Paperclip, Download, ChevronDown, ChevronUp, FileText, ImageIcon, Eye, Loader2, ExternalLink, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import html2pdf from "html2pdf.js";
 
 // Parse a "form:submissionId:formType" virtual URL
 function parseFormRef(url) {
@@ -32,45 +32,28 @@ function FormRefItem({ submissionId, formType, name }) {
     setDownloading(true);
     try {
       console.log("[AuditLog.FormRefItem.handleDownload] Starting download for submission:", submissionId);
-      const { appId, token, functionsVersion, appBaseUrl } = appParams;
-      const baseUrl = appBaseUrl || `https://appfunctions.base44.com`;
-      const fetchUrl = `${baseUrl}/api/apps/${appId}/functions/generateFormPDF`;
-      const res = await fetch(fetchUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-          ...(functionsVersion ? { 'X-Functions-Version': functionsVersion } : {}),
-        },
-        body: JSON.stringify({ submissionId }),
-      });
       
-      if (!res.ok) {
-        const errText = await res.text();
-        console.error("[AuditLog.FormRefItem.handleDownload] HTTP error:", res.status, errText);
-        toast.error(`PDF generation failed: ${errText}`);
-        return;
+      const response = await base44.functions.invoke('generateFormPDF', { submissionId });
+      
+      if (!response.data || !response.data.html) {
+        throw new Error("No HTML content returned");
       }
       
-      const contentType = res.headers.get('content-type');
-      console.log("[AuditLog.FormRefItem.handleDownload] Content-type:", contentType);
+      const { html, fileName } = response.data;
       
-      const blob = await res.blob();
-      console.log("[AuditLog.FormRefItem.handleDownload] Blob size:", blob.size);
+      const element = document.createElement('div');
+      element.innerHTML = html;
       
-      if (blob.size === 0) {
-        toast.error("PDF generation returned empty file");
-        return;
-      }
+      const opt = {
+        margin: 10,
+        filename: fileName,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+      };
       
-      const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = `${(name || 'form').replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '')}_${submissionId}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(blobUrl);
+      await html2pdf().set(opt).from(element).save();
+      toast.success("PDF downloaded successfully");
       console.log("[AuditLog.FormRefItem.handleDownload] Download completed");
     } catch (err) {
       console.error("[AuditLog.FormRefItem.handleDownload] Error:", err);
