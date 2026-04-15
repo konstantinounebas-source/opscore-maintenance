@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { appParams } from "@/lib/app-params";
 import TopHeader from "@/components/layout/TopHeader";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, FileText, Clock, CheckCircle2, XCircle, Eye } from "lucide-react";
+import { Plus, FileText, Clock, CheckCircle2, XCircle, Eye, Download, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import OutlineManagementForm from "@/components/forms/OutlineManagementForm";
 import CombinedFMPIandInvoiceForm from "@/components/forms/CombinedFMPIandInvoiceForm";
@@ -48,6 +49,30 @@ const FORM_TEMPLATES = [
   },
 ];
 
+async function downloadFormPDF(submissionId, formName) {
+  const { appId, token, functionsVersion, appBaseUrl } = appParams;
+  const baseUrl = appBaseUrl || `https://appfunctions.base44.com`;
+  const url = `${baseUrl}/api/apps/${appId}/functions/generateFormPDF`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      ...(functionsVersion ? { 'X-Functions-Version': functionsVersion } : {}),
+    },
+    body: JSON.stringify({ submissionId }),
+  });
+  const blob = await res.blob();
+  const blobUrl = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = blobUrl;
+  a.download = `${(formName || 'form').replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '')}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(blobUrl);
+}
+
 export default function Forms() {
   const urlParams = new URLSearchParams(window.location.search);
   const preloadSubmissionId = urlParams.get("submission");
@@ -56,6 +81,7 @@ export default function Forms() {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [editingSubmission, setEditingSubmission] = useState(null);
   const [preloaded, setPreloaded] = useState(false);
+  const [downloadingId, setDownloadingId] = useState(null);
 
   const { data: submissions = [], refetch } = useQuery({
     queryKey: ["formSubmissions"],
@@ -111,6 +137,12 @@ export default function Forms() {
     setSelectedTemplate(null);
     setEditingSubmission(null);
     refetch();
+  };
+
+  const handleDownload = async (sub) => {
+    setDownloadingId(sub.id);
+    await downloadFormPDF(sub.id, sub.form_name);
+    setDownloadingId(null);
   };
 
   const incidentMap = Object.fromEntries(incidents.map(i => [i.id, i]));
@@ -227,6 +259,10 @@ export default function Forms() {
                     </div>
                     <Button size="sm" variant="outline" className="gap-1.5 text-xs shrink-0" onClick={() => handleEdit(sub)}>
                       <Eye className="w-3.5 h-3.5" /> View
+                    </Button>
+                    <Button size="sm" variant="outline" className="gap-1.5 text-xs shrink-0" onClick={() => handleDownload(sub)} disabled={downloadingId === sub.id}>
+                      {downloadingId === sub.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                      PDF
                     </Button>
                   </div>
                 );

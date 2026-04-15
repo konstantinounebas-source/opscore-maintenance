@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { appParams } from "@/lib/app-params";
 import { getAthensTimestamp } from "@/lib/timeSync";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -18,26 +19,62 @@ function parseFormRef(url) {
   return { submissionId: parts[1], formType: parts[2] };
 }
 
+function FormRefItem({ submissionId, name }) {
+  const [downloading, setDownloading] = useState(false);
+
+  const handleOpenForm = () => {
+    window.open(`/Forms?submission=${submissionId}`, "_blank");
+  };
+
+  const handleDownload = async () => {
+    setDownloading(true);
+    const { appId, token, functionsVersion, appBaseUrl } = appParams;
+    const baseUrl = appBaseUrl || `https://appfunctions.base44.com`;
+    const fetchUrl = `${baseUrl}/api/apps/${appId}/functions/generateFormPDF`;
+    const res = await fetch(fetchUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        ...(functionsVersion ? { 'X-Functions-Version': functionsVersion } : {}),
+      },
+      body: JSON.stringify({ submissionId }),
+    });
+    const blob = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = `${(name || 'form').replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '')}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(blobUrl);
+    setDownloading(false);
+  };
+
+  return (
+    <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-indigo-200 bg-indigo-50">
+      <FileText className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
+      <span className="truncate max-w-[140px] text-xs text-indigo-700 font-medium">{name || "Form Submission"}</span>
+      <div className="flex items-center gap-1 ml-auto">
+        <button onClick={handleOpenForm} title="View Form"
+          className="p-1 rounded hover:bg-indigo-200 text-indigo-400 hover:text-indigo-700 transition-colors">
+          <ExternalLink className="h-3.5 w-3.5" />
+        </button>
+        <button onClick={handleDownload} disabled={downloading} title="Download PDF"
+          className="p-1 rounded hover:bg-indigo-200 text-indigo-400 hover:text-indigo-700 transition-colors disabled:opacity-50">
+          {downloading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function AttachmentItem({ url, name }) {
   const formRef = parseFormRef(url);
 
-  // Form submission reference — open the Forms page filtered to this submission
   if (formRef) {
-    const handleOpenForm = () => {
-      window.open(`/Forms?submission=${formRef.submissionId}`, "_blank");
-    };
-    return (
-      <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-indigo-200 bg-indigo-50">
-        <FileText className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
-        <span className="truncate max-w-[160px] text-xs text-indigo-700 font-medium">{name || "Form Submission"}</span>
-        <div className="flex items-center gap-1 ml-auto">
-          <button onClick={handleOpenForm} title="View Form"
-            className="p-1 rounded hover:bg-indigo-200 text-indigo-400 hover:text-indigo-700 transition-colors">
-            <ExternalLink className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      </div>
-    );
+    return <FormRefItem submissionId={formRef.submissionId} name={name} />;
   }
 
   const isImage = /\.(png|jpg|jpeg|gif|webp)$/i.test(name || url);
