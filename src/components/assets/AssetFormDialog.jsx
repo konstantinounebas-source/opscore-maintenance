@@ -137,7 +137,7 @@ function DocTypeUploader({ label, files = [], onAdd, onRemove }) {
 
 const emptyForm = {
   asset_id: "", asset_name: "", active_shelter_id: "", location_address: "",
-  city: "", shelter_type: "", category: "", status: "Active",
+  city: "", municipality: "", shelter_type: "", category: "", status: "Active",
   installation_date: "", delivery_date: "",
   warranty_base_year: "", software_warranty_end_date: "",
   electronics_warranty_end_date: "", materials_warranty_end_date: "",
@@ -161,6 +161,7 @@ function groupByLabel(attachments) {
 
 export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
   const cities = useConfigLists("Asset Cities");
+  const municipalities = useConfigLists("Municipalities");
   const shelterTypes = useConfigLists("Asset Shelter Types");
   const statuses = useConfigLists("Asset Status");
   const categories = useConfigLists("Asset Categories");
@@ -242,6 +243,7 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
         latitude: match.latitude ?? f.latitude,
         longitude: match.longitude ?? f.longitude,
         city: match.city || f.city,
+        municipality: match.municipality || f.municipality,
       }));
     }
   }, [form.active_shelter_id, allAssets.length]);
@@ -410,6 +412,15 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
                   </SelectContent>
                 </Select>
                 {errors.city && <p className="text-xs text-red-500">Required</p>}
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Δήμος</Label>
+                <Select value={form.municipality || ""} onValueChange={v => set("municipality", v)}>
+                  <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectContent>
+                    {municipalities.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
