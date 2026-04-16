@@ -214,9 +214,10 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
     queryClient.invalidateQueries({ queryKey: ["incidentAttachments", incidentId] });
   };
 
-  const deleteFormSubmission = async (submissionId, queryKey) => {
+  const deleteFormSubmission = async (submissionId, formType) => {
     await base44.entities.FormSubmissions.delete(submissionId);
-    queryClient.invalidateQueries({ queryKey: [queryKey, incidentId] });
+    queryClient.invalidateQueries({ queryKey: [formType === "ompi" ? "ompiSubmitted" : "fmpiSubmitted", incidentId] });
+    queryClient.invalidateQueries({ queryKey: [formType === "ompi" ? "ompiDrafts" : "fmpiDrafts", incidentId] });
   };
 
   const handleSubmit = async () => {
@@ -463,7 +464,7 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
                           </button>
                           <button
                             type="button"
-                            onClick={() => deleteFormSubmission(s.id, "ompiSubmitted")}
+                            onClick={() => deleteFormSubmission(s.id, "ompi")}
                             className="text-red-400 hover:text-red-600 transition-colors flex-shrink-0 p-1"
                             title="Delete submission"
                           >
@@ -585,7 +586,7 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
                           </button>
                           <button
                             type="button"
-                            onClick={() => deleteFormSubmission(s.id, "fmpiSubmitted")}
+                            onClick={() => deleteFormSubmission(s.id, "fmpi")}
                             className="text-red-400 hover:text-red-600 transition-colors flex-shrink-0 p-1"
                             title="Delete submission"
                           >
