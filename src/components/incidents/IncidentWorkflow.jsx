@@ -14,9 +14,10 @@ import { useAuth } from "@/lib/AuthContext";
 import WorkOrderPanel from "@/components/incidents/WorkOrderPanel";
 import OutlineManagementForm from "@/components/forms/OutlineManagementForm";
 import CombinedFMPIandInvoiceForm from "@/components/forms/CombinedFMPIandInvoiceForm";
+import { useNavigate } from "react-router-dom";
 import {
   CheckCircle2, Circle, Loader2, ChevronRight,
-  Paperclip, StickyNote, AlertTriangle, FileCheck, Lock, FileText
+  Paperclip, StickyNote, AlertTriangle, FileCheck, Lock, FileText, PenLine
 } from "lucide-react";
 
 // ── Administrative steps in strict sequential order ──────────────────────────
@@ -134,9 +135,23 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
 
   const key = step.key;
 
+  const navigate = useNavigate();
+
   const { data: existingAttachments = [] } = useQuery({
     queryKey: ["incidentAttachments", incidentId],
     queryFn: () => base44.entities.IncidentAttachments.filter({ incident_id: incidentId }),
+  });
+
+  const { data: ompiDrafts = [] } = useQuery({
+    queryKey: ["ompiDrafts", incidentId],
+    queryFn: () => base44.entities.FormSubmissions.filter({ incident_id: incidentId, form_type: "outline_management_incident_plan" }),
+    enabled: key === "create_ompi",
+  });
+
+  const { data: fmpiDrafts = [] } = useQuery({
+    queryKey: ["fmpiDrafts", incidentId],
+    queryFn: () => base44.entities.FormSubmissions.filter({ incident_id: incidentId, form_type: "combined_fmpi_invoice" }),
+    enabled: key === "create_fmpi",
   });
 
   const { data: incidentWorkOrders = [] } = useQuery({
@@ -403,6 +418,23 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
                   <FileText className="w-3.5 h-3.5" /> Fill OMPI Form
                 </Button>
               </div>
+              {ompiDrafts.length > 0 && (
+                <div className="space-y-1">
+                  {ompiDrafts.map(draft => (
+                    <button
+                      key={draft.id}
+                      type="button"
+                      onClick={() => navigate(`/Forms?submissionId=${draft.id}`)}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 transition-colors text-left"
+                    >
+                      <PenLine className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                      <span className="text-xs text-indigo-700 font-medium flex-1 truncate">{draft.form_name || "OMPI Draft"}</span>
+                      <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${draft.status === "Draft" ? "bg-slate-200 text-slate-600" : "bg-blue-100 text-blue-700"}`}>{draft.status}</span>
+                      <ChevronRight className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                    </button>
+                  ))}
+                </div>
+              )}
               {existingAttachments.length > 0 && (
                 <div className="p-2 bg-green-50 border border-green-200 rounded-lg space-y-1">
                   <p className="text-xs text-green-700 flex items-center gap-1 font-medium">
@@ -446,6 +478,23 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
                   <FileText className="w-3.5 h-3.5" /> Fill FMPI Form
                 </Button>
               </div>
+              {fmpiDrafts.length > 0 && (
+                <div className="space-y-1">
+                  {fmpiDrafts.map(draft => (
+                    <button
+                      key={draft.id}
+                      type="button"
+                      onClick={() => navigate(`/Forms?submissionId=${draft.id}`)}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 transition-colors text-left"
+                    >
+                      <PenLine className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                      <span className="text-xs text-indigo-700 font-medium flex-1 truncate">{draft.form_name || "FMPI Draft"}</span>
+                      <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${draft.status === "Draft" ? "bg-slate-200 text-slate-600" : "bg-blue-100 text-blue-700"}`}>{draft.status}</span>
+                      <ChevronRight className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                    </button>
+                  ))}
+                </div>
+              )}
               <div className="space-y-1.5">
                 <Label className="text-xs flex items-center gap-1"><Paperclip className="w-3 h-3" /> Upload FMPI / Pricing Order Documents (optional)</Label>
                 <FileUploader onUpload={fd => set("files", [...(formData.files || []), fd])} label="Upload Documents" />
