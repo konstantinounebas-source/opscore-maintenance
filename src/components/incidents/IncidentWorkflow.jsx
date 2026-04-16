@@ -200,10 +200,7 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
       toast({ title: "Person required", description: "Please enter the responsible person." });
       return;
     }
-    if (key === "create_ompi" && (!formData.files || formData.files.length === 0) && existingAttachments.length === 0) {
-      toast({ title: "Attachment required", description: "Please upload the OMPI document." });
-      return;
-    }
+
 
     setSaving(true);
     try {
@@ -405,8 +402,7 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label className="text-xs flex items-center gap-1">
-                  <Paperclip className="w-3 h-3" /> OMPI Document
-                  {existingAttachments.length === 0 && <span className="text-red-500">*</span>}
+                  <Paperclip className="w-3 h-3" /> OMPI Document (optional)
                 </Label>
                 <Button
                   type="button"
