@@ -214,6 +214,11 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
     queryClient.invalidateQueries({ queryKey: ["incidentAttachments", incidentId] });
   };
 
+  const deleteFormSubmission = async (submissionId, queryKey) => {
+    await base44.entities.FormSubmissions.delete(submissionId);
+    queryClient.invalidateQueries({ queryKey: [queryKey, incidentId] });
+  };
+
   const handleSubmit = async () => {
     if (key !== "close_incident" && !person.trim()) {
       toast({ title: "Person required", description: "Please enter the responsible person." });
@@ -445,17 +450,26 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
                     <div className="space-y-1 pt-1 border-t border-slate-200">
                       <p className="text-xs text-slate-500 font-medium">Electronic submissions:</p>
                       {ompiSubmitted.map(s => (
-                        <button
-                          key={s.id}
-                          type="button"
-                          onClick={() => navigate(`/Forms?submissionId=${s.id}`)}
-                          className="w-full flex items-center gap-2 px-2 py-1.5 rounded border border-green-200 bg-green-50 hover:bg-green-100 transition-colors text-left"
-                        >
-                          <FileCheck className="w-3 h-3 text-green-600 shrink-0" />
-                          <span className="text-xs text-green-700 flex-1 truncate">{s.form_name || "OMPI Form"}</span>
-                          <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${s.status === "Approved" ? "bg-green-100 text-green-700" : s.status === "Rejected" ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"}`}>{s.status}</span>
-                          <ChevronRight className="w-3 h-3 text-green-400 shrink-0" />
-                        </button>
+                        <div key={s.id} className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/Forms?submissionId=${s.id}`)}
+                            className="flex-1 flex items-center gap-2 px-2 py-1.5 rounded border border-green-200 bg-green-50 hover:bg-green-100 transition-colors text-left"
+                          >
+                            <FileCheck className="w-3 h-3 text-green-600 shrink-0" />
+                            <span className="text-xs text-green-700 flex-1 truncate">{s.form_name || "OMPI Form"}</span>
+                            <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${s.status === "Approved" ? "bg-green-100 text-green-700" : s.status === "Rejected" ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"}`}>{s.status}</span>
+                            <ChevronRight className="w-3 h-3 text-green-400 shrink-0" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => deleteFormSubmission(s.id, "ompiSubmitted")}
+                            className="text-red-400 hover:text-red-600 transition-colors flex-shrink-0 p-1"
+                            title="Delete submission"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       ))}
                     </div>
                   )}
@@ -558,17 +572,26 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
                     <div className="space-y-1 pt-1 border-t border-slate-200">
                       <p className="text-xs text-slate-500 font-medium">Electronic submissions:</p>
                       {fmpiSubmitted.map(s => (
-                        <button
-                          key={s.id}
-                          type="button"
-                          onClick={() => navigate(`/Forms?submissionId=${s.id}`)}
-                          className="w-full flex items-center gap-2 px-2 py-1.5 rounded border border-green-200 bg-green-50 hover:bg-green-100 transition-colors text-left"
-                        >
-                          <FileCheck className="w-3 h-3 text-green-600 shrink-0" />
-                          <span className="text-xs text-green-700 flex-1 truncate">{s.form_name || "FMPI Form"}</span>
-                          <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${s.status === "Approved" ? "bg-green-100 text-green-700" : s.status === "Rejected" ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"}`}>{s.status}</span>
-                          <ChevronRight className="w-3 h-3 text-green-400 shrink-0" />
-                        </button>
+                        <div key={s.id} className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/Forms?submissionId=${s.id}`)}
+                            className="flex-1 flex items-center gap-2 px-2 py-1.5 rounded border border-green-200 bg-green-50 hover:bg-green-100 transition-colors text-left"
+                          >
+                            <FileCheck className="w-3 h-3 text-green-600 shrink-0" />
+                            <span className="text-xs text-green-700 flex-1 truncate">{s.form_name || "FMPI Form"}</span>
+                            <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${s.status === "Approved" ? "bg-green-100 text-green-700" : s.status === "Rejected" ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"}`}>{s.status}</span>
+                            <ChevronRight className="w-3 h-3 text-green-400 shrink-0" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => deleteFormSubmission(s.id, "fmpiSubmitted")}
+                            className="text-red-400 hover:text-red-600 transition-colors flex-shrink-0 p-1"
+                            title="Delete submission"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       ))}
                     </div>
                   )}
