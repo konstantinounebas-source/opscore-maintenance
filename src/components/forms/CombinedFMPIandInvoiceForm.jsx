@@ -200,6 +200,15 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
     enabled: !!linkedIncidentId,
   });
 
+  // ── Fetch submitted OMPI form for priority ──
+  const { data: ompiSubmissions = [] } = useQuery({
+    queryKey: ["ompiSubmissions", linkedIncidentId],
+    queryFn: () => linkedIncidentId
+      ? base44.entities.FormSubmissions.filter({ incident_id: linkedIncidentId, form_type: "outline_management_incident_plan" })
+      : Promise.resolve([]),
+    enabled: !!linkedIncidentId,
+  });
+
   // ── Derived ──
   const incident = useMemo(() => incidents.find(i => i.id === linkedIncidentId), [incidents, linkedIncidentId]);
   const asset = useMemo(() => assets.find(a => a.id === linkedAssetId), [assets, linkedAssetId]);
@@ -221,11 +230,29 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
   const subsystem = useMemo(() => deriveSubsystem(incident), [incident]);
   const subcategory = useMemo(() => deriveSubcategory(incident), [incident]);
 
-  const rawPriority = incident?.initial_priority || incident?.priority || "";
+  // Priority: prefer OMPI form value, fall back to incident
+  const ompiForm = useMemo(() => {
+    if (!ompiSubmissions.length) return null;
+    // prefer Submitted, otherwise latest Draft
+    return ompiSubmissions.find(s => s.status === "Submitted") || ompiSubmissions[ompiSubmissions.length - 1];
+  }, [ompiSubmissions]);
+
+  const rawPriority = ompiForm
+    ? (ompiForm.form_data?.priority || incident?.initial_priority || incident?.priority || "")
+    : (incident?.initial_priority || incident?.priority || "");
   const priority = ["P1", "P2"].includes(rawPriority) ? rawPriority : "";
   const isHighPriority = priority === "P1";
 
   const reportDate = incident?.reported_date || incident?.first_report_date;
+
+  // Auto-fill OWR from OMPI form if not already set
+  useEffect(() => {
+    if (ompiForm && !owrValue && !submission) {
+      const ompiOwr = ompiForm.ektos_eggyhshs;
+      if (ompiOwr === "YES" || ompiOwr === "Yes") setOwrValue("ΝΑΙ");
+      else if (ompiOwr === "NO" || ompiOwr === "No") setOwrValue("ΟΧΙ");
+    }
+  }, [ompiForm]);
 
   // Auto-fill sigDate from incident creation date
   useEffect(() => {
