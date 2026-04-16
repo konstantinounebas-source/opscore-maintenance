@@ -369,11 +369,15 @@ export default function OutlineManagementForm({ submission, incidents, assets, w
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="_none">— Επιλογή —</SelectItem>
-                    {assets.filter((a, idx, arr) => arr.findIndex(x => (x.asset_id || x.id) === (a.asset_id || a.id)) === idx).map(a => (
-                      <SelectItem key={a.id} value={a.id}>
-                        <span className="font-mono text-xs mr-2">{a.asset_id}</span>{a.active_shelter_id || a.location_address || ""}
-                      </SelectItem>
-                    ))}
+                    {assets.filter((a, idx, arr) => arr.findIndex(x => x.asset_id === a.asset_id) === idx).map(a => {
+                      const label = [a.active_shelter_id, a.location_address].filter(Boolean).find(v => v !== a.asset_id) || "";
+                      return (
+                        <SelectItem key={a.id} value={a.id}>
+                          <span className="font-mono text-xs font-bold">{a.asset_id}</span>
+                          {label && <><span className="mx-1.5 text-slate-300">|</span><span>{label}</span></>}
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               </div>
