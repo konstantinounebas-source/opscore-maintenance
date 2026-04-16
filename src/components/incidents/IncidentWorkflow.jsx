@@ -17,7 +17,7 @@ import CombinedFMPIandInvoiceForm from "@/components/forms/CombinedFMPIandInvoic
 import { useNavigate } from "react-router-dom";
 import {
   CheckCircle2, Circle, Loader2, ChevronRight,
-  Paperclip, StickyNote, AlertTriangle, FileCheck, Lock, FileText, PenLine
+  Paperclip, StickyNote, AlertTriangle, FileCheck, Lock, FileText, PenLine, Trash2
 } from "lucide-react";
 
 // ── Administrative steps in strict sequential order ──────────────────────────
@@ -193,6 +193,11 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
     queryClient.invalidateQueries({ queryKey: ["incidentAudit", incidentId] });
     queryClient.invalidateQueries({ queryKey: ["incidentAttachments", incidentId] });
     queryClient.invalidateQueries({ queryKey: ["workOrders", incidentId] });
+  };
+
+  const deleteAttachment = async (attachmentId) => {
+    await base44.entities.IncidentAttachments.delete(attachmentId);
+    queryClient.invalidateQueries({ queryKey: ["incidentAttachments", incidentId] });
   };
 
   const handleSubmit = async () => {
@@ -432,15 +437,24 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
                 </div>
               )}
               {existingAttachments.length > 0 && (
-                <div className="p-2 bg-green-50 border border-green-200 rounded-lg space-y-1">
+                <div className="p-2 bg-green-50 border border-green-200 rounded-lg space-y-1.5">
                   <p className="text-xs text-green-700 flex items-center gap-1 font-medium">
                     <FileCheck className="w-3.5 h-3.5" /> Already uploaded
                   </p>
-                  {existingAttachments.slice(0, 3).map(a => (
-                    <a key={a.id} href={a.file_url} target="_blank" rel="noreferrer"
-                      className="block text-xs text-green-700 underline truncate">{a.file_name}</a>
+                  {existingAttachments.map(a => (
+                    <div key={a.id} className="flex items-center gap-2">
+                      <a href={a.file_url} target="_blank" rel="noreferrer"
+                        className="flex-1 text-xs text-green-700 underline truncate">{a.file_name}</a>
+                      <button
+                        type="button"
+                        onClick={() => deleteAttachment(a.id)}
+                        className="text-red-400 hover:text-red-600 transition-colors flex-shrink-0"
+                        title="Delete attachment"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   ))}
-                  {existingAttachments.length > 3 && <p className="text-xs text-green-600">+{existingAttachments.length - 3} more</p>}
                 </div>
               )}
               <FileUploader
@@ -488,6 +502,27 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
                       <span className="text-xs px-1.5 py-0.5 rounded font-medium bg-amber-100 text-amber-700">Draft</span>
                       <ChevronRight className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
                     </button>
+                  ))}
+                </div>
+              )}
+              {existingAttachments.length > 0 && (
+                <div className="p-2 bg-green-50 border border-green-200 rounded-lg space-y-1.5">
+                  <p className="text-xs text-green-700 flex items-center gap-1 font-medium">
+                    <FileCheck className="w-3.5 h-3.5" /> Already uploaded
+                  </p>
+                  {existingAttachments.map(a => (
+                    <div key={a.id} className="flex items-center gap-2">
+                      <a href={a.file_url} target="_blank" rel="noreferrer"
+                        className="flex-1 text-xs text-green-700 underline truncate">{a.file_name}</a>
+                      <button
+                        type="button"
+                        onClick={() => deleteAttachment(a.id)}
+                        className="text-red-400 hover:text-red-600 transition-colors flex-shrink-0"
+                        title="Delete attachment"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   ))}
                 </div>
               )}
