@@ -14,18 +14,11 @@ import AssetChildrenSection from "@/components/assets/AssetChildrenSection";
 
 const CONTRACT_BASE_YEAR = 2023;
 
-function calcWarrantyEnd(baseYear, years, deliveryDate) {
+function calcWarrantyEnd(baseYear, years) {
   if (!baseYear) return "";
   const targetYear = Number(baseYear) + years;
-  // Use the delivery date's month if available, otherwise default to December (month 12)
-  let month = 12;
-  if (deliveryDate) {
-    const d = new Date(deliveryDate);
-    month = d.getMonth() + 1; // 1-based
-  }
-  // Day 0 of (month+1) = last day of month
-  const lastDay = new Date(targetYear, month, 0);
-  return lastDay.toISOString().split("T")[0];
+  // Always end on 31st December of the target year
+  return `${targetYear}-12-31`;
 }
 
 function SectionHeader({ title, color = "slate" }) {
@@ -225,10 +218,10 @@ export default function AssetFormDialog({ open, onOpenChange, asset, onSave }) {
     if (!yr || yr < 2000 || yr > 2100) return;
     setForm(f => ({
       ...f,
-      software_warranty_end_date: calcWarrantyEnd(yr, 3, f.delivery_date),
-      electronics_warranty_end_date: calcWarrantyEnd(yr, 5, f.delivery_date),
-      materials_warranty_end_date: calcWarrantyEnd(yr, 10, f.delivery_date),
-      structural_warranty_end_date: calcWarrantyEnd(yr, 15, f.delivery_date),
+      software_warranty_end_date: calcWarrantyEnd(yr, 3),
+      electronics_warranty_end_date: calcWarrantyEnd(yr, 5),
+      materials_warranty_end_date: calcWarrantyEnd(yr, 10),
+      structural_warranty_end_date: calcWarrantyEnd(yr, 15),
     }));
   }, [form.warranty_base_year]);
 
