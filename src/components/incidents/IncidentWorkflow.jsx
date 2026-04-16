@@ -148,10 +148,24 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
     enabled: key === "create_ompi",
   });
 
+  const { data: ompiSubmitted = [] } = useQuery({
+    queryKey: ["ompiSubmitted", incidentId],
+    queryFn: () => base44.entities.FormSubmissions.filter({ incident_id: incidentId, form_type: "outline_management_incident_plan" }),
+    enabled: key === "create_ompi",
+    select: data => data.filter(d => d.status !== "Draft"),
+  });
+
   const { data: fmpiDrafts = [] } = useQuery({
     queryKey: ["fmpiDrafts", incidentId],
     queryFn: () => base44.entities.FormSubmissions.filter({ incident_id: incidentId, form_type: "combined_fmpi_invoice", status: "Draft" }),
     enabled: key === "create_fmpi",
+  });
+
+  const { data: fmpiSubmitted = [] } = useQuery({
+    queryKey: ["fmpiSubmitted", incidentId],
+    queryFn: () => base44.entities.FormSubmissions.filter({ incident_id: incidentId, form_type: "combined_fmpi_invoice" }),
+    enabled: key === "create_fmpi",
+    select: data => data.filter(d => d.status !== "Draft"),
   });
 
   const { data: incidentWorkOrders = [] } = useQuery({
@@ -405,6 +419,48 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
 
           {key === "create_ompi" && (
             <div className="space-y-2">
+              {/* Submission status summary */}
+              {(ompiSubmitted.length > 0 || existingAttachments.length > 0) && (
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-2">
+                  <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Submission Status</p>
+                  <div className="flex gap-4">
+                    <div className="flex items-center gap-1.5">
+                      {ompiSubmitted.length > 0
+                        ? <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+                        : <Circle className="w-3.5 h-3.5 text-slate-300" />}
+                      <span className={`text-xs font-medium ${ompiSubmitted.length > 0 ? "text-green-700" : "text-slate-400"}`}>
+                        Electronic ({ompiSubmitted.length})
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      {existingAttachments.length > 0
+                        ? <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+                        : <Circle className="w-3.5 h-3.5 text-slate-300" />}
+                      <span className={`text-xs font-medium ${existingAttachments.length > 0 ? "text-green-700" : "text-slate-400"}`}>
+                        Manual ({existingAttachments.length})
+                      </span>
+                    </div>
+                  </div>
+                  {ompiSubmitted.length > 0 && (
+                    <div className="space-y-1 pt-1 border-t border-slate-200">
+                      <p className="text-xs text-slate-500 font-medium">Electronic submissions:</p>
+                      {ompiSubmitted.map(s => (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onClick={() => navigate(`/Forms?submissionId=${s.id}`)}
+                          className="w-full flex items-center gap-2 px-2 py-1.5 rounded border border-green-200 bg-green-50 hover:bg-green-100 transition-colors text-left"
+                        >
+                          <FileCheck className="w-3 h-3 text-green-600 shrink-0" />
+                          <span className="text-xs text-green-700 flex-1 truncate">{s.form_name || "OMPI Form"}</span>
+                          <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${s.status === "Approved" ? "bg-green-100 text-green-700" : s.status === "Rejected" ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"}`}>{s.status}</span>
+                          <ChevronRight className="w-3 h-3 text-green-400 shrink-0" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
               <div className="flex items-center justify-between">
                 <Label className="text-xs flex items-center gap-1">
                   <Paperclip className="w-3 h-3" /> OMPI Document (optional)
@@ -476,6 +532,48 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
 
           {key === "create_fmpi" && (
             <div className="space-y-3">
+              {/* Submission status summary */}
+              {(fmpiSubmitted.length > 0 || existingAttachments.length > 0) && (
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-2">
+                  <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Submission Status</p>
+                  <div className="flex gap-4">
+                    <div className="flex items-center gap-1.5">
+                      {fmpiSubmitted.length > 0
+                        ? <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+                        : <Circle className="w-3.5 h-3.5 text-slate-300" />}
+                      <span className={`text-xs font-medium ${fmpiSubmitted.length > 0 ? "text-green-700" : "text-slate-400"}`}>
+                        Electronic ({fmpiSubmitted.length})
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      {existingAttachments.length > 0
+                        ? <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+                        : <Circle className="w-3.5 h-3.5 text-slate-300" />}
+                      <span className={`text-xs font-medium ${existingAttachments.length > 0 ? "text-green-700" : "text-slate-400"}`}>
+                        Manual ({existingAttachments.length})
+                      </span>
+                    </div>
+                  </div>
+                  {fmpiSubmitted.length > 0 && (
+                    <div className="space-y-1 pt-1 border-t border-slate-200">
+                      <p className="text-xs text-slate-500 font-medium">Electronic submissions:</p>
+                      {fmpiSubmitted.map(s => (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onClick={() => navigate(`/Forms?submissionId=${s.id}`)}
+                          className="w-full flex items-center gap-2 px-2 py-1.5 rounded border border-green-200 bg-green-50 hover:bg-green-100 transition-colors text-left"
+                        >
+                          <FileCheck className="w-3 h-3 text-green-600 shrink-0" />
+                          <span className="text-xs text-green-700 flex-1 truncate">{s.form_name || "FMPI Form"}</span>
+                          <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${s.status === "Approved" ? "bg-green-100 text-green-700" : s.status === "Rejected" ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"}`}>{s.status}</span>
+                          <ChevronRight className="w-3 h-3 text-green-400 shrink-0" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
               <div className="flex items-center justify-between">
                 <Label className="text-xs flex items-center gap-1"><Paperclip className="w-3 h-3" /> Attachment (optional)</Label>
                 <Button
