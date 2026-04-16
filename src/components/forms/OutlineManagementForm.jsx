@@ -353,7 +353,11 @@ export default function OutlineManagementForm({ submission, incidents, assets, w
                     <SelectItem value="_none">— Επιλογή —</SelectItem>
                     {incidents.map(i => (
                       <SelectItem key={i.id} value={i.id}>
-                        <span className="font-mono text-xs mr-2">{i.incident_id}</span>{i.title}
+                        <span className="font-mono text-xs font-bold">{i.incident_id}</span>
+                        <span className="mx-1.5 text-slate-300">|</span>
+                        <span>{i.title}</span>
+                        <span className="mx-1.5 text-slate-300">|</span>
+                        <span className="text-slate-400 text-xs">{i.reported_date ? format(new Date(i.reported_date), "dd/MM/yyyy") : i.first_report_date ? format(new Date(i.first_report_date), "dd/MM/yyyy") : "—"}</span>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -367,7 +371,7 @@ export default function OutlineManagementForm({ submission, incidents, assets, w
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="_none">— Επιλογή —</SelectItem>
-                    {assets.map(a => (
+                    {assets.filter((a, idx, arr) => arr.findIndex(x => x.asset_id === a.asset_id) === idx).map(a => (
                       <SelectItem key={a.id} value={a.id}>
                         <span className="font-mono text-xs mr-2">{a.asset_id}</span>{a.active_shelter_id || a.location_address || ""}
                       </SelectItem>
