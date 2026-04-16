@@ -8,7 +8,11 @@
     },
     "child_name": {
       "type": "string",
-      "description": "Child component name"
+      "description": "Child component name (internal/system name)"
+    },
+    "display_name": {
+      "type": "string",
+      "description": "Optional clean user-facing/commercial name. Falls back to child_name if empty."
     },
     "child_category": {
       "type": "string",
@@ -24,7 +28,7 @@
     },
     "unit_price": {
       "type": "number",
-      "description": "Unit price excl. VAT (EUR)"
+      "description": "Unit price excl. VAT (EUR) \u2014 used for Individual pricing only"
     },
     "default_warranty_months": {
       "type": "number",

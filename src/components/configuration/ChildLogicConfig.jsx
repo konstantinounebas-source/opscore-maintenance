@@ -26,6 +26,7 @@ function ChildCatalogTab({ catalog, queryClient }) {
   const [currentPage, setCurrentPage] = useState(0);
   const [filterType, setFilterType] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
+  const [filterPricing, setFilterPricing] = useState("");
 
   const uniqueTypes = [...new Set(catalog.map(c => c.child_type).filter(Boolean))].sort();
   const uniqueCategories = [...new Set(catalog.map(c => c.child_category).filter(Boolean))].sort();
@@ -33,6 +34,7 @@ function ChildCatalogTab({ catalog, queryClient }) {
   const filteredCatalog = catalog.filter(item => {
     if (filterType && item.child_type !== filterType) return false;
     if (filterCategory && item.child_category !== filterCategory) return false;
+    if (filterPricing && (item.pricing_type || "Individual") !== filterPricing) return false;
     return true;
   });
 
@@ -87,6 +89,11 @@ function ChildCatalogTab({ catalog, queryClient }) {
     setCurrentPage(0);
   };
 
+  const handleFilterPricingChange = (val) => {
+    setFilterPricing(val === "clear" ? "" : val);
+    setCurrentPage(0);
+  };
+
   return (
     <div className="space-y-3">
       <div className="flex justify-between items-center gap-3 flex-wrap">
@@ -109,6 +116,17 @@ function ChildCatalogTab({ catalog, queryClient }) {
               <SelectContent>
                 <SelectItem value="clear">All categories</SelectItem>
                 {uniqueCategories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-slate-500">Pricing:</span>
+            <Select value={filterPricing} onValueChange={handleFilterPricingChange}>
+              <SelectTrigger className="w-28 h-7 text-xs"><SelectValue placeholder="All" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="clear">All</SelectItem>
+                <SelectItem value="Individual">Individual</SelectItem>
+                <SelectItem value="Bundle">Bundle</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -138,26 +156,12 @@ function ChildCatalogTab({ catalog, queryClient }) {
 
       {adding && <ChildCatalogForm value={form} onChange={setForm} allCatalog={catalog} onCancel={() => { setAdding(false); setForm({}); }} onSave={() => {
         const dataToSave = { ...form };
-        if (form.pricing_type === "Bundle") {
-          if (form.bundle_items?.length > 0) {
-            const codes = form.bundle_items.map(item => item.child_code).join(",");
-            if (!form.child_code?.trim()) {
-              dataToSave.child_code = codes;
-            }
-            // Set type based on bundle items
-            const types = [...new Set(form.bundle_items.map(item => item.child_type).filter(Boolean))];
-            if (!form.child_type?.trim()) {
-              dataToSave.child_type = types.length === 1 ? types[0] : types.join(",");
-            }
-            // Set category based on bundle items
-            const categories = [...new Set(form.bundle_items.map(item => item.child_category).filter(Boolean))];
-            if (!form.child_category?.trim()) {
-              dataToSave.child_category = categories.length === 1 ? categories[0] : categories.join(",");
-            }
-          }
-          if (!form.child_name?.trim()) {
-            dataToSave.child_name = "Bundle";
-          }
+        // Auto-derive category/type from bundle items if not set
+        if (form.pricing_type === "Bundle" && form.bundle_items?.length > 0) {
+          const itemTypes = [...new Set(form.bundle_items.map(item => item.child_type).filter(Boolean))];
+          if (!form.child_type?.trim()) dataToSave.child_type = itemTypes.length === 1 ? itemTypes[0] : itemTypes.join(",");
+          const itemCategories = [...new Set(form.bundle_items.map(item => item.child_category).filter(Boolean))];
+          if (!form.child_category?.trim()) dataToSave.child_category = itemCategories.length === 1 ? itemCategories[0] : itemCategories.join(",");
         }
         createMutation.mutate(dataToSave);
       }} onCancel={() => { setAdding(false); setForm({}); }} saving={createMutation.isPending} />}
@@ -166,41 +170,26 @@ function ChildCatalogTab({ catalog, queryClient }) {
         <table className="w-full text-xs">
           <thead className="bg-slate-50 border-b">
             <tr>
-              {["Code","Name","Category","Type","Pricing","Price (€)","Warranty","Start Rule","Active",""].map(h => (
+              {["Code","Name / Display Name","Category","Type","Pricing","Price (€)","Items","Warranty","Active",""].map(h => (
                 <th key={h} className="px-3 py-2 text-left font-semibold text-slate-600 text-xs">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {catalog.length === 0 && <tr><td colSpan={9} className="px-3 py-6 text-center text-slate-400">No children defined yet</td></tr>}
+            {catalog.length === 0 && <tr><td colSpan={10} className="px-3 py-6 text-center text-slate-400">No children defined yet</td></tr>}
             {paginatedCatalog.map(item => (
               <tr key={item.id} className={`hover:bg-slate-50 ${!item.active ? "opacity-50" : ""}`}>
                 {editing?.id === item.id ? (
-                  <td colSpan={9} className="p-2">
+                  <td colSpan={10} className="p-2">
                    <ChildCatalogForm value={editing} onChange={setEditing} allCatalog={catalog}
                       onCancel={() => setEditing(null)}
                       onSave={() => {
                         const dataToSave = { ...editing };
-                        if (editing.pricing_type === "Bundle") {
-                          if (editing.bundle_items?.length > 0) {
-                            const codes = editing.bundle_items.map(bi => bi.child_code).join(",");
-                            if (!editing.child_code?.trim()) {
-                              dataToSave.child_code = codes;
-                            }
-                            // Set type based on bundle items
-                            const types = [...new Set(editing.bundle_items.map(bi => bi.child_type).filter(Boolean))];
-                            if (!editing.child_type?.trim()) {
-                              dataToSave.child_type = types.length === 1 ? types[0] : types.join(",");
-                            }
-                            // Set category based on bundle items
-                            const categories = [...new Set(editing.bundle_items.map(bi => bi.child_category).filter(Boolean))];
-                            if (!editing.child_category?.trim()) {
-                              dataToSave.child_category = categories.length === 1 ? categories[0] : categories.join(",");
-                            }
-                          }
-                          if (!editing.child_name?.trim()) {
-                            dataToSave.child_name = "Bundle";
-                          }
+                        if (editing.pricing_type === "Bundle" && editing.bundle_items?.length > 0) {
+                          const itemTypes = [...new Set(editing.bundle_items.map(bi => bi.child_type).filter(Boolean))];
+                          if (!editing.child_type?.trim()) dataToSave.child_type = itemTypes.length === 1 ? itemTypes[0] : itemTypes.join(",");
+                          const itemCategories = [...new Set(editing.bundle_items.map(bi => bi.child_category).filter(Boolean))];
+                          if (!editing.child_category?.trim()) dataToSave.child_category = itemCategories.length === 1 ? itemCategories[0] : itemCategories.join(",");
                         }
                         updateMutation.mutate({ id: item.id, data: dataToSave });
                       }}
@@ -209,13 +198,23 @@ function ChildCatalogTab({ catalog, queryClient }) {
                 ) : (
                   <>
                     <td className="px-3 py-2 font-mono text-slate-700">{item.child_code}</td>
-                    <td className="px-3 py-2 font-medium text-slate-800">{item.child_name}</td>
-                    <td className="px-3 py-2 text-slate-600">{item.child_category}</td>
-                    <td className="px-3 py-2 text-slate-600">{item.child_type}</td>
-                    <td className="px-3 py-2 text-xs"><Badge variant="outline">{item.pricing_type || "Individual"}</Badge></td>
-                    <td className="px-3 py-2 text-slate-600">{item.pricing_type === "Bundle" ? `€${item.bundle_price?.toLocaleString()}` : item.unit_price != null ? `€${item.unit_price.toLocaleString()}` : "—"}</td>
-                    <td className="px-3 py-2">{item.default_warranty_months} mo</td>
-                    <td className="px-3 py-2 text-slate-500">{WARRANTY_START_RULES.find(r => r.value === item.warranty_start_rule)?.label || item.warranty_start_rule}</td>
+                    <td className="px-3 py-2">
+                      <div className="font-medium text-slate-800 text-xs">{item.display_name || item.child_name}</div>
+                      {item.display_name && item.display_name !== item.child_name && (
+                        <div className="text-[10px] text-slate-400">{item.child_name}</div>
+                      )}
+                    </td>
+                    <td className="px-3 py-2 text-slate-600 text-xs">{item.child_category}</td>
+                    <td className="px-3 py-2 text-slate-600 text-xs">{item.child_type}</td>
+                    <td className="px-3 py-2 text-xs">
+                      {item.pricing_type === "Bundle"
+                        ? <Badge className="text-[10px] bg-purple-100 text-purple-700 border border-purple-200 hover:bg-purple-100">Bundle</Badge>
+                        : <Badge variant="outline" className="text-[10px]">Individual</Badge>
+                      }
+                    </td>
+                    <td className="px-3 py-2 text-slate-600 text-xs">{item.pricing_type === "Bundle" ? (item.bundle_price != null ? `€${item.bundle_price.toLocaleString()}` : "—") : (item.unit_price != null ? `€${item.unit_price.toLocaleString()}` : "—")}</td>
+                    <td className="px-3 py-2 text-xs text-slate-500">{item.pricing_type === "Bundle" ? (item.bundle_items?.length ?? 0) : "—"}</td>
+                    <td className="px-3 py-2 text-xs">{item.default_warranty_months ? `${item.default_warranty_months} mo` : "—"}</td>
                     <td className="px-3 py-2">
                       <button onClick={() => updateMutation.mutate({ id: item.id, data: { active: !item.active } })}>
                         {item.active ? <ToggleRight className="w-4 h-4 text-green-500" /> : <ToggleLeft className="w-4 h-4 text-slate-400" />}
@@ -407,7 +406,10 @@ function TypeTemplatesTab({ templates, catalog, shelterTypeDefs, queryClient }) 
               return (
                 <tr key={row.id} className="hover:bg-slate-50">
                   <td className="px-3 py-2 text-slate-400">{row.display_order}</td>
-                  <td className="px-3 py-2 font-medium text-slate-800">{child?.child_name || <span className="text-red-400">Unknown</span>}</td>
+                  <td className="px-3 py-2 font-medium text-slate-800">
+                    {child ? (child.display_name || child.child_name) : <span className="text-red-400">Unknown</span>}
+                    {child?.pricing_type === "Bundle" && <Badge className="ml-1 text-[9px] bg-purple-100 text-purple-700 border border-purple-200 hover:bg-purple-100">Bundle</Badge>}
+                  </td>
                   <td className="px-3 py-2 text-slate-500">{child?.child_category}</td>
                   <td className="px-3 py-2">{child?.default_warranty_months} mo</td>
                   <td className="px-3 py-2">
@@ -443,7 +445,7 @@ function TypeTemplatesTab({ templates, catalog, shelterTypeDefs, queryClient }) 
               <Label className="text-xs">Child Component *</Label>
               <Select value={addForm.child_catalog_id} onValueChange={v => setAddForm(f => ({ ...f, child_catalog_id: v }))}>
                 <SelectTrigger className="mt-1 h-8 text-xs"><SelectValue placeholder="Select..." /></SelectTrigger>
-                <SelectContent>{catalog.filter(c => c.active && !usedChildIds.has(c.id)).map(c => <SelectItem key={c.id} value={c.id}>{c.child_name} ({c.child_category})</SelectItem>)}</SelectContent>
+                <SelectContent>{catalog.filter(c => c.active && !usedChildIds.has(c.id)).map(c => <SelectItem key={c.id} value={c.id}>{c.display_name || c.child_name} {c.pricing_type === "Bundle" ? "[Bundle]" : ""} ({c.child_category})</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div><Label className="text-xs">Order</Label><Input type="number" className="mt-1 h-8 text-xs" value={addForm.display_order} onChange={e => setAddForm(f => ({ ...f, display_order: parseInt(e.target.value) || 0 }))} /></div>
