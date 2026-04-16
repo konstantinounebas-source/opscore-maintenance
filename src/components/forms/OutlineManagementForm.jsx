@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/lib/AuthContext";
 import FileUploadArea from "@/components/shared/FileUploadArea";
 
 // ── Read-only field display ────────────────────────────────────────────────────
@@ -163,6 +164,7 @@ function deriveSubcategory(incident) {
 // ── Main Form Component ────────────────────────────────────────────────────
 export default function OutlineManagementForm({ submission, incidents, assets, workOrders, crews, onClose, defaultIncidentId }) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const isEditing = !!submission;
 
   // ── Linked record selectors ──
@@ -235,7 +237,6 @@ export default function OutlineManagementForm({ submission, incidents, assets, w
         : await base44.entities.FormSubmissions.create(data);
       
       const incId = data.incident_id;
-      const user = await base44.auth.me();
       const timestamp = getAthensTimestamp();
       const allFiles = (data.form_data?.attachments || []).filter(f => f?.url);
 

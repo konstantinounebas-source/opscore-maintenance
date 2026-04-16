@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { format, addBusinessDays, addDays } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/lib/AuthContext";
 import FileUploadArea from "@/components/shared/FileUploadArea";
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -158,6 +159,7 @@ const emptyRow = () => ({
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function CombinedFMPIandInvoiceForm({ submission, incidents, assets, workOrders, crews, childAssets, onClose, defaultIncidentId }) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const isEditing = !!submission;
 
   // ── Tab state ──
@@ -287,7 +289,6 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
         : await base44.entities.FormSubmissions.create(data);
       
       const incId = data.incident_id;
-      const user = await base44.auth.me();
       const timestamp = getAthensTimestamp();
 
       const allFiles = [
