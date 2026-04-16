@@ -351,13 +351,18 @@ export default function OutlineManagementForm({ submission, incidents, assets, w
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="_none">— Επιλογή —</SelectItem>
-                    {incidents.map(i => (
-                      <SelectItem key={i.id} value={i.id}>
-                        <span className="font-mono text-xs font-bold">{i.incident_id}</span>
-                        <span className="mx-1.5 text-slate-300">|</span>
-                        <span>{i.title}</span>
-                      </SelectItem>
-                    ))}
+                    {incidents.map(i => {
+                      const d = i.reported_date || i.first_report_date;
+                      const dateFmt = d ? (() => { const [y,m,dd] = d.split("-"); return `${dd}/${m}/${y}`; })() : null;
+                      return (
+                        <SelectItem key={i.id} value={i.id}>
+                          <span className="font-mono text-xs font-bold">{i.incident_id}</span>
+                          <span className="mx-1.5 text-slate-300">|</span>
+                          <span>{i.title}</span>
+                          {dateFmt && <><span className="mx-1.5 text-slate-300">|</span><span className="text-slate-500 text-xs">{dateFmt}</span></>}
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               </div>
