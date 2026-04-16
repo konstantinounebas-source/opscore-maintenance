@@ -348,7 +348,7 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
     if (status === "Submitted") {
       if (!linkedIncidentId) { toast({ title: "Επιλέξτε περιστατικό", variant: "destructive" }); return; }
       if (!linkedAssetId) { toast({ title: "Επιλέξτε asset", variant: "destructive" }); return; }
-      if (!linkedWOId) { toast({ title: "Επιλέξτε Work Order", variant: "destructive" }); return; }
+
       if (!outlineDate) { toast({ title: "Συμπληρώστε: Ημερομηνία Outline management plan", variant: "destructive" }); return; }
       if (!owrValue) { toast({ title: "Επιλέξτε: Εκτός Εγγύησης (OWR)", variant: "destructive" }); return; }
       const hasEmptyChild = rows.some(r => !r.child_id);
@@ -411,7 +411,7 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
             <h3 className="text-sm font-semibold text-indigo-800 flex items-center gap-2">
               <Info className="w-4 h-4" /> Σύνδεση Εγγραφών
             </h3>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-xs font-medium text-slate-600">Περιστατικό (Incident) *</Label>
                 <Select value={linkedIncidentId || "_none"} onValueChange={v => setLinkedIncidentId(v === "_none" ? "" : v)}>
@@ -441,21 +441,8 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
                     <SelectItem value="_none">— Επιλογή —</SelectItem>
                     {assets.map(a => (
                       <SelectItem key={a.id} value={a.id}>
-                        <span className="font-mono text-xs mr-1">{a.asset_id}</span>{a.active_shelter_id || a.location_address || ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-xs font-medium text-slate-600">Work Order *</Label>
-                <Select value={linkedWOId || "_none"} onValueChange={v => setLinkedWOId(v === "_none" ? "" : v)}>
-                  <SelectTrigger className="mt-1 text-sm"><SelectValue placeholder="Επιλογή..." /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="_none">— Επιλογή —</SelectItem>
-                    {workOrders.map(w => (
-                      <SelectItem key={w.id} value={w.id}>
-                        <span className="font-mono text-xs mr-1">{w.work_order_id}</span>{w.title}
+                        <span className="font-mono text-xs mr-1">{a.active_shelter_id || a.asset_id}</span>
+                        {a.location_address || ""}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -477,7 +464,6 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
               <Section title="1. General / Incident / Work Order Details" icon={AlertTriangle}>
                 <div className="grid grid-cols-2 gap-4">
                   <ReadOnlyField label="Incident Number" value={incident?.incident_id} />
-                  <ReadOnlyField label="Workorder Number" value={workOrder?.work_order_id} />
                   <ReadOnlyField label="Ημερομηνία Αναφοράς απο Α.Α.:" value={fmtDate(reportDate)} />
                   <div className="space-y-1">
                     <Label className="text-xs font-semibold text-slate-600">Ημερομηνία Outline management plan: *</Label>
