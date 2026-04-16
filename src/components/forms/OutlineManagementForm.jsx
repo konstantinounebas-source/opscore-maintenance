@@ -358,7 +358,7 @@ export default function OutlineManagementForm({ submission, incidents, assets, w
                         <SelectItem key={i.id} value={i.id}>
                           <span className="font-mono text-xs font-bold">{i.incident_id}</span>
                           <span className="mx-1.5 text-slate-300">|</span>
-                          <span>{i.title}</span>
+                          <span>{i.title.replace(/\s*[-–]\s*\d{4}-\d{2}-\d{2}$/, "")}</span>
                           {dateFmt && <><span className="mx-1.5 text-slate-300">|</span><span className="text-slate-500 text-xs">{dateFmt}</span></>}
                         </SelectItem>
                       );
