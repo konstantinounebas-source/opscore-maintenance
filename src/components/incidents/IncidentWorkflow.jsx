@@ -168,6 +168,19 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
     select: data => data.filter(d => d.status !== "Draft"),
   });
 
+  // For CA Status: fetch FMPI submissions to preview
+  const { data: caFmpiSubmissions = [] } = useQuery({
+    queryKey: ["caFmpiSubmissions", incidentId],
+    queryFn: () => base44.entities.FormSubmissions.filter({ incident_id: incidentId, form_type: "combined_fmpi_invoice" }),
+    enabled: key === "ca_status",
+  });
+
+  const { data: caFmpiAttachments = [] } = useQuery({
+    queryKey: ["caFmpiAttachments", incidentId],
+    queryFn: () => base44.entities.IncidentAttachments.filter({ incident_id: incidentId }),
+    enabled: key === "ca_status",
+  });
+
   const { data: incidentWorkOrders = [] } = useQuery({
     queryKey: ["workOrders", incidentId],
     queryFn: () => base44.entities.WorkOrders.filter({ incident_id: incidentId }),
@@ -380,6 +393,55 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
               <p className="text-xs text-slate-500">
                 The CA must review and set an approval status before the Corrective Work Order can proceed. If left pending, the corrective WO will remain locked.
               </p>
+
+              {/* FMPI Preview Section */}
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-2">
+                <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">FMPI & Pricing Order — Review</p>
+
+                {/* Digital submissions */}
+                {caFmpiSubmissions.length > 0 ? (
+                  <div className="space-y-1">
+                    <p className="text-xs text-slate-500 font-medium">Digital submissions:</p>
+                    {caFmpiSubmissions.map(s => (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => navigate(`/Forms?submissionId=${s.id}`)}
+                        className="w-full flex items-center gap-2 px-2 py-1.5 rounded border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 transition-colors text-left"
+                      >
+                        <FileCheck className="w-3 h-3 text-indigo-600 shrink-0" />
+                        <span className="text-xs text-indigo-700 flex-1 truncate">{s.form_name || "FMPI & Pricing Order"}</span>
+                        <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${s.status === "Submitted" ? "bg-blue-100 text-blue-700" : s.status === "Approved" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>{s.status}</span>
+                        <ChevronRight className="w-3 h-3 text-indigo-400 shrink-0" />
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-400 italic">No digital FMPI submissions found.</p>
+                )}
+
+                {/* Manual attachments */}
+                {caFmpiAttachments.length > 0 && (
+                  <div className="space-y-1 pt-1 border-t border-slate-200">
+                    <p className="text-xs text-slate-500 font-medium">Manual attachments ({caFmpiAttachments.length}):</p>
+                    <div className="max-h-28 overflow-y-auto space-y-1">
+                      {caFmpiAttachments.map(a => (
+                        <a
+                          key={a.id}
+                          href={a.file_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center gap-2 px-2 py-1.5 rounded border border-slate-200 bg-white hover:bg-slate-50 transition-colors text-left w-full"
+                        >
+                          <FileText className="w-3 h-3 text-slate-400 shrink-0" />
+                          <span className="text-xs text-slate-600 flex-1 truncate">{a.file_name}</span>
+                          <span className="text-xs text-indigo-500 font-medium">Preview →</span>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold">CA Approval Decision *</Label>
                 <div className="flex gap-3">
