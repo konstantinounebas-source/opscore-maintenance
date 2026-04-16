@@ -144,13 +144,13 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
 
   const { data: ompiDrafts = [] } = useQuery({
     queryKey: ["ompiDrafts", incidentId],
-    queryFn: () => base44.entities.FormSubmissions.filter({ incident_id: incidentId, form_type: "outline_management_incident_plan" }),
+    queryFn: () => base44.entities.FormSubmissions.filter({ incident_id: incidentId, form_type: "outline_management_incident_plan", status: "Draft" }),
     enabled: key === "create_ompi",
   });
 
   const { data: fmpiDrafts = [] } = useQuery({
     queryKey: ["fmpiDrafts", incidentId],
-    queryFn: () => base44.entities.FormSubmissions.filter({ incident_id: incidentId, form_type: "combined_fmpi_invoice" }),
+    queryFn: () => base44.entities.FormSubmissions.filter({ incident_id: incidentId, form_type: "combined_fmpi_invoice", status: "Draft" }),
     enabled: key === "create_fmpi",
   });
 
@@ -429,7 +429,7 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
                     >
                       <PenLine className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
                       <span className="text-xs text-indigo-700 font-medium flex-1 truncate">{draft.form_name || "OMPI Draft"}</span>
-                      <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${draft.status === "Draft" ? "bg-slate-200 text-slate-600" : "bg-blue-100 text-blue-700"}`}>{draft.status}</span>
+                      <span className="text-xs px-1.5 py-0.5 rounded font-medium bg-amber-100 text-amber-700">Draft</span>
                       <ChevronRight className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
                     </button>
                   ))}
@@ -489,7 +489,7 @@ function AdminActionModal({ step, incident, incidentId, onClose, onDone }) {
                     >
                       <PenLine className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
                       <span className="text-xs text-indigo-700 font-medium flex-1 truncate">{draft.form_name || "FMPI Draft"}</span>
-                      <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${draft.status === "Draft" ? "bg-slate-200 text-slate-600" : "bg-blue-100 text-blue-700"}`}>{draft.status}</span>
+                      <span className="text-xs px-1.5 py-0.5 rounded font-medium bg-amber-100 text-amber-700">Draft</span>
                       <ChevronRight className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
                     </button>
                   ))}
