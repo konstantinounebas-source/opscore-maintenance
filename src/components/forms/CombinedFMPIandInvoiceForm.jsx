@@ -254,6 +254,17 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
     }
   }, [ompiForm]);
 
+  // Auto-fill outlineDate from OMPI submission date
+  useEffect(() => {
+    if (ompiForm && !outlineDate && !submission) {
+      const ompiDate = ompiForm.submitted_at || ompiForm.updated_date || ompiForm.created_date;
+      if (ompiDate) {
+        // Extract just the date part (YYYY-MM-DD)
+        setOutlineDate(ompiDate.split("T")[0]);
+      }
+    }
+  }, [ompiForm]);
+
   // Auto-fill sigDate from incident creation date
   useEffect(() => {
     if (reportDate && !sigDate) {
@@ -494,7 +505,15 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
                   <ReadOnlyField label="Ημερομηνία Αναφοράς απο Α.Α.:" value={fmtDate(reportDate)} />
                   <div className="space-y-1">
                     <Label className="text-xs font-semibold text-slate-600">Ημερομηνία Outline management plan: *</Label>
-                    <Input type="date" value={outlineDate} onChange={e => setOutlineDate(e.target.value)} className="text-sm mt-1" />
+                    {ompiForm && outlineDate ? (
+                      <div className="flex items-center gap-2 min-h-[36px] px-3 py-2 rounded-md bg-slate-50 border border-slate-200 text-sm text-slate-700">
+                        <Lock className="w-3 h-3 text-slate-300 flex-shrink-0" />
+                        <span className="flex-1">{fmtDate(outlineDate)}</span>
+                        <span className="text-xs text-indigo-500 font-medium px-1.5 py-0.5 bg-indigo-50 border border-indigo-100 rounded">Από OMPI</span>
+                      </div>
+                    ) : (
+                      <Input type="date" value={outlineDate} onChange={e => setOutlineDate(e.target.value)} className="text-sm mt-1" />
+                    )}
                   </div>
                   <ReadOnlyField label="Ημερομηνία Έκδοσης:" value={fmtDate(new Date().toISOString())} />
                   <ReadOnlyField label="Κωδικός Στάσης:" value={asset?.active_shelter_id || asset?.asset_id} />
