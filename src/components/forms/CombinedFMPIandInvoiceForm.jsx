@@ -344,16 +344,17 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
   });
 
   const handleSave = (status = "Draft") => {
-    if (!linkedIncidentId) { toast({ title: "Επιλέξτε περιστατικό", variant: "destructive" }); return; }
-    if (!linkedAssetId) { toast({ title: "Επιλέξτε asset", variant: "destructive" }); return; }
-    if (!linkedWOId) { toast({ title: "Επιλέξτε Work Order", variant: "destructive" }); return; }
-    if (!outlineDate) { toast({ title: "Συμπληρώστε: Ημερομηνία Outline management plan", variant: "destructive" }); return; }
-    if (!owrValue) { toast({ title: "Επιλέξτε: Εκτός Εγγύησης (OWR)", variant: "destructive" }); return; }
-
-    const hasEmptyChild = rows.some(r => !r.child_id);
-    if (hasEmptyChild) { toast({ title: "Επιλέξτε Child για κάθε γραμμή εργασίας", variant: "destructive" }); return; }
-    const hasZeroQty = rows.some(r => !r.qty || Number(r.qty) <= 0);
-    if (hasZeroQty) { toast({ title: "Η ποσότητα πρέπει να είναι > 0", variant: "destructive" }); return; }
+    if (status === "Submitted") {
+      if (!linkedIncidentId) { toast({ title: "Επιλέξτε περιστατικό", variant: "destructive" }); return; }
+      if (!linkedAssetId) { toast({ title: "Επιλέξτε asset", variant: "destructive" }); return; }
+      if (!linkedWOId) { toast({ title: "Επιλέξτε Work Order", variant: "destructive" }); return; }
+      if (!outlineDate) { toast({ title: "Συμπληρώστε: Ημερομηνία Outline management plan", variant: "destructive" }); return; }
+      if (!owrValue) { toast({ title: "Επιλέξτε: Εκτός Εγγύησης (OWR)", variant: "destructive" }); return; }
+      const hasEmptyChild = rows.some(r => !r.child_id);
+      if (hasEmptyChild) { toast({ title: "Επιλέξτε Child για κάθε γραμμή εργασίας", variant: "destructive" }); return; }
+      const hasZeroQty = rows.some(r => !r.qty || Number(r.qty) <= 0);
+      if (hasZeroQty) { toast({ title: "Η ποσότητα πρέπει να είναι > 0", variant: "destructive" }); return; }
+    }
 
     saveMutation.mutate({
       form_type: "combined_fmpi_invoice",

@@ -250,17 +250,19 @@ export default function MakeSafeChecklistForm({ submission, incidents, assets, w
   });
 
   const handleSave = (status = "Draft") => {
-    if (!fd.date)       { toast({ title: "Απαιτείται Ημερομηνία", variant: "destructive" }); return; }
-    if (!fd.time_start) { toast({ title: "Απαιτείται Ώρα Έναρξης", variant: "destructive" }); return; }
-    const hasRisk = fd.check_360 || fd.danger_electrical || fd.danger_glass || fd.danger_structural || fd.danger_pv || fd.danger_other;
-    if (!hasRisk && status === "Submitted") {
-      toast({ title: "Απαιτείται τουλάχιστον μια επιλογή στο STOP & ASSESS", variant: "destructive" }); return;
-    }
-    if (isHighRisk && !fd.danger_description) {
-      toast({ title: "Απαιτείται Περιγραφή Κινδύνου (Άμεσος κίνδυνος ζωής)", variant: "destructive" }); return;
-    }
-    if (fd.vehicle_yes && !fd.veh_justification) {
-      toast({ title: "Απαιτείται Αιτιολόγηση για Ειδικό Όχημα", variant: "destructive" }); return;
+    if (status === "Submitted") {
+      if (!fd.date)       { toast({ title: "Απαιτείται Ημερομηνία", variant: "destructive" }); return; }
+      if (!fd.time_start) { toast({ title: "Απαιτείται Ώρα Έναρξης", variant: "destructive" }); return; }
+      const hasRisk = fd.check_360 || fd.danger_electrical || fd.danger_glass || fd.danger_structural || fd.danger_pv || fd.danger_other;
+      if (!hasRisk) {
+        toast({ title: "Απαιτείται τουλάχιστον μια επιλογή στο STOP & ASSESS", variant: "destructive" }); return;
+      }
+      if (isHighRisk && !fd.danger_description) {
+        toast({ title: "Απαιτείται Περιγραφή Κινδύνου (Άμεσος κίνδυνος ζωής)", variant: "destructive" }); return;
+      }
+      if (fd.vehicle_yes && !fd.veh_justification) {
+        toast({ title: "Απαιτείται Αιτιολόγηση για Ειδικό Όχημα", variant: "destructive" }); return;
+      }
     }
     saveMutation.mutate({
       form_type: "make_safe_checklist",
