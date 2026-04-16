@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { getAthensTimestamp } from "@/lib/timeSync";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -22,10 +23,10 @@ function parseFormRef(url) {
 
 function FormRefItem({ submissionId, formType, name }) {
   const [downloading, setDownloading] = useState(false);
+  const navigate = useNavigate();
 
   const handleOpenForm = () => {
-    console.log("[AuditLog.FormRefItem] Opening form:", submissionId, "formType:", formType);
-    window.open(`/Forms?submissionId=${submissionId}`, "_blank");
+    navigate(`/Forms?submissionId=${submissionId}`);
   };
 
   const handleDownload = async () => {
@@ -68,7 +69,7 @@ function FormRefItem({ submissionId, formType, name }) {
       <FileText className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
       <span className="truncate max-w-[140px] text-xs text-indigo-700 font-medium" title={name}>{name || "Form Submission"}</span>
       <div className="flex items-center gap-1 ml-auto">
-        <button onClick={handleOpenForm} title="View Form in editor"
+        <button onClick={handleOpenForm} title="Open & Continue Editing"
           className="p-1 rounded hover:bg-indigo-200 text-indigo-400 hover:text-indigo-700 transition-colors">
           <ExternalLink className="h-3.5 w-3.5" />
         </button>
