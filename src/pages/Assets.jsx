@@ -294,7 +294,7 @@ export default function Assets() {
     { key: "city", label: "City" },
     { key: "shelter_type", label: "Shelter Type" },
     { key: "status", label: "Status", render: (row) => <StatusBadge status={row.status} /> },
-    { key: "delivery_date", label: "Delivery Date" },
+    { key: "delivery_date", label: "Delivery Date", render: (r) => { if (!r.delivery_date) return <span className="text-slate-400">—</span>; const [y,m,d] = r.delivery_date.split("-"); return <span>{d}/{m}/{y}</span>; } },
     { key: "childs", label: "Childs", accessor: (row) => getChildCount(row.id) },
     { key: "incidents", label: "Open Incidents", accessor: (row) => getOpenIncidents(row.id) },
     { key: "work_orders", label: "Open WOs", accessor: (row) => getOpenWorkOrders(row.id) },

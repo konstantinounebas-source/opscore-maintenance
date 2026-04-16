@@ -27,7 +27,7 @@ export default function WorkOrders() {
     { key: "status", label: "Status", render: (r) => <StatusBadge status={r.status} /> },
     { key: "priority", label: "Priority", render: (r) => priorityBadge(r.priority) },
     { key: "assigned_to", label: "Assigned To" },
-    { key: "due_date", label: "Due Date" },
+    { key: "due_date", label: "Due Date", render: (r) => { if (!r.due_date) return <span className="text-slate-400">—</span>; const [y,m,d] = r.due_date.split("-"); return <span>{d}/{m}/{y}</span>; } },
   ];
 
   return (

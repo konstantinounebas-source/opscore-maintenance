@@ -340,7 +340,7 @@ export default function Forms() {
                       <div className="text-xs text-slate-500 mt-0.5 flex flex-wrap gap-2">
                         {incident && <span>Incident: <span className="font-mono text-slate-600">{incident.incident_id}</span></span>}
                         {asset    && <span>Asset: <span className="font-mono text-slate-600">{asset.asset_id}</span></span>}
-                        <span>{format(new Date(sub.created_date), "dd MMM yyyy, HH:mm")}</span>
+                        <span>{format(new Date(sub.created_date), "dd/MM/yyyy, HH:mm")}</span>
                       </div>
                     </div>
                     <div className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${STATUS_BADGE[sub.status] || STATUS_BADGE.Draft}`}>

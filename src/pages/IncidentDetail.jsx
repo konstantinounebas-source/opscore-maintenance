@@ -145,7 +145,7 @@ export default function IncidentDetail() {
             <IField label="Category" value={incident.category} />
             <IField label="Reported Date" value={incident.reported_date} />
             <IField label="Assigned To" value={incident.assigned_to} />
-            <IField label="Created" value={incident.created_date ? format(new Date(incident.created_date), "MMM d, yyyy") : null} />
+            <IField label="Created" value={incident.created_date ? format(new Date(incident.created_date), "dd/MM/yyyy") : null} />
           </div>
 
           {/* Expandable extra fields */}
@@ -274,6 +274,13 @@ export default function IncidentDetail() {
   );
 }
 
+function fmtFieldDate(val) {
+  if (!val) return val;
+  const m = String(val).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+  return val;
+}
+
 function IField({ label, value, children }) {
   const hasValue = children != null || (value !== undefined && value !== null && value !== "");
   if (!hasValue) return null;
@@ -281,7 +288,7 @@ function IField({ label, value, children }) {
     <div>
       <p className="text-xs text-slate-500 font-medium">{label}</p>
       <div className="text-sm font-semibold mt-1 text-slate-800">
-        {children ?? String(value)}
+        {children ?? String(fmtFieldDate(value))}
       </div>
     </div>
   );

@@ -61,12 +61,12 @@ export default function IncidentFormSubmissions({ incidentId }) {
                 {sub.created_date && (
                   <span className="flex items-center gap-1 text-xs text-slate-400">
                     <Clock className="w-3 h-3" />
-                    {format(new Date(sub.created_date), "dd MMM yyyy, HH:mm")}
+                    {format(new Date(sub.created_date), "dd/MM/yyyy, HH:mm")}
                   </span>
                 )}
                 {sub.submitted_at && sub.status === "Submitted" && (
                   <span className="text-xs text-slate-400">
-                    Submitted: {format(new Date(sub.submitted_at), "dd MMM yyyy")}
+                    Submitted: {format(new Date(sub.submitted_at), "dd/MM/yyyy")}
                   </span>
                 )}
               </div>

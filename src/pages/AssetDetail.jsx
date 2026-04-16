@@ -230,7 +230,7 @@ export default function AssetDetail() {
     { key: "title", label: "Title" },
     { key: "status", label: "Status", render: (r) => <StatusBadge status={r.status} /> },
     { key: "priority", label: "Priority", render: (r) => <StatusBadge status={r.priority} /> },
-    { key: "reported_date", label: "Reported" },
+    { key: "reported_date", label: "Reported", render: (r) => { if (!r.reported_date) return <span className="text-slate-400">—</span>; const [y,m,d] = r.reported_date.split("-"); return <span>{d}/{m}/{y}</span>; } },
   ];
 
   const woColumns = [
@@ -238,7 +238,7 @@ export default function AssetDetail() {
     { key: "title", label: "Title" },
     { key: "status", label: "Status", render: (r) => <StatusBadge status={r.status} /> },
     { key: "priority", label: "Priority", render: (r) => <StatusBadge status={r.priority} /> },
-    { key: "due_date", label: "Due Date" },
+    { key: "due_date", label: "Due Date", render: (r) => { if (!r.due_date) return <span className="text-slate-400">—</span>; const [y,m,d] = r.due_date.split("-"); return <span>{d}/{m}/{y}</span>; } },
   ];
 
   const shipmentColumns = [
@@ -260,7 +260,7 @@ export default function AssetDetail() {
       }
     },
     { key: "status", label: "Status", render: (r) => <StatusBadge status={r.status} /> },
-    { key: "shipment_date", label: "Date" },
+    { key: "shipment_date", label: "Date", render: (r) => { if (!r.shipment_date) return <span className="text-slate-400">—</span>; const [y,m,d] = r.shipment_date.split("-"); return <span>{d}/{m}/{y}</span>; } },
     { key: "details", label: "Details", render: (r) => <span className="text-xs text-slate-500">{r.details || "—"}</span> },
   ];
 
@@ -373,7 +373,7 @@ export default function AssetDetail() {
                           <p className="text-sm font-medium text-slate-900">{att.file_name}</p>
                           <div className="flex items-center gap-2 flex-wrap">
                             {att.doc_label && <span className="text-xs bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-medium">{att.doc_label}</span>}
-                            <p className="text-xs text-slate-400">{att.file_size || "—"} · {att.uploaded_by || "—"} · {att.created_date ? format(new Date(att.created_date), "MMM d, yyyy") : "—"}</p>
+                            <p className="text-xs text-slate-400">{att.file_size || "—"} · {att.uploaded_by || "—"} · {att.created_date ? format(new Date(att.created_date), "dd/MM/yyyy") : "—"}</p>
                           </div>
                         </div>
                       </div>
@@ -396,7 +396,7 @@ export default function AssetDetail() {
                           <p className="text-sm font-medium text-slate-900">{att.file_name}</p>
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-medium">From Incident</span>
-                            <p className="text-xs text-slate-400">{att.file_size || "—"} · {att.uploaded_by || "—"} · {att.created_date ? format(new Date(att.created_date), "MMM d, yyyy") : "—"}</p>
+                            <p className="text-xs text-slate-400">{att.file_size || "—"} · {att.uploaded_by || "—"} · {att.created_date ? format(new Date(att.created_date), "dd/MM/yyyy") : "—"}</p>
                           </div>
                         </div>
                       </div>
@@ -427,6 +427,14 @@ export default function AssetDetail() {
   );
 }
 
+function fmtFieldDate(val) {
+  if (!val) return val;
+  // Format ISO date strings (YYYY-MM-DD) to dd/MM/yyyy
+  const m = String(val).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+  return val;
+}
+
 function Field({ label, value, children }) {
   const hasValue = children != null || (value !== undefined && value !== null && value !== "");
   if (!hasValue) return null;
@@ -434,7 +442,7 @@ function Field({ label, value, children }) {
     <div>
       <p className="text-xs text-slate-500 font-medium">{label}</p>
       <div className="text-sm font-semibold mt-1 text-slate-800">
-        {children ?? String(value)}
+        {children ?? String(fmtFieldDate(value))}
       </div>
     </div>
   );

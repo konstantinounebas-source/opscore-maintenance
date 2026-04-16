@@ -173,8 +173,10 @@ export default function Incidents() {
       label: "Reported Date and Time",
       render: (r) => {
         if (!r.reported_date) return <span className="text-slate-400">—</span>;
+        const [y, m, d] = r.reported_date.split("-");
+        const formatted = `${d}/${m}/${y}`;
         const time = r.detection_time ? ` ${r.detection_time}` : "";
-        return <span className="text-sm text-slate-700">{r.reported_date}{time}</span>;
+        return <span className="text-sm text-slate-700">{formatted}{time}</span>;
       }
     },
   ];
