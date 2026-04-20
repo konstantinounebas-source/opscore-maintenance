@@ -1,13 +1,9 @@
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
-import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Search, X, Upload } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { Plus, Search, X, Upload, Pencil, ChevronLeft, ChevronRight } from "lucide-react";
 
 const STAGE_COLORS = {
   planning:     "bg-slate-100 text-slate-700",
@@ -18,19 +14,23 @@ const STAGE_COLORS = {
 };
 
 const CONDITION_LABELS = {
-  none:            "None",
-  sign_only:       "Sign Only",
-  shelter_only:    "Shelter Only",
-  sign_and_shelter:"Sign & Shelter",
-  unknown:         "Unknown",
+  none:             "None",
+  sign_only:        "Sign Only",
+  shelter_only:     "Shelter Only",
+  sign_and_shelter: "Sign & Shelter",
+  unknown:          "Unknown",
 };
 
-export default function BusShelterOrdersTab({ assets, onNewOrder, onImport }) {
+const PAGE_SIZES = [20, 40, 80, 100, "All"];
+
+export default function BusShelterOrdersTab({ assets, onNewOrder, onImport, onEditOrder }) {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [filterStage, setFilterStage] = useState("all");
   const [filterCity, setFilterCity] = useState("all");
   const [filterYear, setFilterYear] = useState("all");
+  const [pageSize, setPageSize] = useState(20);
+  const [page, setPage] = useState(1);
 
   const orders = useMemo(() =>
     assets
@@ -45,20 +45,34 @@ export default function BusShelterOrdersTab({ assets, onNewOrder, onImport }) {
   const uniqueCities = [...new Set(orders.map(o => o.city).filter(Boolean))].sort();
   const uniqueYears = [...new Set(orders.map(o => o.order_year).filter(Boolean))].sort((a, b) => b - a);
 
-  const filtered = useMemo(() => orders.filter(o => {
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      const matches = [o.asset_code, o.location_address, o.municipality, o.city, o.ordered_shelter_type]
-        .some(v => v && String(v).toLowerCase().includes(q));
-      if (!matches) return false;
-    }
-    if (filterStage !== "all" && o.asset_stage !== filterStage) return false;
-    if (filterCity !== "all" && o.city !== filterCity) return false;
-    if (filterYear !== "all" && String(o.order_year) !== filterYear) return false;
-    return true;
-  }), [orders, search, filterStage, filterCity, filterYear]);
+  const filtered = useMemo(() => {
+    setPage(1); // reset to page 1 whenever filters change
+    return orders.filter(o => {
+      if (search.trim()) {
+        const q = search.toLowerCase();
+        const matches = [o.asset_code, o.location_address, o.municipality, o.city, o.ordered_shelter_type]
+          .some(v => v && String(v).toLowerCase().includes(q));
+        if (!matches) return false;
+      }
+      if (filterStage !== "all" && o.asset_stage !== filterStage) return false;
+      if (filterCity !== "all" && o.city !== filterCity) return false;
+      if (filterYear !== "all" && String(o.order_year) !== filterYear) return false;
+      return true;
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orders, search, filterStage, filterCity, filterYear]);
+
+  const totalRows = filtered.length;
+  const effectivePageSize = pageSize === "All" ? totalRows : pageSize;
+  const totalPages = pageSize === "All" ? 1 : Math.max(1, Math.ceil(totalRows / effectivePageSize));
+  const paginated = pageSize === "All" ? filtered : filtered.slice((page - 1) * effectivePageSize, page * effectivePageSize);
 
   const hasFilters = search || filterStage !== "all" || filterCity !== "all" || filterYear !== "all";
+
+  const handlePageSizeChange = (val) => {
+    setPageSize(val === "All" ? "All" : Number(val));
+    setPage(1);
+  };
 
   return (
     <div className="space-y-4">
@@ -110,54 +124,58 @@ export default function BusShelterOrdersTab({ assets, onNewOrder, onImport }) {
         </div>
       </div>
 
-      {hasFilters && <p className="text-xs text-slate-500">{filtered.length} of {orders.length} orders shown</p>}
+      {/* Count row */}
+      <p className="text-xs text-slate-500">
+        {hasFilters ? `${totalRows} of ${orders.length} orders shown` : `${totalRows} orders`}
+      </p>
 
-      {/* Table */}
+      {/* Table with horizontal scroll */}
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="min-w-max w-full text-sm">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Code</th>
-                <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Address</th>
-                <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Municipality</th>
-                <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">City</th>
-                <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Condition</th>
-                <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Bay</th>
-                <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Ordered Type</th>
-                <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Installed Type</th>
-                <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Year</th>
-                <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Install Date</th>
-                <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Stage</th>
-                <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Notes</th>
+                <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Code</th>
+                <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Address</th>
+                <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Municipality</th>
+                <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">City</th>
+                <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Condition</th>
+                <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Bay</th>
+                <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Ordered Type</th>
+                <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Installed Type</th>
+                <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Year</th>
+                <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Install Date</th>
+                <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Stage</th>
+                <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Notes</th>
+                <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap"></th>
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 ? (
-                <tr><td colSpan={12} className="text-center py-10 text-slate-400 text-sm">No bus shelter orders found.</td></tr>
-              ) : filtered.map(o => (
+              {paginated.length === 0 ? (
+                <tr><td colSpan={13} className="text-center py-10 text-slate-400 text-sm">No bus shelter orders found.</td></tr>
+              ) : paginated.map(o => (
                 <tr
                   key={o.id}
                   className="border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors"
                   onClick={() => navigate(`/AssetDetail?id=${o.id}`)}
                 >
-                  <td className="px-3 py-2.5 font-medium text-slate-800">{o.asset_code || "—"}</td>
-                  <td className="px-3 py-2.5 text-slate-600 max-w-[180px] truncate">{o.location_address || "—"}</td>
-                  <td className="px-3 py-2.5 text-slate-600">{o.municipality || "—"}</td>
-                  <td className="px-3 py-2.5 text-slate-600">{o.city || "—"}</td>
-                  <td className="px-3 py-2.5 text-slate-600">{CONDITION_LABELS[o.existing_condition] || "—"}</td>
-                  <td className="px-3 py-2.5">
+                  <td className="px-3 py-2.5 font-medium text-slate-800 whitespace-nowrap">{o.asset_code || "—"}</td>
+                  <td className="px-3 py-2.5 text-slate-600 max-w-[200px] truncate">{o.location_address || "—"}</td>
+                  <td className="px-3 py-2.5 text-slate-600 whitespace-nowrap">{o.municipality || "—"}</td>
+                  <td className="px-3 py-2.5 text-slate-600 whitespace-nowrap">{o.city || "—"}</td>
+                  <td className="px-3 py-2.5 text-slate-600 whitespace-nowrap">{CONDITION_LABELS[o.existing_condition] || "—"}</td>
+                  <td className="px-3 py-2.5 whitespace-nowrap">
                     {o.has_bay ? (
                       <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${o.has_bay === "yes" ? "bg-green-100 text-green-700" : o.has_bay === "no" ? "bg-red-100 text-red-700" : "bg-slate-100 text-slate-500"}`}>
                         {o.has_bay}
                       </span>
                     ) : "—"}
                   </td>
-                  <td className="px-3 py-2.5 text-slate-600">{o.ordered_shelter_type || "—"}</td>
-                  <td className="px-3 py-2.5 text-slate-600">{o.installed_shelter_type || "—"}</td>
-                  <td className="px-3 py-2.5 text-slate-600">{o.order_year || "—"}</td>
-                  <td className="px-3 py-2.5 text-slate-600">{o.installation_date || "—"}</td>
-                  <td className="px-3 py-2.5">
+                  <td className="px-3 py-2.5 text-slate-600 whitespace-nowrap">{o.ordered_shelter_type || "—"}</td>
+                  <td className="px-3 py-2.5 text-slate-600 whitespace-nowrap">{o.installed_shelter_type || "—"}</td>
+                  <td className="px-3 py-2.5 text-slate-600 whitespace-nowrap">{o.order_year || "—"}</td>
+                  <td className="px-3 py-2.5 text-slate-600 whitespace-nowrap">{o.installation_date || "—"}</td>
+                  <td className="px-3 py-2.5 whitespace-nowrap">
                     {o.asset_stage ? (
                       <span className={`text-xs font-medium px-2 py-0.5 rounded capitalize ${STAGE_COLORS[o.asset_stage] || "bg-slate-100 text-slate-600"}`}>
                         {o.asset_stage}
@@ -165,11 +183,50 @@ export default function BusShelterOrdersTab({ assets, onNewOrder, onImport }) {
                     ) : "—"}
                   </td>
                   <td className="px-3 py-2.5 text-slate-500 max-w-[150px] truncate">{o.notes || "—"}</td>
+                  <td className="px-3 py-2.5 whitespace-nowrap" onClick={e => e.stopPropagation()}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0 text-slate-400 hover:text-slate-700"
+                      onClick={() => onEditOrder?.(o)}
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </Button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Pagination */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-slate-500">Rows per page:</span>
+          <Select value={String(pageSize)} onValueChange={handlePageSizeChange}>
+            <SelectTrigger className="h-8 text-xs w-20"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {PAGE_SIZES.map(s => (
+                <SelectItem key={s} value={String(s)}>{s}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {pageSize !== "All" && totalPages > 1 && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-500">
+              {(page - 1) * effectivePageSize + 1}–{Math.min(page * effectivePageSize, totalRows)} of {totalRows}
+            </span>
+            <Button variant="outline" size="sm" className="h-8 w-8 p-0" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <Button variant="outline" size="sm" className="h-8 w-8 p-0" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

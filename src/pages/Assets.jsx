@@ -263,6 +263,11 @@ export default function Assets() {
     setOrderFormOpen(true);
   };
 
+  const handleEditOrder = (order) => {
+    setEditingOrder(order);
+    setOrderFormOpen(true);
+  };
+
   const handleOrderSave = async (formData, attachments, childComponents) => {
     await handleSave(formData, attachments, childComponents);
     setOrderFormOpen(false);
@@ -390,7 +395,7 @@ export default function Assets() {
           </TabsContent>
 
           <TabsContent value="bus_shelter_orders">
-            <BusShelterOrdersTab assets={assets} onNewOrder={handleNewOrder} onImport={() => setImportOrdersOpen(true)} />
+            <BusShelterOrdersTab assets={assets} onNewOrder={handleNewOrder} onImport={() => setImportOrdersOpen(true)} onEditOrder={handleEditOrder} />
           </TabsContent>
         </Tabs>
       </div>
