@@ -9,6 +9,7 @@ import StatusBadge from "@/components/shared/StatusBadge";
 import AssetFormDialog from "@/components/assets/AssetFormDialog";
 import ImportAssetsDialog from "@/components/assets/ImportAssetsDialog";
 import BusShelterOrdersTab from "@/components/assets/BusShelterOrdersTab";
+import BusShelterOrderFormDialog from "@/components/assets/BusShelterOrderFormDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -25,6 +26,8 @@ export default function Assets() {
   const [editingAsset, setEditingAsset] = useState(null);
   const [newOrderDefaults, setNewOrderDefaults] = useState(null);
   const [importOpen, setImportOpen] = useState(false);
+  const [orderFormOpen, setOrderFormOpen] = useState(false);
+  const [editingOrder, setEditingOrder] = useState(null);
 
   // Filter state (maintenance tab)
   const [searchText, setSearchText] = useState("");
@@ -254,9 +257,13 @@ export default function Assets() {
   ];
 
   const handleNewOrder = () => {
-    setEditingAsset(null);
-    setNewOrderDefaults({ asset_source: "bus_shelter_order", asset_stage: "planning" });
-    setFormOpen(true);
+    setEditingOrder(null);
+    setOrderFormOpen(true);
+  };
+
+  const handleOrderSave = async (formData, attachments, childComponents) => {
+    await handleSave(formData, attachments, childComponents);
+    setOrderFormOpen(false);
   };
 
   return (
@@ -394,6 +401,12 @@ export default function Assets() {
         defaultValues={newOrderDefaults}
       />
       <ImportAssetsDialog open={importOpen} onOpenChange={setImportOpen} onImport={handleImportFile} />
+      <BusShelterOrderFormDialog
+        open={orderFormOpen}
+        onOpenChange={setOrderFormOpen}
+        order={editingOrder}
+        onSave={handleOrderSave}
+      />
     </div>
   );
 }
