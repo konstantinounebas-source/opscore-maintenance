@@ -24,6 +24,7 @@ export default function PlanningWorkbench() {
   const { data: workOrders = [] }                                     = useQuery({ queryKey: ["workOrders"],           queryFn: () => base44.entities.WorkOrders.list() });
   const { data: layers = [] }                                         = useQuery({ queryKey: ["planningLayers"],       queryFn: () => base44.entities.PlanningLayers.list() });
   const { data: layerAssets = [] }                                    = useQuery({ queryKey: ["planningLayerAssets"],  queryFn: () => base44.entities.PlanningLayerAssets.list() });
+  const { data: mapLayerLinks = [] }                                  = useQuery({ queryKey: ["workbenchMapLayers"],   queryFn: () => base44.entities.WorkbenchMapLayers.list() });
 
   // ── Map workspace collection ────────────────────────────────────────────────
   const [mapWorkspaces, setMapWorkspaces] = useState([{ id: newMapId() }]);
@@ -80,10 +81,16 @@ export default function PlanningWorkbench() {
   });
 
   const deleteLayerMutation = useMutation({
-    mutationFn: (id) => base44.entities.PlanningLayers.delete(id),
+    mutationFn: async (id) => {
+      await base44.entities.PlanningLayers.delete(id);
+      // Also remove all map links for this layer
+      const links = mapLayerLinks.filter(ml => ml.layer_id === id);
+      await Promise.all(links.map(l => base44.entities.WorkbenchMapLayers.delete(l.id)));
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["planningLayers"] });
       queryClient.invalidateQueries({ queryKey: ["planningLayerAssets"] });
+      queryClient.invalidateQueries({ queryKey: ["workbenchMapLayers"] });
     },
   });
 
@@ -102,6 +109,26 @@ export default function PlanningWorkbench() {
       if (record) await base44.entities.PlanningLayerAssets.delete(record.id);
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["planningLayerAssets"] }); },
+  });
+
+  // ── WorkbenchMapLayers mutations ────────────────────────────────────────────
+  const addLayerToMapMutation = useMutation({
+    mutationFn: async ({ mapId, layerId }) => {
+      const existing = mapLayerLinks.find(ml => ml.map_id === mapId && ml.layer_id === layerId);
+      if (existing) return existing;
+      return base44.entities.WorkbenchMapLayers.create({ map_id: mapId, layer_id: layerId, is_enabled: true, display_order: mapLayerLinks.filter(ml => ml.map_id === mapId).length });
+    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["workbenchMapLayers"] }); },
+  });
+
+  const removeLayerFromMapMutation = useMutation({
+    mutationFn: (linkId) => base44.entities.WorkbenchMapLayers.delete(linkId),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["workbenchMapLayers"] }); },
+  });
+
+  const toggleMapLayerMutation = useMutation({
+    mutationFn: ({ linkId, isEnabled }) => base44.entities.WorkbenchMapLayers.update(linkId, { is_enabled: isEnabled }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["workbenchMapLayers"] }); },
   });
 
   const saveWeekMutation = useMutation({
@@ -150,6 +177,18 @@ export default function PlanningWorkbench() {
   const handleRemoveFromLayer = useCallback(async (layerId, assetId) => {
     await removeFromLayerMutation.mutateAsync({ layerId, assetId });
   }, [removeFromLayerMutation]);
+
+  const handleAddLayerToMap = useCallback(async (mapId, layerId) => {
+    await addLayerToMapMutation.mutateAsync({ mapId, layerId });
+  }, [addLayerToMapMutation]);
+
+  const handleRemoveLayerFromMap = useCallback(async (linkId) => {
+    await removeLayerFromMapMutation.mutateAsync(linkId);
+  }, [removeLayerFromMapMutation]);
+
+  const handleToggleMapLayer = useCallback(async (linkId, isEnabled) => {
+    await toggleMapLayerMutation.mutateAsync({ linkId, isEnabled });
+  }, [toggleMapLayerMutation]);
 
   const isLoading = weeksLoading || assignmentsLoading;
 
@@ -232,6 +271,8 @@ export default function PlanningWorkbench() {
             onRemoveMap={removeMap}
             allAssets={assets}
             allAssignments={allAssignments}
+            globalLayers={layers}
+            mapLayerLinks={mapLayerLinks}
             layers={layers}
             layerAssets={layerAssets}
             weeks={weeks}
@@ -240,6 +281,11 @@ export default function PlanningWorkbench() {
             incidentsByAsset={incidentsByAsset}
             workOrdersByAsset={workOrdersByAsset}
             onSaveAssignment={handleSaveAssignment}
+            onCreateGlobalLayer={handleCreateLayer}
+            onDeleteGlobalLayer={handleDeleteLayer}
+            onAddLayerToMap={handleAddLayerToMap}
+            onRemoveLayerFromMap={handleRemoveLayerFromMap}
+            onToggleMapLayer={handleToggleMapLayer}
             onCreateLayer={handleCreateLayer}
             onDeleteLayer={handleDeleteLayer}
             onAddToLayer={handleAddToLayer}

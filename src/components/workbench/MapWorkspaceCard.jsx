@@ -15,6 +15,15 @@ export default function MapWorkspaceCard({
   totalMaps,
   allAssets,
   allAssignments,
+  // New architecture
+  globalLayers,
+  mapLayerLinks,
+  onCreateGlobalLayer,
+  onDeleteGlobalLayer,
+  onAddLayerToMap,
+  onRemoveLayerFromMap,
+  onToggleMapLayer,
+  // Legacy props (kept for backward compat)
   layers,
   layerAssets,
   weeks,
@@ -66,9 +75,24 @@ export default function MapWorkspaceCard({
     [allAssets, filters, assignmentByAssetId, incidentsByAsset, workOrdersByAsset, activeLayerFilter, layerAssets]
   );
 
+  // Per-map active color rules (sorted by priority desc)
+  const colorRules = useMemo(() => {
+    if (!globalLayers || !mapLayerLinks) return null;
+    return mapLayerLinks
+      .filter(ml => ml.is_enabled !== false)
+      .map(ml => {
+        const layer = globalLayers.find(l => l.id === ml.layer_id);
+        return layer ? { ...layer, _priority: ml.priority_override ?? layer.default_priority ?? 0 } : null;
+      })
+      .filter(Boolean)
+      .sort((a, b) => b._priority - a._priority);
+  }, [globalLayers, mapLayerLinks]);
+
+  const hasColorRules = colorRules && colorRules.length > 0;
+
   const legendEntries = useMemo(() =>
-    getLegendEntries(colorMode, layers, filteredAssets, allAssignments, incidentsByAsset, workOrdersByAsset, layerAssets, activeVisualRule),
-    [colorMode, layers, filteredAssets, allAssignments, incidentsByAsset, workOrdersByAsset, layerAssets, activeVisualRule]
+    getLegendEntries(colorMode, layers, filteredAssets, allAssignments, incidentsByAsset, workOrdersByAsset, layerAssets, activeVisualRule, hasColorRules ? colorRules : null),
+    [colorMode, layers, filteredAssets, allAssignments, incidentsByAsset, workOrdersByAsset, layerAssets, activeVisualRule, colorRules, hasColorRules]
   );
 
   const currentAssignment = selectedAsset ? (assignmentByAssetId[selectedAsset.id] || null) : null;
@@ -114,19 +138,16 @@ export default function MapWorkspaceCard({
         {showLayers && (
           <div className="px-3 py-2 border-b border-slate-100 bg-slate-50 shrink-0 max-h-64 overflow-y-auto">
             <VisualLayerManager
-              manualLayers={layers}
-              visualRules={activeVisualRule ? [activeVisualRule] : []}
-              layerAssets={layerAssets}
+              globalLayers={globalLayers || layers}
+              mapLayerLinks={mapLayerLinks || []}
               allAssets={allAssets}
               allAssignments={allAssignments}
-              incidentsByAsset={incidentsByAsset}
-              workOrdersByAsset={workOrdersByAsset}
-              visibleLayerIds={visibleLayerIds}
-              activeVisualRule={activeVisualRule}
-              onToggleLayer={toggleLayer}
-              onCreateManualLayer={onCreateLayer}
-              onDeleteManualLayer={onDeleteLayer}
-              onSetVisualRule={setActiveVisualRule}
+              layerAssets={layerAssets}
+              onCreateGlobalLayer={onCreateGlobalLayer || onCreateLayer}
+              onDeleteGlobalLayer={onDeleteGlobalLayer || onDeleteLayer}
+              onAddLayerToMap={onAddLayerToMap ? (layerId) => onAddLayerToMap(mapId, layerId) : undefined}
+              onRemoveLayerFromMap={onRemoveLayerFromMap}
+              onToggleMapLayer={onToggleMapLayer}
               compact
             />
           </div>
@@ -139,12 +160,13 @@ export default function MapWorkspaceCard({
             allAssignments={allAssignments}
             selectedAssetId={selectedAsset?.id}
             onSelectAsset={setSelectedAsset}
-            colorMode={colorMode}
+            colorMode={hasColorRules ? "color_rules" : colorMode}
             layers={layers}
             layerAssets={layerAssets}
             incidentsByAsset={incidentsByAsset}
             workOrdersByAsset={workOrdersByAsset}
             activeVisualRule={activeVisualRule}
+            colorRules={colorRules}
           />
           <MapLegend entries={legendEntries} />
         </div>

@@ -31,6 +31,7 @@ export default function WorkbenchMap({
   incidentsByAsset,
   workOrdersByAsset,
   activeVisualRule,
+  colorRules,
 }) {
   const assignmentByAsset = useMemo(() => {
     const m = {};
@@ -50,6 +51,7 @@ export default function WorkbenchMap({
         incidentsByAsset,
         workOrdersByAsset,
         activeVisualRule,
+        colorRules,
       });
       return {
         asset: a,

@@ -16,6 +16,8 @@ export default function MapWorkspaceContainer({
   onRemoveMap,
   allAssets,
   allAssignments,
+  globalLayers,
+  mapLayerLinks,
   layers,
   layerAssets,
   weeks,
@@ -24,6 +26,11 @@ export default function MapWorkspaceContainer({
   incidentsByAsset,
   workOrdersByAsset,
   onSaveAssignment,
+  onCreateGlobalLayer,
+  onDeleteGlobalLayer,
+  onAddLayerToMap,
+  onRemoveLayerFromMap,
+  onToggleMapLayer,
   onCreateLayer,
   onDeleteLayer,
   onAddToLayer,
@@ -49,29 +56,40 @@ export default function MapWorkspaceContainer({
 
       {/* Grid */}
       <div className={`flex-1 grid gap-2 p-2 overflow-hidden ${getGridClass(count)}`} style={{ minHeight: 0 }}>
-        {mapWorkspaces.map((ws, i) => (
-          <MapWorkspaceCard
-            key={ws.id}
-            mapId={ws.id}
-            mapNumber={i + 1}
-            totalMaps={count}
-            allAssets={allAssets}
-            allAssignments={allAssignments}
-            layers={layers}
-            layerAssets={layerAssets}
-            weeks={weeks}
-            incidents={incidents}
-            workOrders={workOrders}
-            incidentsByAsset={incidentsByAsset}
-            workOrdersByAsset={workOrdersByAsset}
-            onRemove={onRemoveMap}
-            onSaveAssignment={onSaveAssignment}
-            onCreateLayer={onCreateLayer}
-            onDeleteLayer={onDeleteLayer}
-            onAddToLayer={onAddToLayer}
-            onRemoveFromLayer={onRemoveFromLayer}
-          />
-        ))}
+        {mapWorkspaces.map((ws, i) => {
+          // Filter mapLayerLinks to only this map's links
+          const thisMapLinks = (mapLayerLinks || []).filter(ml => ml.map_id === ws.id);
+          return (
+            <MapWorkspaceCard
+              key={ws.id}
+              mapId={ws.id}
+              mapNumber={i + 1}
+              totalMaps={count}
+              allAssets={allAssets}
+              allAssignments={allAssignments}
+              globalLayers={globalLayers || layers}
+              mapLayerLinks={thisMapLinks}
+              layers={layers}
+              layerAssets={layerAssets}
+              weeks={weeks}
+              incidents={incidents}
+              workOrders={workOrders}
+              incidentsByAsset={incidentsByAsset}
+              workOrdersByAsset={workOrdersByAsset}
+              onRemove={onRemoveMap}
+              onSaveAssignment={onSaveAssignment}
+              onCreateGlobalLayer={onCreateGlobalLayer}
+              onDeleteGlobalLayer={onDeleteGlobalLayer}
+              onAddLayerToMap={onAddLayerToMap}
+              onRemoveLayerFromMap={onRemoveLayerFromMap}
+              onToggleMapLayer={onToggleMapLayer}
+              onCreateLayer={onCreateLayer}
+              onDeleteLayer={onDeleteLayer}
+              onAddToLayer={onAddToLayer}
+              onRemoveFromLayer={onRemoveFromLayer}
+            />
+          );
+        })}
       </div>
     </div>
   );
