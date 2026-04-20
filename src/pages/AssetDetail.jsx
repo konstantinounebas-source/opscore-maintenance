@@ -8,6 +8,7 @@ import DataTable from "@/components/shared/DataTable";
 import AuditLog from "@/components/shared/AuditLog";
 import FileUploader from "@/components/shared/FileUploader";
 import AssetFormDialog from "@/components/assets/AssetFormDialog";
+import BusShelterOrderFormDialog from "@/components/assets/BusShelterOrderFormDialog";
 import ChildFormDialog from "@/components/assets/ChildFormDialog";
 import AddChildFromTemplateDialog from "@/components/assets/AddChildFromTemplateDialog";
 import MoveChildDialog from "@/components/childs/MoveChildDialog";
@@ -267,7 +268,7 @@ export default function AssetDetail() {
   return (
     <div>
       <TopHeader
-        title={asset.asset_name}
+        title={asset.asset_source === "bus_shelter_order" ? `Bus Stop: ${asset.asset_code || asset.asset_id}` : (asset.asset_name || asset.asset_id)}
         actions={
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => navigate("/Assets")}><ArrowLeft className="w-3.5 h-3.5 mr-1.5" />Back</Button>
@@ -281,19 +282,36 @@ export default function AssetDetail() {
         {/* Overview Card */}
         <div className="bg-white rounded-xl border border-slate-200 p-6">
           {/* Always-visible fields */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <Field label="Asset ID" value={asset.asset_id} />
-            <Field label="Active Shelter ID" value={asset.active_shelter_id} />
-            <Field label="Asset Name" value={asset.asset_name} />
-            <Field label="Status"><StatusBadge status={asset.status} /></Field>
-            <Field label="City" value={asset.city} />
-            <Field label="Shelter Type" value={asset.shelter_type} />
-            <Field label="Location / Address" value={asset.location_address} />
-            <Field label="Installation Date" value={asset.installation_date} />
-          </div>
+          {asset.asset_source === "bus_shelter_order" ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <Field label="Asset Code / Bus Stop ID" value={asset.asset_code} />
+              <Field label="Order Year" value={asset.order_year} />
+              <Field label="Stage" value={asset.asset_stage} />
+              <Field label="City" value={asset.city} />
+              <Field label="Municipality" value={asset.municipality} />
+              <Field label="Location / Address" value={asset.location_address} />
+              <Field label="Ordered Shelter Type" value={asset.ordered_shelter_type} />
+              <Field label="Installed Shelter Type" value={asset.installed_shelter_type} />
+              <Field label="Existing Condition" value={asset.existing_condition} />
+              <Field label="Has Bay" value={asset.has_bay} />
+              <Field label="Installation Date" value={asset.installation_date} />
+              {asset.notes && <div className="col-span-2 md:col-span-4"><Field label="Notes" value={asset.notes} /></div>}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <Field label="Asset ID" value={asset.asset_id} />
+              <Field label="Active Shelter ID" value={asset.active_shelter_id} />
+              <Field label="Asset Name" value={asset.asset_name} />
+              <Field label="Status"><StatusBadge status={asset.status} /></Field>
+              <Field label="City" value={asset.city} />
+              <Field label="Shelter Type" value={asset.shelter_type} />
+              <Field label="Location / Address" value={asset.location_address} />
+              <Field label="Installation Date" value={asset.installation_date} />
+            </div>
+          )}
 
-          {/* Expandable extra fields */}
-          {showMore && (
+          {/* Expandable extra fields — maintenance only */}
+          {asset.asset_source !== "bus_shelter_order" && showMore && (
             <div className="mt-6 pt-5 border-t border-slate-100 grid grid-cols-2 md:grid-cols-4 gap-6">
               <Field label="Delivery Date" value={asset.delivery_date} />
               <Field label="Delivery Year" value={asset.delivery_year} />
@@ -313,12 +331,14 @@ export default function AssetDetail() {
             </div>
           )}
 
-          <button
-            onClick={() => setShowMore(v => !v)}
-            className="mt-5 flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 font-medium"
-          >
-            {showMore ? <><ChevronUp className="w-3.5 h-3.5" /> Show Less</> : <><ChevronDown className="w-3.5 h-3.5" /> Show More Info</>}
-          </button>
+          {asset.asset_source !== "bus_shelter_order" && (
+            <button
+              onClick={() => setShowMore(v => !v)}
+              className="mt-5 flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+            >
+              {showMore ? <><ChevronUp className="w-3.5 h-3.5" /> Show Less</> : <><ChevronDown className="w-3.5 h-3.5" /> Show More Info</>}
+            </button>
+          )}
         </div>
 
         <Tabs defaultValue="childs" className="space-y-4">
@@ -418,7 +438,16 @@ export default function AssetDetail() {
         </Tabs>
       </div>
 
-      <AssetFormDialog open={editOpen} onOpenChange={setEditOpen} asset={asset} onSave={(data, attachments) => updateAsset.mutate({ data, attachments })} />
+      {asset?.asset_source === "bus_shelter_order" ? (
+        <BusShelterOrderFormDialog
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          order={asset}
+          onSave={(data) => updateAsset.mutate({ data, attachments: [] })}
+        />
+      ) : (
+        <AssetFormDialog open={editOpen} onOpenChange={setEditOpen} asset={asset} onSave={(data, attachments) => updateAsset.mutate({ data, attachments })} />
+      )}
 
       <ChildFormDialog open={childFormOpen} onOpenChange={setChildFormOpen} child={editingChild} parentAssetId={assetId} onSave={handleChildSave} />
       <MoveChildDialog open={moveDialogOpen} onOpenChange={setMoveDialogOpen} child={childToMove} assets={allAssets} currentAssetId={assetId} onMove={handleMoveChild} />
