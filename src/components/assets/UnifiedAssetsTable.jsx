@@ -15,7 +15,7 @@ const STAGE_COLORS = {
   maintenance:  "bg-purple-100 text-purple-700",
 };
 
-const PAGE_SIZES = [20, 40, 80, "All"];
+const PAGE_SIZES = [10, 20, 40, 80, "All"];
 
 export default function UnifiedAssetsTable({
   assets,
@@ -31,7 +31,7 @@ export default function UnifiedAssetsTable({
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterOpenIncidents, setFilterOpenIncidents] = useState("all");
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const [pageSize, setPageSize] = useState(10);
 
   const getOpenIncidents = (assetId) =>
     incidents.filter(i => i.related_asset_id === assetId && (i.status === "Open" || i.status === "In Progress")).length;
