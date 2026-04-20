@@ -81,7 +81,7 @@ export default function UnifiedAssetsTable({
   return (
     <div className="space-y-3">
       {/* Filter Bar */}
-      <div className="bg-white rounded-xl border border-slate-200 p-4">
+      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-2">
         <div className="flex flex-wrap gap-2 items-center">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
@@ -132,9 +132,16 @@ export default function UnifiedAssetsTable({
             </Button>
           )}
         </div>
-        {hasFilters && (
-          <p className="text-xs text-slate-500 mt-2">{totalRows} of {assets.length} assets shown</p>
-        )}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-slate-500">Rows per page:</span>
+          <Select value={String(pageSize)} onValueChange={v => { setPageSize(v === "All" ? "All" : Number(v)); setPage(1); }}>
+            <SelectTrigger className="h-8 text-xs w-20"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {PAGE_SIZES.map(s => <SelectItem key={s} value={String(s)}>{s}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          {hasFilters && <span className="text-xs text-slate-500">{totalRows} of {assets.length} assets shown</span>}
+        </div>
       </div>
 
       {/* Table */}
@@ -234,31 +241,19 @@ export default function UnifiedAssetsTable({
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-500">Rows per page:</span>
-          <Select value={String(pageSize)} onValueChange={v => { setPageSize(v === "All" ? "All" : Number(v)); setPage(1); }}>
-            <SelectTrigger className="h-8 text-xs w-20"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {PAGE_SIZES.map(s => <SelectItem key={s} value={String(s)}>{s}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <span className="text-xs text-slate-400">{totalRows} total</span>
+      {pageSize !== "All" && totalPages > 1 && (
+        <div className="flex items-center justify-end gap-2">
+          <span className="text-xs text-slate-500">
+            {(page - 1) * effectivePageSize + 1}–{Math.min(page * effectivePageSize, totalRows)} of {totalRows}
+          </span>
+          <Button variant="outline" size="sm" className="h-8 w-8 p-0" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <Button variant="outline" size="sm" className="h-8 w-8 p-0" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>
+            <ChevronRight className="w-4 h-4" />
+          </Button>
         </div>
-        {pageSize !== "All" && totalPages > 1 && (
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-500">
-              {(page - 1) * effectivePageSize + 1}–{Math.min(page * effectivePageSize, totalRows)} of {totalRows}
-            </span>
-            <Button variant="outline" size="sm" className="h-8 w-8 p-0" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <Button variant="outline" size="sm" className="h-8 w-8 p-0" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 }
