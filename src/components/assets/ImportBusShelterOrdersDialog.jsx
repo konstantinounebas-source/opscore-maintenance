@@ -1,8 +1,10 @@
 import React, { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, Loader2, X } from "lucide-react";
+import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import Papa from "papaparse";
+import * as XLSX from "xlsx";
 
 export default function ImportBusShelterOrdersDialog({ open, onOpenChange, onSuccess }) {
   const [file, setFile] = useState(null);
@@ -20,10 +22,19 @@ export default function ImportBusShelterOrdersDialog({ open, onOpenChange, onSuc
   };
 
   const handleFile = (f) => {
-    if (!f) return;
+    if (!f || !(f instanceof File)) {
+      setErrorMsg("Invalid file object. Please select a file.");
+      setStatus("error");
+      return;
+    }
+    if (f.size === 0) {
+      setErrorMsg("The selected file is empty.");
+      setStatus("error");
+      return;
+    }
     const ext = f.name.split(".").pop().toLowerCase();
-    if (!["xlsx", "xls"].includes(ext)) {
-      setErrorMsg("Please upload an .xlsx or .xls file.");
+    if (!["csv", "xlsx", "xls"].includes(ext)) {
+      setErrorMsg("Unsupported file type. Please upload a .csv, .xlsx, or .xls file.");
       setStatus("error");
       return;
     }
@@ -38,23 +49,112 @@ export default function ImportBusShelterOrdersDialog({ open, onOpenChange, onSuc
     handleFile(e.dataTransfer.files[0]);
   };
 
+  const parseFile = (file) => {
+    return new Promise((resolve, reject) => {
+      const ext = file.name.split(".").pop().toLowerCase();
+
+      if (ext === "csv") {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          Papa.parse(e.target.result, {
+            header: true,
+            dynamicTyping: true,
+            skipEmptyLines: true,
+            complete: (results) => {
+              if (!results.data || results.data.length === 0) {
+                reject("No rows found in the CSV file.");
+              } else {
+                resolve(results.data);
+              }
+            },
+            error: (err) => reject(`CSV parsing error: ${err.message}`),
+          });
+        };
+        reader.onerror = () => reject("Failed to read file.");
+        reader.readAsText(file);
+      } else {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const workbook = XLSX.read(e.target.result, { type: "binary" });
+          const TARGET_SHEET = "Base44_Import_Lean";
+          const sheetName = workbook.SheetNames.includes(TARGET_SHEET)
+            ? TARGET_SHEET
+            : workbook.SheetNames[0];
+
+          if (!sheetName) {
+            reject("No sheets found in the Excel file.");
+            return;
+          }
+
+          if (!workbook.SheetNames.includes(TARGET_SHEET) && workbook.SheetNames.length > 0) {
+            // using first sheet as fallback — that's fine, no error needed
+          }
+
+          const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: null });
+          if (!rows || rows.length === 0) {
+            reject(`No rows found in sheet "${sheetName}".`);
+          } else {
+            resolve(rows);
+          }
+        };
+        reader.onerror = () => reject("Failed to read file.");
+        reader.readAsBinaryString(file);
+      }
+    });
+  };
+
   const handleImport = async () => {
     if (!file) return;
     setStatus("uploading");
     setErrorMsg("");
+    setResult(null);
 
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    const response = await base44.functions.invoke("importBusShelterOrders", { file_url });
-    const data = response.data;
-
-    if (data?.success) {
-      setResult(data);
-      setStatus("success");
-      onSuccess?.();
-    } else {
-      setErrorMsg(data?.error || "Import failed. Please try again.");
+    let parsedRows;
+    try {
+      parsedRows = await parseFile(file);
+    } catch (e) {
+      setErrorMsg(typeof e === "string" ? e : e.message || "Failed to parse file.");
       setStatus("error");
+      return;
     }
+
+    if (!parsedRows || parsedRows.length === 0) {
+      setErrorMsg("No rows found in the file.");
+      setStatus("error");
+      return;
+    }
+
+    // Send in batches of 200 rows
+    const BATCH_SIZE = 200;
+    let totalCreated = 0;
+    let totalSkipped = 0;
+    let allSkippedDetails = [];
+
+    for (let i = 0; i < parsedRows.length; i += BATCH_SIZE) {
+      const batch = parsedRows.slice(i, i + BATCH_SIZE);
+      const response = await base44.functions.invoke("importBusShelterOrders", { rows: batch });
+      const data = response.data;
+
+      if (!data?.success) {
+        setErrorMsg(data?.error || "Import failed. Please try again.");
+        setStatus("error");
+        return;
+      }
+
+      totalCreated += data.created || 0;
+      totalSkipped += data.skipped || 0;
+      allSkippedDetails = allSkippedDetails.concat(data.skipped_details || []);
+    }
+
+    setResult({
+      success: true,
+      total_rows: parsedRows.length,
+      created: totalCreated,
+      skipped: totalSkipped,
+      skipped_details: allSkippedDetails,
+    });
+    setStatus("success");
+    onSuccess?.();
   };
 
   const handleClose = () => {
@@ -76,11 +176,13 @@ export default function ImportBusShelterOrdersDialog({ open, onOpenChange, onSuc
           {status !== "success" && (
             <>
               <p className="text-sm text-slate-500">
-                Upload your Excel file (<code className="bg-slate-100 px-1 rounded text-xs">Base44_Import_Lean</code> sheet will be used).
-                Duplicate asset codes will be skipped automatically.
+                Upload a <code className="bg-slate-100 px-1 rounded text-xs">.csv</code>,{" "}
+                <code className="bg-slate-100 px-1 rounded text-xs">.xlsx</code>, or{" "}
+                <code className="bg-slate-100 px-1 rounded text-xs">.xls</code> file. For Excel files,
+                the <code className="bg-slate-100 px-1 rounded text-xs">Base44_Import_Lean</code> sheet
+                will be used if present. Duplicate asset codes are skipped automatically.
               </p>
 
-              {/* Drop zone */}
               <div
                 className={`border-2 border-dashed rounded-xl p-8 flex flex-col items-center gap-3 cursor-pointer transition-colors ${
                   dragging ? "border-emerald-400 bg-emerald-50" : "border-slate-200 hover:border-emerald-300 hover:bg-slate-50"
@@ -98,14 +200,14 @@ export default function ImportBusShelterOrdersDialog({ open, onOpenChange, onSuc
                   </div>
                 ) : (
                   <div className="text-center">
-                    <p className="text-sm text-slate-600">Drop your Excel file here</p>
-                    <p className="text-xs text-slate-400">or click to browse</p>
+                    <p className="text-sm text-slate-600">Drop your file here</p>
+                    <p className="text-xs text-slate-400">or click to browse (.csv, .xlsx, .xls)</p>
                   </div>
                 )}
                 <input
                   ref={inputRef}
                   type="file"
-                  accept=".xlsx,.xls"
+                  accept=".csv,.xlsx,.xls"
                   className="hidden"
                   onChange={(e) => handleFile(e.target.files[0])}
                 />
@@ -121,7 +223,7 @@ export default function ImportBusShelterOrdersDialog({ open, onOpenChange, onSuc
               {status === "uploading" && (
                 <div className="flex items-center gap-2 text-sm text-slate-600 bg-slate-50 rounded-lg p-3">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Uploading and importing data… this may take a moment for large files.
+                  Parsing and importing data… this may take a moment for large files.
                 </div>
               )}
             </>
