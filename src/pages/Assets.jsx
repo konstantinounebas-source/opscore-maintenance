@@ -8,6 +8,7 @@ import AssetFormDialog from "@/components/assets/AssetFormDialog";
 import ImportAssetsDialog from "@/components/assets/ImportAssetsDialog";
 import BusShelterOrderFormDialog from "@/components/assets/BusShelterOrderFormDialog";
 import ImportBusShelterOrdersDialog from "@/components/assets/ImportBusShelterOrdersDialog";
+import NewAssetDialog from "@/components/assets/NewAssetDialog";
 import UnifiedAssetsTable from "@/components/assets/UnifiedAssetsTable";
 import { Button } from "@/components/ui/button";
 import { Box, Activity, Link2, AlertTriangle, Wrench, Plus, Download, Upload, BusFront } from "lucide-react";
@@ -17,7 +18,8 @@ export default function Assets() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [formOpen, setFormOpen] = useState(false);
+  const [newAssetOpen, setNewAssetOpen] = useState(false);
+  const [editFormOpen, setEditFormOpen] = useState(false);
   const [editingAsset, setEditingAsset] = useState(null);
   const [importOpen, setImportOpen] = useState(false);
   const [orderFormOpen, setOrderFormOpen] = useState(false);
@@ -39,7 +41,17 @@ export default function Assets() {
       const user = await base44.auth.me();
       await base44.entities.AssetTransactions.create({ asset_id: newAsset.id, action: "Asset Created", details: `Asset ${newAsset.asset_id} created`, user: user?.email });
       queryClient.invalidateQueries({ queryKey: ["assets"] });
-      setFormOpen(false);
+      // Notify maintenance manager
+      try {
+        const isBusOrder = newAsset.asset_source === "bus_shelter_order";
+        const label = isBusOrder ? `Bus Shelter Order (${newAsset.asset_code || newAsset.asset_id})` : `Maintenance Asset (${newAsset.asset_id || newAsset.active_shelter_id})`;
+        const location = [newAsset.location_address, newAsset.city, newAsset.municipality].filter(Boolean).join(", ");
+        await base44.integrations.Core.SendEmail({
+          to: user?.email,
+          subject: `New Asset Added: ${label}`,
+          body: `A new asset has been added to the system.\n\nType: ${isBusOrder ? "Bus Shelter Order" : "Maintenance Asset"}\nID: ${newAsset.asset_id || "—"}\nLocation: ${location || "—"}\nAdded by: ${user?.email || "—"}\nDate: ${new Date().toLocaleString()}\n\nPlease log in to review the asset details.`,
+        });
+      } catch (_) { /* notification is non-critical */ }
       toast({ title: "Asset created successfully" });
     },
   });
@@ -50,7 +62,7 @@ export default function Assets() {
       const user = await base44.auth.me();
       await base44.entities.AssetTransactions.create({ asset_id: editingAsset.id, action: "Asset Updated", details: "Asset information modified", user: user?.email });
       queryClient.invalidateQueries({ queryKey: ["assets"] });
-      setFormOpen(false);
+      setEditFormOpen(false);
       setEditingAsset(null);
       toast({ title: "Asset updated successfully" });
     },
@@ -189,7 +201,7 @@ export default function Assets() {
       setOrderFormOpen(true);
     } else {
       setEditingAsset(asset);
-      setFormOpen(true);
+      setEditFormOpen(true);
     }
   };
 
@@ -213,11 +225,8 @@ export default function Assets() {
             <Button variant="outline" size="sm" className="gap-1.5" onClick={exportCSV}>
               <Download className="w-3.5 h-3.5" /> Export
             </Button>
-            <Button variant="outline" size="sm" className="gap-1.5 border-emerald-300 text-emerald-700 hover:bg-emerald-50" onClick={() => { setEditingOrder(null); setOrderFormOpen(true); }}>
-              <Plus className="w-3.5 h-3.5" /> New Order
-            </Button>
-            <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 gap-1.5" onClick={() => { setEditingAsset(null); setFormOpen(true); }}>
-              <Plus className="w-3.5 h-3.5" /> Add Asset
+            <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 gap-1.5" onClick={() => setNewAssetOpen(true)}>
+              <Plus className="w-3.5 h-3.5" /> Add Asset / Order
             </Button>
           </div>
         }
@@ -242,9 +251,10 @@ export default function Assets() {
         />
       </div>
 
+      <NewAssetDialog open={newAssetOpen} onOpenChange={setNewAssetOpen} onSave={handleSave} />
       <AssetFormDialog
-        open={formOpen}
-        onOpenChange={(open) => { setFormOpen(open); if (!open) setEditingAsset(null); }}
+        open={editFormOpen}
+        onOpenChange={(open) => { setEditFormOpen(open); if (!open) setEditingAsset(null); }}
         asset={editingAsset}
         onSave={handleSave}
       />
