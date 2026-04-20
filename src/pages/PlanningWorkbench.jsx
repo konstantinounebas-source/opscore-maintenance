@@ -1,8 +1,8 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import MapWorkspaceContainer from "@/components/workbench/MapWorkspaceContainer";
 import PlanningReviewPanel from "@/components/workbench/PlanningReviewPanel";
@@ -153,6 +153,52 @@ export default function PlanningWorkbench() {
 
   const isLoading = weeksLoading || assignmentsLoading;
 
+  // ── Resizable right panel ────────────────────────────────────────────────────
+  const [panelWidth, setPanelWidth] = useState(288); // px, ~w-72
+  const [panelHidden, setPanelHidden] = useState(false);
+  const isDragging = useRef(false);
+  const dragStartX = useRef(0);
+  const dragStartWidth = useRef(0);
+
+  const containerRef = useRef(null);
+  const MIN_WIDTH = 60;   // ~5% of typical screen
+  const MAX_WIDTH_FRAC = 0.40; // 40% of container
+
+  const handleDragStart = (e) => {
+    isDragging.current = true;
+    dragStartX.current = e.clientX;
+    dragStartWidth.current = panelWidth;
+    document.addEventListener("mousemove", handleDragMove);
+    document.addEventListener("mouseup", handleDragEnd);
+    e.preventDefault();
+  };
+
+  const handleDragMove = useCallback((e) => {
+    if (!isDragging.current) return;
+    const containerWidth = containerRef.current?.offsetWidth || window.innerWidth;
+    const maxWidth = containerWidth * MAX_WIDTH_FRAC;
+    const delta = dragStartX.current - e.clientX; // dragging left = expand, right = shrink
+    const newWidth = Math.min(maxWidth, Math.max(MIN_WIDTH, dragStartWidth.current + delta));
+    setPanelWidth(newWidth);
+    if (newWidth <= MIN_WIDTH + 10) setPanelHidden(true);
+    else setPanelHidden(false);
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    isDragging.current = false;
+    document.removeEventListener("mousemove", handleDragMove);
+    document.removeEventListener("mouseup", handleDragEnd);
+  }, [handleDragMove]);
+
+  const togglePanel = () => {
+    if (panelHidden) {
+      setPanelHidden(false);
+      setPanelWidth(288);
+    } else {
+      setPanelHidden(true);
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-slate-100">
       {/* Top bar */}
@@ -177,7 +223,7 @@ export default function PlanningWorkbench() {
       </div>
 
       {/* Main split layout */}
-      <div className="flex flex-1 overflow-hidden gap-0">
+      <div ref={containerRef} className="flex flex-1 overflow-hidden gap-0 relative">
         {/* LEFT: Map workspace zone — takes remaining space */}
         <div className="flex-1 overflow-hidden min-w-0">
           <MapWorkspaceContainer
@@ -201,15 +247,41 @@ export default function PlanningWorkbench() {
           />
         </div>
 
-        {/* RIGHT: Passive review panel — fixed width, isolated state */}
-        <div className="w-72 shrink-0 overflow-hidden border-l border-slate-200">
-          <PlanningReviewPanel
-            weeks={weeks}
-            allAssignments={allAssignments}
-            assetsMap={assetsMap}
-            incidentsByAsset={incidentsByAsset}
-            workOrdersByAsset={workOrdersByAsset}
-          />
+        {/* Resize handle + toggle button */}
+        <div
+          className="relative shrink-0 flex items-center justify-center cursor-col-resize select-none z-10"
+          style={{ width: 10 }}
+          onMouseDown={handleDragStart}
+        >
+          <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-0.5 bg-slate-200 hover:bg-indigo-400 transition-colors" />
+          <button
+            onClick={togglePanel}
+            onMouseDown={e => e.stopPropagation()}
+            className="absolute z-20 bg-white border border-slate-200 rounded-full shadow p-0.5 hover:bg-indigo-50 hover:border-indigo-300 transition-colors"
+            style={{ top: "50%" , transform: "translateY(-50%)" }}
+            title={panelHidden ? "Show panel" : "Hide panel"}
+          >
+            {panelHidden
+              ? <ChevronLeft className="h-3 w-3 text-slate-500" />
+              : <ChevronRight className="h-3 w-3 text-slate-500" />
+            }
+          </button>
+        </div>
+
+        {/* RIGHT: Passive review panel — resizable */}
+        <div
+          className="shrink-0 overflow-hidden border-l border-slate-200 transition-all duration-150"
+          style={{ width: panelHidden ? 0 : panelWidth, minWidth: panelHidden ? 0 : undefined }}
+        >
+          {!panelHidden && (
+            <PlanningReviewPanel
+              weeks={weeks}
+              allAssignments={allAssignments}
+              assetsMap={assetsMap}
+              incidentsByAsset={incidentsByAsset}
+              workOrdersByAsset={workOrdersByAsset}
+            />
+          )}
         </div>
       </div>
 
