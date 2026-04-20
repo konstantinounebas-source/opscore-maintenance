@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Layers, Plus, Trash2, Eye, EyeOff, Check, X, Pencil, GripVertical } from "lucide-react";
-import { COLOR_RULE_FIELDS, resolveFieldValue } from "./workbenchUtils";
+import { COLOR_RULE_FIELDS, resolveFieldValue } from "./workbenchUtils.jsx";
 
 const PRESET_COLORS = ["#6366F1","#EC4899","#F59E0B","#10B981","#3B82F6","#EF4444","#8B5CF6","#06B6D4","#F97316","#84CC16","#14B8A6","#F43F5E"];
 

@@ -1,3 +1,54 @@
+// ─── Color Rule Field Definitions ────────────────────────────────────────────
+export const COLOR_RULE_FIELDS = [
+  { id: "assignment_status", label: "Assignment Status", source: "assignment" },
+  { id: "assignment_type",   label: "Work Type",         source: "assignment" },
+  { id: "priority_bucket",   label: "Priority",          source: "assignment" },
+  { id: "team_name",         label: "Team",              source: "assignment" },
+  { id: "assigned_to",       label: "Assigned To",       source: "assignment" },
+  { id: "asset_status",      label: "Asset Status",      source: "asset",      assetKey: "status" },
+  { id: "city",              label: "City",              source: "asset",      assetKey: "city" },
+  { id: "shelter_type",      label: "Shelter Type",      source: "asset",      assetKey: "shelter_type" },
+];
+
+// Resolve the runtime value for a given field from asset+assignment context
+export function resolveFieldValue(fieldId, asset, assignment) {
+  switch (fieldId) {
+    case "assignment_status": return assignment?.assignment_status ?? null;
+    case "assignment_type":   return assignment?.assignment_type ?? null;
+    case "priority_bucket":   return assignment?.priority_bucket ?? null;
+    case "team_name":         return assignment?.team_name ?? null;
+    case "assigned_to":       return assignment?.assigned_to ?? null;
+    case "asset_status":      return asset?.status ?? null;
+    case "city":              return asset?.city ?? null;
+    case "shelter_type":      return asset?.shelter_type ?? null;
+    default:                  return null;
+  }
+}
+
+// Resolve pin color from per-map color rules (new architecture)
+// colorRules = PlanningLayers filtered for a given map (enabled, sorted by priority desc)
+export function getColorRulePin(asset, assignment, colorRules, layerAssets) {
+  if (!colorRules || colorRules.length === 0) return null;
+
+  // Manual overrides first
+  const manualRules = colorRules.filter(r => r.layer_type === "manual_override");
+  for (const rule of manualRules) {
+    const inLayer = layerAssets.some(la => la.planning_layer_id === rule.id && la.asset_id === asset.id);
+    if (inLayer) return rule.color_hex;
+  }
+
+  // Rule-based: find highest-priority matching rule
+  const ruleBasedRules = colorRules.filter(r => r.layer_type !== "manual_override");
+  for (const rule of ruleBasedRules) {
+    const val = resolveFieldValue(rule.color_by_field, asset, assignment);
+    if (val !== null && String(val) === String(rule.color_by_value)) {
+      return rule.color_hex;
+    }
+  }
+
+  return null; // no match → caller uses default color
+}
+
 // ─── Color Mode Options ────────────────────────────────────────────────────────
 
 export const COLOR_MODES = [
@@ -96,7 +147,13 @@ function getVisualRuleColor(asset, assignment, rule, incidentsByAsset, workOrder
 
 // ─── Main pin color resolver ───────────────────────────────────────────────────
 
-export function getMapPinColor({ asset, assignment, colorMode, layers, layerAssets, incidentsByAsset, workOrdersByAsset, activeVisualRule }) {
+export function getMapPinColor({ asset, assignment, colorMode, layers, layerAssets, incidentsByAsset, workOrdersByAsset, activeVisualRule, colorRules }) {
+  // New color rules architecture takes highest precedence
+  if (colorRules && colorRules.length > 0) {
+    const ruleColor = getColorRulePin(asset, assignment, colorRules, layerAssets);
+    if (ruleColor) return ruleColor;
+  }
+
   // Visual rule takes precedence if active
   if (activeVisualRule) {
     return getVisualRuleColor(asset, assignment, activeVisualRule, incidentsByAsset, workOrdersByAsset);
@@ -154,7 +211,16 @@ export function getMapPinColor({ asset, assignment, colorMode, layers, layerAsse
 
 // ─── Legend entries per color mode ────────────────────────────────────────────
 
-export function getLegendEntries(colorMode, layers, assets, assignments, incidentsByAsset, workOrdersByAsset, layerAssets, activeVisualRule) {
+export function getLegendEntries(colorMode, layers, assets, assignments, incidentsByAsset, workOrdersByAsset, layerAssets, activeVisualRule, colorRules) {
+  // New color rules legend
+  if (colorRules && colorRules.length > 0) {
+    return colorRules.map(r => ({
+      label: r.label || `${r.color_by_field}: ${r.color_by_value}`,
+      color: r.color_hex,
+      rule: `${r.color_by_field} = ${r.color_by_value}`,
+    }));
+  }
+
   if (activeVisualRule) {
     return activeVisualRule.values.map((val, idx) => ({
       label: val,
