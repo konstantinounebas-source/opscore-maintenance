@@ -40,7 +40,6 @@ export default function Assets() {
       await base44.entities.AssetTransactions.create({ asset_id: newAsset.id, action: "Asset Created", details: `Asset ${newAsset.asset_id} created`, user: user?.email });
       queryClient.invalidateQueries({ queryKey: ["assets"] });
       setFormOpen(false);
-      setNewOrderDefaults(null);
       toast({ title: "Asset created successfully" });
     },
   });
@@ -89,7 +88,7 @@ export default function Assets() {
         });
         return;
       }
-      const newAsset = await createMutation.mutateAsync({ ...formData, ...newOrderDefaults });
+      const newAsset = await createMutation.mutateAsync({ ...formData });
       if (!newAsset?.id) return;
       const user = await base44.auth.me();
       if (childComponents.length > 0) {
