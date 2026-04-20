@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, X } from "lucide-react";
+import { Plus, Search, X, Upload } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 const STAGE_COLORS = {
@@ -25,7 +25,7 @@ const CONDITION_LABELS = {
   unknown:         "Unknown",
 };
 
-export default function BusShelterOrdersTab({ assets, onNewOrder }) {
+export default function BusShelterOrdersTab({ assets, onNewOrder, onImport }) {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [filterStage, setFilterStage] = useState("all");
@@ -100,9 +100,14 @@ export default function BusShelterOrdersTab({ assets, onNewOrder }) {
             </Button>
           )}
         </div>
-        <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 gap-1.5" onClick={onNewOrder}>
-          <Plus className="w-3.5 h-3.5" /> New Bus Shelter Order
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={onImport}>
+            <Upload className="w-3.5 h-3.5" /> Import from Excel
+          </Button>
+          <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 gap-1.5" onClick={onNewOrder}>
+            <Plus className="w-3.5 h-3.5" /> New Bus Shelter Order
+          </Button>
+        </div>
       </div>
 
       {hasFilters && <p className="text-xs text-slate-500">{filtered.length} of {orders.length} orders shown</p>}

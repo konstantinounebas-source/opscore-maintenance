@@ -10,6 +10,7 @@ import AssetFormDialog from "@/components/assets/AssetFormDialog";
 import ImportAssetsDialog from "@/components/assets/ImportAssetsDialog";
 import BusShelterOrdersTab from "@/components/assets/BusShelterOrdersTab";
 import BusShelterOrderFormDialog from "@/components/assets/BusShelterOrderFormDialog";
+import ImportBusShelterOrdersDialog from "@/components/assets/ImportBusShelterOrdersDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -28,6 +29,7 @@ export default function Assets() {
   const [importOpen, setImportOpen] = useState(false);
   const [orderFormOpen, setOrderFormOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState(null);
+  const [importOrdersOpen, setImportOrdersOpen] = useState(false);
 
   // Filter state (maintenance tab)
   const [searchText, setSearchText] = useState("");
@@ -388,7 +390,7 @@ export default function Assets() {
           </TabsContent>
 
           <TabsContent value="bus_shelter_orders">
-            <BusShelterOrdersTab assets={assets} onNewOrder={handleNewOrder} />
+            <BusShelterOrdersTab assets={assets} onNewOrder={handleNewOrder} onImport={() => setImportOrdersOpen(true)} />
           </TabsContent>
         </Tabs>
       </div>
@@ -406,6 +408,11 @@ export default function Assets() {
         onOpenChange={setOrderFormOpen}
         order={editingOrder}
         onSave={handleOrderSave}
+      />
+      <ImportBusShelterOrdersDialog
+        open={importOrdersOpen}
+        onOpenChange={setImportOrdersOpen}
+        onSuccess={() => queryClient.invalidateQueries({ queryKey: ["assets"] })}
       />
     </div>
   );
