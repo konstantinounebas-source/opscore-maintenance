@@ -58,7 +58,7 @@ export default function ImportBusShelterOrdersDialog({ open, onOpenChange, onSuc
         reader.onload = (e) => {
           Papa.parse(e.target.result, {
             header: true,
-            dynamicTyping: true,
+            dynamicTyping: false,
             skipEmptyLines: true,
             complete: (results) => {
               if (!results.data || results.data.length === 0) {
@@ -128,6 +128,7 @@ export default function ImportBusShelterOrdersDialog({ open, onOpenChange, onSuc
     const BATCH_SIZE = 200;
     let totalCreated = 0;
     let totalSkipped = 0;
+    let totalUpdated = 0;
     let allSkippedDetails = [];
 
     for (let i = 0; i < parsedRows.length; i += BATCH_SIZE) {
@@ -144,12 +145,14 @@ export default function ImportBusShelterOrdersDialog({ open, onOpenChange, onSuc
       totalCreated += data.created || 0;
       totalSkipped += data.skipped || 0;
       allSkippedDetails = allSkippedDetails.concat(data.skipped_details || []);
+      totalUpdated = (totalUpdated || 0) + (data.updated || 0);
     }
 
     setResult({
       success: true,
       total_rows: parsedRows.length,
       created: totalCreated,
+      updated: totalUpdated,
       skipped: totalSkipped,
       skipped_details: allSkippedDetails,
     });
@@ -235,9 +238,12 @@ export default function ImportBusShelterOrdersDialog({ open, onOpenChange, onSuc
               <div>
                 <p className="text-lg font-semibold text-slate-800">Import Complete</p>
                 <p className="text-sm text-slate-500 mt-1">
-                  <span className="font-medium text-emerald-700">{result.created}</span> records imported
+                  <span className="font-medium text-emerald-700">{result.created}</span> created
+                  {result.updated > 0 && (
+                    <>, <span className="font-medium text-blue-600">{result.updated}</span> updated</>
+                  )}
                   {result.skipped > 0 && (
-                    <>, <span className="font-medium text-amber-600">{result.skipped}</span> skipped (duplicates)</>
+                    <>, <span className="font-medium text-amber-600">{result.skipped}</span> skipped</>
                   )}
                   {" "}out of <span className="font-medium">{result.total_rows}</span> total rows.
                 </p>
