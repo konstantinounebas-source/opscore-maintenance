@@ -1,0 +1,173 @@
+{
+  "name": "Assets",
+  "type": "object",
+  "properties": {
+    "asset_id": {
+      "type": "string",
+      "description": "Unique asset identifier"
+    },
+    "asset_source": {
+      "type": "string",
+      "enum": [
+        "maintenance",
+        "bus_shelter_order"
+      ],
+      "default": "maintenance",
+      "description": "Source / type of asset record"
+    },
+    "asset_stage": {
+      "type": "string",
+      "enum": [
+        "planning",
+        "ordered",
+        "installation",
+        "installed",
+        "maintenance"
+      ],
+      "default": "planning",
+      "description": "Current stage of the asset lifecycle"
+    },
+    "asset_code": {
+      "type": "string",
+      "description": "External reference ID (e.g. bus stop ID)"
+    },
+    "order_year": {
+      "type": "number",
+      "description": "Year of the bus shelter order"
+    },
+    "existing_condition": {
+      "type": "string",
+      "enum": [
+        "none",
+        "sign_only",
+        "shelter_only",
+        "sign_and_shelter",
+        "unknown"
+      ],
+      "description": "Existing condition at the bus stop location"
+    },
+    "has_bay": {
+      "type": "string",
+      "enum": [
+        "yes",
+        "no",
+        "unknown"
+      ],
+      "description": "Whether the location has a bus bay"
+    },
+    "ordered_shelter_type": {
+      "type": "string",
+      "description": "Shelter type as ordered"
+    },
+    "installed_shelter_type": {
+      "type": "string",
+      "description": "Shelter type as actually installed"
+    },
+    "category": {
+      "type": "string",
+      "description": "Asset category"
+    },
+    "asset_type": {
+      "type": "string",
+      "description": "Specific type of asset"
+    },
+    "active_shelter_id": {
+      "type": "string",
+      "description": "Active Shelter ID (validated)"
+    },
+    "location_address": {
+      "type": "string",
+      "description": "Location / Address"
+    },
+    "city": {
+      "type": "string",
+      "description": "City / \u0395\u03c0\u03b1\u03c1\u03c7\u03af\u03b1 (e.g. Nicosia)"
+    },
+    "municipality": {
+      "type": "string",
+      "description": "Municipality / \u0394\u03ae\u03bc\u03bf\u03c2 (e.g. Strovolos)"
+    },
+    "shelter_type": {
+      "type": "string",
+      "description": "Shelter type from dropdown"
+    },
+    "status": {
+      "type": "string",
+      "description": "Current status of the asset"
+    },
+    "installation_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the asset was installed"
+    },
+    "delivery_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Delivery date"
+    },
+    "delivery_year": {
+      "type": "number",
+      "description": "Delivery year"
+    },
+    "warranty_base_year": {
+      "type": "number",
+      "description": "Warranty base year (automatic)"
+    },
+    "software_warranty_end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Software Warranty End Date (3 Years)"
+    },
+    "electronics_warranty_end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Refurbish & Electronic Equipment Warranty End Date (5 Years)"
+    },
+    "materials_warranty_end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Acrylic/Plastics/Seals/Paint Warranty End Date (10 Years)"
+    },
+    "structural_warranty_end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Metal/Glass/Solar Panels/Electrical Equipment Warranty End Date (15 Years)"
+    },
+    "preventive_inspection_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Preventive Inspection Date (6 years after 2023 contract)"
+    },
+    "next_inspection_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Next Inspection Date"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Notes"
+    },
+    "latitude": {
+      "type": "number",
+      "description": "GPS Latitude"
+    },
+    "longitude": {
+      "type": "number",
+      "description": "GPS Longitude"
+    },
+    "evidence_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Attached document/photo types"
+    },
+    "description": {
+      "type": "string",
+      "description": "General description of the asset"
+    }
+  },
+  "required": [
+    "asset_id"
+  ]
+}
