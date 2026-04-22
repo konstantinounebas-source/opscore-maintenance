@@ -24,15 +24,26 @@ export default function Incidents() {
   const [filterShelterType, setFilterShelterType] = useState("all");
   const [filterReportingMethod, setFilterReportingMethod] = useState("all");
   const [filterSource, setFilterSource] = useState("all");
+  const [filterWorkflowState, setFilterWorkflowState] = useState("all");
 
   const { data: incidents = [] } = useQuery({ queryKey: ["incidents"], queryFn: () => base44.entities.Incidents.list() });
   const { data: workOrders = [] } = useQuery({ queryKey: ["workOrders"], queryFn: () => base44.entities.WorkOrders.list() });
 
   const createMutation = useMutation({
     mutationFn: async ({ data, pendingFiles }) => {
-      const inc = await base44.entities.Incidents.create(data);
+      const now = new Date().toISOString();
+      // Initialize workflow state and SLA 1 clock on creation
+      const incidentData = {
+        ...data,
+        workflow_state: "Awaiting_CR_OMPI",
+        incident_created_at: now,
+        sla_status: "On Track",
+        // SLA 1 deadline will be computed when priority is known (at CR+OMPI submission)
+        // We cannot compute it yet as operational_priority is set at CR+OMPI
+      };
+      const inc = await base44.entities.Incidents.create(incidentData);
       const user = await base44.auth.me();
-      await base44.entities.IncidentAuditTrail.create({ incident_id: inc.id, action: "Incident Created", details: `Incident ${data.incident_id} created`, user: user?.email });
+      await base44.entities.IncidentAuditTrail.create({ incident_id: inc.id, action: "Incident Created", details: `Incident ${data.incident_id} created. Workflow started: Awaiting CR+OMPI.`, user: user?.email });
       if (pendingFiles?.length > 0) {
         for (const file of pendingFiles) {
           await base44.entities.IncidentAttachments.create({
@@ -80,16 +91,21 @@ export default function Incidents() {
       if (filterShelterType !== "all" && i.shelter_type !== filterShelterType) return false;
       if (filterReportingMethod !== "all" && i.incident_reporting_method !== filterReportingMethod) return false;
       if (filterSource !== "all" && i.incident_source !== filterSource) return false;
+      if (filterWorkflowState !== "all") {
+        const effectiveState = i.workflow_state || (i.status === "Closed" ? "Closed" : i.ompi_done ? "FMPI_Draft" : "Awaiting_CR_OMPI");
+        if (effectiveState !== filterWorkflowState) return false;
+      }
       return true;
     });
   }, [incidents, workOrders, filterStatus, filterPriority, filterWO, filterProvince, filterShelterType, filterReportingMethod, filterSource]);
 
   const hasActiveFilters = filterStatus !== "all" || filterPriority !== "all" || filterWO !== "all" ||
-    filterProvince !== "all" || filterShelterType !== "all" || filterReportingMethod !== "all" || filterSource !== "all";
+    filterProvince !== "all" || filterShelterType !== "all" || filterReportingMethod !== "all" || filterSource !== "all" ||
+    filterWorkflowState !== "all";
 
   const clearFilters = () => {
     setFilterStatus("all"); setFilterPriority("all"); setFilterWO("all");
-    setFilterProvince("all"); setFilterShelterType("all"); setFilterReportingMethod("all"); setFilterSource("all");
+    setFilterProvince("all"); setFilterShelterType("all"); setFilterReportingMethod("all"); setFilterSource("all"); setFilterWorkflowState("all");
   };
 
   const columns = [
@@ -156,16 +172,26 @@ export default function Incidents() {
       }
     },
     {
-      key: "ca_status",
-      label: "CA Status",
+      key: "workflow_state",
+      label: "Workflow State",
       render: (r) => {
-        const s = r.ca_status || "Pending";
-        const styles = {
-          Pending: "bg-amber-100 text-amber-700",
-          Approved: "bg-green-100 text-green-700",
-          "Not Approved": "bg-red-100 text-red-700",
+        const stateMap = {
+          Awaiting_CR_OMPI:        { label: "Awaiting CR+OMPI",  color: "bg-slate-100 text-slate-600" },
+          CR_OMPI_Submitted:       { label: "CR+OMPI Done",       color: "bg-blue-100 text-blue-700" },
+          FMPI_Draft:              { label: "FMPI Draft",         color: "bg-purple-100 text-purple-700" },
+          FMPI_Submitted:          { label: "FMPI Submitted",     color: "bg-indigo-100 text-indigo-700" },
+          Awaiting_CA_Approval:    { label: "Awaiting CA",        color: "bg-amber-100 text-amber-700" },
+          CA_Rejected:             { label: "CA Rejected",        color: "bg-red-100 text-red-700" },
+          Approved_For_Corrective: { label: "CA Approved",        color: "bg-emerald-100 text-emerald-700" },
+          Corrective_In_Progress:  { label: "Corrective WIP",     color: "bg-cyan-100 text-cyan-700" },
+          Awaiting_Closure:        { label: "Awaiting Closure",   color: "bg-pink-100 text-pink-700" },
+          Closed:                  { label: "Closed",             color: "bg-green-100 text-green-700" },
+          Cancelled:               { label: "Cancelled",          color: "bg-slate-100 text-slate-400" },
         };
-        return <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${styles[s] || "bg-slate-100 text-slate-500"}`}>{s}</span>;
+        // Legacy fallback for incidents without workflow_state
+        const state = r.workflow_state || (r.status === "Closed" ? "Closed" : r.ompi_done ? "FMPI_Draft" : "Awaiting_CR_OMPI");
+        const meta = stateMap[state] || { label: state, color: "bg-slate-100 text-slate-500" };
+        return <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${meta.color}`}>{meta.label}</span>;
       }
     },
     {
@@ -259,6 +285,23 @@ export default function Incidents() {
                 </SelectContent>
               </Select>
             )}
+            <Select value={filterWorkflowState} onValueChange={setFilterWorkflowState}>
+              <SelectTrigger className="h-9 text-sm w-44"><SelectValue placeholder="Workflow State" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Workflow States</SelectItem>
+                <SelectItem value="Awaiting_CR_OMPI">Awaiting CR+OMPI</SelectItem>
+                <SelectItem value="CR_OMPI_Submitted">CR+OMPI Done</SelectItem>
+                <SelectItem value="FMPI_Draft">FMPI Draft</SelectItem>
+                <SelectItem value="FMPI_Submitted">FMPI Submitted</SelectItem>
+                <SelectItem value="Awaiting_CA_Approval">Awaiting CA Approval</SelectItem>
+                <SelectItem value="CA_Rejected">CA Rejected</SelectItem>
+                <SelectItem value="Approved_For_Corrective">CA Approved</SelectItem>
+                <SelectItem value="Corrective_In_Progress">Corrective WIP</SelectItem>
+                <SelectItem value="Awaiting_Closure">Awaiting Closure</SelectItem>
+                <SelectItem value="Closed">Closed</SelectItem>
+                <SelectItem value="Cancelled">Cancelled</SelectItem>
+              </SelectContent>
+            </Select>
             {hasActiveFilters && (
               <Button variant="ghost" size="sm" onClick={clearFilters} className="h-9 gap-1.5 text-slate-500">
                 <X className="w-3.5 h-3.5" /> Clear

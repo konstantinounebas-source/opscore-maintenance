@@ -56,9 +56,37 @@ export default function ResetIncidentDialog({ incident, incidentId, open, onOpen
         await base44.entities.WorkOrders.delete(wo.id);
       }
 
-      // 4. Reset incident workflow flags & status
+      // 4. Reset incident workflow state (new state machine + legacy booleans)
       await base44.entities.Incidents.update(incidentId, {
         status: "Open",
+        // New workflow fields
+        workflow_state: "Awaiting_CR_OMPI",
+        operational_priority: null,
+        warranty_status: null,
+        make_safe_required: false,
+        inspection_required: false,
+        fmpi_required: true,
+        fmpi_approval_required: false,
+        corrective_allowed: false,
+        cr_ompi_submitted_at: null,
+        make_safe_completed_at: null,
+        inspection_completed_at: null,
+        fmpi_submitted_at: null,
+        ca_decision_at: null,
+        ca_decision: null,
+        ca_decision_comment: null,
+        corrective_started_at: null,
+        corrective_completed_at: null,
+        closed_at: null,
+        closure_notes: null,
+        closure_evidence_uploaded: false,
+        active_sla_code: null,
+        active_sla_name: null,
+        sla_started_at: null,
+        sla_deadline_at: null,
+        sla_status: null,
+        sla_completed_at: null,
+        // Legacy booleans (kept for backward compat)
         confirmation_done: false,
         ompi_done: false,
         owr_fmpi_done: false,

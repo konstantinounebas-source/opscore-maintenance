@@ -6,10 +6,11 @@ import { FileText, ExternalLink, Clock } from "lucide-react";
 import { format } from "date-fns";
 
 const FORM_TYPE_LABELS = {
-  outline_management_incident_plan: "Outline Management Incident Plan",
-  combined_fmpi_invoice:    "FMPI & Pricing Order",
-  make_safe_checklist:      "MAKE-SAFE CHECKLIST ΠΕΔΙΟΥ",
-  work_order_form_f:        "Work Order Invoice",
+  cr_ompi:                          "Confirmation of Receipt + OMPI",
+  outline_management_incident_plan: "Outline Management Incident Plan (Legacy)",
+  combined_fmpi_invoice:            "FMPI & Pricing Order",
+  make_safe_checklist:              "MAKE-SAFE CHECKLIST ΠΕΔΙΟΥ",
+  work_order_form_f:                "Work Order Invoice",
 };
 
 const STATUS_COLORS = {

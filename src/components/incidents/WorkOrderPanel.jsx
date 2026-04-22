@@ -412,10 +412,12 @@ function ChecklistModal({ wo, incidentId, onClose, onDone }) {
   );
 }
 
-export default function WorkOrderPanel({ woType, incident, incidentId }) {
+export default function WorkOrderPanel({ woType, incident, incidentId, lockedReason }) {
   const config = WO_TYPE_CONFIG[woType];
-  // Only lock corrective WO if OWR=Yes AND CA not yet approved. In-warranty incidents don't need CA approval.
-  const isCorrectiveLocked = woType === "corrective" && incident?.out_of_warranty === "Yes" && incident?.ca_status !== "Approved";
+  // New state-machine lock: use lockedReason prop if provided, else fall back to legacy logic
+  const isCorrectiveLocked = lockedReason
+    ? true
+    : woType === "corrective" && incident?.out_of_warranty === "Yes" && incident?.ca_status !== "Approved";
   const [expanded, setExpanded] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [closingWO, setClosingWO] = useState(null);
@@ -467,7 +469,7 @@ export default function WorkOrderPanel({ woType, incident, incidentId }) {
           </span>
           {isCorrectiveLocked && (
             <span className="text-xs text-slate-400 flex items-center gap-1">
-              <Lock className="w-3 h-3" /> Requires CA Approval
+              <Lock className="w-3 h-3" /> {lockedReason || "Requires CA Approval"}
             </span>
           )}
           {!isCorrectiveLocked && totalCount > 0 && (

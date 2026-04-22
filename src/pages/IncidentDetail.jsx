@@ -7,6 +7,7 @@ import StatusBadge from "@/components/shared/StatusBadge";
 import AuditLog from "@/components/shared/AuditLog";
 import IncidentFormDialog from "@/components/incidents/IncidentFormDialog";
 import IncidentWorkflow from "@/components/incidents/IncidentWorkflow.jsx";
+import SLAStatusCard from "@/components/incidents/SLAStatusCard";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -217,6 +218,9 @@ export default function IncidentDetail() {
             {showMore ? <><ChevronUp className="w-3.5 h-3.5" /> Show Less</> : <><ChevronDown className="w-3.5 h-3.5" /> Show More Info</>}
           </button>
         </div>
+
+        {/* SLA Status Card */}
+        <SLAStatusCard incident={incident} />
 
         {/* Workflow */}
         <IncidentWorkflow incident={incident} incidentId={incidentId} onRefresh={invalidateAll} />

@@ -14,7 +14,8 @@ import {
   ArrowLeft, Save, Send, Lock, Plus, Trash2, AlertTriangle,
   CheckCircle2, Upload, X, Info, Euro, Calendar, Wrench, Clock
 } from "lucide-react";
-import { format, addBusinessDays, addDays } from "date-fns";
+import { format } from "date-fns";
+import { computeFMPISLA, computeRepairSLA, computeCROMPISLA, mergeRules, formatDeadline } from "@/lib/slaEngine";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/AuthContext";
 import FileUploadArea from "@/components/shared/FileUploadArea";
@@ -29,27 +30,7 @@ function fmtNum(n) {
   return Number(n).toFixed(2);
 }
 
-// ── SLA calculation ────────────────────────────────────────────────────────────
-function calcConfirmationDeadline(reportDate, isHighPriority) {
-  if (!reportDate) return null;
-  const d = new Date(reportDate);
-  return isHighPriority ? addBusinessDays(d, 1) : addBusinessDays(d, 2);
-}
-
-function calcFmpiDeadline(reportDate, owr) {
-  if (!reportDate || owr !== "ΝΑΙ") return null;
-  const confirmDate = addBusinessDays(new Date(reportDate), 2);
-  return addDays(confirmDate, 7);
-}
-
-function calcRepairDeadline(outlineDate, owr, caApprovalDate) {
-  if (!outlineDate) return null;
-  if (owr === "ΟΧΙ") {
-    return addDays(new Date(outlineDate), 28);
-  }
-  const base = caApprovalDate ? new Date(caApprovalDate) : new Date(outlineDate);
-  return addDays(base, 21);
-}
+// SLA is now calculated centrally via lib/slaEngine.js — no hardcoded SLA math here.
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 function ReadOnlyField({ label, value, children }) {
@@ -272,13 +253,32 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
     }
   }, [reportDate, sigDate]);
 
-  // ── SLA calculations ──
-  const confirmationDeadline = useMemo(() =>
-    calcConfirmationDeadline(reportDate, isHighPriority), [reportDate, isHighPriority]);
-  const fmpiDeadline = useMemo(() =>
-    calcFmpiDeadline(reportDate, owrValue), [reportDate, owrValue]);
-  const repairDeadline = useMemo(() =>
-    calcRepairDeadline(outlineDate, owrValue, null), [outlineDate, owrValue]);
+  // ── Load SLA rules ──
+  const { data: slaRulesData = [] } = useQuery({
+    queryKey: ["slaRules"],
+    queryFn: () => base44.entities.SLARules.list(),
+  });
+
+  // ── SLA calculations (from central engine) ──
+  const crOmpiBase = incident?.cr_ompi_submitted_at || incident?.created_date;
+  const effectiveWarranty = owrValue === "ΝΑΙ" ? "OWR" : owrValue === "ΟΧΙ" ? "In Warranty" : (incident?.warranty_status || null);
+
+  const fmpiSLAResult = useMemo(() => {
+    if (!crOmpiBase || !effectiveWarranty) return null;
+    return computeFMPISLA(crOmpiBase, effectiveWarranty, slaRulesData);
+  }, [crOmpiBase, effectiveWarranty, slaRulesData]);
+
+  const repairSLAResult = useMemo(() => {
+    if (!effectiveWarranty) return null;
+    const base = incident?.ca_decision_at || crOmpiBase;
+    if (!base) return null;
+    return computeRepairSLA(base, effectiveWarranty, slaRulesData);
+  }, [crOmpiBase, effectiveWarranty, incident?.ca_decision_at, slaRulesData]);
+
+  const crOmpiSLAResult = useMemo(() => {
+    if (!incident?.incident_created_at && !incident?.created_date) return null;
+    return computeCROMPISLA(incident?.incident_created_at || incident?.created_date, priority || "P2", slaRulesData);
+  }, [incident, priority, slaRulesData]);
 
   // ── Invoice calcs ──
   // Only show children belonging to the linked asset
@@ -372,7 +372,22 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
         user: user?.email,
         ...(auditAttachments.length > 0 ? { attachment_metadata: auditAttachments } : {}),
       });
-      
+
+      // Update incident workflow state when FMPI is submitted
+      if (data.status === "Submitted" && incId) {
+        const nowTs = getAthensTimestamp();
+        const fmpiApprovalNeeded = data.apaiteitai_eggkrisi_ca === "Yes" || data.ektos_eggyhshs === "Yes";
+        const nextWorkflowState = fmpiApprovalNeeded ? "Awaiting_CA_Approval" : "FMPI_Submitted";
+        await base44.entities.Incidents.update(incId, {
+          workflow_state: nextWorkflowState,
+          fmpi_submitted_at: nowTs,
+          fmpi_approval_required: fmpiApprovalNeeded,
+          corrective_allowed: !fmpiApprovalNeeded,
+          // Legacy compat
+          owr_fmpi_done: true,
+        });
+      }
+
       return result;
     },
     onSuccess: () => {
@@ -620,12 +635,12 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
                   <div className="space-y-1">
                     <Label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
                       <Clock className="w-3.5 h-3.5 text-blue-500" />
-                      Προθεσμία Επιβεβαίωσης Λήψης
+                      CR+OMPI Deadline
                     </Label>
                     <div className="flex items-center gap-2 min-h-[36px] px-3 py-2 rounded-md bg-slate-50 border border-slate-200 text-sm text-slate-700">
                       <Lock className="w-3 h-3 text-slate-300 flex-shrink-0" />
-                      <span className="flex-1">
-                        {confirmationDeadline ? fmtDate(confirmationDeadline) : <span className="text-slate-300 italic">—</span>}
+                      <span className="flex-1 text-xs font-semibold">
+                        {crOmpiSLAResult ? formatDeadline(crOmpiSLAResult.sla_deadline_at) : <span className="text-slate-300 italic">—</span>}
                       </span>
                     </div>
                   </div>
@@ -633,19 +648,36 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
                   <div className="space-y-1">
                     <Label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
                       <Clock className="w-3.5 h-3.5 text-blue-500" />
-                      Προθεσμία FMPI (το παρόν)
+                      FMPI Deadline
                     </Label>
                     <div className="flex items-center gap-2 min-h-[36px] px-3 py-2 rounded-md bg-slate-50 border border-slate-200 text-sm text-slate-700">
                       <Lock className="w-3 h-3 text-slate-300 flex-shrink-0" />
-                      <span className="flex-1">
-                        {fmpiDeadline
-                          ? fmtDate(fmpiDeadline)
-                          : owrValue === "ΟΧΙ"
-                            ? <span className="text-slate-400 italic text-xs">Δεν εφαρμόζεται (εντός εγγύησης)</span>
-                            : <span className="text-slate-300 italic">—</span>
+                      <span className="flex-1 text-xs font-semibold">
+                        {fmpiSLAResult
+                          ? formatDeadline(fmpiSLAResult.sla_deadline_at)
+                          : <span className="text-slate-300 italic">Select warranty status</span>
                         }
                       </span>
                     </div>
+                  </div>
+
+                  <div className="col-span-2 space-y-1">
+                    <Label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-blue-500" />
+                      Repair Deadline
+                    </Label>
+                    <div className="flex items-center gap-2 min-h-[36px] px-3 py-2 rounded-md bg-slate-50 border border-slate-200 text-sm text-slate-700">
+                      <Lock className="w-3 h-3 text-slate-300 flex-shrink-0" />
+                      <span className="flex-1 text-xs font-semibold">
+                        {repairSLAResult
+                          ? formatDeadline(repairSLAResult.sla_deadline_at)
+                          : <span className="text-slate-300 italic">—</span>
+                        }
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-slate-400">
+                      {effectiveWarranty === "OWR" ? "21 days from CA approval" : effectiveWarranty === "In Warranty" ? "28 days from FMPI submission" : "—"}
+                    </p>
                   </div>
 
 
