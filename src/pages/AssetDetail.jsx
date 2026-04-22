@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Link, useNavigate } from "react-router-dom";
@@ -7,8 +7,7 @@ import StatusBadge from "@/components/shared/StatusBadge";
 import DataTable from "@/components/shared/DataTable";
 import AuditLog from "@/components/shared/AuditLog";
 import FileUploader from "@/components/shared/FileUploader";
-import AssetFormDialog from "@/components/assets/AssetFormDialog";
-import BusShelterOrderFormDialog from "@/components/assets/BusShelterOrderFormDialog";
+import AssetFormUnified from "@/components/assets/AssetFormUnified";
 import ChildFormDialog from "@/components/assets/ChildFormDialog";
 import AddChildFromTemplateDialog from "@/components/assets/AddChildFromTemplateDialog";
 import MoveChildDialog from "@/components/childs/MoveChildDialog";
@@ -16,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
-import { ArrowLeft, Pencil, Plus, AlertTriangle, Wrench, Download, FileText, Image, ExternalLink, Send, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, Pencil, Plus, AlertTriangle, Wrench, Download, FileText, Image, ExternalLink, Send } from "lucide-react";
 
 export default function AssetDetail() {
   const params = new URLSearchParams(window.location.search);
@@ -26,7 +25,6 @@ export default function AssetDetail() {
   const { toast } = useToast();
 
   const [editOpen, setEditOpen] = useState(false);
-  const [showMore, setShowMore] = useState(false);
   const [childFormOpen, setChildFormOpen] = useState(false);
   const [editingChild, setEditingChild] = useState(null);
   const editingChildRef = React.useRef(null);
@@ -166,7 +164,7 @@ export default function AssetDetail() {
         parent_asset_id: "",
         status: "Returned",
         shipment_date: today,
-        details: `Returned to inventory from asset ${asset?.asset_id || assetId}`,
+        details: `Returned to inventory from asset ${asset?.active_shelter_id || asset?.asset_code || asset?.asset_id || assetId}`,
       });
       await base44.entities.AssetTransactions.create({ asset_id: assetId, action: "Child Set Un-Assigned", details: `${child.child_id} set as Un-Assigned`, user: user?.email });
     } else {
@@ -180,9 +178,9 @@ export default function AssetDetail() {
         parent_asset_id: destinationAssetId,
         status: "Delivered",
         shipment_date: today,
-        details: `Moved from ${asset?.asset_id || assetId} to ${destAsset?.asset_id || destinationAssetId}`,
+        details: `Moved from ${asset?.active_shelter_id || asset?.asset_code || asset?.asset_id || assetId} to ${destAsset?.active_shelter_id || destAsset?.asset_code || destAsset?.asset_id || destinationAssetId}`,
       });
-      await base44.entities.AssetTransactions.create({ asset_id: assetId, action: "Child Moved", details: `${child.child_id} moved to ${destAsset?.asset_id || destinationAssetId}`, user: user?.email });
+      await base44.entities.AssetTransactions.create({ asset_id: assetId, action: "Child Moved", details: `${child.child_id} moved to ${destAsset?.active_shelter_id || destAsset?.asset_code || destAsset?.asset_id || destinationAssetId}`, user: user?.email });
     }
     queryClient.invalidateQueries({ queryKey: ["childAssets", assetId] });
     queryClient.invalidateQueries({ queryKey: ["assetTransactions", assetId] });
@@ -249,7 +247,7 @@ export default function AssetDetail() {
       key: "source_asset_id", label: "From",
       render: (r) => {
         const src = r.source_asset_id ? allAssets.find(a => a.id === r.source_asset_id) : null;
-        return <span className="text-xs">{src ? `${src.asset_id}` : (r.source_asset_id ? r.source_asset_id : "—")}</span>;
+        return <span className="text-xs">{src ? (src.active_shelter_id || src.asset_code || src.asset_id) : (r.source_asset_id ? r.source_asset_id : "—")}</span>;
       }
     },
     {
@@ -257,7 +255,7 @@ export default function AssetDetail() {
       render: (r) => {
         if (!r.parent_asset_id) return <span className="text-xs text-slate-400">Inventory (Un-Assigned)</span>;
         const dest = allAssets.find(a => a.id === r.parent_asset_id);
-        return <span className="text-xs">{dest ? `${dest.asset_id}` : r.parent_asset_id}</span>;
+        return <span className="text-xs">{dest ? (dest.active_shelter_id || dest.asset_code || dest.asset_id) : r.parent_asset_id}</span>;
       }
     },
     { key: "status", label: "Status", render: (r) => <StatusBadge status={r.status} /> },
@@ -268,7 +266,7 @@ export default function AssetDetail() {
   return (
     <div>
       <TopHeader
-        title={asset.asset_source === "bus_shelter_order" ? `Bus Stop: ${asset.asset_code || asset.asset_id}` : (asset.asset_name || asset.asset_id)}
+        title={asset.active_shelter_id || asset.asset_code || asset.asset_id || "Asset"}
         actions={
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => navigate("/Assets")}><ArrowLeft className="w-3.5 h-3.5 mr-1.5" />Back</Button>
@@ -279,65 +277,63 @@ export default function AssetDetail() {
         }
       />
       <div className="p-6 space-y-6">
-        {/* Overview Card */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
-          {/* Always-visible fields */}
-          {asset.asset_source === "bus_shelter_order" ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              <Field label="Asset Code / Bus Stop ID" value={asset.asset_code} />
-              <Field label="Order Year" value={asset.order_year} />
-              <Field label="Stage" value={asset.asset_stage} />
-              <Field label="City" value={asset.city} />
-              <Field label="Municipality" value={asset.municipality} />
-              <Field label="Location / Address" value={asset.location_address} />
-              <Field label="Ordered Shelter Type" value={asset.ordered_shelter_type} />
-              <Field label="Installed Shelter Type" value={asset.installed_shelter_type} />
-              <Field label="Existing Condition" value={asset.existing_condition} />
-              <Field label="Has Bay" value={asset.has_bay} />
-              <Field label="Installation Date" value={asset.installation_date} />
-              {asset.notes && <div className="col-span-2 md:col-span-4"><Field label="Notes" value={asset.notes} /></div>}
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              <Field label="Asset ID" value={asset.asset_id} />
-              <Field label="Active Shelter ID" value={asset.active_shelter_id} />
-              <Field label="Asset Name" value={asset.asset_name} />
-              <Field label="Status"><StatusBadge status={asset.status} /></Field>
-              <Field label="City" value={asset.city} />
-              <Field label="Shelter Type" value={asset.shelter_type} />
-              <Field label="Location / Address" value={asset.location_address} />
-              <Field label="Installation Date" value={asset.installation_date} />
-            </div>
-          )}
+        {/* ── Overview ── */}
+        <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <Field label="Shelter ID" value={asset.active_shelter_id || asset.asset_code} />
+            <Field label="Status"><StatusBadge status={asset.status} /></Field>
+            <Field label="Stage" value={asset.asset_stage} />
+            <Field label="City" value={asset.city} />
+            <Field label="Municipality" value={asset.municipality} />
+            <Field label="Location / Address" value={asset.location_address} />
+            <Field label="Installation Date" value={asset.installation_date} />
+            <Field label="Asset Name" value={asset.asset_name} />
+          </div>
 
-          {/* Expandable extra fields — maintenance only */}
-          {asset.asset_source !== "bus_shelter_order" && showMore && (
-            <div className="mt-6 pt-5 border-t border-slate-100 grid grid-cols-2 md:grid-cols-4 gap-6">
-              <Field label="Delivery Date" value={asset.delivery_date} />
-              <Field label="Delivery Year" value={asset.delivery_year} />
-              <Field label="Warranty Base Year" value={asset.warranty_base_year} />
-              <Field label="Software Warranty End" value={asset.software_warranty_end_date} />
-              <Field label="Electronics Warranty End" value={asset.electronics_warranty_end_date} />
-              <Field label="Materials Warranty End" value={asset.materials_warranty_end_date} />
-              <Field label="Structural Warranty End" value={asset.structural_warranty_end_date} />
-              <Field label="Preventive Inspection" value={asset.preventive_inspection_date} />
-              <Field label="Next Inspection" value={asset.next_inspection_date} />
-              <Field label="Latitude" value={asset.latitude} />
-              <Field label="Longitude" value={asset.longitude} />
-              <Field label="Childs" value={children.length} />
-              <Field label="Open Incidents" value={incidents.filter(i => i.status !== "Closed" && i.status !== "Resolved").length} />
-              {asset.notes && <div className="col-span-2 md:col-span-4"><Field label="Notes" value={asset.notes} /></div>}
-              {asset.description && <div className="col-span-2 md:col-span-4"><Field label="Description" value={asset.description} /></div>}
-            </div>
-          )}
+          {/* ── Site / Physical Details ── */}
+          <SectionDivider label="Site / Physical Details" />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <Field label="Shelter Type" value={asset.shelter_type} />
+            <Field label="Ordered Shelter Type" value={asset.ordered_shelter_type} />
+            <Field label="Installed Shelter Type" value={asset.installed_shelter_type} />
+            <Field label="Existing Condition" value={asset.existing_condition} />
+            <Field label="Has Bay" value={asset.has_bay} />
+            <Field label="Category" value={asset.category} />
+          </div>
 
-          {asset.asset_source !== "bus_shelter_order" && (
-            <button
-              onClick={() => setShowMore(v => !v)}
-              className="mt-5 flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 font-medium"
-            >
-              {showMore ? <><ChevronUp className="w-3.5 h-3.5" /> Show Less</> : <><ChevronDown className="w-3.5 h-3.5" /> Show More Info</>}
-            </button>
+          {/* ── Lifecycle / Dates ── */}
+          <SectionDivider label="Lifecycle / Dates" />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <Field label="Delivery Date" value={asset.delivery_date} />
+            <Field label="Delivery Year" value={asset.delivery_year} />
+            <Field label="Order Year" value={asset.order_year} />
+            <Field label="Childs" value={children.length} />
+            <Field label="Open Incidents" value={incidents.filter(i => i.status !== "Closed" && i.status !== "Resolved").length} />
+          </div>
+
+          {/* ── Warranty / Inspection ── */}
+          <SectionDivider label="Warranty / Inspection" />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <Field label="Warranty Base Year" value={asset.warranty_base_year} />
+            <Field label="Software Warranty End" value={asset.software_warranty_end_date} />
+            <Field label="Electronics Warranty End" value={asset.electronics_warranty_end_date} />
+            <Field label="Materials Warranty End" value={asset.materials_warranty_end_date} />
+            <Field label="Structural Warranty End" value={asset.structural_warranty_end_date} />
+            <Field label="Preventive Inspection" value={asset.preventive_inspection_date} />
+            <Field label="Next Inspection" value={asset.next_inspection_date} />
+          </div>
+
+          {/* ── Additional Information ── */}
+          {(asset.notes || asset.description || asset.latitude || asset.longitude) && (
+            <>
+              <SectionDivider label="Additional Information" />
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <Field label="Latitude" value={asset.latitude} />
+                <Field label="Longitude" value={asset.longitude} />
+                {asset.notes && <div className="col-span-2 md:col-span-4"><Field label="Notes" value={asset.notes} /></div>}
+                {asset.description && <div className="col-span-2 md:col-span-4"><Field label="Description" value={asset.description} /></div>}
+              </div>
+            </>
           )}
         </div>
 
@@ -438,20 +434,26 @@ export default function AssetDetail() {
         </Tabs>
       </div>
 
-      {asset?.asset_source === "bus_shelter_order" ? (
-        <BusShelterOrderFormDialog
-          open={editOpen}
-          onOpenChange={setEditOpen}
-          order={asset}
-          onSave={(data) => updateAsset.mutate({ data, attachments: [] })}
-        />
-      ) : (
-        <AssetFormDialog open={editOpen} onOpenChange={setEditOpen} asset={asset} onSave={(data, attachments) => updateAsset.mutate({ data, attachments })} />
-      )}
+      <AssetFormUnified
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        asset={asset}
+        onSave={(data, attachments) => updateAsset.mutate({ data, attachments })}
+      />
 
       <ChildFormDialog open={childFormOpen} onOpenChange={setChildFormOpen} child={editingChild} parentAssetId={assetId} onSave={handleChildSave} />
       <MoveChildDialog open={moveDialogOpen} onOpenChange={setMoveDialogOpen} child={childToMove} assets={allAssets} currentAssetId={assetId} onMove={handleMoveChild} />
       <AddChildFromTemplateDialog open={templateDialogOpen} onOpenChange={setTemplateDialogOpen} asset={asset} onSave={(data) => base44.entities.ChildAssets.create(data).then(async (newChild) => { const user = await base44.auth.me(); await base44.entities.AssetTransactions.create({ asset_id: assetId, action: "Child Added", details: `Added child "${newChild.description || newChild.child_id}" from template`, user: user?.email }); queryClient.invalidateQueries({ queryKey: ["childAssets", assetId] }); queryClient.invalidateQueries({ queryKey: ["assetTransactions", assetId] }); })} />
+    </div>
+  );
+}
+
+function SectionDivider({ label }) {
+  return (
+    <div className="flex items-center gap-3 pt-2">
+      <div className="flex-1 border-t border-slate-100" />
+      <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide whitespace-nowrap">{label}</span>
+      <div className="flex-1 border-t border-slate-100" />
     </div>
   );
 }

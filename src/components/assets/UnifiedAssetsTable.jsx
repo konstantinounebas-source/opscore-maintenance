@@ -93,11 +93,11 @@ export default function UnifiedAssetsTable({
             />
           </div>
           <Select value={filterSource} onValueChange={setFilterSource}>
-            <SelectTrigger className="h-9 text-sm w-44"><SelectValue placeholder="Type" /></SelectTrigger>
+            <SelectTrigger className="h-9 text-sm w-44"><SelectValue placeholder="Source" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="all">All Sources</SelectItem>
               <SelectItem value="maintenance">Maintenance</SelectItem>
-              <SelectItem value="bus_shelter_order">Bus Shelter Orders</SelectItem>
+              <SelectItem value="bus_shelter_order">Bus Shelter Order</SelectItem>
             </SelectContent>
           </Select>
           <Select value={filterCity} onValueChange={setFilterCity}>
@@ -150,8 +150,6 @@ export default function UnifiedAssetsTable({
           <table className="min-w-max w-full text-sm">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Type</th>
-                <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">ID / Code</th>
                 <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Shelter ID</th>
                 <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Address</th>
                 <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">City</th>
@@ -165,34 +163,27 @@ export default function UnifiedAssetsTable({
             </thead>
             <tbody>
               {paginated.length === 0 ? (
-                <tr><td colSpan={11} className="text-center py-10 text-slate-400 text-sm">No assets found.</td></tr>
+                <tr><td colSpan={9} className="text-center py-10 text-slate-400 text-sm">No assets found.</td></tr>
               ) : paginated.map(a => {
                 const openInc = getOpenIncidents(a.id);
                 const openWOs = getOpenWOs(a.id);
                 const childCount = getChildCount(a.id);
-                const isBSO = a.asset_source === "bus_shelter_order";
                 return (
                   <tr
                     key={a.id}
                     className={`border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors ${openInc > 0 ? "bg-red-50/40" : ""}`}
                     onClick={() => navigate(`/AssetDetail?id=${a.id}`)}
                   >
-                    <td className="px-3 py-2.5 whitespace-nowrap">
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded ${isBSO ? "bg-emerald-100 text-emerald-700" : "bg-indigo-100 text-indigo-700"}`}>
-                        {isBSO ? "Order" : "Maintenance"}
-                      </span>
-                    </td>
                     <td className="px-3 py-2.5 font-medium text-slate-800 whitespace-nowrap">
-                      {isBSO ? (a.asset_code || "—") : (a.asset_id || "—")}
+                      {a.active_shelter_id || a.asset_code || "—"}
                     </td>
-                    <td className="px-3 py-2.5 text-slate-600 whitespace-nowrap">{a.active_shelter_id || "—"}</td>
                     <td className="px-3 py-2.5 text-slate-600 max-w-[200px] truncate">{a.location_address || "—"}</td>
                     <td className="px-3 py-2.5 text-slate-600 whitespace-nowrap">{a.city || "—"}</td>
                     <td className="px-3 py-2.5 text-slate-600 whitespace-nowrap">
-                      {isBSO ? (a.ordered_shelter_type || a.installed_shelter_type || "—") : (a.shelter_type || "—")}
+                      {a.shelter_type || a.ordered_shelter_type || a.installed_shelter_type || "—"}
                     </td>
                     <td className="px-3 py-2.5 whitespace-nowrap">
-                      {isBSO && a.asset_stage ? (
+                      {a.asset_stage ? (
                         <span className={`text-xs font-medium px-2 py-0.5 rounded capitalize ${STAGE_COLORS[a.asset_stage] || "bg-slate-100 text-slate-600"}`}>
                           {a.asset_stage}
                         </span>
