@@ -106,6 +106,7 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
       f.related_asset_id = defaultAssetId;
       const asset = assets.find(a => a.id === defaultAssetId);
       if (asset) {
+        f.related_asset_name = asset.asset_id || "";
         f.active_shelter_id = asset.asset_id || "";
         f.province = asset.city || "";
         f.municipality = asset.municipality || "";
