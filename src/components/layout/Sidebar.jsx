@@ -7,18 +7,13 @@ import {
 } from "lucide-react";
 
 const navItems = [
-  { path: "/Dashboard", label: "Dashboard", icon: LayoutDashboard },
   { path: "/Assets", label: "Assets", icon: Box, submenu: [
     { path: "/Childs", label: "Child Assets", icon: Package }
   ]},
   { path: "/Incidents", label: "Incidents", icon: AlertTriangle },
   { path: "/WorkOrders", label: "Work Orders", icon: Wrench },
-  { path: "/Planning", label: "Planning Workbench", icon: MapPin, submenu: [
-    { path: "/Crews", label: "Crews", icon: Users },
-    { path: "/SLAConfig", label: "SLA Rules", icon: ShieldCheck },
-  ]},
+  { path: "/Planning", label: "Planning Workbench", icon: MapPin },
   { path: "/Forms", label: "Forms", icon: FileText },
-  { path: "/Analytics", label: "Analytics & KPIs", icon: BarChart2 },
   { path: "/Configuration", label: "Configuration", icon: Settings },
 ];
 
