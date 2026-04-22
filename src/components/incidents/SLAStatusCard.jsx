@@ -1,6 +1,6 @@
 import React from "react";
-import { Clock, CheckCircle2, AlertTriangle, XCircle, Pause, Info } from "lucide-react";
-import { formatDeadline, refreshSLAStatus, getNextActionLabel, deriveWorkflowStateFromLegacy } from "@/lib/slaEngine";
+import { Clock, CheckCircle2, AlertTriangle, XCircle, Pause, Info, Wrench, Calendar } from "lucide-react";
+import { formatDeadline, refreshSLAStatus, getNextActionLabel, deriveWorkflowStateFromLegacy, getPriorityLabel } from "@/lib/slaEngine";
 import { differenceInHours } from "date-fns";
 
 const SLA_STATUS_CONFIG = {
@@ -105,12 +105,33 @@ export default function SLAStatusCard({ incident }) {
             ✓ CA Approved
           </span>
         )}
-        {incident.ca_decision === "Rejected" && (
+          {incident.ca_decision === "Rejected" && (
           <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200">
             ✗ CA Rejected
           </span>
         )}
+        {(incident.operational_priority || incident.initial_priority) && (
+          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${
+            (incident.operational_priority || incident.initial_priority) === "P2"
+              ? "bg-red-100 text-red-700 border-red-200"
+              : "bg-blue-100 text-blue-700 border-blue-200"
+          }`}>
+            {getPriorityLabel(incident.operational_priority || incident.initial_priority)}
+          </span>
+        )}
       </div>
+
+      {/* Repair deadline — shown after CA approval or FMPI for In Warranty */}
+      {incident.repair_deadline_at && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-slate-200 text-xs">
+          <Wrench className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+          <span className="text-slate-500 font-medium">Repair Deadline:</span>
+          <span className="font-bold text-slate-800">{formatDeadline(incident.repair_deadline_at)}</span>
+          {incident.warranty_status === "OWR" && (
+            <span className="text-slate-400 ml-auto">CA Approval + 21 days</span>
+          )}
+        </div>
+      )}
 
       {/* Next action */}
       <div className="flex items-center gap-2 pt-1 border-t border-current border-opacity-10">

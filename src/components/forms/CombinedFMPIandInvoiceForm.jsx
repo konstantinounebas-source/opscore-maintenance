@@ -15,7 +15,7 @@ import {
   CheckCircle2, Upload, X, Info, Euro, Calendar, Wrench, Clock
 } from "lucide-react";
 import { format } from "date-fns";
-import { computeFMPISLA, computeRepairSLA, computeCROMPISLA, mergeRules, formatDeadline } from "@/lib/slaEngine";
+import { computeFMPISLA, computeCROMPISLA, formatDeadline } from "@/lib/slaEngine";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/AuthContext";
 import FileUploadArea from "@/components/shared/FileUploadArea";
@@ -61,15 +61,16 @@ function Section({ title, icon: SectionIcon, accent, children, rightSlot }) {
   );
 }
 
+// PRIORITY: P1 = Low, P2 = High/Urgent (contractual)
 function PriorityBadge({ priority }) {
   if (priority === "P1") return (
-    <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200">
-      <AlertTriangle className="w-3 h-3" /> P1 – Υψηλή
+    <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 border border-blue-200">
+      P1 – Χαμηλή (Low)
     </span>
   );
   if (priority === "P2") return (
-    <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200">
-      P2 – Μεσαία
+    <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200">
+      <AlertTriangle className="w-3 h-3" /> P2 – Υψηλή / Επείγον (High)
     </span>
   );
   return null;
@@ -219,10 +220,11 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
   }, [ompiSubmissions]);
 
   const rawPriority = ompiForm
-    ? (ompiForm.form_data?.priority || incident?.initial_priority || incident?.priority || "")
-    : (incident?.initial_priority || incident?.priority || "");
+    ? (ompiForm.form_data?.priority || incident?.operational_priority || incident?.initial_priority || incident?.priority || "")
+    : (incident?.operational_priority || incident?.initial_priority || incident?.priority || "");
   const priority = ["P1", "P2"].includes(rawPriority) ? rawPriority : "";
-  const isHighPriority = priority === "P1";
+  // CORRECTED: P2 = High/Urgent priority
+  const isHighPriority = priority === "P2";
 
   const reportDate = incident?.reported_date || incident?.first_report_date;
 
@@ -253,32 +255,19 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
     }
   }, [reportDate, sigDate]);
 
-  // ── Load SLA rules ──
-  const { data: slaRulesData = [] } = useQuery({
-    queryKey: ["slaRules"],
-    queryFn: () => base44.entities.SLARules.list(),
-  });
-
   // ── SLA calculations (from central engine) ──
   const crOmpiBase = incident?.cr_ompi_submitted_at || incident?.created_date;
   const effectiveWarranty = owrValue === "ΝΑΙ" ? "OWR" : owrValue === "ΟΧΙ" ? "In Warranty" : (incident?.warranty_status || null);
 
   const fmpiSLAResult = useMemo(() => {
     if (!crOmpiBase || !effectiveWarranty) return null;
-    return computeFMPISLA(crOmpiBase, effectiveWarranty, slaRulesData);
-  }, [crOmpiBase, effectiveWarranty, slaRulesData]);
-
-  const repairSLAResult = useMemo(() => {
-    if (!effectiveWarranty) return null;
-    const base = incident?.ca_decision_at || crOmpiBase;
-    if (!base) return null;
-    return computeRepairSLA(base, effectiveWarranty, slaRulesData);
-  }, [crOmpiBase, effectiveWarranty, incident?.ca_decision_at, slaRulesData]);
+    return computeFMPISLA(crOmpiBase, effectiveWarranty, []);
+  }, [crOmpiBase, effectiveWarranty]);
 
   const crOmpiSLAResult = useMemo(() => {
     if (!incident?.incident_created_at && !incident?.created_date) return null;
-    return computeCROMPISLA(incident?.incident_created_at || incident?.created_date, priority || "P2", slaRulesData);
-  }, [incident, priority, slaRulesData]);
+    return computeCROMPISLA(incident?.incident_created_at || incident?.created_date, priority || "P1", []);
+  }, [incident, priority]);
 
   // ── Invoice calcs ──
   // Only show children belonging to the linked asset
@@ -661,26 +650,13 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
                     </div>
                   </div>
 
-                  <div className="col-span-2 space-y-1">
-                    <Label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5 text-blue-500" />
-                      Repair Deadline
-                    </Label>
-                    <div className="flex items-center gap-2 min-h-[36px] px-3 py-2 rounded-md bg-slate-50 border border-slate-200 text-sm text-slate-700">
-                      <Lock className="w-3 h-3 text-slate-300 flex-shrink-0" />
-                      <span className="flex-1 text-xs font-semibold">
-                        {repairSLAResult
-                          ? formatDeadline(repairSLAResult.sla_deadline_at)
-                          : <span className="text-slate-300 italic">—</span>
-                        }
-                      </span>
-                    </div>
-                    <p className="text-[10px] text-slate-400">
-                      {effectiveWarranty === "OWR" ? "21 days from CA approval" : effectiveWarranty === "In Warranty" ? "28 days from FMPI submission" : "—"}
-                    </p>
+                  <div className="col-span-2 p-2.5 rounded-md bg-amber-50 border border-amber-100 text-xs text-amber-700 flex items-start gap-2">
+                    <Clock className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                    <span>
+                      <span className="font-semibold">Repair Deadline</span> is set when CA Approval is granted (OWR: +21 days from approval date) or at FMPI submission (In Warranty: +28 days).
+                      It is visible in the CA Approval step and the incident SLA card.
+                    </span>
                   </div>
-
-
                 </div>
               </div>
             </TabsContent>

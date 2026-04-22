@@ -5,7 +5,7 @@
  * Renders available actions based on incident.workflow_state.
  * All state transitions write to incident.workflow_state + timestamps.
  */
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -22,13 +22,16 @@ import WorkOrderPanel from "@/components/incidents/WorkOrderPanel";
 import CROMPIForm from "@/components/incidents/CROMPIForm";
 import OutlineManagementForm from "@/components/forms/OutlineManagementForm";
 import CombinedFMPIandInvoiceForm from "@/components/forms/CombinedFMPIandInvoiceForm";
+import ManualFMPIModal from "@/components/incidents/ManualFMPIModal";
 import { getAthensTimestamp } from "@/lib/timeSync";
-import { computeRepairSLA, mergeRules, formatDeadline, deriveWorkflowStateFromLegacy } from "@/lib/slaEngine";
+import { mergeRules, formatDeadline, deriveWorkflowStateFromLegacy } from "@/lib/slaEngine";
 import {
   CheckCircle2, Circle, Loader2, ChevronRight,
   AlertTriangle, FileCheck, FileText, PenLine,
-  Lock, ChevronDown, Trash2, XCircle
+  Lock, ChevronDown, Trash2, XCircle, Upload, Calendar
 } from "lucide-react";
+import { computeRepairSLA, getPriorityLabel } from "@/lib/slaEngine";
+import { addDays, format } from "date-fns";
 
 // ── Work Order panel types ───────────────────────────────────────────────────
 const WO_PANELS = [
@@ -81,7 +84,7 @@ function CAApprovalModal({ incident, incidentId, onClose, onDone }) {
       if (decision === "Approved") {
         nextState = "Approved_For_Corrective";
         corrective_allowed = true;
-        // Start repair SLA
+        // Repair SLA: OWR = exactly 21 calendar days from CA approval date
         const repairSLA = computeRepairSLA(now, incident.warranty_status || "OWR", slaRulesData);
         if (repairSLA) {
           newSLAUpdates = {
@@ -92,6 +95,8 @@ function CAApprovalModal({ incident, incidentId, onClose, onDone }) {
             sla_status: repairSLA.sla_status,
             previous_sla_code: incident.active_sla_code,
             previous_sla_completed_at: now,
+            // Store repair deadline separately for display clarity
+            repair_deadline_at: repairSLA.sla_deadline_at,
           };
         }
       } else {
@@ -143,6 +148,13 @@ function CAApprovalModal({ incident, incidentId, onClose, onDone }) {
     }
   };
 
+  // Repair deadline preview: approval date + 21 calendar days (OWR rule)
+  const previewRepairDeadline = useMemo(() => {
+    if (decision !== "Approved") return null;
+    const approvalDate = new Date();
+    return addDays(approvalDate, 21);
+  }, [decision]);
+
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
@@ -156,7 +168,12 @@ function CAApprovalModal({ incident, incidentId, onClose, onDone }) {
               {fmpiSubmissions.map(s => (
                 <div key={s.id} className="flex items-center gap-2 px-2 py-1.5 rounded border border-indigo-200 bg-indigo-50 text-xs text-indigo-700">
                   <FileCheck className="w-3 h-3 shrink-0" />
-                  <span className="flex-1 truncate">{s.form_name || "FMPI & Pricing Order"}</span>
+                  <span className="flex-1 truncate">
+                    {s.form_name || "FMPI & Pricing Order"}
+                    {s.form_data?.fmpi_submission_method === "Manual" && (
+                      <span className="ml-1.5 px-1 py-0.5 rounded bg-amber-100 text-amber-700 text-[10px] font-semibold">MANUAL</span>
+                    )}
+                  </span>
                   <span className={`px-1.5 py-0.5 rounded font-medium ${s.status === "Submitted" ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"}`}>{s.status}</span>
                 </div>
               ))}
@@ -189,6 +206,22 @@ function CAApprovalModal({ incident, incidentId, onClose, onDone }) {
               </p>
             )}
           </div>
+
+          {/* Repair Deadline — shown on Approval, calculated as approval date + 21 days (OWR rule) */}
+          {decision === "Approved" && previewRepairDeadline && (
+            <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 space-y-1">
+              <p className="text-xs font-bold text-emerald-800 flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5" /> Repair Deadline Clock Starts on Approval
+              </p>
+              <p className="text-sm font-bold text-emerald-900">
+                {format(previewRepairDeadline, "dd/MM/yyyy")}
+              </p>
+              <p className="text-[10px] text-emerald-700">
+                = Approval Date + 21 calendar days (OWR contractual SLA).
+                This deadline will be written to the incident and becomes the active repair clock.
+              </p>
+            </div>
+          )}
 
           <div className="space-y-1.5">
             <Label className="text-xs">Decision Comment (optional)</Label>
@@ -348,6 +381,7 @@ function CloseIncidentModal({ incident, incidentId, workOrders, onClose, onDone 
 export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
   const [showCROMPI, setShowCROMPI] = useState(false);
   const [showFMPIForm, setShowFMPIForm] = useState(false);
+  const [showManualFMPI, setShowManualFMPI] = useState(false);
   const [showCAModal, setShowCAModal] = useState(false);
   const [showCloseModal, setShowCloseModal] = useState(false);
   const { toast } = useToast();
@@ -363,6 +397,7 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
     queryFn: () => base44.entities.WorkOrders.filter({ incident_id: incidentId }),
   });
   const { data: slaRulesData = [] } = useQuery({ queryKey: ["slaRules"], queryFn: () => base44.entities.SLARules.list() });
+  // Load all FMPI submissions — includes both digital and manual uploads (both use combined_fmpi_invoice type)
   const { data: fmpiSubmissions = [] } = useQuery({
     queryKey: ["fmpiSubmissions", incidentId],
     queryFn: () => base44.entities.FormSubmissions.filter({ incident_id: incidentId, form_type: "combined_fmpi_invoice" }),
@@ -419,7 +454,9 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
           </div>
           {workflowState !== "Closed" && workflowState !== "Cancelled" && (
             <span className="text-xs text-slate-400">
-              Operational Priority: <span className="font-semibold text-slate-700">{incident.operational_priority || incident.initial_priority || "—"}</span>
+              Priority: <span className="font-semibold text-slate-700">
+                {getPriorityLabel(incident.operational_priority || incident.initial_priority)}
+              </span>
             </span>
           )}
         </div>
@@ -457,38 +494,63 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
           </Button>
         </div>
 
-        {/* FMPI */}
+        {/* FMPI — dual path: Digital or Manual Upload */}
         {workflowState !== "Awaiting_CR_OMPI" && (
-          <div className={`rounded-lg border p-3 flex items-center justify-between gap-3 ${
-            hasFMPISubmitted ? "bg-green-50 border-green-200" : "bg-white border-slate-200"
+          <div className={`rounded-lg border overflow-hidden ${
+            hasFMPISubmitted ? "border-green-200" : "border-slate-200"
           }`}>
-            <div className="flex items-center gap-2">
+            <div className={`p-3 flex items-center gap-2 ${hasFMPISubmitted ? "bg-green-50" : "bg-white"}`}>
               {hasFMPISubmitted
                 ? <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
                 : <Circle className="w-4 h-4 text-slate-300 shrink-0" />
               }
-              <div>
+              <div className="flex-1 min-w-0">
                 <p className={`text-sm font-medium ${hasFMPISubmitted ? "text-slate-600" : "text-slate-800"}`}>
                   Full Management Plan (FMPI)
                 </p>
-                {warrantyStatus && (
-                  <p className="text-xs text-slate-400">
-                    {fmpiApprovalRequired ? "CA Approval required (OWR)" : "No CA Approval required (In Warranty)"}
-                  </p>
-                )}
+                <p className="text-xs text-slate-400">
+                  {fmpiApprovalRequired ? "CA Approval required (OWR)" : "No CA Approval required (In Warranty)"}
+                  {incident.fmpi_submission_method ? ` · ${incident.fmpi_submission_method} submission` : ""}
+                </p>
                 {incident.fmpi_submitted_at && (
                   <p className="text-xs text-slate-400">Submitted: {formatDeadline(incident.fmpi_submitted_at)}</p>
                 )}
               </div>
             </div>
-            <Button
-              size="sm"
-              variant={hasFMPISubmitted ? "outline" : "default"}
-              className={`text-xs h-8 ${!hasFMPISubmitted ? "bg-indigo-600 hover:bg-indigo-700" : ""}`}
-              onClick={() => setShowFMPIForm(true)}
-            >
-              {hasFMPISubmitted ? "View FMPI" : "Fill FMPI"}
-            </Button>
+            {/* Action buttons row */}
+            <div className={`flex gap-2 px-3 py-2 border-t ${hasFMPISubmitted ? "border-green-100 bg-green-50/40" : "border-slate-100 bg-slate-50/40"}`}>
+              <Button
+                size="sm"
+                variant={hasFMPISubmitted ? "outline" : "default"}
+                className={`text-xs h-7 flex-1 ${!hasFMPISubmitted ? "bg-indigo-600 hover:bg-indigo-700 text-white" : ""}`}
+                onClick={() => setShowFMPIForm(true)}
+              >
+                <FileText className="w-3 h-3 mr-1" />
+                {hasFMPISubmitted ? "View Digital FMPI" : "Fill Digital FMPI"}
+              </Button>
+              {!hasFMPISubmitted && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-xs h-7 flex-1 border-amber-300 text-amber-700 hover:bg-amber-50"
+                  onClick={() => setShowManualFMPI(true)}
+                >
+                  <Upload className="w-3 h-3 mr-1" />
+                  Upload Manual FMPI
+                </Button>
+              )}
+              {hasFMPISubmitted && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-xs h-7 border-amber-200 text-amber-600 hover:bg-amber-50"
+                  onClick={() => setShowManualFMPI(true)}
+                >
+                  <Upload className="w-3 h-3 mr-1" />
+                  Upload Additional
+                </Button>
+              )}
+            </div>
           </div>
         )}
 
@@ -633,6 +695,15 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
             />
           </DialogContent>
         </Dialog>
+      )}
+
+      {showManualFMPI && (
+        <ManualFMPIModal
+          incident={incident}
+          incidentId={incidentId}
+          onClose={() => setShowManualFMPI(false)}
+          onDone={() => { setShowManualFMPI(false); onRefresh(); }}
+        />
       )}
 
       {showCAModal && (

@@ -1,36 +1,39 @@
 /**
  * Centralized SLA Calculation Engine
  *
+ * PRIORITY CONVENTION (contractual):
+ *   P1 = LOW priority  → 48-hour CR+OMPI window (less urgent)
+ *   P2 = HIGH priority → 24-hour CR+OMPI window (urgent / same-day)
+ *
  * All SLA deadlines are calculated here.
  * Forms and workflow components must NOT contain hardcoded SLA math.
- * Configuration is loaded from SLARules entity. Fallback defaults exist.
  */
 
 import { addDays, addHours, isWeekend, format, isBefore, differenceInHours } from "date-fns";
 
 // ── Default SLA rule table (fallback when SLARules entity is empty) ──────────
-// These defaults mirror the contractual requirements.
+// PRIORITY: P1 = Low (48h), P2 = High (24h)
 export const DEFAULT_SLA_RULES = [
   {
     code: "SLA_1_CR_OMPI_P1",
-    name: "Confirmation of Receipt + OMPI (P1)",
+    name: "Confirmation of Receipt + OMPI (P1 – Low)",
     priority: "P1",
     warranty_status: "Any",
     phase: "CR_OMPI",
-    duration_value: 24,
+    duration_value: 48,      // P1 = Low priority = 48 hours
     duration_unit: "hours",
-    warning_threshold_hours: 4,
+    warning_threshold_hours: 8,
     breach_threshold_hours: 0,
   },
   {
     code: "SLA_1_CR_OMPI_P2",
-    name: "Confirmation of Receipt + OMPI (P2)",
+    name: "Confirmation of Receipt + OMPI (P2 – High)",
     priority: "P2",
     warranty_status: "Any",
     phase: "CR_OMPI",
-    duration_value: 48,
+    duration_value: 24,      // P2 = High priority = 24 hours (urgent)
     duration_unit: "hours",
-    warning_threshold_hours: 8,
+    warning_threshold_hours: 4,
     breach_threshold_hours: 0,
   },
   {
@@ -68,11 +71,11 @@ export const DEFAULT_SLA_RULES = [
   },
   {
     code: "SLA_3_REPAIR_OWR",
-    name: "Repair Completion (OWR – post CA approval)",
+    name: "Repair Completion (OWR – 21 days from CA approval)",
     priority: "Any",
     warranty_status: "OWR",
     phase: "Repair",
-    duration_value: 21,
+    duration_value: 21,       // Exactly 21 calendar days from CA approval date
     duration_unit: "calendar_days",
     warning_threshold_hours: 48,
     breach_threshold_hours: 0,
@@ -91,7 +94,6 @@ export function mergeRules(loadedRules = []) {
 
 // ── Find best matching rule ──────────────────────────────────────────────────
 export function findRule(rules, { phase, priority, warranty_status }) {
-  // Exact match first
   let rule = rules.find(r =>
     r.phase === phase &&
     (r.priority === priority || r.priority === "Any") &&
@@ -100,7 +102,7 @@ export function findRule(rules, { phase, priority, warranty_status }) {
   return rule || null;
 }
 
-// ── Add business days (skips weekends, no holiday support yet) ───────────────
+// ── Add business days (skips weekends) ───────────────────────────────────────
 export function addBusinessDaysLocal(date, days) {
   let d = new Date(date);
   let added = 0;
@@ -139,11 +141,13 @@ export function evalSLAStatus(deadline, completedAt, rule) {
 }
 
 // ── Main: compute CR+OMPI SLA for a newly created incident ──────────────────
+// P1 = Low priority = 48h; P2 = High priority = 24h
 export function computeCROMPISLA(incidentCreatedAt, operationalPriority, allRules) {
   const rules = mergeRules(allRules);
+  // Default to P1 (Low) if no priority selected
   const rule = findRule(rules, {
     phase: "CR_OMPI",
-    priority: operationalPriority || "P2",
+    priority: operationalPriority || "P1",
     warranty_status: "Any",
   });
   if (!rule) return null;
@@ -178,7 +182,9 @@ export function computeFMPISLA(crOmpiSubmittedAt, warrantyStatus, allRules) {
   };
 }
 
-// ── Compute Repair SLA starting at FMPI submission or CA approval ────────────
+// ── Compute Repair SLA — MUST start from CA approval date for OWR incidents ──
+// OWR: exactly 21 calendar days from CA approval date
+// In Warranty: 28 calendar days from FMPI submission
 export function computeRepairSLA(startAt, warrantyStatus, allRules) {
   const rules = mergeRules(allRules);
   const rule = findRule(rules, {
@@ -208,19 +214,16 @@ export function refreshSLAStatus(incident) {
   if (incident.sla_completed_at) return "Completed";
   if (isBefore(deadline, now)) return "Breached";
 
-  // Use a default warning of 24h if no rule stored
   const warningHours = 24;
   if (hoursLeft <= warningHours) return "At Risk";
   return "On Track";
 }
 
 // ── Derive initial workflow_state from legacy boolean fields ─────────────────
-// Used for migration-safe rendering of old incidents
 export function deriveWorkflowStateFromLegacy(incident) {
   if (!incident) return "Awaiting_CR_OMPI";
   if (incident.workflow_state) return incident.workflow_state;
 
-  // Legacy fallback cascade
   if (incident.status === "Closed") return "Closed";
   if (incident.owr_fmpi_done) {
     if (incident.is_owr && incident.ca_status === "Approved") return "Approved_For_Corrective";
@@ -243,22 +246,30 @@ export function formatDeadline(isoString) {
   }
 }
 
+// ── Human-readable priority label ────────────────────────────────────────────
+// P1 = Low, P2 = High (contractual definition)
+export function getPriorityLabel(priority) {
+  if (priority === "P1") return "P1 – Low";
+  if (priority === "P2") return "P2 – High";
+  return priority || "—";
+}
+
 // ── Determine what action the user should take next ──────────────────────────
 export function getNextActionLabel(workflowState) {
   const map = {
-    Awaiting_CR_OMPI: "Submit Confirmation of Receipt + OMPI",
-    CR_OMPI_Submitted: "Submit FMPI",
-    Awaiting_Make_Safe: "Create Make Safe Work Order",
-    Awaiting_Inspection: "Create Inspection Work Order",
-    FMPI_Draft: "Submit FMPI",
-    FMPI_Submitted: "Submit FMPI or Proceed",
-    Awaiting_CA_Approval: "Awaiting CA Approval",
-    CA_Rejected: "Revise and Resubmit FMPI",
+    Awaiting_CR_OMPI:        "Submit Confirmation of Receipt + OMPI",
+    CR_OMPI_Submitted:       "Submit FMPI",
+    Awaiting_Make_Safe:      "Create Make Safe Work Order",
+    Awaiting_Inspection:     "Create Inspection Work Order",
+    FMPI_Draft:              "Submit FMPI",
+    FMPI_Submitted:          "Awaiting CA Approval or proceed to Corrective",
+    Awaiting_CA_Approval:    "Awaiting CA Approval",
+    CA_Rejected:             "Revise and Resubmit FMPI",
     Approved_For_Corrective: "Create Corrective Work Order",
-    Corrective_In_Progress: "Complete Corrective Work Order",
-    Awaiting_Closure: "Submit Closure Evidence",
-    Closed: "Incident Closed",
-    Cancelled: "Incident Cancelled",
+    Corrective_In_Progress:  "Complete Corrective Work Order",
+    Awaiting_Closure:        "Submit Closure Evidence",
+    Closed:                  "Incident Closed",
+    Cancelled:               "Incident Cancelled",
   };
   return map[workflowState] || "Unknown State";
 }

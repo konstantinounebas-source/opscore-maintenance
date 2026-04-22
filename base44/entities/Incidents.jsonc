@@ -108,7 +108,7 @@
         "P1",
         "P2"
       ],
-      "description": "Operational priority set during CR+OMPI"
+      "description": "Operational priority: P1 = Low (48h SLA), P2 = High/Urgent (24h SLA)"
     },
     "warranty_status": {
       "type": "string",
@@ -137,6 +137,14 @@
       "type": "boolean",
       "default": false,
       "description": "True for OWR incidents, drives CA approval gate"
+    },
+    "fmpi_submission_method": {
+      "type": "string",
+      "enum": [
+        "Digital",
+        "Manual"
+      ],
+      "description": "How FMPI was submitted: Digital (via form) or Manual (uploaded document)"
     },
     "corrective_allowed": {
       "type": "boolean",
@@ -180,6 +188,11 @@
     "ca_decision_comment": {
       "type": "string",
       "description": "Optional CA decision comment"
+    },
+    "repair_deadline_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Repair deadline: OWR = CA approval + 21 days; In Warranty = FMPI submit + 28 days"
     },
     "corrective_started_at": {
       "type": "string",
