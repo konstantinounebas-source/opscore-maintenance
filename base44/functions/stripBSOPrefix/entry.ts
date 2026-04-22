@@ -17,12 +17,17 @@ Deno.serve(async (req) => {
         asset_id: a.asset_id.replace(/^BSO-/, '')
       }));
 
-    // Update one at a time with delays to avoid rate limits
+    // Update in batches of 100 with delays between batches
     let updatedCount = 0;
-    for (const asset of assetsToUpdate) {
-      await base44.asServiceRole.entities.Assets.update(asset.id, { asset_id: asset.asset_id });
-      updatedCount++;
-      await new Promise(r => setTimeout(r, 200));
+    for (let i = 0; i < assetsToUpdate.length; i += 100) {
+      const batch = assetsToUpdate.slice(i, i + 100);
+      await Promise.all(
+        batch.map(a => base44.asServiceRole.entities.Assets.update(a.id, { asset_id: a.asset_id }))
+      );
+      updatedCount += batch.length;
+      if (i + 100 < assetsToUpdate.length) {
+        await new Promise(r => setTimeout(r, 1000));
+      }
     }
 
     return Response.json({
