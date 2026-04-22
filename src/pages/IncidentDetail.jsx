@@ -13,11 +13,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
-import { ArrowLeft, Pencil, Send, ChevronDown, ChevronUp, Paperclip, Loader2, RotateCcw, FileText, ImageIcon } from "lucide-react";
+import { ArrowLeft, Pencil, Send, ChevronDown, ChevronUp, Paperclip, Loader2, RotateCcw } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import IncidentDocuments from "@/components/incidents/IncidentDocuments";
 import ResetIncidentDialog from "@/components/incidents/ResetIncidentDialog";
 import IncidentFormSubmissions from "@/components/incidents/IncidentFormSubmissions";
+import IncidentAttachmentsPreview from "@/components/incidents/IncidentAttachmentsPreview";
 
 export default function IncidentDetail() {
   const params = new URLSearchParams(window.location.search);
@@ -187,29 +188,8 @@ export default function IncidentDetail() {
             </div>
           )}
 
-          {/* Attachments from Incident Creation Form */}
-           {attachments.filter(a => a.is_initial_upload).length > 0 && (
-             <div className="mt-4 pt-4 border-t border-slate-100">
-               <p className="text-xs text-slate-500 font-medium mb-3">Attachments</p>
-               <div className="space-y-2">
-                 {attachments.filter(a => a.is_initial_upload).map((att) => (
-                   <div key={att.id} className="flex items-center gap-3 px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors">
-                     <div className="h-8 w-8 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0">
-                       {/\.(png|jpg|jpeg|gif|webp)$/i.test(att.file_name || att.file_url)
-                         ? <ImageIcon className="h-4 w-4 text-indigo-500" />
-                         : <FileText className="h-4 w-4 text-indigo-500" />
-                       }
-                     </div>
-                     <div className="flex-1 min-w-0">
-                       <a href={att.file_url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-indigo-600 hover:text-indigo-800 truncate block">
-                         {att.file_name || att.file_url?.split("/").pop()}
-                       </a>
-                     </div>
-                   </div>
-                 ))}
-               </div>
-             </div>
-           )}
+          {/* Incident Evidence — all attachments with image thumbnails */}
+          <IncidentAttachmentsPreview attachments={attachments} auditTrail={auditTrail} />
 
           <button
             onClick={() => setShowMore(v => !v)}
