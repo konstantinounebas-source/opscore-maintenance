@@ -26,9 +26,9 @@ export default function UnifiedAssetsTable({
 }) {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
-  const [filterSource, setFilterSource] = useState("all");
   const [filterCity, setFilterCity] = useState("all");
-  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterStageStatus, setFilterStageStatus] = useState("all");
+  const [filterShelterType, setFilterShelterType] = useState("all");
   const [filterOpenIncidents, setFilterOpenIncidents] = useState("all");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -41,14 +41,19 @@ export default function UnifiedAssetsTable({
     childAssets.filter(c => c.parent_asset_id === assetId).length;
 
   const uniqueCities = [...new Set(assets.map(a => a.city).filter(Boolean))].sort();
-  const uniqueStatuses = [...new Set(assets.map(a => a.status).filter(Boolean))].sort();
+  const uniqueStageStatus = [...new Set(
+    assets.flatMap(a => [a.asset_stage, a.status]).filter(Boolean)
+  )].sort();
+  const uniqueShelterTypes = [...new Set(
+    assets.flatMap(a => [a.shelter_type, a.ordered_shelter_type, a.installed_shelter_type]).filter(Boolean)
+  )].sort();
 
   const filtered = useMemo(() => {
     setPage(1);
     return assets.filter(a => {
-      if (filterSource !== "all" && a.asset_source !== filterSource) return false;
       if (filterCity !== "all" && a.city !== filterCity) return false;
-      if (filterStatus !== "all" && a.status !== filterStatus) return false;
+      if (filterStageStatus !== "all" && a.asset_stage !== filterStageStatus && a.status !== filterStageStatus) return false;
+      if (filterShelterType !== "all" && ![a.shelter_type, a.ordered_shelter_type, a.installed_shelter_type].includes(filterShelterType)) return false;
       if (filterOpenIncidents === "with" && getOpenIncidents(a.id) === 0) return false;
       if (filterOpenIncidents === "without" && getOpenIncidents(a.id) > 0) return false;
       if (search.trim()) {
@@ -69,14 +74,14 @@ export default function UnifiedAssetsTable({
       return (a.city || "").localeCompare(b.city || "");
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [assets, search, filterSource, filterCity, filterStatus, filterOpenIncidents, incidents, workOrders, childAssets]);
+  }, [assets, search, filterCity, filterStageStatus, filterShelterType, filterOpenIncidents, incidents, workOrders, childAssets]);
 
   const totalRows = filtered.length;
   const effectivePageSize = pageSize === "All" ? totalRows : pageSize;
   const totalPages = pageSize === "All" ? 1 : Math.max(1, Math.ceil(totalRows / effectivePageSize));
   const paginated = pageSize === "All" ? filtered : filtered.slice((page - 1) * effectivePageSize, page * effectivePageSize);
 
-  const hasFilters = search || filterSource !== "all" || filterCity !== "all" || filterStatus !== "all" || filterOpenIncidents !== "all";
+  const hasFilters = search || filterCity !== "all" || filterStageStatus !== "all" || filterShelterType !== "all" || filterOpenIncidents !== "all";
 
   return (
     <div className="space-y-3">
@@ -92,26 +97,25 @@ export default function UnifiedAssetsTable({
               className="pl-9 h-9 text-sm w-64 bg-slate-50 border-slate-200"
             />
           </div>
-          <Select value={filterSource} onValueChange={setFilterSource}>
-            <SelectTrigger className="h-9 text-sm w-44"><SelectValue placeholder="Source" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Sources</SelectItem>
-              <SelectItem value="maintenance">Maintenance</SelectItem>
-              <SelectItem value="bus_shelter_order">Bus Shelter Order</SelectItem>
-            </SelectContent>
-          </Select>
           <Select value={filterCity} onValueChange={setFilterCity}>
-            <SelectTrigger className="h-9 text-sm w-36"><SelectValue placeholder="City" /></SelectTrigger>
+            <SelectTrigger className="h-9 text-sm w-40"><SelectValue placeholder="City" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Cities</SelectItem>
               {uniqueCities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="h-9 text-sm w-36"><SelectValue placeholder="Status" /></SelectTrigger>
+          <Select value={filterStageStatus} onValueChange={setFilterStageStatus}>
+            <SelectTrigger className="h-9 text-sm w-48"><SelectValue placeholder="Status / Stage" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              {uniqueStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              <SelectItem value="all">All Status / Stage</SelectItem>
+              {uniqueStageStatus.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={filterShelterType} onValueChange={setFilterShelterType}>
+            <SelectTrigger className="h-9 text-sm w-48"><SelectValue placeholder="Shelter Type" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Shelter Types</SelectItem>
+              {uniqueShelterTypes.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={filterOpenIncidents} onValueChange={setFilterOpenIncidents}>
@@ -125,7 +129,7 @@ export default function UnifiedAssetsTable({
           {hasFilters && (
             <Button
               variant="ghost" size="sm"
-              onClick={() => { setSearch(""); setFilterSource("all"); setFilterCity("all"); setFilterStatus("all"); setFilterOpenIncidents("all"); }}
+              onClick={() => { setSearch(""); setFilterCity("all"); setFilterStageStatus("all"); setFilterShelterType("all"); setFilterOpenIncidents("all"); }}
               className="h-9 gap-1.5 text-slate-500"
             >
               <X className="w-3.5 h-3.5" /> Clear
