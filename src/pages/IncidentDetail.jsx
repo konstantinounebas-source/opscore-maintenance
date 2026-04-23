@@ -20,6 +20,7 @@ import ResetIncidentDialog from "@/components/incidents/ResetIncidentDialog";
 import IncidentFormSubmissions from "@/components/incidents/IncidentFormSubmissions";
 import IncidentAttachmentsPreview from "@/components/incidents/IncidentAttachmentsPreview";
 import SLAResponseClock from "@/components/incidents/SLAResponseClock";
+import SLADeadlinePanel from "@/components/incidents/SLADeadlinePanel";
 
 export default function IncidentDetail() {
   const params = new URLSearchParams(window.location.search);
@@ -202,6 +203,9 @@ export default function IncidentDetail() {
             {showMore ? <><ChevronUp className="w-3.5 h-3.5" /> Show Less</> : <><ChevronDown className="w-3.5 h-3.5" /> Show More Info</>}
           </button>
         </div>
+
+        {/* SLA Deadlines Panel — acknowledgement, make safe, restoration */}
+        <SLADeadlinePanel incident={incident} />
 
         {/* SLA Status Card */}
         <SLAStatusCard incident={incident} />

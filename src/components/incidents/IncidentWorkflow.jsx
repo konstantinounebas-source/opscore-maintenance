@@ -30,7 +30,7 @@ import {
   AlertTriangle, FileCheck, FileText, PenLine,
   Lock, ChevronDown, Trash2, XCircle, Upload, Calendar
 } from "lucide-react";
-import { computeRepairSLA, getPriorityLabel } from "@/lib/slaEngine";
+import { computeRepairSLA, getPriorityLabel, computeOWRRestorationDeadline } from "@/lib/slaEngine";
 import { addDays, format } from "date-fns";
 
 // ── Work Order panel types ───────────────────────────────────────────────────
@@ -97,6 +97,8 @@ function CAApprovalModal({ incident, incidentId, onClose, onDone }) {
             previous_sla_completed_at: now,
             // Store repair deadline separately for display clarity
             repair_deadline_at: repairSLA.sla_deadline_at,
+            // Update restoration_deadline for OWR incidents (CA approval date + 21 days)
+            restoration_deadline: computeOWRRestorationDeadline(now),
           };
         }
       } else {
@@ -426,12 +428,20 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
   };
 
   const advanceToClosureCheck = async () => {
+    // Block closure if FMPI is required (always true) and not yet submitted
     if (!hasFMPISubmitted) {
-      toast({ title: "FMPI required", description: "Submit FMPI before proceeding to closure." });
+      toast({ title: "FMPI required", description: "Submit Full Management Plan (FMPI) before closing the incident." });
       return;
     }
+    // Block if OWR and CA not yet approved
     if (fmpiApprovalRequired && incident.ca_decision !== "Approved") {
-      toast({ title: "CA Approval required", description: "CA must approve FMPI before closure." });
+      toast({ title: "CA Approval required", description: "CA must approve the FMPI before incident can be closed." });
+      return;
+    }
+    // Block if Make Safe WO required (P2) and not completed
+    const makeSafeWO = incidentWorkOrders.find(w => /make.?safe/i.test(w.title || ""));
+    if (incident.make_safe_required && makeSafeWO && makeSafeWO.status !== "Completed" && makeSafeWO.status !== "Cancelled") {
+      toast({ title: "Make Safe incomplete", description: "Make Safe Work Order must be completed before closing." });
       return;
     }
     if (!requiredWOsMet()) {

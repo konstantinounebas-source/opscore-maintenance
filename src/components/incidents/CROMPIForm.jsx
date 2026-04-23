@@ -14,7 +14,8 @@ import { base44 } from "@/api/base44Client";
 import { getAthensTimestamp } from "@/lib/timeSync";
 import {
   computeCROMPISLA, computeFMPISLA,
-  mergeRules, formatDeadline, deriveWorkflowStateFromLegacy
+  mergeRules, formatDeadline, deriveWorkflowStateFromLegacy,
+  computePriorityDeadlines
 } from "@/lib/slaEngine";
 import TopHeader from "@/components/layout/TopHeader";
 import { Button } from "@/components/ui/button";
@@ -155,6 +156,11 @@ export default function CROMPIForm({ incident, incidentId, onClose, onDone }) {
       // Compute FMPI SLA (starts from CR+OMPI submission)
       const newFmpiSLA = computeFMPISLA(now, warrantyStatus, slaRulesData);
 
+      // Recalculate SLA deadlines in case priority/owr changed at CR+OMPI
+      const createdAt = incident?.incident_created_at || incident?.created_date || now;
+      const isOWR = warrantyStatus === "OWR";
+      const freshDeadlines = computePriorityDeadlines(createdAt, operationalPriority, isOWR, null);
+
       const incidentUpdates = {
         workflow_state: "CR_OMPI_Submitted",
         operational_priority: operationalPriority,
@@ -165,6 +171,8 @@ export default function CROMPIForm({ incident, incidentId, onClose, onDone }) {
         fmpi_approval_required: fmpiApprovalRequired,
         corrective_allowed: !fmpiApprovalRequired,
         cr_ompi_submitted_at: now,
+        // Store/refresh the priority-based SLA deadlines
+        ...freshDeadlines,
         // Advance SLA to FMPI phase
         active_sla_code: newFmpiSLA?.active_sla_code || null,
         active_sla_name: newFmpiSLA?.active_sla_name || null,

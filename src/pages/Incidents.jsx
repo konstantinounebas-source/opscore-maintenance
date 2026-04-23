@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Download, X, Clock, AlertTriangle } from "lucide-react";
 import { differenceInSeconds, addHours } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
+import { computePriorityDeadlines } from "@/lib/slaEngine";
 
 export default function Incidents() {
   const navigate = useNavigate();
@@ -33,18 +34,52 @@ export default function Incidents() {
   const createMutation = useMutation({
     mutationFn: async ({ data, pendingFiles }) => {
       const now = new Date().toISOString();
-      // Initialize workflow state and SLA 1 clock on creation
+      const priority = data.initial_priority;
+      const isOWR = data.is_owr === true;
+
+      // Compute SLA deadlines from priority at creation time
+      const slaDeadlines = computePriorityDeadlines(now, priority, isOWR, null);
+
       const incidentData = {
         ...data,
         workflow_state: "Awaiting_CR_OMPI",
         incident_created_at: now,
         sla_status: "On Track",
-        // SLA 1 deadline will be computed when priority is known (at CR+OMPI submission)
-        // We cannot compute it yet as operational_priority is set at CR+OMPI
+        ...slaDeadlines,
       };
       const inc = await base44.entities.Incidents.create(incidentData);
       const user = await base44.auth.me();
-      await base44.entities.IncidentAuditTrail.create({ incident_id: inc.id, action: "Incident Created", details: `Incident ${data.incident_id} created. Workflow started: Awaiting CR+OMPI.`, user: user?.email });
+
+      await base44.entities.IncidentAuditTrail.create({
+        incident_id: inc.id,
+        action: "Incident Created",
+        details: `Incident ${data.incident_id} created. Priority: ${priority || "—"}. Workflow started: Awaiting CR+OMPI.${slaDeadlines.acknowledgement_deadline ? ` Acknowledgement deadline set.` : ""}`,
+        user: user?.email,
+      });
+
+      // P2: auto-create a Make Safe Work Order
+      if (priority === "P2" && slaDeadlines.make_safe_deadline) {
+        const wos = await base44.entities.WorkOrders.list();
+        const nextWoNum = wos.length + 1;
+        await base44.entities.WorkOrders.create({
+          work_order_id: `WO-MS-${String(nextWoNum).padStart(3, "0")}`,
+          title: `Make Safe — ${data.incident_id}`,
+          incident_id: inc.id,
+          related_asset_id: data.related_asset_id || "",
+          related_asset_name: data.related_asset_name || "",
+          status: "Open",
+          priority: "High",
+          description: `Auto-created Make Safe Work Order for P2 incident ${data.incident_id}. Must be completed within 24h.`,
+          due_date: slaDeadlines.make_safe_deadline?.split("T")[0] || null,
+        });
+        await base44.entities.IncidentAuditTrail.create({
+          incident_id: inc.id,
+          action: "Auto: Make Safe WO Created",
+          details: `P2 incident — Make Safe Work Order auto-created. Deadline: ${slaDeadlines.make_safe_deadline}`,
+          user: user?.email,
+        });
+      }
+
       if (pendingFiles?.length > 0) {
         for (const file of pendingFiles) {
           await base44.entities.IncidentAttachments.create({

@@ -60,22 +60,18 @@
       "description": "State-machine driven workflow state"
     },
     "active_sla_code": {
-      "type": "string",
-      "description": "Current active SLA rule code"
+      "type": "string"
     },
     "active_sla_name": {
-      "type": "string",
-      "description": "Human-readable name of active SLA"
+      "type": "string"
     },
     "sla_started_at": {
       "type": "string",
-      "format": "date-time",
-      "description": "When the current SLA clock started"
+      "format": "date-time"
     },
     "sla_deadline_at": {
       "type": "string",
-      "format": "date-time",
-      "description": "Calculated SLA deadline"
+      "format": "date-time"
     },
     "sla_status": {
       "type": "string",
@@ -85,22 +81,18 @@
         "Breached",
         "Completed",
         "Paused"
-      ],
-      "description": "Current SLA compliance status"
+      ]
     },
     "sla_completed_at": {
       "type": "string",
-      "format": "date-time",
-      "description": "When current SLA was completed"
+      "format": "date-time"
     },
     "previous_sla_code": {
-      "type": "string",
-      "description": "Previous SLA code (for audit)"
+      "type": "string"
     },
     "previous_sla_completed_at": {
       "type": "string",
-      "format": "date-time",
-      "description": "When previous SLA was completed"
+      "format": "date-time"
     },
     "operational_priority": {
       "type": "string",
@@ -108,58 +100,76 @@
         "P1",
         "P2"
       ],
-      "description": "Operational priority: P1 = Low (48h SLA), P2 = High/Urgent (24h SLA)"
+      "description": "P1 = Low, P2 = High/Urgent"
     },
     "warranty_status": {
       "type": "string",
       "enum": [
         "In Warranty",
         "OWR"
-      ],
-      "description": "Definitive warranty classification set at CR+OMPI"
+      ]
     },
     "make_safe_required": {
       "type": "boolean",
-      "default": false,
-      "description": "Decision made at CR+OMPI"
+      "default": false
     },
     "inspection_required": {
       "type": "boolean",
-      "default": false,
-      "description": "Decision made at CR+OMPI"
+      "default": false
     },
     "fmpi_required": {
       "type": "boolean",
-      "default": true,
-      "description": "Always true for all incidents"
+      "default": true
     },
     "fmpi_approval_required": {
       "type": "boolean",
-      "default": false,
-      "description": "True for OWR incidents, drives CA approval gate"
+      "default": false
     },
     "fmpi_submission_method": {
       "type": "string",
       "enum": [
         "Digital",
         "Manual"
-      ],
-      "description": "How FMPI was submitted: Digital (via form) or Manual (uploaded document)"
+      ]
     },
     "corrective_allowed": {
       "type": "boolean",
-      "default": false,
-      "description": "System-set: true when FMPI submitted (non-OWR) or CA approved (OWR)"
+      "default": false
+    },
+    "acknowledgement_deadline": {
+      "type": "string",
+      "format": "date-time",
+      "description": "SLA deadline for CR+OMPI acknowledgement (auto-calculated)"
+    },
+    "make_safe_deadline": {
+      "type": "string",
+      "format": "date-time",
+      "description": "P2 only: Make Safe must be completed within 24h of creation"
+    },
+    "restoration_deadline": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Final repair/restoration deadline (28 days from creation, or 21 days from CA approval for OWR)"
+    },
+    "acknowledgement_breach": {
+      "type": "boolean",
+      "default": false
+    },
+    "make_safe_breach": {
+      "type": "boolean",
+      "default": false
+    },
+    "restoration_breach": {
+      "type": "boolean",
+      "default": false
     },
     "incident_created_at": {
       "type": "string",
-      "format": "date-time",
-      "description": "Timestamp of incident creation (SLA 1 start)"
+      "format": "date-time"
     },
     "cr_ompi_submitted_at": {
       "type": "string",
-      "format": "date-time",
-      "description": "Timestamp when CR+OMPI was submitted (SLA 1 end)"
+      "format": "date-time"
     },
     "make_safe_completed_at": {
       "type": "string",
@@ -182,17 +192,14 @@
       "enum": [
         "Approved",
         "Rejected"
-      ],
-      "description": "CA approval decision"
+      ]
     },
     "ca_decision_comment": {
-      "type": "string",
-      "description": "Optional CA decision comment"
+      "type": "string"
     },
     "repair_deadline_at": {
       "type": "string",
-      "format": "date-time",
-      "description": "Repair deadline: OWR = CA approval + 21 days; In Warranty = FMPI submit + 28 days"
+      "format": "date-time"
     },
     "corrective_started_at": {
       "type": "string",
@@ -221,15 +228,14 @@
         "Not Approved"
       ],
       "default": "Pending",
-      "description": "Legacy CA Approval Status \u2013 kept for backward compatibility"
+      "description": "Legacy CA Approval Status"
     },
     "out_of_warranty": {
       "type": "string",
       "enum": [
         "Yes",
         "No"
-      ],
-      "description": "Legacy OWR field \u2013 use warranty_status instead"
+      ]
     },
     "category": {
       "type": "string"
@@ -246,8 +252,7 @@
     },
     "issue_date": {
       "type": "string",
-      "format": "date",
-      "description": "\u0397\u03bc\u03b5\u03c1\u03bf\u03bc\u03b7\u03bd\u03af\u03b1 \u0388\u03ba\u03b4\u03bf\u03c3\u03b7\u03c2"
+      "format": "date"
     },
     "created_time": {
       "type": "string"
@@ -361,11 +366,11 @@
     },
     "is_owr": {
       "type": "boolean",
-      "description": "Legacy OWR boolean \u2013 use warranty_status"
+      "description": "Legacy OWR boolean"
     },
     "requires_make_safe": {
       "type": "boolean",
-      "description": "Legacy \u2013 use make_safe_required"
+      "description": "Legacy"
     },
     "approval_date": {
       "type": "string",
@@ -376,53 +381,43 @@
     },
     "confirmation_done": {
       "type": "boolean",
-      "default": false,
-      "description": "LEGACY \u2013 do not use for new workflow logic"
+      "default": false
     },
     "ompi_done": {
       "type": "boolean",
-      "default": false,
-      "description": "LEGACY \u2013 do not use for new workflow logic"
+      "default": false
     },
     "inspection_done": {
       "type": "boolean",
-      "default": false,
-      "description": "LEGACY"
+      "default": false
     },
     "make_safe_done": {
       "type": "boolean",
-      "default": false,
-      "description": "LEGACY"
+      "default": false
     },
     "owr_fmpi_done": {
       "type": "boolean",
-      "default": false,
-      "description": "LEGACY"
+      "default": false
     },
     "photos_after_fixing_done": {
       "type": "boolean",
-      "default": false,
-      "description": "LEGACY"
+      "default": false
     },
     "corrective_done": {
       "type": "boolean",
-      "default": false,
-      "description": "LEGACY"
+      "default": false
     },
     "checklist_done": {
       "type": "boolean",
-      "default": false,
-      "description": "LEGACY"
+      "default": false
     },
     "revisit_done": {
       "type": "boolean",
-      "default": false,
-      "description": "LEGACY"
+      "default": false
     },
     "finalise_done": {
       "type": "boolean",
-      "default": false,
-      "description": "LEGACY"
+      "default": false
     }
   },
   "required": [
