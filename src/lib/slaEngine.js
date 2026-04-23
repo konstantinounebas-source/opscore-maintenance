@@ -12,26 +12,30 @@
 import { addDays, addHours, isWeekend, format, isBefore, differenceInHours } from "date-fns";
 
 // ── Default SLA rule table (fallback when SLARules entity is empty) ──────────
-// PRIORITY: P1 = Low (48h), P2 = High (24h)
+// CONTRACTUAL PRIORITY DEFINITION:
+//   P1 = LOW priority  → Confirmation ≤ 24h (next business day). Repair ≤ 28 days.
+//   P2 = HIGH priority → Same-day confirmation + Make-Safe within 24h. Repair ≤ 28 days.
+//   FMPI required ONLY for OWR incidents (both P1 and P2).
+//   OWR repair deadline: ≤ 21 days from CA approval.
 export const DEFAULT_SLA_RULES = [
   {
     code: "SLA_1_CR_OMPI_P1",
-    name: "Confirmation of Receipt + OMPI (P1 – Low)",
+    name: "Επιβεβαίωση Παραλαβής (P1 – Χαμηλή)",
     priority: "P1",
     warranty_status: "Any",
     phase: "CR_OMPI",
-    duration_value: 48,      // P1 = Low priority = 48 hours
+    duration_value: 24,      // P1 = Low priority = 24 hours (next business day)
     duration_unit: "hours",
-    warning_threshold_hours: 8,
+    warning_threshold_hours: 6,
     breach_threshold_hours: 0,
   },
   {
     code: "SLA_1_CR_OMPI_P2",
-    name: "Confirmation of Receipt + OMPI (P2 – High)",
+    name: "Επιβεβαίωση + Make-Safe (P2 – Υψηλή)",
     priority: "P2",
     warranty_status: "Any",
     phase: "CR_OMPI",
-    duration_value: 24,      // P2 = High priority = 24 hours (urgent)
+    duration_value: 24,      // P2 = High priority = same-day + Make-Safe within 24h
     duration_unit: "hours",
     warning_threshold_hours: 4,
     breach_threshold_hours: 0,

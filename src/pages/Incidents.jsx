@@ -8,7 +8,8 @@ import StatusBadge from "@/components/shared/StatusBadge";
 import IncidentFormDialog from "@/components/incidents/IncidentFormDialog";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Download, X } from "lucide-react";
+import { Plus, Download, X, Clock, AlertTriangle } from "lucide-react";
+import { differenceInSeconds, addHours } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function Incidents() {
@@ -109,6 +110,42 @@ export default function Incidents() {
   };
 
   const columns = [
+    {
+      key: "sla_clock",
+      label: "SLA Response",
+      render: (r) => {
+        const priority = r.initial_priority || r.operational_priority;
+        const state = r.workflow_state || "Awaiting_CR_OMPI";
+        if (state !== "Awaiting_CR_OMPI" || !priority || !r.incident_created_at) {
+          return state === "Awaiting_CR_OMPI"
+            ? <span className="text-slate-400 text-xs">—</span>
+            : <span className="inline-flex items-center gap-1 text-xs text-slate-400"><Clock className="w-3 h-3" />Done</span>;
+        }
+        const deadline = addHours(new Date(r.incident_created_at), 24);
+        const secsLeft = differenceInSeconds(deadline, new Date());
+        const breached = secsLeft <= 0;
+        const atRisk = !breached && secsLeft <= 4 * 3600;
+        const abs = Math.abs(secsLeft);
+        const h = Math.floor(abs / 3600);
+        const m = Math.floor((abs % 3600) / 60);
+        const display = h > 0 ? `${h}h ${m}m` : `${m}m`;
+        if (breached) return (
+          <span className="inline-flex items-center gap-1 text-xs font-bold bg-red-100 text-red-700 px-2 py-0.5 rounded-full">
+            <AlertTriangle className="w-3 h-3" /> {display} overdue
+          </span>
+        );
+        if (atRisk) return (
+          <span className="inline-flex items-center gap-1 text-xs font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+            <Clock className="w-3 h-3" /> {display} left
+          </span>
+        );
+        return (
+          <span className="inline-flex items-center gap-1 text-xs font-medium bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full">
+            <Clock className="w-3 h-3" /> {display} left
+          </span>
+        );
+      }
+    },
     { key: "incident_id", label: "ID" },
     {
       key: "related_asset_name",

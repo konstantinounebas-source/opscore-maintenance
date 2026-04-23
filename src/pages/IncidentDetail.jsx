@@ -19,6 +19,7 @@ import IncidentDocuments from "@/components/incidents/IncidentDocuments";
 import ResetIncidentDialog from "@/components/incidents/ResetIncidentDialog";
 import IncidentFormSubmissions from "@/components/incidents/IncidentFormSubmissions";
 import IncidentAttachmentsPreview from "@/components/incidents/IncidentAttachmentsPreview";
+import SLAResponseClock from "@/components/incidents/SLAResponseClock";
 
 export default function IncidentDetail() {
   const params = new URLSearchParams(window.location.search);
@@ -136,6 +137,9 @@ export default function IncidentDetail() {
         }
       />
       <div className="p-6 space-y-6">
+        {/* SLA Response Clock — shows countdown while awaiting CR+OMPI */}
+        <SLAResponseClock incident={incident} />
+
         {/* Overview */}
         <div className="bg-white rounded-xl border border-slate-200 p-6">
           {/* Always-visible fields */}
