@@ -29,8 +29,8 @@ export default function Assets() {
   const { data: workOrders = [] } = useQuery({ queryKey: ["workOrders"], queryFn: () => base44.entities.WorkOrders.list() });
 
   const getChildCount = (assetId) => childAssets.filter(c => c.parent_asset_id === assetId).length;
-  const getOpenIncidents = (assetId) => incidents.filter(i => i.related_asset_id === assetId && (i.status === "Open" || i.status === "In Progress")).length;
-  const getOpenWorkOrders = (assetId) => workOrders.filter(w => w.related_asset_id === assetId && (w.status === "Open" || w.status === "In Progress")).length;
+  const getOpenIncidents = (assetId) => incidents.filter(i => i.related_asset_id === assetId && i.status !== "Closed" && i.status !== "Cancelled").length;
+  const getOpenWorkOrders = (assetId) => workOrders.filter(w => w.related_asset_id === assetId && w.status !== "Completed" && w.status !== "Cancelled").length;
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Assets.create(data),
