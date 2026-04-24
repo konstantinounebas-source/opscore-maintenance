@@ -588,9 +588,11 @@ export function applyMapFilters(assets, filters, assignmentByAssetId, incidentsB
       const plannedWeekValues = parseMultiSelect(f.planned_week);
       if (plannedWeekValues.length > 0) {
         const asgn = assignmentByAssetId[a.id];
-        const weekCodes = plannedWeekValues;
-        const weekIds = weekCodes.map(code => weeks.find(w => w.week_code === code)?.id).filter(Boolean);
-        if (!asgn || !weekIds.includes(asgn.planning_week_id)) return false;
+        const hasUnassigned = plannedWeekValues.includes("Unassigned");
+        const hasRegular = plannedWeekValues.some(v => v !== "Unassigned");
+        const weekIds = plannedWeekValues.filter(v => v !== "Unassigned").map(code => weeks.find(w => w.week_code === code)?.id).filter(Boolean);
+        const matches = (hasRegular && asgn && weekIds.includes(asgn.planning_week_id)) || (hasUnassigned && !asgn);
+        if (!matches) return false;
       }
 
       // Single-value filters (kept for backward compat)
