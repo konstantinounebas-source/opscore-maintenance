@@ -121,7 +121,7 @@ export default function WorkbenchMap({
               color: m.isSelected ? "#1e293b" : "#fff",
               weight: m.isSelected ? 3 : 1.5,
             }}
-            eventHandlers={{ click: () => onSelectAsset(m.asset) }}
+            eventHandlers={{ click: (e) => onSelectAsset(m.asset, e) }}
           >
             <Tooltip direction="top" offset={[0, -6]} opacity={0.97}>
               <div className="text-xs font-bold">{m.asset.asset_id}</div>
