@@ -150,61 +150,8 @@ export default function AssignAssetModal({
         </DialogHeader>
 
         {asset && (
-          <div className="bg-slate-50 rounded-lg px-4 py-2.5 text-xs text-slate-600 border mb-1 space-y-1.5">
+          <div className="bg-slate-50 rounded-lg px-4 py-2.5 text-xs text-slate-600 border mb-1">
             <div><span className="font-medium">Asset:</span> {asset.asset_id} — {asset.asset_name}</div>
-
-            <div className="flex items-center justify-between gap-2">
-              <div>
-                <span className="font-medium">Week: </span>
-                {resolvedWeek
-                  ? <span className="text-indigo-700 font-semibold">
-                      {resolvedWeek.week_name || `${resolvedWeek.start_date} → ${resolvedWeek.end_date}`}
-                    </span>
-                  : <span className="text-slate-400 italic">No week assigned yet</span>
-                }
-              </div>
-              {!existingAssignment && (
-                <button
-                  onClick={() => setWeekCreateOpen(v => !v)}
-                  className="flex items-center gap-1 text-indigo-600 hover:text-indigo-800 font-medium text-xs shrink-0"
-                >
-                  {weekCreateOpen ? <ChevronUp className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
-                  {weekCreateOpen ? "Cancel" : "New Week"}
-                </button>
-              )}
-            </div>
-
-            {weekCreateOpen && (
-              <div className="border border-indigo-200 bg-white rounded-md p-3 space-y-2 mt-1">
-                <p className="text-[11px] text-indigo-600 font-semibold uppercase tracking-wide">Create New Planning Week</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <Label className="text-[11px]">Start Date</Label>
-                    <Input type="date" className="h-7 text-xs mt-0.5" value={newWeek.start_date}
-                      onChange={e => setWk("start_date", e.target.value)} />
-                  </div>
-                  <div>
-                    <Label className="text-[11px]">End Date</Label>
-                    <Input type="date" className="h-7 text-xs mt-0.5" value={newWeek.end_date}
-                      onChange={e => setWk("end_date", e.target.value)} />
-                  </div>
-                </div>
-                {newWeek.start_date && newWeek.end_date && (
-                  <p className="text-[10px] text-slate-400">
-                    Will be saved as: <b>{deriveWeekMeta(newWeek.start_date).week_name}</b> ({deriveWeekMeta(newWeek.start_date).week_code})
-                  </p>
-                )}
-                <Button
-                  size="sm"
-                  className="w-full h-7 text-xs bg-indigo-600 hover:bg-indigo-700 mt-1"
-                  disabled={creatingWeek || !newWeek.start_date || !newWeek.end_date}
-                  onClick={handleCreateWeek}
-                >
-                  {creatingWeek ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Plus className="w-3 h-3 mr-1" />}
-                  {creatingWeek ? "Creating…" : "Create & Use This Week"}
-                </Button>
-              </div>
-            )}
           </div>
         )}
 
@@ -226,21 +173,61 @@ export default function AssignAssetModal({
               <Select value={resolvedWeek?.id || "__none__"} onValueChange={v => {
                 if (v === "__new__") {
                   setWeekCreateOpen(true);
-                } else {
+                } else if (v !== "__none__") {
                   const selected = weeks.find(w => w.id === v);
                   if (selected) {
-                    // Note: This won't directly update resolvedWeek, 
-                    // but the user should use the week selector in the info box
+                    setCreatedWeek(selected);
                   }
                 }
               }}>
-                <SelectTrigger className="mt-1.5 text-sm"><SelectValue placeholder="Pick a week…" /></SelectTrigger>
+                <SelectTrigger className="mt-1.5 text-sm"><SelectValue placeholder="Pick a date…" /></SelectTrigger>
                 <SelectContent style={{ zIndex: 99999 }}>
-                  <SelectItem value="__none__">— Select week —</SelectItem>
-                  {weeks.map(w => <SelectItem key={w.id} value={w.id}>{w.week_code} ({w.week_name})</SelectItem>)}
+                  <SelectItem value="__none__">Pick a date to select a week…</SelectItem>
+                  {weeks.map(w => <SelectItem key={w.id} value={w.id}>{w.week_code} — {w.week_name}</SelectItem>)}
                   <SelectItem value="__new__">+ Create new week</SelectItem>
                 </SelectContent>
               </Select>
+              {weekCreateOpen && (
+                <div className="border border-indigo-200 bg-white rounded-md p-3 space-y-2 mt-2">
+                  <p className="text-[11px] text-indigo-600 font-semibold uppercase tracking-wide">Create New Planning Week</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-[11px]">Start Date</Label>
+                      <Input type="date" className="h-7 text-xs mt-0.5" value={newWeek.start_date}
+                        onChange={e => setWk("start_date", e.target.value)} />
+                    </div>
+                    <div>
+                      <Label className="text-[11px]">End Date</Label>
+                      <Input type="date" className="h-7 text-xs mt-0.5" value={newWeek.end_date}
+                        onChange={e => setWk("end_date", e.target.value)} />
+                    </div>
+                  </div>
+                  {newWeek.start_date && newWeek.end_date && (
+                    <p className="text-[10px] text-slate-400">
+                      Will be saved as: <b>{deriveWeekMeta(newWeek.start_date).week_name}</b> ({deriveWeekMeta(newWeek.start_date).week_code})
+                    </p>
+                  )}
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      className="flex-1 h-7 text-xs bg-indigo-600 hover:bg-indigo-700"
+                      disabled={creatingWeek || !newWeek.start_date || !newWeek.end_date}
+                      onClick={handleCreateWeek}
+                    >
+                      {creatingWeek ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Plus className="w-3 h-3 mr-1" />}
+                      {creatingWeek ? "Creating…" : "Create"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 text-xs"
+                      onClick={() => setWeekCreateOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
