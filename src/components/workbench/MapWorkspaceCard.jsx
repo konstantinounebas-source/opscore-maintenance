@@ -117,10 +117,10 @@ export default function MapWorkspaceCard({
   const hasColorRules = colorRules && colorRules.length > 0;
 
   const legendEntries = useMemo(() => {
-    const base = getLegendEntries(colorMode, layers, filteredAssets, allAssignments, incidentsByAsset, workOrdersByAsset, layerAssets, activeVisualRule, null, assignmentByAssetId);
+    const base = getLegendEntries(colorMode, layers, filteredAssets, allAssignments, incidentsByAsset, workOrdersByAsset, layerAssets, activeVisualRule, null, assignmentByAssetId, weeks);
     // Apply color overrides
     return base.map(e => colorOverrides[e.label] ? { ...e, color: colorOverrides[e.label] } : e);
-  }, [colorMode, layers, filteredAssets, allAssignments, incidentsByAsset, workOrdersByAsset, layerAssets, activeVisualRule, colorOverrides, assignmentByAssetId]);
+  }, [colorMode, layers, filteredAssets, allAssignments, incidentsByAsset, workOrdersByAsset, layerAssets, activeVisualRule, colorOverrides, assignmentByAssetId, weeks]);
 
   // Assets visible on map = filtered - hidden by legend
   const visibleAssets = useMemo(() => {

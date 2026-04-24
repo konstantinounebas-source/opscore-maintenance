@@ -306,7 +306,7 @@ export function getMapPinColor({ asset, assignment, colorMode, layers, layerAsse
 
 // ─── Legend entries per color mode ────────────────────────────────────────────
 
-export function getLegendEntries(colorMode, layers, assets, assignments, incidentsByAsset, workOrdersByAsset, layerAssets, activeVisualRule, colorRules, assignmentByAssetId) {
+export function getLegendEntries(colorMode, layers, assets, assignments, incidentsByAsset, workOrdersByAsset, layerAssets, activeVisualRule, colorRules, assignmentByAssetId, weeks = []) {
   // Helper to count assets matching a label
   function countMatches(label, mode) {
     return assets.filter(a => {
@@ -449,11 +449,15 @@ export function getLegendEntries(colorMode, layers, assets, assignments, inciden
         }
       });
       const unassignedCount = assets.filter(a => !assignmentByAssetId[a.id]).length;
-      const entries = Object.entries(weekMap).map(([weekId, count]) => ({
-        label: weekId,
-        color: getGenericColor("planned_week", weekId),
-        count
-      }));
+      const entries = Object.entries(weekMap).map(([weekId, count]) => {
+        const week = weeks.find(w => w.id === weekId);
+        const label = week ? `${week.week_code} - ${week.week_name}` : weekId;
+        return {
+          label,
+          color: getGenericColor("planned_week", weekId),
+          count
+        };
+      });
       if (unassignedCount > 0) {
         entries.push({ label: "Unassigned", color: "#CBD5E1", count: unassignedCount });
       }
