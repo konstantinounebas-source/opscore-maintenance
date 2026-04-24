@@ -256,12 +256,6 @@ export default function AssetFormUnified({ open, onOpenChange, onSave, asset }) 
 
           {/* ── 1. Asset Identity ── */}
           <SectionHeader title="Asset Identity" color="indigo" />
-          {isEdit && (
-            <div className="space-y-1.5">
-              <Label className="text-xs">Asset ID</Label>
-              <Input value={form.asset_id || ""} readOnly className="bg-slate-100 text-slate-600" />
-            </div>
-          )}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs">Shelter ID</Label>
