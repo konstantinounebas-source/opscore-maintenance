@@ -36,6 +36,12 @@ export default function PlanningWorkbench() {
   const [weekModalOpen, setWeekModalOpen] = useState(false);
   const [editingWeek, setEditingWeek] = useState(null);
 
+  // ── Asset popup and assignment modal ────────────────────────────────────────
+  const [selectedAsset, setSelectedAsset] = useState(null);
+  const [popupPos, setPopupPos] = useState(null);
+  const [assignmentModalOpen, setAssignmentModalOpen] = useState(false);
+  const [assigningAsset, setAssigningAsset] = useState(null);
+
   // ── Shared lookups (read-only from map perspective) ─────────────────────────
   const assetsMap = useMemo(() => Object.fromEntries(assets.map(a => [a.id, a])), [assets]);
 
@@ -328,8 +334,14 @@ export default function PlanningWorkbench() {
               assetsMap={assetsMap}
               incidentsByAsset={incidentsByAsset}
               workOrdersByAsset={workOrdersByAsset}
-              onSelectAssetForPopup={(asset) => console.log("Select asset:", asset)}
-              onOpenAssignmentModal={(asset, assignment) => console.log("Open assignment modal:", asset, assignment)}
+              onSelectAssetForPopup={(asset) => {
+                setSelectedAsset(asset);
+                setPopupPos({ x: 50, y: 50 });
+              }}
+              onOpenAssignmentModal={(asset, assignment) => {
+                setAssigningAsset(asset);
+                setAssignmentModalOpen(true);
+              }}
             />
           )}
         </div>
