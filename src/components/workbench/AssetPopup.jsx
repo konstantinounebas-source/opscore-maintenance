@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { X, Loader2, AlertCircle, Wrench, MapPin, Camera } from "lucide-react";
+import { X, Loader2, AlertCircle, Wrench, MapPin, Camera, Eye } from "lucide-react";
+import MapillaryViewer from "./MapillaryViewer";
 
 export default function AssetPopup({
   asset,
@@ -19,6 +20,7 @@ export default function AssetPopup({
   const [planningTypeId, setPlanningTypeId] = useState(assignment?.planning_type_id || "");
   const [weekId, setWeekId] = useState(assignment?.planning_week_id || "");
   const [saving, setSaving] = useState(false);
+  const [showMapillary, setShowMapillary] = useState(false);
 
   const assetIncidents = (incidents || []).filter(i => i.related_asset_id === asset?.id || i.asset_id === asset?.asset_id);
   const assetWorkOrders = (workOrders || []).filter(w => w.related_asset_id === asset?.id || w.asset_id === asset?.asset_id);
@@ -91,6 +93,13 @@ export default function AssetPopup({
             title="View photos"
           >
             <Camera className="h-4 w-4" />
+          </button>
+          <button 
+            onClick={(e) => { e.stopPropagation(); setShowMapillary(true); }} 
+            className="p-1 text-slate-400 hover:text-indigo-600 rounded"
+            title="Street view"
+          >
+            <Eye className="h-4 w-4" />
           </button>
           <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="text-slate-400 hover:text-slate-600">
             <X className="h-4 w-4" />
@@ -181,6 +190,13 @@ export default function AssetPopup({
           )}
         </div>
       </div>
+
+      {/* Mapillary Viewer */}
+      <MapillaryViewer 
+        asset={asset} 
+        isOpen={showMapillary} 
+        onClose={() => setShowMapillary(false)} 
+      />
     </div>
   );
 }
