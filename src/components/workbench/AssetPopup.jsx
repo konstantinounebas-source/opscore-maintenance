@@ -5,6 +5,7 @@ import { X, Loader2, AlertCircle, Wrench } from "lucide-react";
 
 export default function AssetPopup({
   asset,
+  popupPos,
   assignment,
   incidents,
   workOrders,
@@ -20,16 +21,7 @@ export default function AssetPopup({
   const assetIncidents = (incidents || []).filter(i => i.related_asset_id === asset?.id || i.asset_id === asset?.asset_id);
   const assetWorkOrders = (workOrders || []).filter(w => w.related_asset_id === asset?.id || w.asset_id === asset?.asset_id);
   
-  // Debug logging
-  useEffect(() => {
-    console.log("AssetPopup - asset.id:", asset?.id);
-    if (incidents?.length > 0) {
-      console.log("AssetPopup - First incident related_asset_id:", incidents[0]?.related_asset_id);
-    }
-    if (workOrders?.length > 0) {
-      console.log("AssetPopup - First workOrder related_asset_id:", workOrders[0]?.related_asset_id);
-    }
-  }, [asset?.id, incidents, workOrders]);
+
   
   const filteredWeeks = planningTypeId 
     ? (weeks || []).filter(w => w.planning_type_id === planningTypeId)
@@ -54,7 +46,7 @@ export default function AssetPopup({
   if (!asset) return null;
 
   return (
-    <div className="fixed bg-white border border-slate-300 rounded-lg shadow-xl p-4 z-50 w-80 max-w-sm" style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
+    <div className="fixed bg-white border border-slate-300 rounded-lg shadow-xl p-4 w-80 max-w-sm" style={{ top: popupPos?.y || 'auto', left: popupPos?.x || 'auto', zIndex: 50 }}>
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
