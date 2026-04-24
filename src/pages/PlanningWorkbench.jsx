@@ -22,6 +22,7 @@ export default function PlanningWorkbench() {
   const { data: assets = [] }                                         = useQuery({ queryKey: ["assets"],               queryFn: () => base44.entities.Assets.list() });
   const { data: incidents = [] }                                      = useQuery({ queryKey: ["incidents"],            queryFn: () => base44.entities.Incidents.list() });
   const { data: workOrders = [] }                                     = useQuery({ queryKey: ["workOrders"],           queryFn: () => base44.entities.WorkOrders.list() });
+  const { data: planningTypes = [] }                                  = useQuery({ queryKey: ["planningTypes"],        queryFn: () => base44.entities.PlanningTypes.list() });
   const { data: layers = [] }                                         = useQuery({ queryKey: ["planningLayers"],       queryFn: () => base44.entities.PlanningLayers.list() });
   const { data: layerAssets = [] }                                    = useQuery({ queryKey: ["planningLayerAssets"],  queryFn: () => base44.entities.PlanningLayerAssets.list() });
   const { data: mapLayerLinks = [] }                                  = useQuery({ queryKey: ["workbenchMapLayers"],   queryFn: () => base44.entities.WorkbenchMapLayers.list() });
@@ -266,21 +267,22 @@ export default function PlanningWorkbench() {
         {/* LEFT: Map workspace zone — takes remaining space */}
         <div className="flex-1 overflow-hidden min-w-0">
           <MapWorkspaceContainer
-            mapWorkspaces={mapWorkspaces}
-            onAddMap={addMap}
-            onRemoveMap={removeMap}
-            allAssets={assets}
-            allAssignments={allAssignments}
-            globalLayers={layers}
-            mapLayerLinks={mapLayerLinks}
-            layers={layers}
-            layerAssets={layerAssets}
-            weeks={weeks}
-            incidents={incidents}
-            workOrders={workOrders}
-            incidentsByAsset={incidentsByAsset}
-            workOrdersByAsset={workOrdersByAsset}
-            onSaveAssignment={handleSaveAssignment}
+             mapWorkspaces={mapWorkspaces}
+             onAddMap={addMap}
+             onRemoveMap={removeMap}
+             allAssets={assets}
+             allAssignments={allAssignments}
+             globalLayers={layers}
+             mapLayerLinks={mapLayerLinks}
+             layers={layers}
+             layerAssets={layerAssets}
+             weeks={weeks}
+             incidents={incidents}
+             workOrders={workOrders}
+             incidentsByAsset={incidentsByAsset}
+             workOrdersByAsset={workOrdersByAsset}
+             planningTypes={planningTypes}
+             onSaveAssignment={handleSaveAssignment}
             onCreateGlobalLayer={handleCreateLayer}
             onDeleteGlobalLayer={handleDeleteLayer}
             onAddLayerToMap={handleAddLayerToMap}

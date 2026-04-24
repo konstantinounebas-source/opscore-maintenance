@@ -33,6 +33,7 @@ export default function MapWorkspaceCard({
   workOrders,
   incidentsByAsset,
   workOrdersByAsset,
+  planningTypes,
   onRemove,
   onSaveAssignment,
   onCreateLayer,
@@ -287,6 +288,7 @@ export default function MapWorkspaceCard({
                  incidents={incidents}
                  workOrders={workOrders}
                  weeks={weeks}
+                 planningTypes={planningTypes}
                  onClose={() => {
                    setSelectedAsset(null);
                    setPopupPos(null);

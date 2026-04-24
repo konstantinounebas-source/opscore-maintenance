@@ -9,10 +9,11 @@ export default function AssetPopup({
   incidents,
   workOrders,
   weeks,
+  planningTypes = [],
   onClose,
   onSaveAssignment,
 }) {
-  const [assignmentType, setAssignmentType] = useState(assignment?.assignment_type || "");
+  const [planningTypeId, setPlanningTypeId] = useState(assignment?.planning_type_id || "");
   const [weekId, setWeekId] = useState(assignment?.planning_week_id || "");
   const [saving, setSaving] = useState(false);
 
@@ -24,7 +25,7 @@ export default function AssetPopup({
     setSaving(true);
     try {
       const formData = {
-        assignment_type: assignmentType,
+        planning_type_id: planningTypeId,
         planning_week_id: weekId,
         asset_id: asset.id,
       };
@@ -57,8 +58,8 @@ export default function AssetPopup({
           <span className="font-medium text-slate-700">{asset.status || "—"}</span>
         </div>
         <div className="flex items-center justify-between text-xs">
-          <span className="text-slate-500">Type:</span>
-          <span className="font-medium text-slate-700">{asset.asset_type || "—"}</span>
+          <span className="text-slate-500">Shelter Type:</span>
+          <span className="font-medium text-slate-700">{asset.ordered_shelter_type || "—"}</span>
         </div>
         {assetIncidents.length > 0 && (
           <div className="flex items-center gap-1 text-xs text-red-600">
@@ -77,17 +78,15 @@ export default function AssetPopup({
       {/* Assignment Form */}
       <div className="space-y-2">
         <div>
-          <label className="text-[10px] font-semibold text-slate-600">Assignment Type</label>
-          <Select value={assignmentType} onValueChange={setAssignmentType}>
+          <label className="text-[10px] font-semibold text-slate-600">Planning Type</label>
+          <Select value={planningTypeId} onValueChange={setPlanningTypeId}>
             <SelectTrigger className="mt-1 text-xs h-7">
               <SelectValue placeholder="Select type..." />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Inspection">Inspection</SelectItem>
-              <SelectItem value="Preventive">Preventive</SelectItem>
-              <SelectItem value="Corrective">Corrective</SelectItem>
-              <SelectItem value="Review">Review</SelectItem>
-              <SelectItem value="Mixed">Mixed</SelectItem>
+              {planningTypes.map(pt => (
+                <SelectItem key={pt.id} value={pt.id}>{pt.name}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -111,7 +110,7 @@ export default function AssetPopup({
         <Button
           className="w-full bg-indigo-600 hover:bg-indigo-700 h-7 text-xs"
           onClick={handleAssign}
-          disabled={saving || !weekId}
+          disabled={saving || !weekId || !planningTypeId}
         >
           {saving ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
           {saving ? "Saving..." : assignment ? "Update" : "Assign"}

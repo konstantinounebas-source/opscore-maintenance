@@ -25,6 +25,7 @@ export default function MapWorkspaceContainer({
   workOrders,
   incidentsByAsset,
   workOrdersByAsset,
+  planningTypes,
   onSaveAssignment,
   onCreateGlobalLayer,
   onDeleteGlobalLayer,
@@ -61,33 +62,34 @@ export default function MapWorkspaceContainer({
           const thisMapLinks = (mapLayerLinks || []).filter(ml => ml.map_id === ws.id);
           return (
             <MapWorkspaceCard
-              key={ws.id}
-              mapId={ws.id}
-              mapNumber={i + 1}
-              totalMaps={count}
-              allAssets={allAssets}
-              allAssignments={allAssignments}
-              globalLayers={globalLayers || layers}
-              mapLayerLinks={thisMapLinks}
-              layers={layers}
-              layerAssets={layerAssets}
-              weeks={weeks}
-              incidents={incidents}
-              workOrders={workOrders}
-              incidentsByAsset={incidentsByAsset}
-              workOrdersByAsset={workOrdersByAsset}
-              onRemove={onRemoveMap}
-              onSaveAssignment={onSaveAssignment}
-              onCreateGlobalLayer={onCreateGlobalLayer}
-              onDeleteGlobalLayer={onDeleteGlobalLayer}
-              onAddLayerToMap={onAddLayerToMap}
-              onRemoveLayerFromMap={onRemoveLayerFromMap}
-              onToggleMapLayer={onToggleMapLayer}
-              onCreateLayer={onCreateLayer}
-              onDeleteLayer={onDeleteLayer}
-              onAddToLayer={onAddToLayer}
-              onRemoveFromLayer={onRemoveFromLayer}
-            />
+               key={ws.id}
+               mapId={ws.id}
+               mapNumber={i + 1}
+               totalMaps={count}
+               allAssets={allAssets}
+               allAssignments={allAssignments}
+               globalLayers={globalLayers || layers}
+               mapLayerLinks={thisMapLinks}
+               layers={layers}
+               layerAssets={layerAssets}
+               weeks={weeks}
+               incidents={incidents}
+               workOrders={workOrders}
+               incidentsByAsset={incidentsByAsset}
+               workOrdersByAsset={workOrdersByAsset}
+               planningTypes={planningTypes}
+               onRemove={onRemoveMap}
+               onSaveAssignment={onSaveAssignment}
+               onCreateGlobalLayer={onCreateGlobalLayer}
+               onDeleteGlobalLayer={onDeleteGlobalLayer}
+               onAddLayerToMap={onAddLayerToMap}
+               onRemoveLayerFromMap={onRemoveLayerFromMap}
+               onToggleMapLayer={onToggleMapLayer}
+               onCreateLayer={onCreateLayer}
+               onDeleteLayer={onDeleteLayer}
+               onAddToLayer={onAddToLayer}
+               onRemoveFromLayer={onRemoveFromLayer}
+             />
           );
         })}
       </div>
