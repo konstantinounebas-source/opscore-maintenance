@@ -54,8 +54,11 @@ export default function PlanningReviewPanel({ weeks, allAssignments, assetsMap, 
   });
 
   const filteredWeeks = useMemo(() => {
-    if (selectedPlanningTypeIds.size === 0) return [];
-    return weeks.filter(w => selectedPlanningTypeIds.has(w.planning_type_id));
+    let list = weeks;
+    if (selectedPlanningTypeIds.size > 0) {
+      list = list.filter(w => selectedPlanningTypeIds.has(w.planning_type_id));
+    }
+    return list;
   }, [weeks, selectedPlanningTypeIds]);
 
   const selectedWeeks = useMemo(() => weeks.filter(w => selectedWeekIds.has(w.id)), [weeks, selectedWeekIds]);
