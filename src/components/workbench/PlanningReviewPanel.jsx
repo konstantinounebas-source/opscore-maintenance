@@ -42,15 +42,19 @@ export default function PlanningReviewPanel({ weeks, allAssignments, assetsMap, 
   const [assignmentSearch, setAssignmentSearch] = useState("");
   const [assignmentStatusFilter, setAssignmentStatusFilter] = useState("__all__");
 
-  // Get unique planning types
+  // Get unique planning types from weeks
   const planningTypes = useMemo(() => {
-    const types = {};
+    const typesMap = {};
     weeks.forEach(w => {
-      if (w.planning_type_id && !types[w.planning_type_id]) {
-        types[w.planning_type_id] = w;
+      if (w.planning_type_id && !typesMap[w.planning_type_id]) {
+        typesMap[w.planning_type_id] = {
+          id: w.planning_type_id,
+          planning_type_id: w.planning_type_id,
+          name: w.planning_type_name || `Type ${w.planning_type_id}`,
+        };
       }
     });
-    return Object.values(types);
+    return Object.values(typesMap);
   }, [weeks]);
 
   const filteredWeeks = useMemo(() => {
@@ -162,20 +166,20 @@ export default function PlanningReviewPanel({ weeks, allAssignments, assetsMap, 
        <div className="px-3 py-2 border-b border-slate-200 space-y-1.5 shrink-0">
          <label className="text-[10px] font-semibold text-slate-600 uppercase tracking-wide">Planning Types</label>
          <div className="space-y-1 max-h-24 overflow-y-auto">
-           {planningTypes.map(pt => (
+           {planningTypes.length > 0 ? planningTypes.map(pt => (
              <button
-               key={pt.planning_type_id || pt.id}
-               onClick={() => togglePlanningType(pt.planning_type_id || pt.id)}
+               key={pt.id}
+               onClick={() => togglePlanningType(pt.id)}
                className={`w-full text-left px-2 py-1 rounded text-xs transition-colors ${
-                 selectedPlanningTypeIds.has(pt.planning_type_id || pt.id)
+                 selectedPlanningTypeIds.has(pt.id)
                    ? "bg-indigo-100 text-indigo-700 border border-indigo-300"
                    : "bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100"
                }`}
              >
-               {selectedPlanningTypeIds.has(pt.planning_type_id || pt.id) && <span className="mr-1">✓</span>}
+               {selectedPlanningTypeIds.has(pt.id) && <span className="mr-1">✓</span>}
                {pt.name}
              </button>
-           ))}
+           )) : <p className="text-[10px] text-slate-400 px-2 py-1">No planning types available</p>}
          </div>
        </div>
 
