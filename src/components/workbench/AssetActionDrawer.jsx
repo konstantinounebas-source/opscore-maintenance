@@ -137,43 +137,9 @@ export default function AssetActionDrawer({
 
 
         {/* ── ASSET INFO TAB (consolidated) ───────────────── */}
-         {tab === "details" && (
-           <div className="space-y-3">
-             {/* Quick Assign Card */}
-             <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3 space-y-2">
-               <div className="text-xs font-semibold text-slate-700">Quick Assign</div>
-               <div className="grid grid-cols-2 gap-2">
-                 <div>
-                   <Label className="text-[10px]">Type</Label>
-                   <Select value={form.assignment_type || "__none__"} onValueChange={v => set("assignment_type", v === "__none__" ? "" : v)}>
-                     <SelectTrigger className="mt-1 text-xs h-7"><SelectValue placeholder="Type..." /></SelectTrigger>
-                     <SelectContent style={{ zIndex: 99999 }}>
-                       <SelectItem value="__none__">— Type —</SelectItem>
-                       <SelectItem value="Inspection">Inspection</SelectItem>
-                       <SelectItem value="Preventive">Preventive</SelectItem>
-                       <SelectItem value="Corrective">Corrective</SelectItem>
-                       <SelectItem value="Review">Review</SelectItem>
-                       <SelectItem value="Mixed">Mixed</SelectItem>
-                     </SelectContent>
-                   </Select>
-                 </div>
-                 <WeekPickerField
-                   weeks={weeks}
-                   value={form.planning_week_id}
-                   onChange={v => set("planning_week_id", v)}
-                 />
-               </div>
-               <Button
-                 className="w-full bg-indigo-600 hover:bg-indigo-700 h-7 text-xs"
-                 onClick={handleSave}
-                 disabled={saving || !form.planning_week_id}
-               >
-                 {saving ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
-                 {saving ? "Saving..." : assignment ? "Update" : "Assign"}
-               </Button>
-             </div>
-
-             {/* Asset Details */}
+        {tab === "details" && (
+          <div className="space-y-3">
+            {/* Asset Details */}
              <Section label="Asset Details">
                <Row label="ID" value={asset.asset_id} />
                <Row label="Category" value={asset.category} />
