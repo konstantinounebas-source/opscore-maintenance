@@ -27,7 +27,8 @@ export default function UnifiedAssetsTable({
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [filterCity, setFilterCity] = useState("all");
-  const [filterStageStatus, setFilterStageStatus] = useState("all");
+  const [filterPhase, setFilterPhase] = useState("all");
+  const [filterOrdered, setFilterOrdered] = useState("all");
   const [filterShelterType, setFilterShelterType] = useState("all");
   const [filterOpenIncidents, setFilterOpenIncidents] = useState("all");
   const [page, setPage] = useState(1);
@@ -41,9 +42,7 @@ export default function UnifiedAssetsTable({
     childAssets.filter(c => c.parent_asset_id === assetId).length;
 
   const uniqueCities = [...new Set(assets.map(a => a.city).filter(Boolean))].sort();
-  const uniqueStageStatus = [...new Set(
-    assets.flatMap(a => [a.asset_stage, a.status]).filter(Boolean)
-  )].sort();
+  const uniquePhases = [...new Set(assets.map(a => a.phase).filter(Boolean))].sort();
   const uniqueShelterTypes = [...new Set(
     assets.flatMap(a => [a.shelter_type, a.ordered_shelter_type, a.installed_shelter_type]).filter(Boolean)
   )].sort();
@@ -52,7 +51,9 @@ export default function UnifiedAssetsTable({
     setPage(1);
     return assets.filter(a => {
       if (filterCity !== "all" && a.city !== filterCity) return false;
-      if (filterStageStatus !== "all" && a.asset_stage !== filterStageStatus && a.status !== filterStageStatus) return false;
+      if (filterPhase !== "all" && a.phase !== filterPhase) return false;
+      if (filterOrdered === "yes" && !a.ordered) return false;
+      if (filterOrdered === "no" && a.ordered) return false;
       if (filterShelterType !== "all" && ![a.shelter_type, a.ordered_shelter_type, a.installed_shelter_type].includes(filterShelterType)) return false;
       if (filterOpenIncidents === "with" && getOpenIncidents(a.id) === 0) return false;
       if (filterOpenIncidents === "without" && getOpenIncidents(a.id) > 0) return false;
@@ -74,14 +75,14 @@ export default function UnifiedAssetsTable({
       return (a.city || "").localeCompare(b.city || "");
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [assets, search, filterCity, filterStageStatus, filterShelterType, filterOpenIncidents, incidents, workOrders, childAssets]);
+  }, [assets, search, filterCity, filterPhase, filterOrdered, filterShelterType, filterOpenIncidents, incidents, workOrders, childAssets]);
 
   const totalRows = filtered.length;
   const effectivePageSize = pageSize === "All" ? totalRows : pageSize;
   const totalPages = pageSize === "All" ? 1 : Math.max(1, Math.ceil(totalRows / effectivePageSize));
   const paginated = pageSize === "All" ? filtered : filtered.slice((page - 1) * effectivePageSize, page * effectivePageSize);
 
-  const hasFilters = search || filterCity !== "all" || filterStageStatus !== "all" || filterShelterType !== "all" || filterOpenIncidents !== "all";
+  const hasFilters = search || filterCity !== "all" || filterPhase !== "all" || filterOrdered !== "all" || filterShelterType !== "all" || filterOpenIncidents !== "all";
 
   return (
     <div className="space-y-3">
@@ -104,11 +105,19 @@ export default function UnifiedAssetsTable({
               {uniqueCities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Select value={filterStageStatus} onValueChange={setFilterStageStatus}>
-            <SelectTrigger className="h-9 text-sm w-48"><SelectValue placeholder="Status / Stage" /></SelectTrigger>
+          <Select value={filterPhase} onValueChange={setFilterPhase}>
+            <SelectTrigger className="h-9 text-sm w-44"><SelectValue placeholder="Phase" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Status / Stage</SelectItem>
-              {uniqueStageStatus.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              <SelectItem value="all">All Phases</SelectItem>
+              {uniquePhases.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={filterOrdered} onValueChange={setFilterOrdered}>
+            <SelectTrigger className="h-9 text-sm w-40"><SelectValue placeholder="Ordered" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All (Ordered)</SelectItem>
+              <SelectItem value="yes">Ordered</SelectItem>
+              <SelectItem value="no">Not Ordered</SelectItem>
             </SelectContent>
           </Select>
           <Select value={filterShelterType} onValueChange={setFilterShelterType}>
@@ -129,7 +138,7 @@ export default function UnifiedAssetsTable({
           {hasFilters && (
             <Button
               variant="ghost" size="sm"
-              onClick={() => { setSearch(""); setFilterCity("all"); setFilterStageStatus("all"); setFilterShelterType("all"); setFilterOpenIncidents("all"); }}
+              onClick={() => { setSearch(""); setFilterCity("all"); setFilterPhase("all"); setFilterOrdered("all"); setFilterShelterType("all"); setFilterOpenIncidents("all"); }}
               className="h-9 gap-1.5 text-slate-500"
             >
               <X className="w-3.5 h-3.5" /> Clear
@@ -158,7 +167,8 @@ export default function UnifiedAssetsTable({
                 <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Address</th>
                 <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">City</th>
                 <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Shelter Type</th>
-                <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Status / Stage</th>
+                <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Phase</th>
+                <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Ordered</th>
                 <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Incidents</th>
                 <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">WOs</th>
                 <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Childs</th>
@@ -187,13 +197,16 @@ export default function UnifiedAssetsTable({
                       {a.shelter_type || a.ordered_shelter_type || a.installed_shelter_type || "—"}
                     </td>
                     <td className="px-3 py-2.5 whitespace-nowrap">
-                      {a.asset_stage ? (
-                        <span className={`text-xs font-medium px-2 py-0.5 rounded capitalize ${STAGE_COLORS[a.asset_stage] || "bg-slate-100 text-slate-600"}`}>
-                          {a.asset_stage}
-                        </span>
-                      ) : a.status ? (
-                        <StatusBadge status={a.status} />
-                      ) : "—"}
+                      {a.phase ? (
+                        <span className="text-xs font-medium px-2 py-0.5 rounded bg-indigo-100 text-indigo-700">{a.phase}</span>
+                      ) : <span className="text-slate-300 text-xs">—</span>}
+                    </td>
+                    <td className="px-3 py-2.5 whitespace-nowrap">
+                      {a.ordered ? (
+                        <span className="text-xs font-medium px-2 py-0.5 rounded bg-blue-100 text-blue-700">Yes</span>
+                      ) : (
+                        <span className="text-slate-300 text-xs">—</span>
+                      )}
                     </td>
                     <td className="px-3 py-2.5 whitespace-nowrap">
                       {openInc > 0 ? (
