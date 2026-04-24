@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X, Loader2, AlertCircle, Wrench } from "lucide-react";
@@ -19,6 +19,11 @@ export default function AssetPopup({
 
   const assetIncidents = (incidents || []).filter(i => i.related_asset_id === asset?.id);
   const assetWorkOrders = (workOrders || []).filter(w => w.related_asset_id === asset?.id);
+  
+  // Debug logging
+  useEffect(() => {
+    console.log("AssetPopup DEBUG:", { assetId: asset?.id, incidents: incidents?.length, workOrders: workOrders?.length, assetIncidents: assetIncidents.length, assetWorkOrders: assetWorkOrders.length });
+  }, [asset?.id, incidents, workOrders, assetIncidents, assetWorkOrders]);
   
   const filteredWeeks = planningTypeId 
     ? (weeks || []).filter(w => w.planning_type_id === planningTypeId)
