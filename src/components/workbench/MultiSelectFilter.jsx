@@ -60,6 +60,27 @@ export default function MultiSelectFilter({
     }
   }, [open]);
 
+  useEffect(() => {
+    if (!open) return;
+    const handleResize = () => {
+      if (triggerRef.current) {
+        const rect = triggerRef.current.getBoundingClientRect();
+        setPosition(prev => ({
+          ...prev,
+          top: rect.bottom + window.scrollY + 4,
+          left: rect.left + window.scrollX,
+          width: rect.width
+        }));
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("scroll", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("scroll", handleResize);
+    };
+  }, [open]);
+
   return (
     <div className="relative">
       <button
