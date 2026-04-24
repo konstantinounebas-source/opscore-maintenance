@@ -319,11 +319,21 @@ export default function AssetFormUnified({ open, onOpenChange, onSave, asset }) 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs">Ordered Shelter Type</Label>
-              <Input value={form.ordered_shelter_type || ""} onChange={e => set("ordered_shelter_type", e.target.value)} placeholder="e.g. TYPE A1" />
+              <Select value={form.ordered_shelter_type || ""} onValueChange={v => set("ordered_shelter_type", v)}>
+                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>
+                  {shelterTypes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Installed Shelter Type</Label>
-              <Input value={form.installed_shelter_type || ""} onChange={e => set("installed_shelter_type", e.target.value)} placeholder="e.g. TYPE A1" />
+              <Select value={form.installed_shelter_type || ""} onValueChange={v => set("installed_shelter_type", v)}>
+                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>
+                  {shelterTypes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
