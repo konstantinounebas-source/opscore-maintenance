@@ -91,8 +91,8 @@ export default function MapWorkspaceCard({
   const hasColorRules = colorRules && colorRules.length > 0;
 
   const legendEntries = useMemo(() =>
-    getLegendEntries(colorMode, layers, filteredAssets, allAssignments, incidentsByAsset, workOrdersByAsset, layerAssets, activeVisualRule, hasColorRules ? colorRules : null),
-    [colorMode, layers, filteredAssets, allAssignments, incidentsByAsset, workOrdersByAsset, layerAssets, activeVisualRule, colorRules, hasColorRules]
+    getLegendEntries(colorMode, layers, filteredAssets, allAssignments, incidentsByAsset, workOrdersByAsset, layerAssets, activeVisualRule, null),
+    [colorMode, layers, filteredAssets, allAssignments, incidentsByAsset, workOrdersByAsset, layerAssets, activeVisualRule]
   );
 
   const currentAssignment = selectedAsset ? (assignmentByAssetId[selectedAsset.id] || null) : null;
