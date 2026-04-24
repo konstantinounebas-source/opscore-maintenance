@@ -1,10 +1,12 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import {
-  CalendarDays, Search, ChevronDown, ChevronRight, Download,
+  CalendarDays, Search, ChevronDown, ChevronRight, Download, X,
   CheckCircle2, Clock, AlertTriangle, Zap, Users, Wrench
 } from "lucide-react";
 import { format } from "date-fns";
@@ -42,20 +44,11 @@ export default function PlanningReviewPanel({ weeks, allAssignments, assetsMap, 
   const [assignmentSearch, setAssignmentSearch] = useState("");
   const [assignmentStatusFilter, setAssignmentStatusFilter] = useState("__all__");
 
-  // Get unique planning types from weeks
-  const planningTypes = useMemo(() => {
-    const typesMap = {};
-    weeks.forEach(w => {
-      if (w.planning_type_id && !typesMap[w.planning_type_id]) {
-        typesMap[w.planning_type_id] = {
-          id: w.planning_type_id,
-          planning_type_id: w.planning_type_id,
-          name: w.planning_type_name || `Type ${w.planning_type_id}`,
-        };
-      }
-    });
-    return Object.values(typesMap);
-  }, [weeks]);
+  // Fetch planning types from API
+  const { data: planningTypes = [] } = useQuery({
+    queryKey: ["planningTypes"],
+    queryFn: () => base44.entities.PlanningTypes.list(),
+  });
 
   const filteredWeeks = useMemo(() => {
     let list = weeks;
@@ -130,26 +123,7 @@ export default function PlanningReviewPanel({ weeks, allAssignments, assetsMap, 
     URL.revokeObjectURL(url);
   };
 
-  const togglePlanningType = (typeId) => {
-    const newSet = new Set(selectedPlanningTypeIds);
-    if (newSet.has(typeId)) {
-      newSet.delete(typeId);
-    } else {
-      newSet.add(typeId);
-    }
-    setSelectedPlanningTypeIds(newSet);
-    setSelectedWeekIds(new Set()); // Reset week selection
-  };
 
-  const toggleWeek = (weekId) => {
-    const newSet = new Set(selectedWeekIds);
-    if (newSet.has(weekId)) {
-      newSet.delete(weekId);
-    } else {
-      newSet.add(weekId);
-    }
-    setSelectedWeekIds(newSet);
-  };
 
   return (
     <div className="flex flex-col h-full bg-white border-l border-slate-200 overflow-hidden">
@@ -163,31 +137,61 @@ export default function PlanningReviewPanel({ weeks, allAssignments, assetsMap, 
       </div>
 
       {/* Planning Type selector */}
-       <div className="px-3 py-2 border-b border-slate-200 space-y-1.5 shrink-0">
-         <label className="text-[10px] font-semibold text-slate-600 uppercase tracking-wide">Planning Types</label>
-         <div className="space-y-1 max-h-24 overflow-y-auto">
-           {planningTypes.length > 0 ? planningTypes.map(pt => (
-             <button
-               key={pt.id}
-               onClick={() => togglePlanningType(pt.id)}
-               className={`w-full text-left px-2 py-1 rounded text-xs transition-colors ${
-                 selectedPlanningTypeIds.has(pt.id)
-                   ? "bg-indigo-100 text-indigo-700 border border-indigo-300"
-                   : "bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100"
-               }`}
-             >
-               {selectedPlanningTypeIds.has(pt.id) && <span className="mr-1">✓</span>}
-               {pt.name}
-             </button>
-           )) : <p className="text-[10px] text-slate-400 px-2 py-1">No planning types available</p>}
-         </div>
-       </div>
+        <div className="px-3 py-2 border-b border-slate-200 space-y-1.5 shrink-0">
+          <div className="flex items-center justify-between">
+            <label className="text-[10px] font-semibold text-slate-600 uppercase tracking-wide">Planning Types</label>
+            {selectedPlanningTypeIds.size > 0 && (
+              <button
+                onClick={() => setSelectedPlanningTypeIds(new Set())}
+                className="text-[10px] text-slate-400 hover:text-slate-600"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          {planningTypes.length === 0 ? (
+            <p className="text-[10px] text-slate-400 px-2 py-2">Loading types...</p>
+          ) : (
+            <div className="space-y-1">
+              {planningTypes.map(pt => (
+                <label
+                  key={pt.id}
+                  className="flex items-center gap-2 px-2 py-1.5 rounded text-xs cursor-pointer hover:bg-slate-100 transition-colors"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedPlanningTypeIds.has(pt.id)}
+                    onChange={() => {
+                      const newSet = new Set(selectedPlanningTypeIds);
+                      if (newSet.has(pt.id)) {
+                        newSet.delete(pt.id);
+                      } else {
+                        newSet.add(pt.id);
+                      }
+                      setSelectedPlanningTypeIds(newSet);
+                      setSelectedWeekIds(new Set());
+                    }}
+                    className="w-3 h-3"
+                  />
+                  <span className="text-slate-700">{pt.name}</span>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
 
        {/* Week selector + filters */}
        <div className="px-3 py-2 border-b border-slate-200 space-y-1.5 shrink-0">
-         <div>
-           <label className="text-[10px] font-semibold text-slate-600 uppercase tracking-wide block mb-1">Weeks ({selectedWeekIds.size})</label>
-           <div className="text-[10px] text-slate-500 mb-1.5">Select weeks to view assignments</div>
+         <div className="flex items-center justify-between">
+           <label className="text-[10px] font-semibold text-slate-600 uppercase tracking-wide">Weeks ({selectedWeekIds.size})</label>
+           {selectedWeekIds.size > 0 && (
+             <button
+               onClick={() => setSelectedWeekIds(new Set())}
+               className="text-[10px] text-slate-400 hover:text-slate-600"
+             >
+               Clear
+             </button>
+           )}
          </div>
         <div className="relative">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
@@ -225,7 +229,15 @@ export default function PlanningReviewPanel({ weeks, allAssignments, assetsMap, 
           return (
             <div key={week.id}>
               <button
-                onClick={() => toggleWeek(week.id)}
+                onClick={() => {
+                  const newSet = new Set(selectedWeekIds);
+                  if (newSet.has(week.id)) {
+                    newSet.delete(week.id);
+                  } else {
+                    newSet.add(week.id);
+                  }
+                  setSelectedWeekIds(newSet);
+                }}
                 className={`w-full text-left px-4 py-3 border-b border-slate-100 transition-colors hover:bg-slate-50 ${
                   isSelected ? "bg-indigo-50 border-l-2 border-l-indigo-400" : ""
                 }`}
