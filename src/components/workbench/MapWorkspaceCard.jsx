@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Maximize2, RotateCcw, ChevronDown, ChevronUp, Layers } from "lucide-react";
+import { X, Maximize2, RotateCcw, ChevronDown, ChevronUp, Layers, Search } from "lucide-react";
 import MapFilterBar from "./MapFilterBar";
 import MapColorModeSelector from "./MapColorModeSelector";
 import MapLegend from "./MapLegend";
@@ -48,6 +48,7 @@ export default function MapWorkspaceCard({
   // ── Per-map isolated state ─────────────────────────────────────────────────
   const [filters, setFilters] = useState({ ...EMPTY_MAP_FILTERS });
   const [colorMode, setColorMode] = useState("default");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleColorModeChange = (mode) => {
     setColorMode(mode);
@@ -90,6 +91,7 @@ export default function MapWorkspaceCard({
     setColorOverrides({});
     setHiddenValues(new Set());
     setMapLayer("openstreetmap");
+    setSearchQuery("");
   };
 
   // ── Derived: filtered assets for this map only ─────────────────────────────
@@ -128,53 +130,69 @@ export default function MapWorkspaceCard({
     return base.map((e) => colorOverrides[e.label] ? { ...e, color: colorOverrides[e.label] } : e);
   }, [colorMode, layers, filteredAssets, allAssignments, incidentsByAsset, workOrdersByAsset, layerAssets, activeVisualRule, colorOverrides, assignmentByAssetId, weeks]);
 
-  // Assets visible on map = filtered - hidden by legend
+  // Assets visible on map = filtered - hidden by legend - search query
   const visibleAssets = useMemo(() => {
-    if (hiddenValues.size === 0) return filteredAssets;
-    return filteredAssets.filter((a) => {
-      const asgn = assignmentByAssetId[a.id];
-      let matchLabel = null;
+    let results = filteredAssets;
+    
+    // Apply legend filtering
+    if (hiddenValues.size > 0) {
+      results = results.filter((a) => {
+        const asgn = assignmentByAssetId[a.id];
+        let matchLabel = null;
 
-      switch (colorMode) {
-        case "city":matchLabel = a.city;break;
-        case "municipality":matchLabel = a.municipality;break;
-        case "shelter_type":matchLabel = a.shelter_type;break;
-        case "ordered_shelter_type":matchLabel = a.ordered_shelter_type;break;
-        case "installed_shelter_type":matchLabel = a.installed_shelter_type;break;
-        case "phase":matchLabel = a.phase;break;
-        case "order_year":matchLabel = String(a.order_year);break;
-        case "asset_status":matchLabel = a.status;break;
-        case "asset_stage":matchLabel = a.asset_stage;break;
-        case "asset_source":matchLabel = a.asset_source;break;
-        case "existing_condition":matchLabel = a.existing_condition;break;
-        case "has_bay":matchLabel = a.has_bay;break;
-        case "inspection_status":matchLabel = a.inspection_status;break;
-        case "category":matchLabel = a.category;break;
-        case "assignment_status":matchLabel = asgn?.assignment_status || "Unassigned";break;
-        case "assignment_type":matchLabel = asgn?.assignment_type || "Unassigned";break;
-        case "priority":
-          if (!asgn) matchLabel = "Unassigned";else
-          if (asgn.priority_bucket === "P1" || asgn.priority_bucket === "Critical") matchLabel = "P1 / Critical";else
-          if (asgn.priority_bucket === "P2" || asgn.priority_bucket === "High") matchLabel = "P2 / High";else
-          matchLabel = asgn.priority_bucket;
-          break;
-        case "assigned_state":matchLabel = asgn ? "Assigned" : "Unassigned";break;
-        case "incident_presence":matchLabel = incidentsByAsset[a.id]?.length > 0 ? "Has Incidents" : "No Incidents";break;
-        case "work_order_presence":matchLabel = workOrdersByAsset[a.id]?.length > 0 ? "Has Work Orders" : "No Work Orders";break;
-        case "planned_week":
-          if (asgn?.planning_week_id) {
-            const week = weeks.find((w) => w.id === asgn.planning_week_id);
-            matchLabel = week ? `${week.week_code} - ${week.week_name}` : asgn.planning_week_id;
-          } else {
-            matchLabel = "Unassigned";
-          }
-          break;
-        default:matchLabel = null;
-      }
+        switch (colorMode) {
+          case "city":matchLabel = a.city;break;
+          case "municipality":matchLabel = a.municipality;break;
+          case "shelter_type":matchLabel = a.shelter_type;break;
+          case "ordered_shelter_type":matchLabel = a.ordered_shelter_type;break;
+          case "installed_shelter_type":matchLabel = a.installed_shelter_type;break;
+          case "phase":matchLabel = a.phase;break;
+          case "order_year":matchLabel = String(a.order_year);break;
+          case "asset_status":matchLabel = a.status;break;
+          case "asset_stage":matchLabel = a.asset_stage;break;
+          case "asset_source":matchLabel = a.asset_source;break;
+          case "existing_condition":matchLabel = a.existing_condition;break;
+          case "has_bay":matchLabel = a.has_bay;break;
+          case "inspection_status":matchLabel = a.inspection_status;break;
+          case "category":matchLabel = a.category;break;
+          case "assignment_status":matchLabel = asgn?.assignment_status || "Unassigned";break;
+          case "assignment_type":matchLabel = asgn?.assignment_type || "Unassigned";break;
+          case "priority":
+            if (!asgn) matchLabel = "Unassigned";else
+            if (asgn.priority_bucket === "P1" || asgn.priority_bucket === "Critical") matchLabel = "P1 / Critical";else
+            if (asgn.priority_bucket === "P2" || asgn.priority_bucket === "High") matchLabel = "P2 / High";else
+            matchLabel = asgn.priority_bucket;
+            break;
+          case "assigned_state":matchLabel = asgn ? "Assigned" : "Unassigned";break;
+          case "incident_presence":matchLabel = incidentsByAsset[a.id]?.length > 0 ? "Has Incidents" : "No Incidents";break;
+          case "work_order_presence":matchLabel = workOrdersByAsset[a.id]?.length > 0 ? "Has Work Orders" : "No Work Orders";break;
+          case "planned_week":
+            if (asgn?.planning_week_id) {
+              const week = weeks.find((w) => w.id === asgn.planning_week_id);
+              matchLabel = week ? `${week.week_code} - ${week.week_name}` : asgn.planning_week_id;
+            } else {
+              matchLabel = "Unassigned";
+            }
+            break;
+          default:matchLabel = null;
+        }
 
-      return !matchLabel || !hiddenValues.has(matchLabel);
-    });
-  }, [filteredAssets, hiddenValues, colorMode, assignmentByAssetId, incidentsByAsset, workOrdersByAsset, weeks]);
+        return !matchLabel || !hiddenValues.has(matchLabel);
+      });
+    }
+    
+    // Apply search filtering
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      results = results.filter((a) => 
+        a.asset_id?.toLowerCase().includes(query) ||
+        a.location_address?.toLowerCase().includes(query) ||
+        a.active_shelter_id?.toLowerCase().includes(query)
+      );
+    }
+    
+    return results;
+  }, [filteredAssets, hiddenValues, colorMode, assignmentByAssetId, incidentsByAsset, workOrdersByAsset, weeks, searchQuery]);
 
   const currentAssignment = selectedAsset ? assignmentByAssetId[selectedAsset.id] || null : null;
 
@@ -256,8 +274,18 @@ export default function MapWorkspaceCard({
           </div>
         </div>
 
-        {/* Filter bar */}
-        <div className="px-2 py-1.5 border-b border-slate-100 shrink-0">
+        {/* Search and Filter bar */}
+        <div className="px-2 py-1.5 border-b border-slate-100 shrink-0 space-y-1.5">
+          <div className="flex items-center gap-1 px-2 py-1.5 border border-input rounded-md bg-white">
+            <Search className="h-3.5 w-3.5 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search assets..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex-1 text-xs outline-none bg-transparent"
+            />
+          </div>
           <MapFilterBar filters={filters} onChange={setFilters} assets={allAssets} weeks={weeks} />
         </div>
 
