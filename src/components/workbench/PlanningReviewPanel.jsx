@@ -307,141 +307,41 @@ export default function PlanningReviewPanel({ weeks, allAssignments, assetsMap, 
                   </div>
                 </button>
 
-                {/* Collapsed view - show count by type and ordered shelter */}
-                {!isExpanded && (
-                  <div className="px-4 py-2 bg-indigo-50/50 border-b border-slate-100">
-                    {/* Assignment types row */}
-                    <div className="flex flex-wrap gap-3 mb-2">
-                      {Object.entries(weekAssignmentsByType).map(([type, count]) => (
-                        <div key={type} className="text-center text-xs">
-                          <div className="font-semibold text-slate-700">{count}</div>
-                          <div className="text-[9px] text-slate-500">{type}</div>
-                        </div>
-                      ))}
-                    </div>
-                    {/* Ordered shelter types row */}
-                    <div className="text-[9px] text-slate-500 pt-1 border-t border-indigo-100">
-                      {(() => {
-                        const shelterCounts = {};
-                        wa.forEach(a => {
-                          const asset = assetsMap[a.asset_id];
-                          if (asset?.ordered_shelter_type) {
-                            shelterCounts[asset.ordered_shelter_type] = (shelterCounts[asset.ordered_shelter_type] || 0) + 1;
-                          }
-                        });
-                        return Object.entries(shelterCounts).length > 0 ? (
-                          <div className="flex flex-wrap gap-2">
-                            {Object.entries(shelterCounts).map(([shelter, count]) => (
-                              <span key={shelter} className="text-slate-600">
-                                {shelter}: <strong>{count}</strong>
-                              </span>
-                            ))}
-                          </div>
-                        ) : (
-                          <span className="text-slate-400">—</span>
-                        );
-                      })()}
-                    </div>
+                {/* Summary row - always visible */}
+                <div className="px-4 py-2 bg-indigo-50/50 border-b border-slate-100">
+                  {/* Assignment types row */}
+                  <div className="flex flex-wrap gap-3 mb-2">
+                    {Object.entries(weekAssignmentsByType).map(([type, count]) => (
+                      <div key={type} className="text-center text-xs">
+                        <div className="font-semibold text-slate-700">{count}</div>
+                        <div className="text-[9px] text-slate-500">{type}</div>
+                      </div>
+                    ))}
                   </div>
-                )}
-
-                {/* Expanded view - show full details */}
-                {isExpanded && (
-                  <div className="bg-indigo-50/30 border-b border-slate-200">
-                  {/* KPI row */}
-                  {kpis && (
-                    <div className="grid grid-cols-4 gap-0 px-4 py-3 border-b border-indigo-100">
-                      <KPIChip label="Total" value={kpis.total} color="text-slate-700" />
-                      <KPIChip label="Planned" value={kpis.planned} color="text-slate-600" />
-                      <KPIChip label="In Prog." value={kpis.inProgress} color="text-blue-600" />
-                      <KPIChip label="Done" value={kpis.completed} color="text-emerald-600" />
-                    </div>
-                  )}
-                  {kpis && (kpis.critical > 0 || kpis.withIncident > 0 || kpis.withWO > 0) && (
-                    <div className="grid grid-cols-3 gap-0 px-4 pb-3 border-b border-indigo-100">
-                      <KPIChip label="Critical" value={kpis.critical} color="text-red-600" />
-                      <KPIChip label="Incidents" value={kpis.withIncident} color="text-orange-600" />
-                      <KPIChip label="Work Ord." value={kpis.withWO} color="text-amber-600" />
-                    </div>
-                  )}
-
-                  {/* Assignment search + filter */}
-                  <div className="px-3 py-2 space-y-1.5">
-                    <div className="relative">
-                      <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400" />
-                      <Input
-                        value={assignmentSearch}
-                        onChange={e => setAssignmentSearch(e.target.value)}
-                        placeholder="Search assignments..."
-                        className="pl-6 h-7 text-xs"
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <Select value={assignmentStatusFilter} onValueChange={setAssignmentStatusFilter}>
-                        <SelectTrigger className="h-7 text-xs flex-1 mr-2"><SelectValue /></SelectTrigger>
-                        <SelectContent style={{ zIndex: 99999 }}>
-                          <SelectItem value="__all__">All statuses</SelectItem>
-                          {["Planned","In Progress","Completed","Deferred","Cancelled"].map(s => (
-                            <SelectItem key={s} value={s}>{s}</SelectItem>
+                  {/* Ordered shelter types row */}
+                  <div className="text-[9px] text-slate-500 pt-1 border-t border-indigo-100">
+                    {(() => {
+                      const shelterCounts = {};
+                      wa.forEach(a => {
+                        const asset = assetsMap[a.asset_id];
+                        if (asset?.ordered_shelter_type) {
+                          shelterCounts[asset.ordered_shelter_type] = (shelterCounts[asset.ordered_shelter_type] || 0) + 1;
+                        }
+                      });
+                      return Object.entries(shelterCounts).length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {Object.entries(shelterCounts).map(([shelter, count]) => (
+                            <span key={shelter} className="text-slate-600">
+                              {shelter}: <strong>{count}</strong>
+                            </span>
                           ))}
-                        </SelectContent>
-                      </Select>
-                      <button onClick={handleExportCSV} title="Export CSV" className="p-1.5 rounded text-slate-400 hover:text-slate-600 hover:bg-white border border-slate-200">
-                        <Download className="h-3 w-3" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Assignment list */}
-                  <div className="max-h-72 overflow-y-auto">
-                    {weekAssignments.length === 0 ? (
-                      <div className="text-center py-6 text-xs text-slate-400">No assignments match filters</div>
-                    ) : weekAssignments.map(a => {
-                      const asset = assetsMap[a.asset_id];
-                      if (!asset) return null;
-                      const hasIncident = incidentsByAsset[a.asset_id]?.length > 0;
-                      const hasWO = workOrdersByAsset[a.asset_id]?.length > 0;
-                      return (
-                        <div key={a.id} className="flex items-start gap-2 px-4 py-2.5 border-b border-indigo-50 hover:bg-white/70 transition-colors">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className="text-xs font-semibold text-slate-700">{asset.asset_id}</span>
-                              {asset.active_shelter_id && (
-                                <span className="text-[10px] text-slate-400">{asset.active_shelter_id}</span>
-                              )}
-                              {hasIncident && <AlertTriangle className="h-3 w-3 text-orange-500 shrink-0" title="Has incidents" />}
-                              {hasWO && <Wrench className="h-3 w-3 text-amber-500 shrink-0" title="Has work orders" />}
-                            </div>
-                            <div className="text-[10px] text-slate-400 mt-0.5">{asset.city} · {asset.shelter_type}</div>
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {a.assignment_status && (
-                                <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${ASSIGNMENT_STATUS_COLORS[a.assignment_status] || "bg-slate-100 text-slate-600"}`}>
-                                  {a.assignment_status}
-                                </span>
-                              )}
-                              {a.assignment_type && (
-                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium">
-                                  {a.assignment_type}
-                                </span>
-                              )}
-                              {a.priority_bucket && (
-                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-orange-50 text-orange-700 font-medium">
-                                  {a.priority_bucket}
-                                </span>
-                              )}
-                            </div>
-                            {(a.assigned_to || a.team_name) && (
-                              <div className="text-[10px] text-slate-400 mt-0.5">
-                                {a.assigned_to}{a.assigned_to && a.team_name ? " · " : ""}{a.team_name}
-                              </div>
-                            )}
-                          </div>
                         </div>
+                      ) : (
+                        <span className="text-slate-400">—</span>
                       );
-                    })}
+                    })()}
                   </div>
-                  </div>
-                  )}
+                </div>
                   </div>
                   );
                   })
