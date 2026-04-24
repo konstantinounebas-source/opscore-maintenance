@@ -322,15 +322,6 @@ export default function PlanningReviewPanel({
 
                 {/* Summary row - always visible */}
                 <div className="px-4 py-2 bg-indigo-50/50 border-b border-slate-100">
-                   {/* Assignment types row */}
-                   <div className="flex flex-wrap gap-3 mb-2">
-                     {Object.entries(weekAssignmentsByType).map(([type, count]) => (
-                       <div key={type} className="text-center text-xs">
-                         <div className="font-semibold text-slate-700">{count}</div>
-                         <div className="text-[9px] text-slate-500">{type}</div>
-                       </div>
-                     ))}
-                   </div>
                    {/* Ordered shelter types row */}
                    <div className="text-[9px] text-slate-500 pt-1 border-t border-indigo-100">
                      {(() => {
