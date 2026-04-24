@@ -133,10 +133,6 @@ const emptyForm = {
   // Notes
   notes: "",
   description: "",
-  // New fields
-  ordered: false,
-  phase: "",
-  inspection_status: "",
   // Attachments (transient)
   attachments: [],
 };
@@ -159,8 +155,6 @@ export default function AssetFormUnified({ open, onOpenChange, onSave, asset }) 
   const shelterTypes = useConfigLists("Asset Shelter Types");
   const statuses = useConfigLists("Asset Status");
   const evidenceOptions = useConfigLists("Asset Evidence Types");
-  const phases = useConfigLists("Asset Phase");
-  const inspectionStatuses = useConfigLists("Asset Inspection Status");
   const defaultDocTypes = ["Installation Photos", "Delivery Note", "Signed Install Form", "Handover Form", "Warranty Document", "Other"];
   const docTypes = evidenceOptions.length ? evidenceOptions : defaultDocTypes;
 
@@ -474,41 +468,6 @@ export default function AssetFormUnified({ open, onOpenChange, onSave, asset }) 
               <div className="space-y-1"><Label className="text-xs">Electronics (5 Years)</Label><Input type="date" value={form.electronics_warranty_end_date || ""} onChange={e => set("electronics_warranty_end_date", e.target.value)} className="bg-white" /></div>
               <div className="space-y-1"><Label className="text-xs">Materials (10 Years)</Label><Input type="date" value={form.materials_warranty_end_date || ""} onChange={e => set("materials_warranty_end_date", e.target.value)} className="bg-white" /></div>
               <div className="space-y-1"><Label className="text-xs">Structural (15 Years)</Label><Input type="date" value={form.structural_warranty_end_date || ""} onChange={e => set("structural_warranty_end_date", e.target.value)} className="bg-white" /></div>
-            </div>
-          </div>
-
-          {/* ── 6b. Asset Classification ── */}
-          <SectionHeader title="Classification & Inspection" color="indigo" />
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5 flex items-center gap-3 pt-4">
-              <input
-                type="checkbox"
-                id="ordered_check"
-                checked={!!form.ordered}
-                onChange={e => set("ordered", e.target.checked)}
-                className="w-4 h-4 rounded"
-              />
-              <Label htmlFor="ordered_check" className="text-xs cursor-pointer">Ordered</Label>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Phase</Label>
-              <Select value={form.phase || ""} onValueChange={v => set("phase", v)}>
-                <SelectTrigger><SelectValue placeholder="Select phase" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={null}>— None —</SelectItem>
-                  {phases.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Inspection Status</Label>
-              <Select value={form.inspection_status || ""} onValueChange={v => set("inspection_status", v)}>
-                <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={null}>— None —</SelectItem>
-                  {inspectionStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                </SelectContent>
-              </Select>
             </div>
           </div>
 
