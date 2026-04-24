@@ -138,8 +138,19 @@ export default function PlanningReviewPanel({ weeks, allAssignments, assetsMap, 
         <p className="text-[10px] text-slate-400 mt-0.5">Read-only review of planned work. Does not affect maps.</p>
       </div>
 
-      {/* Week search + filter */}
+      {/* Week selector + filters */}
       <div className="px-3 py-2 border-b border-slate-200 space-y-1.5 shrink-0">
+        <Select value={selectedWeekId || ""} onValueChange={id => setSelectedWeekId(id || null)}>
+          <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Select a week..." /></SelectTrigger>
+          <SelectContent style={{ zIndex: 99999 }}>
+            <SelectItem value={null}>-- None --</SelectItem>
+            {filteredWeeks.map(w => (
+              <SelectItem key={w.id} value={w.id}>
+                {w.week_code} · {w.week_name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <div className="relative">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
           <Input
@@ -149,19 +160,6 @@ export default function PlanningReviewPanel({ weeks, allAssignments, assetsMap, 
             className="pl-7 h-7 text-xs"
           />
         </div>
-        {planningTypes.length > 0 && (
-          <Select value={selectedPlanningTypeId} onValueChange={setSelectedPlanningTypeId}>
-            <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
-            <SelectContent style={{ zIndex: 99999 }}>
-              <SelectItem value="__all__">All planning types</SelectItem>
-              {planningTypes.map(pt => (
-                <SelectItem key={pt.planning_type_id} value={pt.planning_type_id}>
-                  {pt.week_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
         <Select value={weekStatusFilter} onValueChange={setWeekStatusFilter}>
           <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
           <SelectContent style={{ zIndex: 99999 }}>
