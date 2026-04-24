@@ -21,6 +21,7 @@ export default function Assets() {
   const [editingAsset, setEditingAsset] = useState(null);
   const [importOpen, setImportOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
 
   const { data: assets = [] } = useQuery({ queryKey: ["assets"], queryFn: () => base44.entities.Assets.list() });
   const { data: childAssets = [] } = useQuery({ queryKey: ["childAssets"], queryFn: () => base44.entities.ChildAssets.list() });
@@ -126,6 +127,21 @@ export default function Assets() {
     setFormOpen(true);
   };
 
+  const handleBulkSetActive = async () => {
+    setUpdatingStatus(true);
+    try {
+      const response = await base44.functions.invoke('bulkUpdateAssetsStatus', {});
+      if (response.data?.success) {
+        toast({ title: `Success`, description: response.data.message });
+        queryClient.invalidateQueries({ queryKey: ["assets"] });
+      }
+    } catch (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
   // Stats
   const totalAssets = assets.length;
   const activeAssets = assets.filter(a => a.status === "Active").length;
@@ -161,6 +177,22 @@ export default function Assets() {
           <StatCard label="Open Incidents" value={assetsWithOpenIncidents} icon={AlertTriangle} color="red" />
           <StatCard label="Open Work Orders" value={assetsWithOpenWO} icon={Wrench} color="amber" />
         </div>
+
+        {activeAssets < totalAssets && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-amber-900">{totalAssets - activeAssets} assets not marked as Active</p>
+              <p className="text-xs text-amber-700">Bulk update to set all assets as Active</p>
+            </div>
+            <Button 
+              onClick={handleBulkSetActive} 
+              disabled={updatingStatus}
+              className="bg-amber-600 hover:bg-amber-700 gap-1.5"
+            >
+              {updatingStatus ? "Updating..." : "Set All Active"}
+            </Button>
+          </div>
+        )}
 
         <UnifiedAssetsTable
           assets={assets}
