@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { X, Loader2, AlertCircle, Wrench, MapPin, Edit3, Camera } from "lucide-react";
+import { X, Loader2, AlertCircle, Wrench, MapPin, Camera } from "lucide-react";
 
 export default function AssetPopup({
   asset,
@@ -84,13 +84,6 @@ export default function AssetPopup({
             title="Zoom to location"
           >
             <MapPin className="h-4 w-4" />
-          </button>
-          <button 
-            onClick={(e) => { e.stopPropagation(); onSaveAssignment?.({ planning_type_id: planningTypeId, planning_week_id: weekId, asset_id: asset.id }, assignment?.id); }} 
-            className="p-1 text-slate-400 hover:text-indigo-600 rounded"
-            title="Edit assignment"
-          >
-            <Edit3 className="h-4 w-4" />
           </button>
           <button 
             onClick={(e) => { e.stopPropagation(); onShowPhotos?.(asset); }} 
@@ -183,7 +176,7 @@ export default function AssetPopup({
               onClick={handleClearAssignment}
               disabled={saving}
             >
-              Clear
+              Unassign
             </Button>
           )}
         </div>
