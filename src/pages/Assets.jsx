@@ -21,6 +21,7 @@ export default function Assets() {
   const [editingAsset, setEditingAsset] = useState(null);
   const [importOpen, setImportOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  const [settingActive, setSettingActive] = useState(false);
 
   const { data: assets = [] } = useQuery({ queryKey: ["assets"], queryFn: () => base44.entities.Assets.list() });
   const { data: childAssets = [] } = useQuery({ queryKey: ["childAssets"], queryFn: () => base44.entities.ChildAssets.list() });
@@ -126,6 +127,20 @@ export default function Assets() {
     setFormOpen(true);
   };
 
+  const handleSetAllActive = async () => {
+    if (!window.confirm("Set all assets to status 'Active'?")) return;
+    setSettingActive(true);
+    try {
+      const res = await base44.functions.invoke('setAllAssetsActive', {});
+      toast({ title: "Success", description: res.data.message });
+      queryClient.invalidateQueries({ queryKey: ["assets"] });
+    } catch (err) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setSettingActive(false);
+    }
+  };
+
   // Stats
   const totalAssets = assets.length;
   const activeAssets = assets.filter(a => a.status === "Active").length;
@@ -141,6 +156,9 @@ export default function Assets() {
         title="Assets"
         actions={
           <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={handleSetAllActive} disabled={settingActive}>
+              {settingActive ? "Setting..." : "Set All Active"}
+            </Button>
             <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setImportOpen(true)}>
               <Upload className="w-3.5 h-3.5" /> Import
             </Button>
