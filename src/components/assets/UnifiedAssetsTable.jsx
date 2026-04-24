@@ -28,10 +28,10 @@ export default function UnifiedAssetsTable({
   const [search, setSearch] = useState("");
   const [filterCity, setFilterCity] = useState("all");
   const [filterPhase, setFilterPhase] = useState("all");
-  const [filterOrdered, setFilterOrdered] = useState("all");
+  const [filterOrdered, setFilterOrdered] = useState("yes");
   const [filterShelterType, setFilterShelterType] = useState("all");
   const [filterStage, setFilterStage] = useState("all");
-  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("Active");
   const [filterOpenIncidents, setFilterOpenIncidents] = useState("all");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
