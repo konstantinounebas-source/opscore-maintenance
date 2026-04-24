@@ -278,26 +278,24 @@ export default function MapWorkspaceCard({
         {/* Map canvas — fills remaining space */}
          <div className="relative overflow-hidden p-1.5" style={{ flex: "1 1 0", minHeight: 0, height: 0 }}>
            <WorkbenchMap
-              assets={visibleAssets}
-              allAssignments={allAssignments}
-              selectedAssetId={selectedAsset?.id}
-              onSelectAsset={(asset) => {
-                setSelectedAsset(asset);
-                setPopupPos({ x: 50, y: 50 });
-              }}
-              colorMode={colorMode}
-              layers={layers}
-              layerAssets={layerAssets}
-              incidentsByAsset={incidentsByAsset}
-              workOrdersByAsset={workOrdersByAsset}
-              activeVisualRule={activeVisualRule}
-              colorRules={colorRules}
-              colorOverrides={colorOverrides}
-              hiddenValues={hiddenValues}
-              legendEntries={legendEntries}
-              zoomToAsset={zoomToAsset}
-              onZoomCompleted={onZoomCompleted}
-            />
+             assets={visibleAssets}
+             allAssignments={allAssignments}
+             selectedAssetId={selectedAsset?.id}
+             onSelectAsset={(asset) => {
+               setSelectedAsset(asset);
+               setPopupPos({ x: 50, y: 50 });
+             }}
+             colorMode={colorMode}
+             layers={layers}
+             layerAssets={layerAssets}
+             incidentsByAsset={incidentsByAsset}
+             workOrdersByAsset={workOrdersByAsset}
+             activeVisualRule={activeVisualRule}
+             colorRules={colorRules}
+             colorOverrides={colorOverrides}
+             zoomToAsset={zoomToAsset}
+             onZoomCompleted={onZoomCompleted}
+           />
            <MapLegend
              entries={legendEntries}
              onColorOverride={handleColorOverride}

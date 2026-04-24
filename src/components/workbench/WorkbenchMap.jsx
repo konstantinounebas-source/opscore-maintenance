@@ -67,43 +67,22 @@ export default function WorkbenchMap({
       // Apply color overrides from legend
       if (colorOverrides) {
         for (const [label, overrideColor] of Object.entries(colorOverrides)) {
-          let matchesLabel = false;
-          switch (colorMode) {
-            case "city": matchesLabel = a.city === label; break;
-            case "municipality": matchesLabel = a.municipality === label; break;
-            case "shelter_type": matchesLabel = a.shelter_type === label; break;
-            case "ordered_shelter_type": matchesLabel = a.ordered_shelter_type === label; break;
-            case "installed_shelter_type": matchesLabel = a.installed_shelter_type === label; break;
-            case "phase": matchesLabel = a.phase === label; break;
-            case "order_year": matchesLabel = String(a.order_year) === label; break;
-            case "asset_status": matchesLabel = a.status === label; break;
-            case "asset_stage": matchesLabel = a.asset_stage === label; break;
-            case "asset_source": matchesLabel = a.asset_source === label; break;
-            case "existing_condition": matchesLabel = a.existing_condition === label; break;
-            case "has_bay": matchesLabel = a.has_bay === label; break;
-            case "inspection_status": matchesLabel = a.inspection_status === label; break;
-            case "category": matchesLabel = a.category === label; break;
-            case "assignment_status": matchesLabel = (assignment?.assignment_status || "Unassigned") === label; break;
-            case "assignment_type": matchesLabel = (assignment?.assignment_type || "Unassigned") === label; break;
-            case "priority": 
-              let priorLabel = "Unassigned";
-              if (assignment) {
-                if (assignment.priority_bucket === "P1" || assignment.priority_bucket === "Critical") priorLabel = "P1 / Critical";
-                else if (assignment.priority_bucket === "P2" || assignment.priority_bucket === "High") priorLabel = "P2 / High";
-                else priorLabel = assignment.priority_bucket;
-              }
-              matchesLabel = priorLabel === label; break;
-            case "assigned_state": matchesLabel = (assignment ? "Assigned" : "Unassigned") === label; break;
-            case "incident_presence": matchesLabel = ((incidentsByAsset[a.id]?.length > 0 ? "Has Incidents" : "No Incidents")) === label; break;
-            case "work_order_presence": matchesLabel = ((workOrdersByAsset[a.id]?.length > 0 ? "Has Work Orders" : "No Work Orders")) === label; break;
-            case "planned_week": 
-              let weekLabel = "Unassigned";
-              if (assignment?.planning_week_id) {
-                // Find week label (would need weeks prop, for now just use id)
-                weekLabel = `Week ${assignment.planning_week_id}`;
-              }
-              matchesLabel = weekLabel === label; break;
-          }
+          // Find if this asset matches the label for the current colorMode
+          const matchesLabel = (() => {
+            switch (colorMode) {
+              case "city": return a.city === label;
+              case "municipality": return a.municipality === label;
+              case "shelter_type": return a.shelter_type === label;
+              case "phase": return a.phase === label;
+              case "order_year": return String(a.order_year) === label;
+              case "asset_status": return a.status === label;
+              case "asset_stage": return a.asset_stage === label;
+              case "asset_source": return a.asset_source === label;
+              case "existing_condition": return a.existing_condition === label;
+              case "has_bay": return a.has_bay === label;
+              default: return false;
+            }
+          })();
           if (matchesLabel) { color = overrideColor; break; }
         }
       }
