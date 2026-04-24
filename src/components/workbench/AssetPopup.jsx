@@ -16,24 +16,29 @@ export default function AssetPopup({
   const [weekId, setWeekId] = useState(assignment?.planning_week_id || "");
   const [saving, setSaving] = useState(false);
 
-  const assetIncidents = incidents.filter(i => i.related_asset_id === asset?.id) || [];
-  const assetWorkOrders = workOrders.filter(w => w.related_asset_id === asset?.id) || [];
+  const assetIncidents = (incidents || []).filter(i => i.related_asset_id === asset?.id);
+  const assetWorkOrders = (workOrders || []).filter(w => w.related_asset_id === asset?.id);
 
   const handleAssign = async () => {
     if (!weekId) return;
     setSaving(true);
-    await onSaveAssignment({
-      assignment_type: assignmentType,
-      planning_week_id: weekId,
-      asset_id: asset.id,
-    }, assignment?.id);
+    try {
+      const formData = {
+        assignment_type: assignmentType,
+        planning_week_id: weekId,
+        asset_id: asset.id,
+      };
+      await onSaveAssignment(formData, assignment?.id);
+    } catch (err) {
+      console.error("Error saving assignment:", err);
+    }
     setSaving(false);
   };
 
   if (!asset) return null;
 
   return (
-    <div className="absolute bg-white border border-slate-300 rounded-lg shadow-xl p-4 z-50 w-80 max-w-sm">
+    <div className="fixed bg-white border border-slate-300 rounded-lg shadow-xl p-4 z-50 w-80 max-w-sm" style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
