@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { 
   LayoutDashboard, Box, AlertTriangle, Settings, 
   ChevronLeft, ChevronRight, Wrench, Package, MapPin,
-  Users, ShieldCheck, FileText, BarChart2
+  Users, ShieldCheck, FileText, BarChart2, Clipboard
 } from "lucide-react";
 
 const navItems = [
@@ -12,6 +12,7 @@ const navItems = [
   ]},
   { path: "/Incidents", label: "Incidents", icon: AlertTriangle },
   { path: "/WorkOrders", label: "Work Orders", icon: Wrench },
+  { path: "/BusStopLogs", label: "Bus Stop Logs", icon: Clipboard },
   { path: "/Planning", label: "Planning Workbench", icon: MapPin },
   { path: "/Forms", label: "Forms", icon: FileText },
   { path: "/Configuration", label: "Configuration", icon: Settings },
