@@ -226,6 +226,7 @@ export default function PlanningReviewPanel({
                      w.week_name.toLowerCase().includes(weekFilterSearch.toLowerCase())
                    ).map(week => {
                      const planningType = planningTypes.find(pt => pt.id === week.planning_type_id);
+                     const weekAssignmentCount = allAssignments.filter(a => a.planning_week_id === week.id).length;
                      return (
                    <label
                      key={week.id}
@@ -249,6 +250,9 @@ export default function PlanningReviewPanel({
                        <div className="font-semibold text-slate-700">{week.week_code}</div>
                        <div className="text-[9px] text-slate-500">{planningType?.name || "—"}</div>
                      </div>
+                     <span className="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded-full shrink-0">
+                       {weekAssignmentCount}
+                     </span>
                    </label>
                    );
                    })
