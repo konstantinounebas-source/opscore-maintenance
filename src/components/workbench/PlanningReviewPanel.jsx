@@ -358,7 +358,23 @@ export default function PlanningReviewPanel({
 
                 {/* Expanded assignments list */}
                 {isExpanded && (
-                  <div className="bg-white border-b border-slate-100">
+                  <div className="bg-white border-b border-slate-100 space-y-1 p-2">
+                    {wa.map(a => {
+                      const asset = assetsMap[a.asset_id];
+                      return (
+                        <div key={a.id} className="p-2 rounded border border-slate-100 hover:bg-slate-50 cursor-pointer text-xs">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="font-semibold text-slate-700">{asset?.asset_id || a.asset_id}</div>
+                              <div className="text-slate-500">{asset?.city || "—"}</div>
+                            </div>
+                            <Badge className={ASSIGNMENT_STATUS_COLORS[a.assignment_status] || "bg-slate-100 text-slate-600"}>
+                              {a.assignment_status}
+                            </Badge>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
                    </div>
