@@ -37,9 +37,8 @@ export default function PlanningReviewPanel({ weeks, allAssignments, assetsMap, 
   // ── Panel-local state — NEVER shared with maps ─────────────────────────────
   const [weekSearch, setWeekSearch] = useState("");
   const [weekStatusFilter, setWeekStatusFilter] = useState("__all__");
-  const [selectedPlanningTypeId, setSelectedPlanningTypeId] = useState("__all__");
-  const [selectedWeekId, setSelectedWeekId] = useState(null);
-  const [expandedWeekIds, setExpandedWeekIds] = useState({});
+  const [selectedPlanningTypeIds, setSelectedPlanningTypeIds] = useState(new Set());
+  const [selectedWeekIds, setSelectedWeekIds] = useState(new Set());
   const [assignmentSearch, setAssignmentSearch] = useState("");
   const [assignmentStatusFilter, setAssignmentStatusFilter] = useState("__all__");
 
@@ -66,17 +65,17 @@ export default function PlanningReviewPanel({ weeks, allAssignments, assetsMap, 
     if (weekStatusFilter !== "__all__") {
       list = list.filter(w => w.status === weekStatusFilter);
     }
-    if (selectedPlanningTypeId !== "__all__") {
-      list = list.filter(w => w.planning_type_id === selectedPlanningTypeId);
+    if (selectedPlanningTypeIds.size > 0) {
+      list = list.filter(w => selectedPlanningTypeIds.has(w.planning_type_id));
     }
     return list;
-  }, [weeks, weekSearch, weekStatusFilter, selectedPlanningTypeId]);
+  }, [weeks, weekSearch, weekStatusFilter, selectedPlanningTypeIds]);
 
-  const selectedWeek = useMemo(() => weeks.find(w => w.id === selectedWeekId), [weeks, selectedWeekId]);
+  const selectedWeeks = useMemo(() => weeks.filter(w => selectedWeekIds.has(w.id)), [weeks, selectedWeekIds]);
 
   const weekAssignments = useMemo(() => {
-    if (!selectedWeekId) return [];
-    let list = allAssignments.filter(a => a.planning_week_id === selectedWeekId);
+    if (selectedWeekIds.size === 0) return [];
+    let list = allAssignments.filter(a => selectedWeekIds.has(a.planning_week_id));
     if (assignmentSearch) {
       const q = assignmentSearch.toLowerCase();
       list = list.filter(a => {
@@ -93,12 +92,12 @@ export default function PlanningReviewPanel({ weeks, allAssignments, assetsMap, 
       list = list.filter(a => a.assignment_status === assignmentStatusFilter);
     }
     return list;
-  }, [selectedWeekId, allAssignments, assignmentSearch, assignmentStatusFilter, assetsMap]);
+  }, [selectedWeekIds, allAssignments, assignmentSearch, assignmentStatusFilter, assetsMap]);
 
-  // KPIs for selected week
+  // KPIs for selected weeks
   const kpis = useMemo(() => {
-    if (!selectedWeekId) return null;
-    const wa = allAssignments.filter(a => a.planning_week_id === selectedWeekId);
+    if (selectedWeekIds.size === 0) return null;
+    const wa = allAssignments.filter(a => selectedWeekIds.has(a.planning_week_id));
     return {
       total:       wa.length,
       planned:     wa.filter(a => a.assignment_status === "Planned").length,
@@ -108,10 +107,10 @@ export default function PlanningReviewPanel({ weeks, allAssignments, assetsMap, 
       withIncident:wa.filter(a => incidentsByAsset[a.asset_id]?.length > 0).length,
       withWO:      wa.filter(a => workOrdersByAsset[a.asset_id]?.length > 0).length,
     };
-  }, [selectedWeekId, allAssignments, incidentsByAsset, workOrdersByAsset]);
+  }, [selectedWeekIds, allAssignments, incidentsByAsset, workOrdersByAsset]);
 
   const handleExportCSV = () => {
-    if (!selectedWeek || weekAssignments.length === 0) return;
+    if (selectedWeeks.length === 0 || weekAssignments.length === 0) return;
     const rows = [["Asset ID", "City", "Type", "Status", "Priority", "Team", "Assigned To"]];
     weekAssignments.forEach(a => {
       const asset = assetsMap[a.asset_id] || {};
@@ -122,9 +121,30 @@ export default function PlanningReviewPanel({ weeks, allAssignments, assetsMap, 
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `${selectedWeek.week_code}_assignments.csv`;
+    link.download = `weeks_${Array.from(selectedWeekIds).join("_")}_assignments.csv`;
     link.click();
     URL.revokeObjectURL(url);
+  };
+
+  const togglePlanningType = (typeId) => {
+    const newSet = new Set(selectedPlanningTypeIds);
+    if (newSet.has(typeId)) {
+      newSet.delete(typeId);
+    } else {
+      newSet.add(typeId);
+    }
+    setSelectedPlanningTypeIds(newSet);
+    setSelectedWeekIds(new Set()); // Reset week selection
+  };
+
+  const toggleWeek = (weekId) => {
+    const newSet = new Set(selectedWeekIds);
+    if (newSet.has(weekId)) {
+      newSet.delete(weekId);
+    } else {
+      newSet.add(weekId);
+    }
+    setSelectedWeekIds(newSet);
   };
 
   return (
@@ -138,19 +158,33 @@ export default function PlanningReviewPanel({ weeks, allAssignments, assetsMap, 
         <p className="text-[10px] text-slate-400 mt-0.5">Read-only review of planned work. Does not affect maps.</p>
       </div>
 
-      {/* Week selector + filters */}
-      <div className="px-3 py-2 border-b border-slate-200 space-y-1.5 shrink-0">
-        <Select value={selectedWeekId || ""} onValueChange={id => setSelectedWeekId(id || null)}>
-          <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Select a week..." /></SelectTrigger>
-          <SelectContent style={{ zIndex: 99999 }}>
-            <SelectItem value={null}>-- None --</SelectItem>
-            {filteredWeeks.map(w => (
-              <SelectItem key={w.id} value={w.id}>
-                {w.week_code} · {w.week_name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      {/* Planning Type selector */}
+       <div className="px-3 py-2 border-b border-slate-200 space-y-1.5 shrink-0">
+         <label className="text-[10px] font-semibold text-slate-600 uppercase tracking-wide">Planning Types</label>
+         <div className="space-y-1 max-h-24 overflow-y-auto">
+           {planningTypes.map(pt => (
+             <button
+               key={pt.planning_type_id || pt.id}
+               onClick={() => togglePlanningType(pt.planning_type_id || pt.id)}
+               className={`w-full text-left px-2 py-1 rounded text-xs transition-colors ${
+                 selectedPlanningTypeIds.has(pt.planning_type_id || pt.id)
+                   ? "bg-indigo-100 text-indigo-700 border border-indigo-300"
+                   : "bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100"
+               }`}
+             >
+               {selectedPlanningTypeIds.has(pt.planning_type_id || pt.id) && <span className="mr-1">✓</span>}
+               {pt.name}
+             </button>
+           ))}
+         </div>
+       </div>
+
+       {/* Week selector + filters */}
+       <div className="px-3 py-2 border-b border-slate-200 space-y-1.5 shrink-0">
+         <div>
+           <label className="text-[10px] font-semibold text-slate-600 uppercase tracking-wide block mb-1">Weeks ({selectedWeekIds.size})</label>
+           <div className="text-[10px] text-slate-500 mb-1.5">Select weeks to view assignments</div>
+         </div>
         <div className="relative">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
           <Input
@@ -176,18 +210,18 @@ export default function PlanningReviewPanel({ weeks, allAssignments, assetsMap, 
         {filteredWeeks.length === 0 && (
           <div className="flex flex-col items-center justify-center py-10 text-slate-400">
             <CalendarDays className="h-8 w-8 mb-2 opacity-30" />
-            <p className="text-xs">No planning weeks found</p>
+            <p className="text-xs">{selectedPlanningTypeIds.size === 0 ? "Select planning types above" : "No weeks found"}</p>
           </div>
         )}
 
         {filteredWeeks.map(week => {
           const weekCount = allAssignments.filter(a => a.planning_week_id === week.id).length;
-          const isSelected = selectedWeekId === week.id;
+          const isSelected = selectedWeekIds.has(week.id);
 
           return (
             <div key={week.id}>
               <button
-                onClick={() => setSelectedWeekId(isSelected ? null : week.id)}
+                onClick={() => toggleWeek(week.id)}
                 className={`w-full text-left px-4 py-3 border-b border-slate-100 transition-colors hover:bg-slate-50 ${
                   isSelected ? "bg-indigo-50 border-l-2 border-l-indigo-400" : ""
                 }`}
@@ -215,8 +249,8 @@ export default function PlanningReviewPanel({ weeks, allAssignments, assetsMap, 
                 </div>
               </button>
 
-              {/* Expanded: KPIs + assignments */}
-              {isSelected && (
+              {/* Show KPIs when weeks selected */}
+              {selectedWeekIds.size > 0 && isSelected && (
                 <div className="bg-indigo-50/30 border-b border-slate-200">
                   {/* KPI row */}
                   {kpis && (
