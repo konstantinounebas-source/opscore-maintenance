@@ -22,11 +22,14 @@ export default function AssetPopup({
   
   // Debug logging
   useEffect(() => {
-    console.log("AssetPopup - Raw incidents:", incidents);
-    console.log("AssetPopup - Raw workOrders:", workOrders);
-    console.log("AssetPopup - Filtered incidents:", assetIncidents);
-    console.log("AssetPopup - Filtered workOrders:", assetWorkOrders);
-  }, [asset?.id, incidents, workOrders, assetIncidents, assetWorkOrders]);
+    console.log("AssetPopup - asset.id:", asset?.id);
+    if (incidents?.length > 0) {
+      console.log("AssetPopup - First incident related_asset_id:", incidents[0]?.related_asset_id);
+    }
+    if (workOrders?.length > 0) {
+      console.log("AssetPopup - First workOrder related_asset_id:", workOrders[0]?.related_asset_id);
+    }
+  }, [asset?.id, incidents, workOrders]);
   
   const filteredWeeks = planningTypeId 
     ? (weeks || []).filter(w => w.planning_type_id === planningTypeId)
