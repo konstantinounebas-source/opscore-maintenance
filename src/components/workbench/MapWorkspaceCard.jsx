@@ -275,7 +275,7 @@ export default function MapWorkspaceCard({
         </div>
 
         {/* Search and Filter bar */}
-        <div className="px-2 py-1.5 border-b border-slate-100 shrink-0 space-y-1.5">
+        <div className="px-2 py-1.5 border-b border-slate-100 shrink-0 flex items-center gap-2">
           <div className="flex items-center gap-1 px-2 py-1.5 border border-input rounded-md bg-white">
             <Search className="h-3.5 w-3.5 text-slate-400" />
             <input
@@ -286,7 +286,9 @@ export default function MapWorkspaceCard({
               className="flex-1 text-xs outline-none bg-transparent"
             />
           </div>
-          <MapFilterBar filters={filters} onChange={setFilters} assets={allAssets} weeks={weeks} />
+          <div className="flex-1">
+            <MapFilterBar filters={filters} onChange={setFilters} assets={allAssets} weeks={weeks} />
+          </div>
         </div>
 
         {/* Layer manager (collapsed by default) */}
