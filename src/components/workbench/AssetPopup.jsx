@@ -17,8 +17,8 @@ export default function AssetPopup({
   const [weekId, setWeekId] = useState(assignment?.planning_week_id || "");
   const [saving, setSaving] = useState(false);
 
-  const assetIncidents = (incidents || []).filter(i => i.related_asset_id === asset?.id);
-  const assetWorkOrders = (workOrders || []).filter(w => w.related_asset_id === asset?.id);
+  const assetIncidents = (incidents || []).filter(i => i.related_asset_id === asset?.id || i.asset_id === asset?.asset_id);
+  const assetWorkOrders = (workOrders || []).filter(w => w.related_asset_id === asset?.id || w.asset_id === asset?.asset_id);
   
   // Debug logging
   useEffect(() => {
