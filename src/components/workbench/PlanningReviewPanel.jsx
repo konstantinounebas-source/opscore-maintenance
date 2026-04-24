@@ -151,35 +151,45 @@ export default function PlanningReviewPanel({
               </button>
             )}
           </div>
-          {planningTypes.length === 0 ? (
-            <p className="text-[10px] text-slate-400 px-2 py-2">Loading types...</p>
-          ) : (
-            <div className="space-y-1">
-              {planningTypes.map(pt => (
-                <label
-                  key={pt.id}
-                  className="flex items-center gap-2 px-2 py-1.5 rounded text-xs cursor-pointer hover:bg-slate-100 transition-colors"
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedPlanningTypeIds.has(pt.id)}
-                    onChange={() => {
-                      const newSet = new Set(selectedPlanningTypeIds);
-                      if (newSet.has(pt.id)) {
-                        newSet.delete(pt.id);
-                      } else {
-                        newSet.add(pt.id);
-                      }
-                      setSelectedPlanningTypeIds(newSet);
-                      setSelectedWeekIds(new Set());
-                    }}
-                    className="w-3 h-3"
-                  />
-                  <span className="text-slate-700">{pt.name}</span>
-                </label>
-              ))}
-            </div>
-          )}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="w-full h-7 px-3 py-1 text-xs border border-input rounded-md bg-white text-slate-600 hover:bg-slate-50 flex items-center justify-between">
+                <span>{selectedPlanningTypeIds.size > 0 ? `${selectedPlanningTypeIds.size} selected` : "Select types..."}</span>
+                <ChevronDown className="h-3 w-3 text-slate-400" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-56 p-0" align="start">
+              <div className="p-2 space-y-1.5">
+                {planningTypes.length === 0 ? (
+                  <p className="text-[10px] text-slate-400 px-2 py-2">Loading types...</p>
+                ) : (
+                  planningTypes.map(pt => (
+                    <label
+                      key={pt.id}
+                      className="flex items-center gap-2 p-2 rounded text-xs cursor-pointer hover:bg-slate-100 transition-colors"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedPlanningTypeIds.has(pt.id)}
+                        onChange={() => {
+                          const newSet = new Set(selectedPlanningTypeIds);
+                          if (newSet.has(pt.id)) {
+                            newSet.delete(pt.id);
+                          } else {
+                            newSet.add(pt.id);
+                          }
+                          setSelectedPlanningTypeIds(newSet);
+                          setSelectedWeekIds(new Set());
+                        }}
+                        className="w-3 h-3"
+                      />
+                      <span className="text-slate-700">{pt.name}</span>
+                    </label>
+                  ))
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
 
        {/* Week selector dropdown */}
