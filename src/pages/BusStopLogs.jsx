@@ -1,11 +1,24 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Search, Plus, Loader2 } from "lucide-react";
 import StationLogDetail from "@/components/stationlogs/StationLogDetail";
 
 const WORKFLOW_STAGES = [
@@ -32,6 +45,9 @@ const WORKFLOW_STAGES = [
 export default function BusStopLogs() {
   const [search, setSearch] = useState("");
   const [selectedLog, setSelectedLog] = useState(null);
+  const [showNewLogDialog, setShowNewLogDialog] = useState(false);
+  const [selectedAsset, setSelectedAsset] = useState(null);
+  const queryClient = useQueryClient();
 
   const { data: assets = [] } = useQuery({
     queryKey: ["assets"],
@@ -41,6 +57,23 @@ export default function BusStopLogs() {
   const { data: logs = [] } = useQuery({
     queryKey: ["stationLogs"],
     queryFn: () => base44.entities.StationLog.list(),
+  });
+
+  const createLogMutation = useMutation({
+    mutationFn: async (assetId) => {
+      const newLog = await base44.entities.StationLog.create({
+        asset_id: assetId,
+        current_stage: 1,
+        current_status: "Waiting",
+        can_move_forward: false,
+      });
+      return newLog;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["stationLogs"] });
+      setShowNewLogDialog(false);
+      setSelectedAsset(null);
+    },
   });
 
   const filteredLogs = logs.filter(log => {
@@ -74,6 +107,15 @@ export default function BusStopLogs() {
     );
   }
 
+  const assetsWithoutLogs = assets.filter(
+    a => !logs.some(l => l.asset_id === a.id)
+  );
+
+  const handleCreateLog = async () => {
+    if (!selectedAsset) return;
+    createLogMutation.mutate(selectedAsset);
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-start">
@@ -81,8 +123,51 @@ export default function BusStopLogs() {
           <h1 className="text-3xl font-bold">Bus Stop Station Logs</h1>
           <p className="text-sm text-gray-500 mt-1">Workflow management for bus stop installations ({logs.length} total)</p>
         </div>
-        <Button className="gap-2"><Plus className="h-4 w-4" />New Log</Button>
+        <Button className="gap-2" onClick={() => setShowNewLogDialog(true)}>
+          <Plus className="h-4 w-4" />New Log
+        </Button>
       </div>
+
+      <Dialog open={showNewLogDialog} onOpenChange={setShowNewLogDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Station Log</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Select Bus Stop</label>
+              <Select value={selectedAsset || ""} onValueChange={setSelectedAsset}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a bus stop..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {assetsWithoutLogs.length === 0 ? (
+                    <div className="p-2 text-sm text-gray-500">All assets have logs</div>
+                  ) : (
+                    assetsWithoutLogs.map(asset => (
+                      <SelectItem key={asset.id} value={asset.id}>
+                        {asset.asset_id} - {asset.location_address}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setShowNewLogDialog(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleCreateLog}
+                disabled={!selectedAsset || createLogMutation.isPending}
+              >
+                {createLogMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Create Log
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div className="flex gap-2">
         <div className="flex-1 relative">
