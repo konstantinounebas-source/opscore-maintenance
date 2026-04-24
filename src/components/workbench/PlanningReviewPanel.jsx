@@ -313,9 +313,7 @@ export default function PlanningReviewPanel({
                       <span className={`text-[9px] px-1.5 py-0.5 rounded-full border font-medium ${WEEK_STATUS_COLORS[week.status] || WEEK_STATUS_COLORS.Draft}`}>
                         {week.status}
                       </span>
-                      {!isExpanded && (
-                        <span className="text-[10px] text-slate-400">{weekCount} assigned</span>
-                      )}
+                      <span className="text-[10px] text-slate-400">{weekCount} assigned</span>
                     </div>
                   </div>
                 </button>
