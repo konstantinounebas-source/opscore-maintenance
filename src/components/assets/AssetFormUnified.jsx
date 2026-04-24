@@ -264,9 +264,8 @@ export default function AssetFormUnified({ open, onOpenChange, onSave, asset }) 
           )}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-xs">Shelter ID <span className="text-red-500">*</span></Label>
-              <Input value={form.active_shelter_id || ""} onChange={e => set("active_shelter_id", e.target.value)} placeholder="e.g. BUS-001" className={err("active_shelter_id")} />
-              {errors.active_shelter_id && <p className="text-xs text-red-500">Required</p>}
+              <Label className="text-xs">Shelter ID</Label>
+              <Input value={form.active_shelter_id || ""} readOnly className="bg-slate-100 text-slate-600" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Status</Label>
