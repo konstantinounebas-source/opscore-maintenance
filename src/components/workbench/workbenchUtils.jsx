@@ -52,15 +52,26 @@ export function getColorRulePin(asset, assignment, colorRules, layerAssets) {
 // ─── Color Mode Options ────────────────────────────────────────────────────────
 
 export const COLOR_MODES = [
-  { value: "default",           label: "Default (Priority/Status)" },
-  { value: "layer",             label: "By Layer" },
-  { value: "city",              label: "By City" },
-  { value: "asset_status",      label: "By Asset Status" },
-  { value: "assignment_status", label: "By Assignment Status" },
-  { value: "assignment_type",   label: "By Assignment Type" },
-  { value: "priority",          label: "By Priority" },
-  { value: "assigned_state",    label: "Assigned / Unassigned" },
-  { value: "incident_presence", label: "By Incident Presence" },
+  { value: "default",            label: "Default (Priority/Status)" },
+  { value: "layer",              label: "By Layer" },
+  // Asset fields
+  { value: "city",               label: "By City" },
+  { value: "municipality",       label: "By Municipality" },
+  { value: "asset_status",       label: "By Asset Status" },
+  { value: "asset_stage",        label: "By Asset Stage" },
+  { value: "asset_source",       label: "By Asset Source" },
+  { value: "shelter_type",       label: "By Shelter Type" },
+  { value: "existing_condition", label: "By Existing Condition" },
+  { value: "has_bay",            label: "By Has Bay" },
+  { value: "phase",              label: "By Phase" },
+  { value: "order_year",         label: "By Order Year" },
+  // Assignment fields
+  { value: "assignment_status",  label: "By Assignment Status" },
+  { value: "assignment_type",    label: "By Assignment Type" },
+  { value: "priority",           label: "By Priority" },
+  { value: "assigned_state",     label: "Assigned / Unassigned" },
+  // Presence
+  { value: "incident_presence",  label: "By Incident Presence" },
   { value: "work_order_presence","label": "By Work Order Presence" },
 ];
 
@@ -77,11 +88,51 @@ export function getCityColor(city) {
 }
 
 const ASSET_STATUS_COLORS = {
-  "Active":       "#22C55E",
-  "Inactive":     "#94A3B8",
+  "Active":            "#22C55E",
+  "Inactive":          "#94A3B8",
   "Under Maintenance": "#F59E0B",
-  "Decommissioned": "#EF4444",
+  "Decommissioned":    "#EF4444",
 };
+
+const ASSET_STAGE_COLORS = {
+  "planning":     "#94A3B8",
+  "ordered":      "#F59E0B",
+  "installation": "#3B82F6",
+  "installed":    "#22C55E",
+  "maintenance":  "#EF4444",
+};
+
+const ASSET_SOURCE_COLORS = {
+  "maintenance":        "#6366F1",
+  "bus_shelter_order":  "#F59E0B",
+};
+
+const EXISTING_CONDITION_COLORS = {
+  "none":             "#94A3B8",
+  "sign_only":        "#F59E0B",
+  "shelter_only":     "#3B82F6",
+  "sign_and_shelter": "#22C55E",
+  "unknown":          "#CBD5E1",
+};
+
+const HAS_BAY_COLORS = {
+  "yes":     "#22C55E",
+  "no":      "#EF4444",
+  "unknown": "#94A3B8",
+};
+
+// Generic palette for dynamic string fields (municipality, phase, shelter_type, order_year)
+const GENERIC_PALETTE = ["#6366F1","#EC4899","#F59E0B","#10B981","#3B82F6","#EF4444","#8B5CF6","#06B6D4","#F97316","#84CC16","#14B8A6","#A78BFA"];
+const _genericMaps = {};
+function getGenericColor(field, value) {
+  if (!value) return "#94A3B8";
+  if (!_genericMaps[field]) _genericMaps[field] = {};
+  if (!_genericMaps[field][value]) {
+    const idx = Object.keys(_genericMaps[field]).length % GENERIC_PALETTE.length;
+    _genericMaps[field][value] = GENERIC_PALETTE[idx];
+  }
+  return _genericMaps[field][value];
+}
 
 const ASSIGNMENT_STATUS_COLORS = {
   "Planned":      "#6366F1",
@@ -164,8 +215,32 @@ export function getMapPinColor({ asset, assignment, colorMode, layers, layerAsse
     case "city":
       return getCityColor(asset.city);
 
+    case "municipality":
+      return getGenericColor("municipality", asset.municipality);
+
     case "asset_status":
       return ASSET_STATUS_COLORS[asset.status] || "#94A3B8";
+
+    case "asset_stage":
+      return ASSET_STAGE_COLORS[asset.asset_stage] || "#94A3B8";
+
+    case "asset_source":
+      return ASSET_SOURCE_COLORS[asset.asset_source] || "#94A3B8";
+
+    case "shelter_type":
+      return getGenericColor("shelter_type", asset.shelter_type);
+
+    case "existing_condition":
+      return EXISTING_CONDITION_COLORS[asset.existing_condition] || "#94A3B8";
+
+    case "has_bay":
+      return HAS_BAY_COLORS[asset.has_bay] || "#94A3B8";
+
+    case "phase":
+      return getGenericColor("phase", asset.phase);
+
+    case "order_year":
+      return getGenericColor("order_year", asset.order_year ? String(asset.order_year) : null);
 
     case "assignment_status":
       if (!assignment) return "#CBD5E1";
@@ -249,6 +324,38 @@ export function getLegendEntries(colorMode, layers, assets, assignments, inciden
 
     case "asset_status":
       return Object.entries(ASSET_STATUS_COLORS).map(([label, color]) => ({ label, color }));
+
+    case "asset_stage":
+      return Object.entries(ASSET_STAGE_COLORS).map(([label, color]) => ({ label, color }));
+
+    case "asset_source":
+      return Object.entries(ASSET_SOURCE_COLORS).map(([label, color]) => ({ label, color }));
+
+    case "existing_condition":
+      return Object.entries(EXISTING_CONDITION_COLORS).map(([label, color]) => ({ label, color }));
+
+    case "has_bay":
+      return Object.entries(HAS_BAY_COLORS).map(([label, color]) => ({ label, color }));
+
+    case "municipality": {
+      const munis = [...new Set(assets.map(a => a.municipality).filter(Boolean))].sort();
+      return munis.map(m => ({ label: m, color: getGenericColor("municipality", m) }));
+    }
+
+    case "shelter_type": {
+      const types = [...new Set(assets.map(a => a.shelter_type).filter(Boolean))].sort();
+      return types.map(t => ({ label: t, color: getGenericColor("shelter_type", t) }));
+    }
+
+    case "phase": {
+      const phases = [...new Set(assets.map(a => a.phase).filter(Boolean))].sort();
+      return phases.map(p => ({ label: p, color: getGenericColor("phase", p) }));
+    }
+
+    case "order_year": {
+      const years = [...new Set(assets.map(a => a.order_year).filter(Boolean))].sort();
+      return years.map(y => ({ label: String(y), color: getGenericColor("order_year", String(y)) }));
+    }
 
     case "assigned_state":
       return [
