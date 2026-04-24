@@ -22,6 +22,7 @@ const ALWAYS_VISIBLE = ["city", "order_year", "ordered_shelter_type", "installed
 
 // All additional filter fields for "Add Filter" dropdown
 const AVAILABLE_FILTER_FIELDS = {
+  "asset_id": "Asset ID",
   "shelter_type": "Shelter Type",
   "asset_status": "Asset Status",
   "assignment_status": "Assignment Status",
@@ -420,7 +421,7 @@ export default function MapFilterBar({ filters, onChange, assets, weeks = [] }) 
           }
 
             {customFields.has("team_name") &&
-          <div>
+            <div>
                 <div className="flex items-center justify-between mb-0.5">
                   <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">Team</p>
                   <button onClick={() => removeCustomField("team_name")} className="text-slate-300 hover:text-slate-500">
@@ -434,7 +435,23 @@ export default function MapFilterBar({ filters, onChange, assets, weeks = [] }) 
                   </SelectContent>
                 </Select>
               </div>
-          }
+            }
+
+            {customFields.has("asset_id") &&
+            <div>
+                <div className="flex items-center justify-between mb-0.5">
+                  <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">Asset ID</p>
+                  <button onClick={() => removeCustomField("asset_id")} className="text-slate-300 hover:text-slate-500">
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+                <MultiSelectFilter
+                options={["Unassigned", ...assets.map((a) => a.asset_id).filter(Boolean).sort()]}
+                values={getValues("asset_id")}
+                onChange={(v) => set("asset_id", v)}
+                placeholder="All assets" />
+              </div>
+            }
           </div>
 
           <div className="flex items-center gap-3 pt-1 border-t border-slate-100">
