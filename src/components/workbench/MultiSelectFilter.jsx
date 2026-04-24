@@ -43,6 +43,8 @@ export default function MultiSelectFilter({
 
   const displayText = selected.length === 0 
     ? placeholder
+    : allSelected
+    ? "All"
     : selected.length === 1
     ? selected[0]
     : `${selected.length} selected`;
