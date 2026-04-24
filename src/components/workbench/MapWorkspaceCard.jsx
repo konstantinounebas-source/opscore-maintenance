@@ -10,6 +10,7 @@ import WorkbenchMap from "./WorkbenchMap";
 import { EMPTY_MAP_FILTERS, applyMapFilters, getLegendEntries } from "./workbenchUtils";
 import MapViewSaveLoad from "./MapViewSaveLoad";
 import AssetPopup from "./AssetPopup";
+import MapLayerSelector from "./MapLayerSelector";
 
 export default function MapWorkspaceCard({
   mapId,
@@ -66,6 +67,7 @@ export default function MapWorkspaceCard({
   const [showLayers, setShowLayers] = useState(false);
   const [colorOverrides, setColorOverrides] = useState({}); // label -> hex
   const [hiddenValues, setHiddenValues] = useState(new Set());
+  const [mapLayer, setMapLayer] = useState("openstreetmap");
 
   const handleColorOverride = (label, color) => {
     setColorOverrides((prev) => ({ ...prev, [label]: color }));
@@ -86,6 +88,7 @@ export default function MapWorkspaceCard({
     setPopupPos(null);
     setColorOverrides({});
     setHiddenValues(new Set());
+    setMapLayer("openstreetmap");
   };
 
   // ── Derived: filtered assets for this map only ─────────────────────────────
@@ -185,13 +188,14 @@ export default function MapWorkspaceCard({
             <div className="h-3 w-px bg-slate-300 shrink-0" />
             <MapColorModeSelector value={colorMode} onChange={handleColorModeChange} />
             <div className="flex items-center gap-2 ml-1">
+              <MapLayerSelector value={mapLayer} onChange={setMapLayer} />
               <label className="flex items-center gap-1 cursor-pointer text-[11px] text-slate-500 hover:text-slate-700 select-none whitespace-nowrap">
                 <input
                   type="checkbox"
                   checked={!filters.is_ordered && !filters.is_implementation_phase && !filters.has_work_order && !filters.show_unassigned_only}
                   onChange={(e) => {if (e.target.checked) setFilters({ ...EMPTY_MAP_FILTERS });}}
                   className="rounded w-3 h-3" />
-                
+
                 All
               </label>
               <label className="flex items-center gap-1 cursor-pointer text-[11px] text-slate-500 hover:text-slate-700 select-none whitespace-nowrap">
@@ -200,7 +204,7 @@ export default function MapWorkspaceCard({
                   checked={filters.is_ordered}
                   onChange={(e) => setFilters((f) => ({ ...f, is_ordered: e.target.checked }))}
                   className="rounded w-3 h-3" />
-                
+
                 Ordered
               </label>
               <label className="flex items-center gap-1 cursor-pointer text-[11px] text-slate-500 hover:text-slate-700 select-none whitespace-nowrap">
@@ -209,7 +213,7 @@ export default function MapWorkspaceCard({
                   checked={filters.is_implementation_phase}
                   onChange={(e) => setFilters((f) => ({ ...f, is_implementation_phase: e.target.checked }))}
                   className="rounded w-3 h-3" />
-                
+
                 Implementation
               </label>
               <label className="flex items-center gap-1 cursor-pointer text-[11px] text-slate-500 hover:text-slate-700 select-none whitespace-nowrap">
@@ -218,7 +222,7 @@ export default function MapWorkspaceCard({
                   checked={filters.has_work_order}
                   onChange={(e) => setFilters((f) => ({ ...f, has_work_order: e.target.checked }))}
                   className="rounded w-3 h-3" />
-                
+
                 Has WO
               </label>
             </div>
@@ -278,25 +282,26 @@ export default function MapWorkspaceCard({
         {/* Map canvas — fills remaining space */}
          <div className="relative overflow-hidden p-1.5" style={{ flex: "1 1 0", minHeight: 0, height: 0 }}>
            <WorkbenchMap
-            assets={visibleAssets}
-            allAssignments={allAssignments}
-            selectedAssetId={selectedAsset?.id}
-            onSelectAsset={(asset) => {
-              setSelectedAsset(asset);
-              setPopupPos({ x: 50, y: 50 });
-            }}
-            colorMode={colorMode}
-            layers={layers}
-            layerAssets={layerAssets}
-            incidentsByAsset={incidentsByAsset}
-            workOrdersByAsset={workOrdersByAsset}
-            activeVisualRule={activeVisualRule}
-            colorRules={colorRules}
-            colorOverrides={colorOverrides}
-            hiddenValues={hiddenValues}
-            legendEntries={legendEntries}
-            zoomToAsset={zoomToAsset}
-            onZoomCompleted={onZoomCompleted} />
+             assets={visibleAssets}
+             allAssignments={allAssignments}
+             selectedAssetId={selectedAsset?.id}
+             onSelectAsset={(asset) => {
+               setSelectedAsset(asset);
+               setPopupPos({ x: 50, y: 50 });
+             }}
+             colorMode={colorMode}
+             layers={layers}
+             layerAssets={layerAssets}
+             incidentsByAsset={incidentsByAsset}
+             workOrdersByAsset={workOrdersByAsset}
+             activeVisualRule={activeVisualRule}
+             colorRules={colorRules}
+             colorOverrides={colorOverrides}
+             hiddenValues={hiddenValues}
+             legendEntries={legendEntries}
+             zoomToAsset={zoomToAsset}
+             onZoomCompleted={onZoomCompleted}
+             mapLayer={mapLayer} />
           
            <MapLegend
             entries={legendEntries}

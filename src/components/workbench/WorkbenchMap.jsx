@@ -2,6 +2,7 @@ import React, { useMemo, useEffect, useRef } from "react";
 import { MapContainer, TileLayer, CircleMarker, Tooltip, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { getMapPinColor } from "./workbenchUtils";
+import { MAP_LAYERS } from "./MapLayerSelector";
 
 function FitBounds({ points, fitKey, zoomToAsset, onZoomCompleted }) {
   const map = useMap();
@@ -43,6 +44,7 @@ export default function WorkbenchMap({
   colorOverrides,
   zoomToAsset,
   onZoomCompleted,
+  mapLayer = "openstreetmap",
 }) {
   const assignmentByAsset = useMemo(() => {
     const m = {};
@@ -121,6 +123,11 @@ export default function WorkbenchMap({
 
   const fitKey = useMemo(() => assets.map(a => a.id).join(","), [assets]);
   const defaultCenter = markers.length > 0 ? [markers[0].lat, markers[0].lng] : [35.16, 33.36];
+  
+  const tileLayer = useMemo(() => {
+    const layer = MAP_LAYERS.find(l => l.id === mapLayer);
+    return layer || MAP_LAYERS[0];
+  }, [mapLayer]);
 
   if (markers.length === 0) {
     return (
@@ -137,8 +144,8 @@ export default function WorkbenchMap({
     <div className="rounded-lg overflow-hidden border border-slate-200" style={{ isolation: "isolate", height: "100%", width: "100%" }}>
       <MapContainer center={defaultCenter} zoom={10} style={{ height: "100%", width: "100%" }} scrollWheelZoom={true}>
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution={tileLayer.attribution}
+          url={tileLayer.url}
         />
         <FitBounds points={markers} fitKey={fitKey} zoomToAsset={zoomToAsset} onZoomCompleted={onZoomCompleted} />
         {markers.map(m => (
