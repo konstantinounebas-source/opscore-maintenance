@@ -22,6 +22,7 @@ const ALWAYS_VISIBLE = ["city", "order_year", "ordered_shelter_type", "installed
 
 // All additional filter fields for "Add Filter" dropdown
 const AVAILABLE_FILTER_FIELDS = {
+  "asset_id": "Asset ID",
   "shelter_type": "Shelter Type",
   "asset_status": "Asset Status",
   "assignment_status": "Assignment Status",
@@ -433,6 +434,23 @@ export default function MapFilterBar({ filters, onChange, assets, weeks = [] }) 
                     <SelectItem value="__all__">All teams</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+            )}
+
+            {customFields.has("asset_id") && (
+              <div>
+                <div className="flex items-center justify-between mb-0.5">
+                  <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">Asset ID</p>
+                  <button onClick={() => removeCustomField("asset_id")} className="text-slate-300 hover:text-slate-500">
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+                <Input
+                  value={filters.asset_id || ""}
+                  onChange={e => set("asset_id", e.target.value)}
+                  placeholder="Search asset ID..."
+                  className="h-7 text-xs border-0 shadow-none focus-visible:ring-0 px-1"
+                />
               </div>
             )}
           </div>
