@@ -55,8 +55,8 @@ export default function AssetPopup({
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
-          <div className="font-bold text-sm text-slate-800">{asset.asset_id}</div>
-          <div className="text-xs text-slate-500 mt-0.5">{asset.shelter_type}</div>
+          <div className="font-bold text-sm text-slate-800">{asset.asset_id || asset.id}</div>
+          <div className="text-xs text-slate-500 mt-0.5">{asset.shelter_type || asset.category || "—"}</div>
         </div>
         <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="text-slate-400 hover:text-slate-600 shrink-0">
           <X className="h-4 w-4" />
