@@ -32,9 +32,11 @@ export default function MapillaryViewer({ asset, isOpen, onClose }) {
             </p>
           </div>
           
-          <p className="text-sm text-slate-600">
-            Δες τη θέση του περιουσιακού στοιχείου από το δρόμο χρησιμοποιώντας τις εικόνες Mapillary.
-          </p>
+          <div className="rounded-md bg-amber-50 border border-amber-200 p-3">
+            <p className="text-xs text-amber-800">
+              <span className="font-medium">Σημείωση:</span> Το Mapillary απαιτεί σύνδεση. Θα ανοίξει το Mapillary σε νέο παράθυρο. Συνδεθείτε με τον λογαριασμό σας για να δείτε τις εικόνες δρόμου.
+            </p>
+          </div>
 
           <Button
             onClick={handleOpenMapillary}
