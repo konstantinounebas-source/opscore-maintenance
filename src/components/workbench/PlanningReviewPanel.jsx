@@ -307,15 +307,41 @@ export default function PlanningReviewPanel({ weeks, allAssignments, assetsMap, 
                   </div>
                 </button>
 
-                {/* Collapsed view - show count by type */}
+                {/* Collapsed view - show count by type and ordered shelter */}
                 {!isExpanded && (
-                  <div className="px-4 py-2 bg-indigo-50/50 border-b border-slate-100 flex flex-wrap gap-2">
-                    {Object.entries(weekAssignmentsByType).map(([type, count]) => (
-                      <div key={type} className="text-center text-xs">
-                        <div className="font-semibold text-slate-700">{count}</div>
-                        <div className="text-[9px] text-slate-500">{type}</div>
-                      </div>
-                    ))}
+                  <div className="px-4 py-2 bg-indigo-50/50 border-b border-slate-100">
+                    {/* Assignment types row */}
+                    <div className="flex flex-wrap gap-3 mb-2">
+                      {Object.entries(weekAssignmentsByType).map(([type, count]) => (
+                        <div key={type} className="text-center text-xs">
+                          <div className="font-semibold text-slate-700">{count}</div>
+                          <div className="text-[9px] text-slate-500">{type}</div>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Ordered shelter types row */}
+                    <div className="text-[9px] text-slate-500 pt-1 border-t border-indigo-100">
+                      {(() => {
+                        const shelterCounts = {};
+                        wa.forEach(a => {
+                          const asset = assetsMap[a.asset_id];
+                          if (asset?.ordered_shelter_type) {
+                            shelterCounts[asset.ordered_shelter_type] = (shelterCounts[asset.ordered_shelter_type] || 0) + 1;
+                          }
+                        });
+                        return Object.entries(shelterCounts).length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {Object.entries(shelterCounts).map(([shelter, count]) => (
+                              <span key={shelter} className="text-slate-600">
+                                {shelter}: <strong>{count}</strong>
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-slate-400">—</span>
+                        );
+                      })()}
+                    </div>
                   </div>
                 )}
 
