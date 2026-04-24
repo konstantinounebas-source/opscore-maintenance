@@ -69,12 +69,12 @@ export default function AssetPopup({
           <span className="text-slate-500">Status:</span>
           <span className="font-medium text-slate-700">{asset.status || "—"}</span>
         </div>
-        {assignment && (
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-slate-500">Planned Week:</span>
-            <span className="font-medium text-slate-700">{assignedWeek?.week_code || "—"}</span>
-          </div>
-        )}
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-slate-500">Assigned Week:</span>
+          <span className={`font-medium ${assignment ? "text-slate-700" : "text-amber-600"}`}>
+            {assignment ? `${assignedWeek?.week_code || "—"} - ${assignedWeek?.week_name || ""}` : "Unassigned"}
+          </span>
+        </div>
         <div className="flex items-center justify-between text-xs">
           <span className="text-slate-500">Shelter Type:</span>
           <span className="font-medium text-slate-700">{asset.ordered_shelter_type || "—"}</span>
