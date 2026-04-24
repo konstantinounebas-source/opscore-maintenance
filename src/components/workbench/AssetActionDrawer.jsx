@@ -66,7 +66,6 @@ export default function AssetActionDrawer({
   const [form, setForm] = useState(BLANK_FORM);
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
-  const typeOptions = useConfigLists("Planning Assignment Types");
   const statusOptions = useConfigLists("Planning Assignment Statuses");
 
   const assetIncidents = incidents.filter(i => i.related_asset_id === asset?.id);
@@ -150,41 +149,19 @@ export default function AssetActionDrawer({
                      <SelectTrigger className="mt-1 text-xs h-7"><SelectValue placeholder="Type..." /></SelectTrigger>
                      <SelectContent style={{ zIndex: 99999 }}>
                        <SelectItem value="__none__">— Type —</SelectItem>
-                       {typeOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                       <SelectItem value="Inspection">Inspection</SelectItem>
+                       <SelectItem value="Preventive">Preventive</SelectItem>
+                       <SelectItem value="Corrective">Corrective</SelectItem>
+                       <SelectItem value="Review">Review</SelectItem>
+                       <SelectItem value="Mixed">Mixed</SelectItem>
                      </SelectContent>
                    </Select>
                  </div>
-                 <div>
-                   <Label className="text-[10px]">Week</Label>
-                   <Popover>
-                     <PopoverTrigger asChild>
-                       <button className="mt-1 w-full flex items-center justify-between border border-input rounded-md px-2 h-7 text-xs bg-white hover:bg-slate-50 transition-colors text-left">
-                         {form.planning_week_id ? (
-                           <span className="text-slate-700 text-xs">
-                             {weeks.find(w => w.id === form.planning_week_id)?.week_code || "—"}
-                           </span>
-                         ) : (
-                           <span className="text-slate-400 text-xs">Select...</span>
-                         )}
-                         <ChevronDown className="h-3 w-3 text-slate-400 shrink-0" />
-                       </button>
-                     </PopoverTrigger>
-                     <PopoverContent className="p-0 w-auto" style={{ zIndex: 99999 }} align="start">
-                       <Calendar
-                         mode="single"
-                         onSelect={(date) => {
-                           if (!date) return;
-                           const matched = weeks.find(w => {
-                             if (!w.start_date || !w.end_date) return false;
-                             return isWithinInterval(date, { start: parseISO(w.start_date), end: parseISO(w.end_date) });
-                           });
-                           if (matched) set("planning_week_id", matched.id);
-                         }}
-                         initialFocus
-                       />
-                     </PopoverContent>
-                   </Popover>
-                 </div>
+                 <WeekPickerField
+                   weeks={weeks}
+                   value={form.planning_week_id}
+                   onChange={v => set("planning_week_id", v)}
+                 />
                </div>
                <Button
                  className="w-full bg-indigo-600 hover:bg-indigo-700 h-7 text-xs"
