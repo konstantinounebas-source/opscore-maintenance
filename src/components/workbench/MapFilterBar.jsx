@@ -91,13 +91,12 @@ export default function MapFilterBar({ filters, onChange, assets, weeks = [] }) 
     <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
       {/* Search row always visible */}
       <div className="flex items-center gap-1.5 px-2 py-1.5">
-        <Search className="h-3.5 w-3.5 text-slate-300 shrink-0" />
+        <Search className="h-3.5 w-3.5 text-slate-400 shrink-0" />
         <Input
           value={filters.search}
           onChange={e => set("search", e.target.value)}
-          placeholder="Search not available (use filters below)"
-          disabled
-          className="h-7 text-xs border-0 shadow-none focus-visible:ring-0 px-1 flex-1 cursor-not-allowed text-slate-400"
+          placeholder="Search by location / asset ID..."
+          className="h-7 text-xs border-0 shadow-none focus-visible:ring-0 px-1 flex-1"
         />
         <button
           onClick={() => setExpanded(v => !v)}
