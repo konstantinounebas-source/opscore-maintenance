@@ -311,18 +311,9 @@ export default function AssignAssetModal({
                  </SelectContent>
                </Select>
              </div>
-             <div>
-               <Label className="text-xs">Status</Label>
-               <Select value={form.assignment_status || "__none__"} onValueChange={v => set("assignment_status", v === "__none__" ? "" : v)}>
-                 <SelectTrigger className="mt-1 text-sm"><SelectValue /></SelectTrigger>
-                 <SelectContent style={{ zIndex: 99999 }}>
-                   {statusOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                 </SelectContent>
-               </Select>
-             </div>
 
-            {/* Priority — drawn from linked incident */}
-            <div>
+             {/* Priority — drawn from linked incident */}
+             <div>
               <Label className="text-xs">Priority</Label>
               <Select value={form.priority_bucket || "auto"} onValueChange={v => set("priority_bucket", v === "auto" ? "" : v)}>
                 <SelectTrigger className="mt-1 text-sm"><SelectValue placeholder="Auto from incident" /></SelectTrigger>
