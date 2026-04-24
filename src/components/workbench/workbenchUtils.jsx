@@ -306,6 +306,8 @@ export const EMPTY_MAP_FILTERS = {
   show_unassigned_only: false,
   has_incident: false,
   has_work_order: false,
+  is_ordered: false,
+  is_implementation_phase: false,
 };
 
 // ─── Apply map filters ─────────────────────────────────────────────────────────
@@ -334,6 +336,8 @@ export function applyMapFilters(assets, filters, assignmentByAssetId, incidentsB
     if (f.team_name && (!asgn || asgn.team_name !== f.team_name)) return false;
     if (f.has_incident && !incidentsByAsset[a.id]?.length) return false;
     if (f.has_work_order && !workOrdersByAsset[a.id]?.length) return false;
+    if (f.is_ordered && !a.order_year) return false;
+    if (f.is_implementation_phase && a.phase !== "Implementation") return false;
 
     if (visibleLayerIds && visibleLayerIds.length > 0) {
       const assetLayerIds = layerAssets.filter(la => la.asset_id === a.id).map(la => la.planning_layer_id);

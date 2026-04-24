@@ -107,6 +107,35 @@ export default function MapWorkspaceCard({
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider shrink-0">Map {mapNumber}</span>
             <div className="h-3 w-px bg-slate-300 shrink-0" />
             <MapColorModeSelector value={colorMode} onChange={setColorMode} />
+            <div className="flex items-center gap-2 ml-1">
+              <label className="flex items-center gap-1 cursor-pointer text-[11px] text-slate-500 hover:text-slate-700 select-none whitespace-nowrap">
+                <input
+                  type="checkbox"
+                  checked={filters.is_ordered}
+                  onChange={e => setFilters(f => ({ ...f, is_ordered: e.target.checked }))}
+                  className="rounded w-3 h-3"
+                />
+                Ordered
+              </label>
+              <label className="flex items-center gap-1 cursor-pointer text-[11px] text-slate-500 hover:text-slate-700 select-none whitespace-nowrap">
+                <input
+                  type="checkbox"
+                  checked={filters.is_implementation_phase}
+                  onChange={e => setFilters(f => ({ ...f, is_implementation_phase: e.target.checked }))}
+                  className="rounded w-3 h-3"
+                />
+                Implementation
+              </label>
+              <label className="flex items-center gap-1 cursor-pointer text-[11px] text-slate-500 hover:text-slate-700 select-none whitespace-nowrap">
+                <input
+                  type="checkbox"
+                  checked={filters.has_work_order}
+                  onChange={e => setFilters(f => ({ ...f, has_work_order: e.target.checked }))}
+                  className="rounded w-3 h-3"
+                />
+                Has WO
+              </label>
+            </div>
             <button
               onClick={() => setShowLayers(v => !v)}
               className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors shrink-0 ${
