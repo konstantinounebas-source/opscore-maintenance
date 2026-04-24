@@ -188,6 +188,7 @@ export default function UnifiedAssetsTable({
                 <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">City</th>
                 <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Shelter Type</th>
                 <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Phase</th>
+                <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Status</th>
                 <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Order Year</th>
                 <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Incidents</th>
                 <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">WOs</th>
@@ -197,17 +198,17 @@ export default function UnifiedAssetsTable({
             </thead>
             <tbody>
               {paginated.length === 0 ? (
-                <tr><td colSpan={9} className="text-center py-10 text-slate-400 text-sm">No assets found.</td></tr>
+                <tr><td colSpan={10} className="text-center py-10 text-slate-400 text-sm">No assets found.</td></tr>
               ) : paginated.map(a => {
-                const openInc = getOpenIncidents(a.id);
-                const openWOs = getOpenWOs(a.id);
-                const childCount = getChildCount(a.id);
-                return (
-                  <tr
-                    key={a.id}
-                    className={`border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors ${openInc > 0 ? "bg-red-50/40" : ""}`}
-                    onClick={() => navigate(`/AssetDetail?id=${a.id}`)}
-                  >
+                 const openInc = getOpenIncidents(a.id);
+                 const openWOs = getOpenWOs(a.id);
+                 const childCount = getChildCount(a.id);
+                 return (
+                   <tr
+                     key={a.id}
+                     className={`border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors ${openInc > 0 ? "bg-red-50/40" : ""}`}
+                     onClick={() => navigate(`/AssetDetail?id=${a.id}`)}
+                   >
                     <td className="px-3 py-2.5 font-medium text-slate-800 whitespace-nowrap">
                       {a.active_shelter_id || a.asset_code || "—"}
                     </td>
@@ -219,6 +220,11 @@ export default function UnifiedAssetsTable({
                     <td className="px-3 py-2.5 whitespace-nowrap">
                       {a.phase ? (
                         <span className="text-xs font-medium px-2 py-0.5 rounded bg-indigo-100 text-indigo-700">{a.phase}</span>
+                      ) : <span className="text-slate-300 text-xs">—</span>}
+                    </td>
+                    <td className="px-3 py-2.5 whitespace-nowrap">
+                      {a.status ? (
+                        <span className="text-xs font-medium px-2 py-0.5 rounded bg-green-100 text-green-700">{a.status}</span>
                       ) : <span className="text-slate-300 text-xs">—</span>}
                     </td>
                     <td className="px-3 py-2.5 whitespace-nowrap">
