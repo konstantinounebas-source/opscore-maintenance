@@ -279,19 +279,6 @@ export default function AssetFormUnified({ open, onOpenChange, onSave, asset }) 
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Inspection Status</Label>
-              <Select value={form.inspection_status || ""} onValueChange={v => set("inspection_status", v)}>
-                <SelectTrigger><SelectValue placeholder="Select (optional)" /></SelectTrigger>
-                <SelectContent>
-                  {inspectionStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Asset Name / Label</Label>
-              <Input value={form.asset_name || ""} onChange={e => set("asset_name", e.target.value)} placeholder="Optional display name" />
-            </div>
           </div>
 
           {/* ── 2. Location ── */}
