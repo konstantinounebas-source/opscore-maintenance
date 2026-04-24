@@ -1,0 +1,40 @@
+{
+  "name": "StationLogActivityLog",
+  "type": "object",
+  "properties": {
+    "station_log_id": {
+      "type": "string",
+      "description": "Reference to StationLog record ID"
+    },
+    "action_type": {
+      "type": "string",
+      "description": "Type of action (create, update, upload, status_change, etc)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description of action"
+    },
+    "performed_by": {
+      "type": "string",
+      "description": "User who performed action"
+    },
+    "action_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When action occurred"
+    },
+    "related_stage": {
+      "type": "number",
+      "description": "Related workflow stage (if applicable)"
+    },
+    "details": {
+      "type": "string",
+      "description": "JSON string with before/after values or additional context"
+    }
+  },
+  "required": [
+    "station_log_id",
+    "action_type",
+    "description"
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "name": "StationLogTasks",
+  "type": "object",
+  "properties": {
+    "station_log_id": {
+      "type": "string",
+      "description": "Reference to StationLog record ID"
+    },
+    "stage": {
+      "type": "number",
+      "description": "Related workflow stage (1-18)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Task description"
+    },
+    "responsible": {
+      "type": "string",
+      "description": "Person or team responsible"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Task due date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Open",
+        "In Progress",
+        "Completed",
+        "Cancelled"
+      ],
+      "default": "Open",
+      "description": "Task status"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "Low",
+        "Medium",
+        "High",
+        "Critical"
+      ],
+      "default": "Medium",
+      "description": "Task priority"
+    },
+    "is_blocking": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this task blocks stage progression"
+    }
+  },
+  "required": [
+    "station_log_id",
+    "description"
+  ]
+}

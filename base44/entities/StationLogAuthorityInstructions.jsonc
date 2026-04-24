@@ -1,0 +1,53 @@
+{
+  "name": "StationLogAuthorityInstructions",
+  "type": "object",
+  "properties": {
+    "station_log_id": {
+      "type": "string",
+      "description": "Reference to StationLog record ID"
+    },
+    "stage": {
+      "type": "number",
+      "description": "Related workflow stage"
+    },
+    "description": {
+      "type": "string",
+      "description": "Authority instruction/directive"
+    },
+    "sent_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When instruction was sent"
+    },
+    "response_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When response was received"
+    },
+    "instruction_received": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether instruction was acknowledged"
+    },
+    "is_blocking": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this instruction blocks progression"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Pending",
+        "Acknowledged",
+        "Implemented",
+        "Cancelled"
+      ],
+      "default": "Pending",
+      "description": "Status of instruction"
+    }
+  },
+  "required": [
+    "station_log_id",
+    "description"
+  ]
+}

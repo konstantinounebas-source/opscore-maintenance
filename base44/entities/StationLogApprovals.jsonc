@@ -1,0 +1,63 @@
+{
+  "name": "StationLogApprovals",
+  "type": "object",
+  "properties": {
+    "station_log_id": {
+      "type": "string",
+      "description": "Reference to StationLog record ID"
+    },
+    "approval_type": {
+      "type": "string",
+      "enum": [
+        "Inspection Approval",
+        "RCA Approval - PWD",
+        "RCA Approval - Municipality",
+        "RCA Approval - Police",
+        "QA Approval",
+        "Final Approval"
+      ],
+      "description": "Type of approval gate"
+    },
+    "stage": {
+      "type": "number",
+      "description": "Related workflow stage"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Pending",
+        "Approved",
+        "Rejected"
+      ],
+      "default": "Pending",
+      "description": "Approval status"
+    },
+    "submitted_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When submitted for approval"
+    },
+    "approved_by": {
+      "type": "string",
+      "description": "Name of approver"
+    },
+    "approved_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When approved"
+    },
+    "comments": {
+      "type": "string",
+      "description": "Approval comments or rejection reason"
+    },
+    "is_blocking": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether rejection blocks progression"
+    }
+  },
+  "required": [
+    "station_log_id",
+    "approval_type"
+  ]
+}

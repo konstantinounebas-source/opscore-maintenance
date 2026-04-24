@@ -1,0 +1,46 @@
+{
+  "name": "StationLogMilestones",
+  "type": "object",
+  "properties": {
+    "station_log_id": {
+      "type": "string",
+      "description": "Reference to StationLog record ID"
+    },
+    "category": {
+      "type": "string",
+      "description": "Milestone category (flexible, user-defined)"
+    },
+    "name": {
+      "type": "string",
+      "description": "Milestone name"
+    },
+    "milestone_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When milestone occurred"
+    },
+    "source": {
+      "type": "string",
+      "description": "Source of milestone (Approval, Stage Completion, Manual Entry, etc)"
+    },
+    "related_stage": {
+      "type": "number",
+      "description": "Related workflow stage (if applicable)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description"
+    },
+    "is_important": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this is contractually/operationally important"
+    }
+  },
+  "required": [
+    "station_log_id",
+    "category",
+    "name",
+    "milestone_date"
+  ]
+}

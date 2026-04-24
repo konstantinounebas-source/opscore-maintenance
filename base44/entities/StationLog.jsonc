@@ -1,0 +1,51 @@
+{
+  "name": "StationLog",
+  "type": "object",
+  "properties": {
+    "asset_id": {
+      "type": "string",
+      "description": "Reference to Assets record ID (Bus Stop)"
+    },
+    "current_stage": {
+      "type": "number",
+      "description": "Current workflow stage (1-18)"
+    },
+    "current_status": {
+      "type": "string",
+      "enum": [
+        "Waiting",
+        "In Progress",
+        "Blocked",
+        "Completed"
+      ],
+      "default": "Waiting",
+      "description": "Current operational status"
+    },
+    "can_move_forward": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether stage progression is allowed"
+    },
+    "next_action": {
+      "type": "string",
+      "description": "Clear instruction for next action"
+    },
+    "next_deadline": {
+      "type": "string",
+      "format": "date",
+      "description": "Next deadline date"
+    },
+    "planning_status": {
+      "type": "string",
+      "description": "Planning week status (e.g. Week 03 or Not Scheduled)"
+    },
+    "notes": {
+      "type": "string",
+      "description": "General notes for this station log"
+    }
+  },
+  "required": [
+    "asset_id",
+    "current_stage"
+  ]
+}

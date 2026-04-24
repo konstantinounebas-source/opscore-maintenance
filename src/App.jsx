@@ -23,6 +23,7 @@ import Forms from '@/pages/Forms';
 import Analytics from '@/pages/Analytics';
 import Crews from '@/pages/Crews';
 import SLAConfig from '@/pages/SLAConfig';
+import BusStopLogs from '@/pages/BusStopLogs';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -64,6 +65,7 @@ const AuthenticatedApp = () => {
         <Route path="/Crews" element={<Crews />} />
         <Route path="/SLAConfig" element={<SLAConfig />} />
         <Route path="/Configuration" element={<Configuration />} />
+        <Route path="/BusStopLogs" element={<BusStopLogs />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
