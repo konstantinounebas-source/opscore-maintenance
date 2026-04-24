@@ -392,14 +392,14 @@ export default function PlanningReviewPanel({
                                   </div>
                                   <div className="flex items-center gap-1 shrink-0">
                                     <button
-                                      onClick={() => onSelectAssetForPopup?.(asset)}
+                                      onClick={(e) => { e.stopPropagation(); onSelectAssetForPopup?.(asset); }}
                                       className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-white rounded transition-colors"
                                       title="View asset"
                                     >
                                       <MapPin className="h-3.5 w-3.5" />
                                     </button>
                                     <button
-                                      onClick={() => onOpenAssignmentModal?.(asset, a)}
+                                      onClick={(e) => { e.stopPropagation(); onOpenAssignmentModal?.(asset, a); }}
                                       className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-white rounded transition-colors"
                                       title="Assign"
                                     >
