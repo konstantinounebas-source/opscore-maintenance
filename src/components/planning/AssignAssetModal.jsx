@@ -234,12 +234,83 @@ export default function AssignAssetModal({
 
         <Tabs defaultValue="assignment">
            <TabsList className="w-full">
-             <TabsTrigger value="assignment" className="flex-1 text-xs">Status & Priority</TabsTrigger>
+             <TabsTrigger value="assignment" className="flex-1 text-xs">Asset Info</TabsTrigger>
              <TabsTrigger value="team" className="flex-1 text-xs">Team & Zone</TabsTrigger>
              <TabsTrigger value="links" className="flex-1 text-xs">Links</TabsTrigger>
            </TabsList>
 
            <TabsContent value="assignment" className="space-y-3 pt-3">
+             {/* Asset Summary */}
+             {asset && (
+               <div className="bg-slate-50 rounded-lg p-3 space-y-2 border border-slate-200">
+                 <div className="grid grid-cols-2 gap-2 text-xs">
+                   {asset.shelter_type && <div><span className="text-slate-500">Type:</span> <span className="font-medium">{asset.shelter_type}</span></div>}
+                   {asset.city && <div><span className="text-slate-500">City:</span> <span className="font-medium">{asset.city}</span></div>}
+                   {asset.municipality && <div><span className="text-slate-500">Municipality:</span> <span className="font-medium">{asset.municipality}</span></div>}
+                   {asset.location_address && <div className="col-span-2"><span className="text-slate-500">Location:</span> <span className="font-medium">{asset.location_address}</span></div>}
+                 </div>
+               </div>
+             )}
+
+             {/* Incidents */}
+             {assetIncidents.length > 0 && (
+               <div className="space-y-1">
+                 <p className="text-xs font-semibold text-slate-700">Incidents ({assetIncidents.length})</p>
+                 <div className="space-y-1.5">
+                   {assetIncidents.map(inc => (
+                     <div key={inc.id} className="bg-red-50 border border-red-200 rounded-md p-2.5 text-xs">
+                       <div className="font-medium text-red-900">{inc.incident_id}</div>
+                       <div className="text-red-700 text-[11px]">{inc.title}</div>
+                       <div className="flex items-center gap-2 mt-1.5">
+                         <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${
+                           inc.priority === 'Critical' ? 'bg-red-200 text-red-800' :
+                           inc.priority === 'High' ? 'bg-orange-200 text-orange-800' :
+                           'bg-yellow-200 text-yellow-800'
+                         }`}>
+                           {inc.priority || 'N/A'}
+                         </span>
+                         <span className="text-red-600 text-[10px]">{inc.status}</span>
+                       </div>
+                     </div>
+                   ))}
+                 </div>
+               </div>
+             )}
+
+             {/* Work Orders */}
+             {assetWOs.length > 0 && (
+               <div className="space-y-1">
+                 <p className="text-xs font-semibold text-slate-700">Work Orders ({assetWOs.length})</p>
+                 <div className="space-y-1.5">
+                   {assetWOs.map(wo => (
+                     <div key={wo.id} className="bg-blue-50 border border-blue-200 rounded-md p-2.5 text-xs">
+                       <div className="font-medium text-blue-900">{wo.work_order_id}</div>
+                       <div className="text-blue-700 text-[11px]">{wo.title}</div>
+                       <div className="flex items-center gap-2 mt-1.5">
+                         <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${
+                           wo.priority === 'Critical' ? 'bg-red-200 text-red-800' :
+                           wo.priority === 'High' ? 'bg-orange-200 text-orange-800' :
+                           'bg-yellow-200 text-yellow-800'
+                         }`}>
+                           {wo.priority || 'N/A'}
+                         </span>
+                         <span className="text-blue-600 text-[10px]">{wo.status}</span>
+                       </div>
+                     </div>
+                   ))}
+                 </div>
+               </div>
+             )}
+
+             <div>
+               <Label className="text-xs">Status</Label>
+               <Select value={form.assignment_status || "__none__"} onValueChange={v => set("assignment_status", v === "__none__" ? "" : v)}>
+                 <SelectTrigger className="mt-1 text-sm"><SelectValue /></SelectTrigger>
+                 <SelectContent style={{ zIndex: 99999 }}>
+                   {statusOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                 </SelectContent>
+               </Select>
+             </div>
              <div>
                <Label className="text-xs">Status</Label>
                <Select value={form.assignment_status || "__none__"} onValueChange={v => set("assignment_status", v === "__none__" ? "" : v)}>
