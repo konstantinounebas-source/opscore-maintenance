@@ -116,6 +116,7 @@ export default function AssetPopup({
               <SelectValue placeholder={planningTypeId ? "Select week..." : "Select type first"} />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value={null}>Unassigned</SelectItem>
               {filteredWeeks.map(w => (
                 <SelectItem key={w.id} value={w.id}>
                   {w.week_code} - {w.week_name}
