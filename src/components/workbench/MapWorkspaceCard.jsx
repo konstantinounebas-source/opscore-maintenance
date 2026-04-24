@@ -6,7 +6,7 @@ import MapColorModeSelector from "./MapColorModeSelector";
 import MapLegend from "./MapLegend";
 import VisualLayerManager from "./VisualLayerManager";
 import WorkbenchMap from "./WorkbenchMap";
-import AssetActionDrawer from "./AssetActionDrawer";
+
 import { EMPTY_MAP_FILTERS, applyMapFilters, getLegendEntries } from "./workbenchUtils";
 import MapViewSaveLoad from "./MapViewSaveLoad";
 
@@ -285,22 +285,7 @@ export default function MapWorkspaceCard({
         </div>
       </div>
 
-      {/* Asset action drawer — slides in */}
-      {selectedAsset && (
-        <AssetActionDrawer
-          asset={selectedAsset}
-          assignment={currentAssignment}
-          incidents={incidents}
-          workOrders={workOrders}
-          weeks={weeks}
-          layers={layers}
-          layerAssets={layerAssets}
-          onClose={() => setSelectedAsset(null)}
-          onSaveAssignment={onSaveAssignment}
-          onAddToLayer={onAddToLayer}
-          onRemoveFromLayer={onRemoveFromLayer}
-        />
-      )}
+
     </div>
   );
 }
