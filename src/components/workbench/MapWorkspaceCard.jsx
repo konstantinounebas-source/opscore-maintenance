@@ -258,11 +258,9 @@ export default function MapWorkspaceCard({
              assets={visibleAssets}
              allAssignments={allAssignments}
              selectedAssetId={selectedAsset?.id}
-             onSelectAsset={(asset, e) => {
+             onSelectAsset={(asset) => {
                setSelectedAsset(asset);
-               if (e && e.clientX && e.clientY) {
-                 setPopupPos({ x: e.clientX, y: e.clientY });
-               }
+               setPopupPos({ x: 50, y: 50 });
              }}
              colorMode={colorMode}
              layers={layers}
