@@ -452,7 +452,7 @@ export default function MapFilterBar({ filters, onChange, assets, weeks = [] }) 
             </label>
             
             {/* Add Filter dropdown */}
-            <DropdownMenu className="flex items-center gap-1.5 cursor-pointer text-xs text-slate-600 hidden">
+            <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-1 ml-auto text-[11px] text-indigo-600 hover:text-indigo-700 font-medium">
                   <Plus className="h-3 w-3" />
