@@ -19,7 +19,7 @@ export default function Incidents() {
   const { toast } = useToast();
   const [formOpen, setFormOpen] = useState(false);
 
-  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("not_closed");
   const [filterPriority, setFilterPriority] = useState("all");
   const [filterWO, setFilterWO] = useState("all");
   const [filterProvince, setFilterProvince] = useState("all");
@@ -117,9 +117,10 @@ export default function Incidents() {
   const uniqueSources = [...new Set(incidents.map(i => i.incident_source).filter(Boolean))].sort();
 
   const filteredIncidents = useMemo(() => {
-    return incidents.filter(i => {
-      const hasWO = workOrders.some(wo => (wo.incident_id === i.id || wo.incident_id === i.incident_id) && /corrective/i.test(wo.title || ""));
-      if (filterStatus !== "all" && i.status !== filterStatus) return false;
+   return incidents.filter(i => {
+     const hasWO = workOrders.some(wo => (wo.incident_id === i.id || wo.incident_id === i.incident_id) && /corrective/i.test(wo.title || ""));
+     if (filterStatus === "not_closed" && i.status === "Closed") return false;
+     if (filterStatus !== "all" && filterStatus !== "not_closed" && i.status !== filterStatus) return false;
       if (filterPriority !== "all" && i.initial_priority !== filterPriority) return false;
       if (filterWO === "yes" && !hasWO) return false;
       if (filterWO === "no" && hasWO) return false;
@@ -135,12 +136,12 @@ export default function Incidents() {
     });
   }, [incidents, workOrders, filterStatus, filterPriority, filterWO, filterProvince, filterShelterType, filterReportingMethod, filterSource]);
 
-  const hasActiveFilters = filterStatus !== "all" || filterPriority !== "all" || filterWO !== "all" ||
+  const hasActiveFilters = filterStatus !== "not_closed" || filterPriority !== "all" || filterWO !== "all" ||
     filterProvince !== "all" || filterShelterType !== "all" || filterReportingMethod !== "all" || filterSource !== "all" ||
     filterWorkflowState !== "all";
 
   const clearFilters = () => {
-    setFilterStatus("all"); setFilterPriority("all"); setFilterWO("all");
+    setFilterStatus("not_closed"); setFilterPriority("all"); setFilterWO("all");
     setFilterProvince("all"); setFilterShelterType("all"); setFilterReportingMethod("all"); setFilterSource("all"); setFilterWorkflowState("all");
   };
 
@@ -301,6 +302,7 @@ export default function Incidents() {
             <Select value={filterStatus} onValueChange={setFilterStatus}>
               <SelectTrigger className="h-9 text-sm w-36"><SelectValue placeholder="Status" /></SelectTrigger>
               <SelectContent>
+                <SelectItem value="not_closed">All (except Closed)</SelectItem>
                 <SelectItem value="all">All Statuses</SelectItem>
                 {["Open","In Progress","On Hold","Resolved","Closed"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
               </SelectContent>
