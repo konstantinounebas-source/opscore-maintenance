@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   CalendarDays, Search, ChevronDown, ChevronRight, Download, X,
   CheckCircle2, Clock, AlertTriangle, Zap, Users, Wrench
@@ -38,11 +39,11 @@ function KPIChip({ label, value, color = "text-slate-700" }) {
 export default function PlanningReviewPanel({ weeks, allAssignments, assetsMap, incidentsByAsset, workOrdersByAsset }) {
   // ── Panel-local state — NEVER shared with maps ─────────────────────────────
   const [weekSearch, setWeekSearch] = useState("");
-  const [weekStatusFilter, setWeekStatusFilter] = useState("__all__");
   const [selectedPlanningTypeIds, setSelectedPlanningTypeIds] = useState(new Set());
   const [selectedWeekIds, setSelectedWeekIds] = useState(new Set());
   const [assignmentSearch, setAssignmentSearch] = useState("");
   const [assignmentStatusFilter, setAssignmentStatusFilter] = useState("__all__");
+  const [weeksDropdownOpen, setWeeksDropdownOpen] = useState(false);
 
   // Fetch planning types from API
   const { data: planningTypes = [] } = useQuery({
@@ -52,21 +53,11 @@ export default function PlanningReviewPanel({ weeks, allAssignments, assetsMap, 
 
   const filteredWeeks = useMemo(() => {
     let list = weeks;
-    if (weekSearch) {
-      const q = weekSearch.toLowerCase();
-      list = list.filter(w =>
-        w.week_code?.toLowerCase().includes(q) ||
-        w.week_name?.toLowerCase().includes(q)
-      );
-    }
-    if (weekStatusFilter !== "__all__") {
-      list = list.filter(w => w.status === weekStatusFilter);
-    }
     if (selectedPlanningTypeIds.size > 0) {
       list = list.filter(w => selectedPlanningTypeIds.has(w.planning_type_id));
     }
     return list;
-  }, [weeks, weekSearch, weekStatusFilter, selectedPlanningTypeIds]);
+  }, [weeks, selectedPlanningTypeIds]);
 
   const selectedWeeks = useMemo(() => weeks.filter(w => selectedWeekIds.has(w.id)), [weeks, selectedWeekIds]);
 
@@ -180,7 +171,7 @@ export default function PlanningReviewPanel({ weeks, allAssignments, assetsMap, 
           )}
         </div>
 
-       {/* Week selector + filters */}
+       {/* Week selector dropdown */}
        <div className="px-3 py-2 border-b border-slate-200 space-y-1.5 shrink-0">
          <div className="flex items-center justify-between">
            <label className="text-[10px] font-semibold text-slate-600 uppercase tracking-wide">Weeks ({selectedWeekIds.size})</label>
@@ -193,59 +184,78 @@ export default function PlanningReviewPanel({ weeks, allAssignments, assetsMap, 
              </button>
            )}
          </div>
-        <div className="relative">
-          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
-          <Input
-            value={weekSearch}
-            onChange={e => setWeekSearch(e.target.value)}
-            placeholder="Search weeks..."
-            className="pl-7 h-7 text-xs"
-          />
-        </div>
-        <Select value={weekStatusFilter} onValueChange={setWeekStatusFilter}>
-          <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
-          <SelectContent style={{ zIndex: 99999 }}>
-            <SelectItem value="__all__">All statuses</SelectItem>
-            {["Active","Draft","Locked","Archived"].map(s => (
-              <SelectItem key={s} value={s}>{s}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
 
-      {/* Week list */}
+         <Popover open={weeksDropdownOpen} onOpenChange={setWeeksDropdownOpen}>
+           <PopoverTrigger asChild>
+             <button className="w-full h-7 px-3 py-1 text-xs border border-input rounded-md bg-white text-slate-600 hover:bg-slate-50 flex items-center justify-between">
+               <span>{selectedWeekIds.size > 0 ? `${selectedWeekIds.size} selected` : "All statuses"}</span>
+               <ChevronDown className="h-3 w-3 text-slate-400" />
+             </button>
+           </PopoverTrigger>
+           <PopoverContent className="w-56 p-0" align="start">
+             <div className="p-2 space-y-1.5 max-h-96 overflow-y-auto">
+               {filteredWeeks.length === 0 ? (
+                 <div className="text-center py-4 text-xs text-slate-400">
+                   {selectedPlanningTypeIds.size === 0 ? "Select planning types above" : "No weeks found"}
+                 </div>
+               ) : (
+                 filteredWeeks.map(week => (
+                   <label
+                     key={week.id}
+                     className="flex items-start gap-2 p-2 rounded text-xs cursor-pointer hover:bg-slate-100 transition-colors"
+                   >
+                     <input
+                       type="checkbox"
+                       checked={selectedWeekIds.has(week.id)}
+                       onChange={() => {
+                         const newSet = new Set(selectedWeekIds);
+                         if (newSet.has(week.id)) {
+                           newSet.delete(week.id);
+                         } else {
+                           newSet.add(week.id);
+                         }
+                         setSelectedWeekIds(newSet);
+                       }}
+                       className="w-3 h-3 mt-0.5"
+                     />
+                     <div className="flex-1 min-w-0">
+                       <div className="font-semibold text-slate-700">{week.week_code}</div>
+                       <div className="text-[9px] text-slate-500">{week.week_name}</div>
+                       <div className="text-[9px] text-slate-400">
+                         {week.start_date && (() => { try { return format(new Date(week.start_date), "MMM d"); } catch { return ""; } })()}
+                         {" – "}
+                         {week.end_date && (() => { try { return format(new Date(week.end_date), "MMM d, yyyy"); } catch { return ""; } })()}
+                       </div>
+                       <span className={`inline-block text-[9px] px-1.5 py-0.5 rounded-full mt-1 border font-medium ${WEEK_STATUS_COLORS[week.status] || WEEK_STATUS_COLORS.Draft}`}>
+                         {week.status}
+                       </span>
+                     </div>
+                   </label>
+                 ))
+               )}
+             </div>
+           </PopoverContent>
+         </Popover>
+       </div>
+
+      {/* Week details view (when weeks selected) */}
       <div className="flex-1 overflow-y-auto">
-        {filteredWeeks.length === 0 && (
+        {selectedWeekIds.size === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 text-slate-400">
             <CalendarDays className="h-8 w-8 mb-2 opacity-30" />
-            <p className="text-xs">{selectedPlanningTypeIds.size === 0 ? "Select planning types above" : "No weeks found"}</p>
+            <p className="text-xs">Select weeks from dropdown above</p>
           </div>
-        )}
+        ) : (
+          selectedWeekIds.size > 0 && weeks.filter(w => selectedWeekIds.has(w.id)).map(week => {
+            const weekCount = allAssignments.filter(a => a.planning_week_id === week.id).length;
 
-        {filteredWeeks.map(week => {
-          const weekCount = allAssignments.filter(a => a.planning_week_id === week.id).length;
-          const isSelected = selectedWeekIds.has(week.id);
-
-          return (
-            <div key={week.id}>
-              <button
-                onClick={() => {
-                  const newSet = new Set(selectedWeekIds);
-                  if (newSet.has(week.id)) {
-                    newSet.delete(week.id);
-                  } else {
-                    newSet.add(week.id);
-                  }
-                  setSelectedWeekIds(newSet);
-                }}
-                className={`w-full text-left px-4 py-3 border-b border-slate-100 transition-colors hover:bg-slate-50 ${
-                  isSelected ? "bg-indigo-50 border-l-2 border-l-indigo-400" : ""
-                }`}
-              >
-                <div className="flex items-start justify-between gap-2">
+            return (
+              <div key={week.id}>
+                <div className="px-4 py-3 border-b border-slate-100 bg-indigo-50 border-l-2 border-l-indigo-400">
+                  <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      {isSelected ? <ChevronDown className="h-3.5 w-3.5 text-indigo-500 shrink-0" /> : <ChevronRight className="h-3.5 w-3.5 text-slate-400 shrink-0" />}
+                      <ChevronDown className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
                       <span className="text-xs font-bold text-slate-700">{week.week_code}</span>
                       {week.is_active && <span className="text-[9px] bg-emerald-500 text-white px-1.5 py-0.5 rounded-full font-bold">ACTIVE</span>}
                     </div>
@@ -262,12 +272,10 @@ export default function PlanningReviewPanel({ weeks, allAssignments, assetsMap, 
                     </span>
                     <span className="text-[10px] text-slate-400">{weekCount} assigned</span>
                   </div>
-                </div>
-              </button>
+                  </div>
 
-              {/* Show KPIs when weeks selected */}
-              {selectedWeekIds.size > 0 && isSelected && (
-                <div className="bg-indigo-50/30 border-b border-slate-200">
+                  {/* Show KPIs when week selected */}
+                  <div className="bg-indigo-50/30 border-b border-slate-200">
                   {/* KPI row */}
                   {kpis && (
                     <div className="grid grid-cols-4 gap-0 px-4 py-3 border-b border-indigo-100">
@@ -360,11 +368,12 @@ export default function PlanningReviewPanel({ weeks, allAssignments, assetsMap, 
                       );
                     })}
                   </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
+                  </div>
+                  </div>
+                  </div>
+                  );
+                  })
+                  )}
       </div>
     </div>
   );
