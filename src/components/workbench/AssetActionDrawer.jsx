@@ -164,88 +164,143 @@ export default function AssetActionDrawer({
         )}
 
         {/* ── ASSIGN TAB ───────────────────────────────── */}
-        {tab === "assign" && (
-          <div className="space-y-3">
-            <WeekPickerField
-              weeks={weeks}
-              value={form.planning_week_id}
-              onChange={v => set("planning_week_id", v)}
-            />
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label className="text-xs">Type</Label>
-                <Select value={form.assignment_type || "__none__"} onValueChange={v => set("assignment_type", v === "__none__" ? "" : v)}>
-                  <SelectTrigger className="mt-1 text-xs h-8"><SelectValue placeholder="Type..." /></SelectTrigger>
-                  <SelectContent style={{ zIndex: 99999 }}>
-                    <SelectItem value="__none__">— Type —</SelectItem>
-                    {typeOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-xs">Status</Label>
-                <Select value={form.assignment_status} onValueChange={v => set("assignment_status", v)}>
-                  <SelectTrigger className="mt-1 text-xs h-8"><SelectValue /></SelectTrigger>
-                  <SelectContent style={{ zIndex: 99999 }}>
-                    {(statusOptions.length ? statusOptions : ["Planned","In Progress","Completed","Deferred","Cancelled"]).map(s => (
-                      <SelectItem key={s} value={s}>{s}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div>
-              <Label className="text-xs">Priority</Label>
-              <Select value={form.priority_bucket || "__auto__"} onValueChange={v => set("priority_bucket", v === "__auto__" ? "" : v)}>
-                <SelectTrigger className="mt-1 text-xs h-8"><SelectValue placeholder="Auto" /></SelectTrigger>
-                <SelectContent style={{ zIndex: 99999 }}>
-                  <SelectItem value="__auto__">Auto from incident</SelectItem>
-                  {PRIORITY_OPTIONS.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label className="text-xs">Assigned To</Label>
-                <Input value={form.assigned_to} onChange={e => set("assigned_to", e.target.value)} className="mt-1 h-8 text-xs" placeholder="Technician..." />
-              </div>
-              <div>
-                <Label className="text-xs">Team</Label>
-                <Input value={form.team_name} onChange={e => set("team_name", e.target.value)} className="mt-1 h-8 text-xs" placeholder="Team..." />
-              </div>
-            </div>
-            <div>
-              <Label className="text-xs">Route Zone</Label>
-              <Input value={form.route_zone} onChange={e => set("route_zone", e.target.value)} className="mt-1 h-8 text-xs" placeholder="Zone A..." />
-            </div>
-            <div>
-              <Label className="text-xs">Notes</Label>
-              <Textarea value={form.notes} onChange={e => set("notes", e.target.value)} className="mt-1 text-xs" rows={2} placeholder="Notes..." />
-            </div>
-            {assetIncidents.length > 0 && (
-              <div>
-                <Label className="text-xs">Link Incident</Label>
-                <Select value={form.source_incident_id || "__none__"} onValueChange={v => set("source_incident_id", v === "__none__" ? "" : v)}>
-                  <SelectTrigger className="mt-1 text-xs h-8"><SelectValue placeholder="None" /></SelectTrigger>
-                  <SelectContent style={{ zIndex: 99999 }}>
-                    <SelectItem value="__none__">None</SelectItem>
-                    {assetIncidents.map(i => (
-                      <SelectItem key={i.id} value={i.id}>{i.incident_id} – {i.title}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-            <Button
-              className="w-full bg-indigo-600 hover:bg-indigo-700 h-8 text-xs"
-              onClick={handleSave}
-              disabled={saving || !form.planning_week_id}
-            >
-              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
-              {saving ? "Saving..." : assignment ? "Update Assignment" : "Create Assignment"}
-            </Button>
-          </div>
-        )}
+         {tab === "assign" && (
+           <div className="space-y-3">
+             {/* Asset + Incident header */}
+             <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3 space-y-1.5">
+               <div className="text-xs font-semibold text-slate-700">{asset.asset_id}</div>
+               <div className="text-[10px] text-slate-500">{asset.city} · {asset.shelter_type}</div>
+               {assetIncidents.length > 0 && (
+                 <div className="text-[10px] text-red-600 font-medium mt-1">
+                   {assetIncidents.length} incident{assetIncidents.length > 1 ? "s" : ""} linked
+                 </div>
+               )}
+             </div>
+
+             {/* Assignment Type & Planning Week */}
+             <div className="grid grid-cols-2 gap-2">
+               <div>
+                 <Label className="text-xs font-semibold">Assignment Type</Label>
+                 <Select value={form.assignment_type || "__none__"} onValueChange={v => set("assignment_type", v === "__none__" ? "" : v)}>
+                   <SelectTrigger className="mt-1 text-xs h-8"><SelectValue placeholder="Type..." /></SelectTrigger>
+                   <SelectContent style={{ zIndex: 99999 }}>
+                     <SelectItem value="__none__">— Type —</SelectItem>
+                     {typeOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                   </SelectContent>
+                 </Select>
+               </div>
+               <div>
+                 <Label className="text-xs font-semibold">Planning Week</Label>
+                 <Popover>
+                   <PopoverTrigger asChild>
+                     <button className="mt-1 w-full flex items-center justify-between border border-input rounded-md px-2.5 h-8 text-xs bg-white hover:bg-slate-50 transition-colors text-left">
+                       {form.planning_week_id ? (
+                         <span className="text-slate-700">
+                           {weeks.find(w => w.id === form.planning_week_id)?.week_code || "—"}
+                         </span>
+                       ) : (
+                         <span className="text-slate-400">Select...</span>
+                       )}
+                       <ChevronDown className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                     </button>
+                   </PopoverTrigger>
+                   <PopoverContent className="p-0 w-auto" style={{ zIndex: 99999 }} align="start">
+                     <div className="p-3 border-b border-slate-100">
+                       <p className="text-xs text-slate-500">Select any date — the matching planning week will be chosen.</p>
+                     </div>
+                     <Calendar
+                       mode="single"
+                       onSelect={(date) => {
+                         if (!date) return;
+                         const matched = weeks.find(w => {
+                           if (!w.start_date || !w.end_date) return false;
+                           return isWithinInterval(date, { start: parseISO(w.start_date), end: parseISO(w.end_date) });
+                         });
+                         if (matched) set("planning_week_id", matched.id);
+                       }}
+                       initialFocus
+                     />
+                   </PopoverContent>
+                 </Popover>
+               </div>
+             </div>
+
+             {/* Status & Priority */}
+             <div className="grid grid-cols-2 gap-2">
+               <div>
+                 <Label className="text-xs">Status</Label>
+                 <Select value={form.assignment_status} onValueChange={v => set("assignment_status", v)}>
+                   <SelectTrigger className="mt-1 text-xs h-8"><SelectValue /></SelectTrigger>
+                   <SelectContent style={{ zIndex: 99999 }}>
+                     {(statusOptions.length ? statusOptions : ["Planned","In Progress","Completed","Deferred","Cancelled"]).map(s => (
+                       <SelectItem key={s} value={s}>{s}</SelectItem>
+                     ))}
+                   </SelectContent>
+                 </Select>
+               </div>
+               <div>
+                 <Label className="text-xs">Priority</Label>
+                 <Select value={form.priority_bucket || "__auto__"} onValueChange={v => set("priority_bucket", v === "__auto__" ? "" : v)}>
+                   <SelectTrigger className="mt-1 text-xs h-8"><SelectValue placeholder="Auto" /></SelectTrigger>
+                   <SelectContent style={{ zIndex: 99999 }}>
+                     <SelectItem value="__auto__">Auto from incident</SelectItem>
+                     {PRIORITY_OPTIONS.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                   </SelectContent>
+                 </Select>
+               </div>
+             </div>
+
+             {/* Team & Assignment */}
+             <div className="grid grid-cols-2 gap-2">
+               <div>
+                 <Label className="text-xs">Assigned To</Label>
+                 <Input value={form.assigned_to} onChange={e => set("assigned_to", e.target.value)} className="mt-1 h-8 text-xs" placeholder="Technician..." />
+               </div>
+               <div>
+                 <Label className="text-xs">Team</Label>
+                 <Input value={form.team_name} onChange={e => set("team_name", e.target.value)} className="mt-1 h-8 text-xs" placeholder="Team..." />
+               </div>
+             </div>
+
+             {/* Route Zone */}
+             <div>
+               <Label className="text-xs">Route Zone</Label>
+               <Input value={form.route_zone} onChange={e => set("route_zone", e.target.value)} className="mt-1 h-8 text-xs" placeholder="Zone A..." />
+             </div>
+
+             {/* Notes */}
+             <div>
+               <Label className="text-xs">Notes</Label>
+               <Textarea value={form.notes} onChange={e => set("notes", e.target.value)} className="mt-1 text-xs" rows={2} placeholder="Notes..." />
+             </div>
+
+             {/* Link Incident */}
+             {assetIncidents.length > 0 && (
+               <div>
+                 <Label className="text-xs">Link Incident</Label>
+                 <Select value={form.source_incident_id || "__none__"} onValueChange={v => set("source_incident_id", v === "__none__" ? "" : v)}>
+                   <SelectTrigger className="mt-1 text-xs h-8"><SelectValue placeholder="None" /></SelectTrigger>
+                   <SelectContent style={{ zIndex: 99999 }}>
+                     <SelectItem value="__none__">None</SelectItem>
+                     {assetIncidents.map(i => (
+                       <SelectItem key={i.id} value={i.id}>{i.incident_id} – {i.title}</SelectItem>
+                     ))}
+                   </SelectContent>
+                 </Select>
+               </div>
+             )}
+
+             {/* Save Button */}
+             <Button
+               className="w-full bg-indigo-600 hover:bg-indigo-700 h-8 text-xs"
+               onClick={handleSave}
+               disabled={saving || !form.planning_week_id}
+             >
+               {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
+               {saving ? "Saving..." : assignment ? "Update Assignment" : "Create Assignment"}
+             </Button>
+           </div>
+         )}
 
         {/* ── INCIDENTS TAB ────────────────────────────── */}
         {tab === "incidents" && (
