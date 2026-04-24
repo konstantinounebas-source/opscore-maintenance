@@ -44,6 +44,7 @@ export default function PlanningReviewPanel({ weeks, allAssignments, assetsMap, 
   const [assignmentSearch, setAssignmentSearch] = useState("");
   const [assignmentStatusFilter, setAssignmentStatusFilter] = useState("__all__");
   const [weeksDropdownOpen, setWeeksDropdownOpen] = useState(false);
+  const [weekFilterSearch, setWeekFilterSearch] = useState("");
 
   // Fetch planning types from API
   const { data: planningTypes = [] } = useQuery({
@@ -193,16 +194,32 @@ export default function PlanningReviewPanel({ weeks, allAssignments, assetsMap, 
              </button>
            </PopoverTrigger>
            <PopoverContent className="w-56 p-0" align="start">
-             <div className="p-2 space-y-1.5 max-h-96 overflow-y-auto">
-               {filteredWeeks.length === 0 ? (
-                 <div className="text-center py-4 text-xs text-slate-400">
-                   {selectedPlanningTypeIds.size === 0 ? "Select planning types above" : "No weeks found"}
-                 </div>
-               ) : (
-                 filteredWeeks.map(week => (
+             <div className="p-2 space-y-2">
+               <input
+                 type="text"
+                 placeholder="Search weeks..."
+                 value={weekFilterSearch}
+                 onChange={(e) => setWeekFilterSearch(e.target.value)}
+                 className="w-full h-7 px-2 text-xs border border-input rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
+               />
+               <div className="space-y-1.5 max-h-96 overflow-y-auto">
+                 {filteredWeeks.filter(w => 
+                   w.week_code.toLowerCase().includes(weekFilterSearch.toLowerCase()) ||
+                   w.week_name.toLowerCase().includes(weekFilterSearch.toLowerCase())
+                 ).length === 0 ? (
+                   <div className="text-center py-4 text-xs text-slate-400">
+                     {selectedPlanningTypeIds.size === 0 ? "Select planning types above" : "No weeks found"}
+                   </div>
+                 ) : (
+                   filteredWeeks.filter(w => 
+                     w.week_code.toLowerCase().includes(weekFilterSearch.toLowerCase()) ||
+                     w.week_name.toLowerCase().includes(weekFilterSearch.toLowerCase())
+                   ).map(week => {
+                     const planningType = planningTypes.find(pt => pt.id === week.planning_type_id);
+                     return (
                    <label
                      key={week.id}
-                     className="flex items-start gap-2 p-2 rounded text-xs cursor-pointer hover:bg-slate-100 transition-colors"
+                     className="flex items-center gap-2 p-2 rounded text-xs cursor-pointer hover:bg-slate-100 transition-colors"
                    >
                      <input
                        type="checkbox"
@@ -216,25 +233,19 @@ export default function PlanningReviewPanel({ weeks, allAssignments, assetsMap, 
                          }
                          setSelectedWeekIds(newSet);
                        }}
-                       className="w-3 h-3 mt-0.5"
+                       className="w-3 h-3 shrink-0"
                      />
                      <div className="flex-1 min-w-0">
                        <div className="font-semibold text-slate-700">{week.week_code}</div>
-                       <div className="text-[9px] text-slate-500">{week.week_name}</div>
-                       <div className="text-[9px] text-slate-400">
-                         {week.start_date && (() => { try { return format(new Date(week.start_date), "MMM d"); } catch { return ""; } })()}
-                         {" – "}
-                         {week.end_date && (() => { try { return format(new Date(week.end_date), "MMM d, yyyy"); } catch { return ""; } })()}
-                       </div>
-                       <span className={`inline-block text-[9px] px-1.5 py-0.5 rounded-full mt-1 border font-medium ${WEEK_STATUS_COLORS[week.status] || WEEK_STATUS_COLORS.Draft}`}>
-                         {week.status}
-                       </span>
+                       <div className="text-[9px] text-slate-500">{planningType?.name || "—"}</div>
                      </div>
                    </label>
-                 ))
-               )}
+                   );
+                   })
+                   )}
              </div>
-           </PopoverContent>
+             </div>
+             </PopoverContent>
          </Popover>
        </div>
 
