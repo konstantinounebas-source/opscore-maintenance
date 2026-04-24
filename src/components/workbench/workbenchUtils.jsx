@@ -480,6 +480,7 @@ export const EMPTY_MAP_FILTERS = {
   existing_condition: "",
   has_bay: "",
   phase: "",
+  planned_week: "",
   show_unassigned_only: false,
   has_incident: false,
   has_work_order: false,
@@ -516,6 +517,7 @@ export function applyMapFilters(assets, filters, assignmentByAssetId, incidentsB
     if (f.existing_condition && a.existing_condition !== f.existing_condition) return false;
     if (f.has_bay && a.has_bay !== f.has_bay) return false;
     if (f.phase && a.phase !== f.phase) return false;
+    if (f.planned_week && a.planned_week !== f.planned_week) return false;
 
     const asgn = assignmentByAssetId[a.id];
     if (f.show_unassigned_only && asgn) return false;
