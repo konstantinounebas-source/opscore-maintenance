@@ -43,6 +43,7 @@ export default function PlanningWorkbench() {
   const [assignmentModalOpen, setAssignmentModalOpen] = useState(false);
   const [assigningAsset, setAssigningAsset] = useState(null);
   const [photoViewerAsset, setPhotoViewerAsset] = useState(null);
+  const [zoomToAsset, setZoomToAsset] = useState(null);
 
   // ── Shared lookups (read-only from map perspective) ─────────────────────────
   const assetsMap = useMemo(() => Object.fromEntries(assets.map(a => [a.id, a])), [assets]);
@@ -275,31 +276,33 @@ export default function PlanningWorkbench() {
         {/* LEFT: Map workspace zone — takes remaining space */}
         <div className="flex-1 overflow-hidden min-w-0">
           <MapWorkspaceContainer
-             mapWorkspaces={mapWorkspaces}
-             onAddMap={addMap}
-             onRemoveMap={removeMap}
-             allAssets={assets}
-             allAssignments={allAssignments}
-             globalLayers={layers}
-             mapLayerLinks={mapLayerLinks}
-             layers={layers}
-             layerAssets={layerAssets}
-             weeks={weeks}
-             incidents={incidents}
-             workOrders={workOrders}
-             incidentsByAsset={incidentsByAsset}
-             workOrdersByAsset={workOrdersByAsset}
-             planningTypes={planningTypes}
-             onSaveAssignment={handleSaveAssignment}
-            onCreateGlobalLayer={handleCreateLayer}
-            onDeleteGlobalLayer={handleDeleteLayer}
-            onAddLayerToMap={handleAddLayerToMap}
-            onRemoveLayerFromMap={handleRemoveLayerFromMap}
-            onToggleMapLayer={handleToggleMapLayer}
-            onCreateLayer={handleCreateLayer}
-            onDeleteLayer={handleDeleteLayer}
-            onAddToLayer={handleAddToLayer}
-            onRemoveFromLayer={handleRemoveFromLayer}
+            mapWorkspaces={mapWorkspaces}
+            onAddMap={addMap}
+            onRemoveMap={removeMap}
+            allAssets={assets}
+            allAssignments={allAssignments}
+            globalLayers={layers}
+            mapLayerLinks={mapLayerLinks}
+            layers={layers}
+            layerAssets={layerAssets}
+            weeks={weeks}
+            incidents={incidents}
+            workOrders={workOrders}
+            incidentsByAsset={incidentsByAsset}
+            workOrdersByAsset={workOrdersByAsset}
+            planningTypes={planningTypes}
+            onSaveAssignment={handleSaveAssignment}
+           onCreateGlobalLayer={handleCreateLayer}
+           onDeleteGlobalLayer={handleDeleteLayer}
+           onAddLayerToMap={handleAddLayerToMap}
+           onRemoveLayerFromMap={handleRemoveLayerFromMap}
+           onToggleMapLayer={handleToggleMapLayer}
+           onCreateLayer={handleCreateLayer}
+           onDeleteLayer={handleDeleteLayer}
+           onAddToLayer={handleAddToLayer}
+           onRemoveFromLayer={handleRemoveFromLayer}
+           zoomToAsset={zoomToAsset}
+           onZoomCompleted={() => setZoomToAsset(null)}
           />
         </div>
 
@@ -365,8 +368,7 @@ export default function PlanningWorkbench() {
           }}
           onSaveAssignment={handleSaveAssignment}
           onZoomToAsset={(asset) => {
-            // TODO: Pan map to asset location
-            console.log("Zoom to:", asset);
+            setZoomToAsset(asset);
           }}
           onShowPhotos={(asset) => {
             setPhotoViewerAsset(asset);

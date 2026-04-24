@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, CircleMarker, Tooltip, useMap } from "react-le
 import "leaflet/dist/leaflet.css";
 import { getMapPinColor } from "./workbenchUtils";
 
-function FitBounds({ points, fitKey }) {
+function FitBounds({ points, fitKey, zoomToAsset, onZoomCompleted }) {
   const map = useMap();
   const prevKey = useRef(null);
   useEffect(() => {
@@ -17,6 +17,14 @@ function FitBounds({ points, fitKey }) {
       );
     }
   }, [fitKey, points.length]);
+
+  useEffect(() => {
+    if (zoomToAsset && zoomToAsset.latitude && zoomToAsset.longitude) {
+      map.setView([zoomToAsset.latitude, zoomToAsset.longitude], 16);
+      onZoomCompleted?.();
+    }
+  }, [zoomToAsset, map, onZoomCompleted]);
+
   return null;
 }
 
@@ -33,6 +41,8 @@ export default function WorkbenchMap({
   activeVisualRule,
   colorRules,
   colorOverrides,
+  zoomToAsset,
+  onZoomCompleted,
 }) {
   const assignmentByAsset = useMemo(() => {
     const m = {};
@@ -109,7 +119,7 @@ export default function WorkbenchMap({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <FitBounds points={markers} fitKey={fitKey} />
+        <FitBounds points={markers} fitKey={fitKey} zoomToAsset={zoomToAsset} onZoomCompleted={onZoomCompleted} />
         {markers.map(m => (
           <CircleMarker
             key={m.asset.id}

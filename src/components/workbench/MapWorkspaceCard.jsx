@@ -40,6 +40,8 @@ export default function MapWorkspaceCard({
   onDeleteLayer,
   onAddToLayer,
   onRemoveFromLayer,
+  zoomToAsset,
+  onZoomCompleted,
 }) {
   // ── Per-map isolated state ─────────────────────────────────────────────────
   const [filters, setFilters] = useState({ ...EMPTY_MAP_FILTERS });
@@ -271,6 +273,8 @@ export default function MapWorkspaceCard({
              activeVisualRule={activeVisualRule}
              colorRules={colorRules}
              colorOverrides={colorOverrides}
+             zoomToAsset={zoomToAsset}
+             onZoomCompleted={onZoomCompleted}
            />
            <MapLegend
              entries={legendEntries}
