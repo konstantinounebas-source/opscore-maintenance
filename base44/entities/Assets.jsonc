@@ -95,6 +95,14 @@
       "type": "string",
       "description": "Current status of the asset"
     },
+    "phase": {
+      "type": "string",
+      "description": "Asset phase (configured via Configuration lists)"
+    },
+    "inspection_status": {
+      "type": "string",
+      "description": "Inspection status (configured via Configuration lists)"
+    },
     "installation_date": {
       "type": "string",
       "format": "date",
