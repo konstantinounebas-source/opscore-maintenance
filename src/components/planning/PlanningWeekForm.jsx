@@ -5,54 +5,41 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Calendar } from "lucide-react";
-import { format } from "date-fns";
+import { Plus, Loader2 } from "lucide-react";
 
 export default function PlanningWeekForm({ open, onOpenChange, onWeekCreated }) {
   const queryClient = useQueryClient();
-  const [weekCode, setWeekCode] = useState("");
-  const [weekName, setWeekName] = useState("");
   const [planningTypeId, setPlanningTypeId] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
   const { data: planningTypes = [] } = useQuery({
     queryKey: ["planningTypes"],
     queryFn: () => base44.entities.PlanningTypes.list(),
   });
 
-  const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.PlanningWeeks.create(data),
-    onSuccess: (newWeek) => {
+  const generateMutation = useMutation({
+    mutationFn: (data) => base44.functions.invoke('generatePlanningWeeks', data),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["planningWeeks"] });
       resetForm();
       onOpenChange(false);
-      if (onWeekCreated) onWeekCreated(newWeek);
     },
   });
 
   const resetForm = () => {
-    setWeekCode("");
-    setWeekName("");
     setPlanningTypeId("");
-    setStartDate("");
-    setEndDate("");
+    setSelectedYear(new Date().getFullYear());
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!weekCode.trim() || !weekName.trim() || !planningTypeId || !startDate || !endDate) {
-      alert("Please fill in all required fields");
+    if (!planningTypeId) {
+      alert("Please select a planning type");
       return;
     }
-    createMutation.mutate({
-      week_code: weekCode.trim(),
-      week_name: weekName.trim(),
+    generateMutation.mutate({
       planning_type_id: planningTypeId,
-      start_date: startDate,
-      end_date: endDate,
-      status: "Draft",
-      is_active: false,
+      year: selectedYear,
     });
   };
 
@@ -89,44 +76,16 @@ export default function PlanningWeekForm({ open, onOpenChange, onWeekCreated }) 
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-slate-700 block mb-1.5">Week Code *</label>
+            <label className="text-xs font-semibold text-slate-700 block mb-1.5">Year *</label>
             <Input
-              value={weekCode}
-              onChange={e => setWeekCode(e.target.value)}
-              placeholder="e.g. W2026-12"
+              type="number"
+              value={selectedYear}
+              onChange={e => setSelectedYear(parseInt(e.target.value))}
+              min={2020}
+              max={2050}
               className="text-sm"
             />
-          </div>
-
-          <div>
-            <label className="text-xs font-semibold text-slate-700 block mb-1.5">Week Name *</label>
-            <Input
-              value={weekName}
-              onChange={e => setWeekName(e.target.value)}
-              placeholder="e.g. Inspection Round 3"
-              className="text-sm"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-semibold text-slate-700 block mb-1.5">Start Date *</label>
-              <Input
-                type="date"
-                value={startDate}
-                onChange={e => setStartDate(e.target.value)}
-                className="text-sm"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-slate-700 block mb-1.5">End Date *</label>
-              <Input
-                type="date"
-                value={endDate}
-                onChange={e => setEndDate(e.target.value)}
-                className="text-sm"
-              />
-            </div>
+            <p className="text-xs text-slate-500 mt-1">52 weeks will be created for {selectedYear}</p>
           </div>
 
           <div className="flex gap-2 justify-end pt-4">
@@ -140,9 +99,18 @@ export default function PlanningWeekForm({ open, onOpenChange, onWeekCreated }) 
             >
               Cancel
             </Button>
-            <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700">
-              <Plus className="w-3.5 h-3.5 mr-1" />
-              Create Week
+            <Button type="submit" disabled={generateMutation.isPending} className="bg-indigo-600 hover:bg-indigo-700">
+              {generateMutation.isPending ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Plus className="w-3.5 h-3.5 mr-1" />
+                  Generate 52 Weeks
+                </>
+              )}
             </Button>
           </div>
         </form>
