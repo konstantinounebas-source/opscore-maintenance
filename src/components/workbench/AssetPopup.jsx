@@ -49,8 +49,8 @@ export default function AssetPopup({
     try {
       if (assignment?.id) {
         const formData = {
-          planning_type_id: null,
-          planning_week_id: null,
+          planning_type_id: "",
+          planning_week_id: "",
           asset_id: asset.id,
         };
         await onSaveAssignment(formData, assignment.id);
