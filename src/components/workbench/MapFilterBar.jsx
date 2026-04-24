@@ -37,29 +37,29 @@ const AVAILABLE_FILTER_FIELDS = {
   "team_name": "Team",
 };
 
-export default function MapFilterBar({ filters, onChange, assets }) {
-  const [expanded, setExpanded] = useState(false);
-  const [customFields, setCustomFields] = useState(new Set());
-  const set = (k, v) => onChange({ ...filters, [k]: v });
-  const reset = () => onChange({ ...EMPTY_MAP_FILTERS });
-  const activeCount = countActiveMapFilters(filters);
-  const cities = uniqueCities(assets);
-  const shelterTypes = uniqueShelterTypes(assets);
-  
-  // Get unique values for all fields
-  const orderYears = [...new Set(assets.map(a => a.order_year).filter(Boolean))].sort((a, b) => a - b);
-  const deliveryYears = [...new Set(assets.map(a => a.delivery_year).filter(Boolean))].sort((a, b) => a - b);
-  const orderedTypes = [...new Set(assets.map(a => a.ordered_shelter_type).filter(Boolean))].sort();
-  const installedTypes = [...new Set(assets.map(a => a.installed_shelter_type).filter(Boolean))].sort();
-  const inspectionStatuses = [...new Set(assets.map(a => a.inspection_status).filter(Boolean))].sort();
-  const categories = [...new Set(assets.map(a => a.category).filter(Boolean))].sort();
-  const assetStages = [...new Set(assets.map(a => a.asset_stage).filter(Boolean))].sort();
-  const assetSources = [...new Set(assets.map(a => a.asset_source).filter(Boolean))].sort();
-  const existingConditions = [...new Set(assets.map(a => a.existing_condition).filter(Boolean))].sort();
-  const hasBayOptions = [...new Set(assets.map(a => a.has_bay).filter(Boolean))].sort();
-  const municipalities = [...new Set(assets.map(a => a.municipality).filter(Boolean))].sort();
-  const phases = [...new Set(assets.map(a => a.phase).filter(Boolean))].sort();
-  const planningWeeks = [...new Set(assets.map(a => a.planning_week).filter(Boolean))].sort();
+export default function MapFilterBar({ filters, onChange, assets, weeks = [] }) {
+   const [expanded, setExpanded] = useState(false);
+   const [customFields, setCustomFields] = useState(new Set());
+   const set = (k, v) => onChange({ ...filters, [k]: v });
+   const reset = () => onChange({ ...EMPTY_MAP_FILTERS });
+   const activeCount = countActiveMapFilters(filters);
+   const cities = uniqueCities(assets);
+   const shelterTypes = uniqueShelterTypes(assets);
+
+   // Get unique values for all fields
+   const orderYears = [...new Set(assets.map(a => a.order_year).filter(Boolean))].sort((a, b) => a - b);
+   const deliveryYears = [...new Set(assets.map(a => a.delivery_year).filter(Boolean))].sort((a, b) => a - b);
+   const orderedTypes = [...new Set(assets.map(a => a.ordered_shelter_type).filter(Boolean))].sort();
+   const installedTypes = [...new Set(assets.map(a => a.installed_shelter_type).filter(Boolean))].sort();
+   const inspectionStatuses = [...new Set(assets.map(a => a.inspection_status).filter(Boolean))].sort();
+   const categories = [...new Set(assets.map(a => a.category).filter(Boolean))].sort();
+   const assetStages = [...new Set(assets.map(a => a.asset_stage).filter(Boolean))].sort();
+   const assetSources = [...new Set(assets.map(a => a.asset_source).filter(Boolean))].sort();
+   const existingConditions = [...new Set(assets.map(a => a.existing_condition).filter(Boolean))].sort();
+   const hasBayOptions = [...new Set(assets.map(a => a.has_bay).filter(Boolean))].sort();
+   const municipalities = [...new Set(assets.map(a => a.municipality).filter(Boolean))].sort();
+   const phases = [...new Set(assets.map(a => a.phase).filter(Boolean))].sort();
+   const planningWeeks = (weeks || []).map(w => w.week_code).filter(Boolean).sort();
   
   const addCustomField = (field) => {
     setCustomFields(prev => new Set([...prev, field]));

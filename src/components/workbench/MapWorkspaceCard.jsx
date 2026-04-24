@@ -231,7 +231,7 @@ export default function MapWorkspaceCard({
 
         {/* Filter bar */}
         <div className="px-2 py-1.5 border-b border-slate-100 shrink-0">
-          <MapFilterBar filters={filters} onChange={setFilters} assets={allAssets} />
+          <MapFilterBar filters={filters} onChange={setFilters} assets={allAssets} weeks={weeks} />
         </div>
 
         {/* Layer manager (collapsed by default) */}
