@@ -148,10 +148,11 @@ function getVisualRuleColor(asset, assignment, rule, incidentsByAsset, workOrder
 // ─── Main pin color resolver ───────────────────────────────────────────────────
 
 export function getMapPinColor({ asset, assignment, colorMode, layers, layerAssets, incidentsByAsset, workOrdersByAsset, activeVisualRule, colorRules }) {
-  // New color rules architecture takes highest precedence
+  // New color rules architecture takes highest precedence — but only if a rule actually matches
   if (colorRules && colorRules.length > 0) {
     const ruleColor = getColorRulePin(asset, assignment, colorRules, layerAssets);
     if (ruleColor) return ruleColor;
+    // If no rule matched, fall through to the user-selected colorMode (do NOT force "default")
   }
 
   // Visual rule takes precedence if active

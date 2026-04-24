@@ -189,7 +189,7 @@ export default function MapWorkspaceCard({
             allAssignments={allAssignments}
             selectedAssetId={selectedAsset?.id}
             onSelectAsset={setSelectedAsset}
-            colorMode={hasColorRules ? "color_rules" : colorMode}
+            colorMode={colorMode}
             layers={layers}
             layerAssets={layerAssets}
             incidentsByAsset={incidentsByAsset}
