@@ -37,10 +37,22 @@ export default function PlanningReviewPanel({ weeks, allAssignments, assetsMap, 
   // ── Panel-local state — NEVER shared with maps ─────────────────────────────
   const [weekSearch, setWeekSearch] = useState("");
   const [weekStatusFilter, setWeekStatusFilter] = useState("__all__");
+  const [selectedPlanningTypeId, setSelectedPlanningTypeId] = useState("__all__");
   const [selectedWeekId, setSelectedWeekId] = useState(null);
   const [expandedWeekIds, setExpandedWeekIds] = useState({});
   const [assignmentSearch, setAssignmentSearch] = useState("");
   const [assignmentStatusFilter, setAssignmentStatusFilter] = useState("__all__");
+
+  // Get unique planning types
+  const planningTypes = useMemo(() => {
+    const types = {};
+    weeks.forEach(w => {
+      if (w.planning_type_id && !types[w.planning_type_id]) {
+        types[w.planning_type_id] = w;
+      }
+    });
+    return Object.values(types);
+  }, [weeks]);
 
   const filteredWeeks = useMemo(() => {
     let list = weeks;
@@ -54,8 +66,11 @@ export default function PlanningReviewPanel({ weeks, allAssignments, assetsMap, 
     if (weekStatusFilter !== "__all__") {
       list = list.filter(w => w.status === weekStatusFilter);
     }
+    if (selectedPlanningTypeId !== "__all__") {
+      list = list.filter(w => w.planning_type_id === selectedPlanningTypeId);
+    }
     return list;
-  }, [weeks, weekSearch, weekStatusFilter]);
+  }, [weeks, weekSearch, weekStatusFilter, selectedPlanningTypeId]);
 
   const selectedWeek = useMemo(() => weeks.find(w => w.id === selectedWeekId), [weeks, selectedWeekId]);
 
@@ -134,6 +149,19 @@ export default function PlanningReviewPanel({ weeks, allAssignments, assetsMap, 
             className="pl-7 h-7 text-xs"
           />
         </div>
+        {planningTypes.length > 0 && (
+          <Select value={selectedPlanningTypeId} onValueChange={setSelectedPlanningTypeId}>
+            <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent style={{ zIndex: 99999 }}>
+              <SelectItem value="__all__">All planning types</SelectItem>
+              {planningTypes.map(pt => (
+                <SelectItem key={pt.planning_type_id} value={pt.planning_type_id}>
+                  {pt.week_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
         <Select value={weekStatusFilter} onValueChange={setWeekStatusFilter}>
           <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
           <SelectContent style={{ zIndex: 99999 }}>
