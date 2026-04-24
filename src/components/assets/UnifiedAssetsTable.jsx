@@ -52,8 +52,8 @@ export default function UnifiedAssetsTable({
     return assets.filter(a => {
       if (filterCity !== "all" && a.city !== filterCity) return false;
       if (filterPhase !== "all" && a.phase !== filterPhase) return false;
-      if (filterOrdered === "yes" && !a.ordered) return false;
-      if (filterOrdered === "no" && a.ordered) return false;
+      if (filterOrdered === "yes" && !a.order_year) return false;
+      if (filterOrdered === "no" && a.order_year) return false;
       if (filterShelterType !== "all" && ![a.shelter_type, a.ordered_shelter_type, a.installed_shelter_type].includes(filterShelterType)) return false;
       if (filterOpenIncidents === "with" && getOpenIncidents(a.id) === 0) return false;
       if (filterOpenIncidents === "without" && getOpenIncidents(a.id) > 0) return false;
@@ -202,8 +202,8 @@ export default function UnifiedAssetsTable({
                       ) : <span className="text-slate-300 text-xs">—</span>}
                     </td>
                     <td className="px-3 py-2.5 whitespace-nowrap">
-                      {a.ordered ? (
-                        <span className="text-xs font-medium px-2 py-0.5 rounded bg-blue-100 text-blue-700">Yes</span>
+                      {a.order_year ? (
+                        <span className="text-xs font-medium px-2 py-0.5 rounded bg-blue-100 text-blue-700">{a.order_year}</span>
                       ) : (
                         <span className="text-slate-300 text-xs">—</span>
                       )}
