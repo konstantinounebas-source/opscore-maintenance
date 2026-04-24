@@ -103,7 +103,6 @@ const emptyForm = {
   status: "Active",
   asset_stage: "",
   category: "",
-  asset_type: "",
   // Location
   location_address: "",
   city: "",
@@ -121,7 +120,6 @@ const emptyForm = {
   order_year: "",
   installation_date: "",
   delivery_date: "",
-  delivery_year: "",
   // Warranty / Inspection
   warranty_base_year: "",
   software_warranty_end_date: "",
@@ -132,7 +130,6 @@ const emptyForm = {
   next_inspection_date: "2030-01-01",
   // Notes
   notes: "",
-  description: "",
   // Attachments (transient)
   attachments: [],
 };
@@ -257,7 +254,6 @@ export default function AssetFormUnified({ open, onOpenChange, onSave, asset }) 
     if (payload.longitude !== "" && payload.longitude != null) payload.longitude = parseFloat(payload.longitude); else delete payload.longitude;
     if (payload.warranty_base_year !== "" && payload.warranty_base_year != null) payload.warranty_base_year = parseInt(payload.warranty_base_year); else delete payload.warranty_base_year;
     if (payload.order_year !== "" && payload.order_year != null) payload.order_year = parseInt(payload.order_year); else delete payload.order_year;
-    if (payload.delivery_year !== "" && payload.delivery_year != null) payload.delivery_year = parseInt(payload.delivery_year); else delete payload.delivery_year;
 
     // Ensure canonical identifiers are consistent
     if (!payload.asset_id) payload.asset_id = payload.active_shelter_id || `AST-${Date.now()}`;
@@ -459,10 +455,6 @@ export default function AssetFormUnified({ open, onOpenChange, onSave, asset }) 
               <Label className="text-xs">Order Year</Label>
               <Input type="number" value={form.order_year || ""} onChange={e => set("order_year", e.target.value)} placeholder="e.g. 2024" min="2000" max="2100" />
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Delivery Year</Label>
-              <Input type="number" value={form.delivery_year || ""} onChange={e => set("delivery_year", e.target.value)} placeholder="e.g. 2024" min="2000" max="2100" />
-            </div>
           </div>
 
           {/* ── 6. Warranty / Inspection ── */}
@@ -491,15 +483,11 @@ export default function AssetFormUnified({ open, onOpenChange, onSave, asset }) 
             </div>
           </div>
 
-          {/* ── 7. Notes / Description ── */}
-          <SectionHeader title="Notes / Description" color="slate" />
+          {/* ── 7. Notes ── */}
+          <SectionHeader title="Notes" color="slate" />
           <div className="space-y-1.5">
             <Label className="text-xs">Notes</Label>
             <Textarea value={form.notes || ""} onChange={e => set("notes", e.target.value)} rows={2} />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs">Description</Label>
-            <Textarea value={form.description || ""} onChange={e => set("description", e.target.value)} rows={2} />
           </div>
 
           {/* ── 8. Attachments / Documents ── */}

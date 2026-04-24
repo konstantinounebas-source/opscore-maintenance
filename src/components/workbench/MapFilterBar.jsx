@@ -18,7 +18,7 @@ const PRIORITIES = ["P1", "P2", "Critical", "High", "Medium", "Low"];
 const ASSET_STATUSES = ["Active", "Inactive", "Under Maintenance", "Decommissioned"];
 
 // Fields always visible in the filter bar
-const ALWAYS_VISIBLE = ["city", "order_year", "ordered_shelter_type", "installed_shelter_type", "planned_week", "inspection_status"];
+const ALWAYS_VISIBLE = ["city", "ordered_shelter_type", "installed_shelter_type", "planned_week", "inspection_status"];
 
 // All additional filter fields for "Add Filter" dropdown
 const AVAILABLE_FILTER_FIELDS = {
@@ -35,7 +35,6 @@ const AVAILABLE_FILTER_FIELDS = {
   "has_bay": "Has Bay",
   "municipality": "Municipality",
   "phase": "Phase",
-  "delivery_year": "Delivery Year",
   "team_name": "Team"
 };
 
@@ -64,7 +63,6 @@ export default function MapFilterBar({ filters, onChange, assets, weeks = [] }) 
 
   // Get unique values for all fields
   const orderYears = [...new Set(assets.map((a) => a.order_year).filter(Boolean))].sort((a, b) => a - b);
-  const deliveryYears = [...new Set(assets.map((a) => a.delivery_year).filter(Boolean))].sort((a, b) => a - b);
   const orderedTypes = [...new Set(assets.map((a) => a.ordered_shelter_type).filter(Boolean))].sort();
   const installedTypes = [...new Set(assets.map((a) => a.installed_shelter_type).filter(Boolean))].sort();
   const inspectionStatuses = [...new Set(assets.map((a) => a.inspection_status).filter(Boolean))].sort();
@@ -402,23 +400,7 @@ export default function MapFilterBar({ filters, onChange, assets, weeks = [] }) 
               </div>
           }
 
-            {customFields.has("delivery_year") &&
-          <div>
-                <div className="flex items-center justify-between mb-0.5">
-                  <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">Delivery Year</p>
-                  <button onClick={() => removeCustomField("delivery_year")} className="text-slate-300 hover:text-slate-500">
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-                <Select value={filters.delivery_year || "__all__"} onValueChange={(v) => set("delivery_year", v === "__all__" ? "" : v)}>
-                  <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="All years" /></SelectTrigger>
-                  <SelectContent style={{ zIndex: 99999 }}>
-                    <SelectItem value="__all__">All years</SelectItem>
-                    {deliveryYears.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-          }
+
 
             {customFields.has("team_name") &&
             <div>

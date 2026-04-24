@@ -71,7 +71,6 @@ export const COLOR_MODES = [
   { value: "has_bay",                label: "By Has Bay" },
   { value: "inspection_status",      label: "By Inspection Status" },
   { value: "category",               label: "By Category" },
-  { value: "order_year",             label: "By Order Year" },
   // Assignment fields
   { value: "assignment_status",      label: "By Assignment Status" },
   { value: "assignment_type",        label: "By Assignment Type" },
@@ -414,10 +413,7 @@ export function getLegendEntries(colorMode, layers, assets, assignments, inciden
       return phases.map(p => ({ label: p, color: getGenericColor("phase", p), count: countMatches(p, "phase") }));
     }
 
-    case "order_year": {
-      const years = [...new Set(assets.map(a => a.order_year).filter(Boolean))].sort();
-      return years.map(y => ({ label: String(y), color: getGenericColor("order_year", String(y)), count: countMatches(String(y), "order_year") }));
-    }
+
 
     case "assigned_state":
       return [
@@ -504,7 +500,6 @@ export const EMPTY_MAP_FILTERS = {
   priority_bucket: "",
   team_name: "",
   order_year: "",
-  delivery_year: "",
   inspection_status: "",
   category: "",
   asset_stage: "",
@@ -605,7 +600,6 @@ export function applyMapFilters(assets, filters, assignmentByAssetId, incidentsB
       if (f.municipality && a.municipality !== f.municipality) return false;
       if (f.shelter_type && a.shelter_type !== f.shelter_type) return false;
       if (f.asset_status && a.status !== f.asset_status) return false;
-      if (f.delivery_year && String(a.delivery_year) !== f.delivery_year) return false;
       if (f.category && a.category !== f.category) return false;
       if (f.asset_stage && a.asset_stage !== f.asset_stage) return false;
       if (f.asset_source && a.asset_source !== f.asset_source) return false;
