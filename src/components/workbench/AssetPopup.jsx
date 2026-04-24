@@ -46,14 +46,18 @@ export default function AssetPopup({
   if (!asset) return null;
 
   return (
-    <div className="fixed bg-white border border-slate-300 rounded-lg shadow-xl p-4 w-80 max-w-sm" style={{ top: popupPos?.y || 'auto', left: popupPos?.x || 'auto', zIndex: 50 }}>
+    <div 
+      className="fixed bg-white border border-slate-300 rounded-lg shadow-xl p-4 w-80 max-w-sm" 
+      style={{ top: popupPos?.y || 'auto', left: popupPos?.x || 'auto', zIndex: 50 }}
+      onClick={(e) => e.stopPropagation()}
+    >
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
           <div className="font-bold text-sm text-slate-800">{asset.asset_id}</div>
           <div className="text-xs text-slate-500 mt-0.5">{asset.shelter_type}</div>
         </div>
-        <button onClick={onClose} className="text-slate-400 hover:text-slate-600 shrink-0">
+        <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="text-slate-400 hover:text-slate-600 shrink-0">
           <X className="h-4 w-4" />
         </button>
       </div>
