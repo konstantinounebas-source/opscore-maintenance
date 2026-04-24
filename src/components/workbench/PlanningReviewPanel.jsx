@@ -50,6 +50,7 @@ export default function PlanningReviewPanel({
   const [selectedPlanningTypeIds, setSelectedPlanningTypeIds] = useState(new Set());
   const [selectedWeekIds, setSelectedWeekIds] = useState(new Set());
   const [assignmentSearch, setAssignmentSearch] = useState("");
+  const [assetSearch, setAssetSearch] = useState("");
   const [assignmentStatusFilter, setAssignmentStatusFilter] = useState("__all__");
   const [weeksDropdownOpen, setWeeksDropdownOpen] = useState(false);
   const [weekFilterSearch, setWeekFilterSearch] = useState("");
@@ -87,11 +88,22 @@ export default function PlanningReviewPanel({
         );
       });
     }
+    if (assetSearch) {
+      const q = assetSearch.toLowerCase();
+      list = list.filter(a => {
+        const asset = assetsMap[a.asset_id];
+        return (
+          asset?.asset_id?.toLowerCase().includes(q) ||
+          asset?.location_address?.toLowerCase().includes(q) ||
+          asset?.active_shelter_id?.toLowerCase().includes(q)
+        );
+      });
+    }
     if (assignmentStatusFilter !== "__all__") {
       list = list.filter(a => a.assignment_status === assignmentStatusFilter);
     }
     return list;
-  }, [selectedWeekIds, allAssignments, assignmentSearch, assignmentStatusFilter, assetsMap]);
+  }, [selectedWeekIds, allAssignments, assignmentSearch, assetSearch, assignmentStatusFilter, assetsMap]);
 
   // KPIs for selected weeks
   const kpis = useMemo(() => {
@@ -278,6 +290,22 @@ export default function PlanningReviewPanel({
              </PopoverContent>
          </Popover>
        </div>
+
+      {/* Asset search field */}
+      {selectedWeekIds.size > 0 && (
+        <div className="px-3 py-2 border-b border-slate-200 shrink-0">
+          <div className="flex items-center gap-1 px-2 py-1.5 border border-input rounded-md bg-white">
+            <Search className="h-3.5 w-3.5 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search assets..."
+              value={assetSearch}
+              onChange={(e) => setAssetSearch(e.target.value)}
+              className="flex-1 text-xs outline-none bg-transparent"
+            />
+          </div>
+        </div>
+      )}
 
       {/* Week details view (when weeks selected) */}
       <div className="flex-1 overflow-y-auto">
