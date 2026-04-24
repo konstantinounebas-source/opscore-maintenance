@@ -17,15 +17,15 @@ export default function PlanningWorkbench() {
   const { toast } = useToast();
 
   // ── Global data via React Query ─────────────────────────────────────────────
-  const { data: weeks = [],           isLoading: weeksLoading }     = useQuery({ queryKey: ["planningWeeks"],        queryFn: () => base44.entities.PlanningWeeks.list("-created_date") });
-  const { data: allAssignments = [],  isLoading: assignmentsLoading }= useQuery({ queryKey: ["planningAssignments"],  queryFn: () => base44.entities.PlanningAssignments.list() });
-  const { data: assets = [] }                                         = useQuery({ queryKey: ["assets"],               queryFn: () => base44.entities.Assets.list() });
-  const { data: incidents = [] }                                      = useQuery({ queryKey: ["incidents"],            queryFn: () => base44.entities.Incidents.list() });
-  const { data: workOrders = [] }                                     = useQuery({ queryKey: ["workOrders"],           queryFn: () => base44.entities.WorkOrders.list() });
-  const { data: planningTypes = [] }                                  = useQuery({ queryKey: ["planningTypes"],        queryFn: () => base44.entities.PlanningTypes.list() });
-  const { data: layers = [] }                                         = useQuery({ queryKey: ["planningLayers"],       queryFn: () => base44.entities.PlanningLayers.list() });
-  const { data: layerAssets = [] }                                    = useQuery({ queryKey: ["planningLayerAssets"],  queryFn: () => base44.entities.PlanningLayerAssets.list() });
-  const { data: mapLayerLinks = [] }                                  = useQuery({ queryKey: ["workbenchMapLayers"],   queryFn: () => base44.entities.WorkbenchMapLayers.list() });
+  const { data: weeks = [] }                                          = useQuery({ queryKey: ["planningWeeks"],        queryFn: () => base44.entities.PlanningWeeks.list("-created_date"), initialData: [] });
+  const { data: allAssignments = [] }                                 = useQuery({ queryKey: ["planningAssignments"],  queryFn: () => base44.entities.PlanningAssignments.list(), initialData: [] });
+  const { data: assets = [] }                                         = useQuery({ queryKey: ["assets"],               queryFn: () => base44.entities.Assets.list(), initialData: [] });
+  const { data: incidents = [] }                                      = useQuery({ queryKey: ["incidents"],            queryFn: () => base44.entities.Incidents.list(), initialData: [] });
+  const { data: workOrders = [] }                                     = useQuery({ queryKey: ["workOrders"],           queryFn: () => base44.entities.WorkOrders.list(), initialData: [] });
+  const { data: planningTypes = [] }                                  = useQuery({ queryKey: ["planningTypes"],        queryFn: () => base44.entities.PlanningTypes.list(), initialData: [] });
+  const { data: layers = [] }                                         = useQuery({ queryKey: ["planningLayers"],       queryFn: () => base44.entities.PlanningLayers.list(), initialData: [] });
+  const { data: layerAssets = [] }                                    = useQuery({ queryKey: ["planningLayerAssets"],  queryFn: () => base44.entities.PlanningLayerAssets.list(), initialData: [] });
+  const { data: mapLayerLinks = [] }                                  = useQuery({ queryKey: ["workbenchMapLayers"],   queryFn: () => base44.entities.WorkbenchMapLayers.list(), initialData: [] });
 
   // ── Map workspace collection ────────────────────────────────────────────────
   const [mapWorkspaces, setMapWorkspaces] = useState([{ id: newMapId() }]);
@@ -191,7 +191,7 @@ export default function PlanningWorkbench() {
     await toggleMapLayerMutation.mutateAsync({ linkId, isEnabled });
   }, [toggleMapLayerMutation]);
 
-  const isLoading = weeksLoading || assignmentsLoading;
+  const isLoading = false; // Always have fallback data
 
   // ── Resizable right panel ────────────────────────────────────────────────────
   const [panelWidth, setPanelWidth] = useState(288); // px, ~w-72
