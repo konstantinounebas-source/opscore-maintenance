@@ -123,15 +123,16 @@ const HAS_BAY_COLORS = {
 
 // Generic palette for dynamic string fields (municipality, phase, shelter_type, order_year)
 const GENERIC_PALETTE = ["#6366F1","#EC4899","#F59E0B","#10B981","#3B82F6","#EF4444","#8B5CF6","#06B6D4","#F97316","#84CC16","#14B8A6","#A78BFA"];
-const _genericMaps = {};
+
+// Deterministic: hash the value string to get a stable color index
+function hashStr(s) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
 function getGenericColor(field, value) {
   if (!value) return "#94A3B8";
-  if (!_genericMaps[field]) _genericMaps[field] = {};
-  if (!_genericMaps[field][value]) {
-    const idx = Object.keys(_genericMaps[field]).length % GENERIC_PALETTE.length;
-    _genericMaps[field][value] = GENERIC_PALETTE[idx];
-  }
-  return _genericMaps[field][value];
+  return GENERIC_PALETTE[hashStr(String(value)) % GENERIC_PALETTE.length];
 }
 
 const ASSIGNMENT_STATUS_COLORS = {

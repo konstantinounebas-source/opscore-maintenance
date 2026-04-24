@@ -62,7 +62,7 @@ export default function WorkbenchMap({
         isSelected: a.id === selectedAssetId,
       };
     }),
-    [assets, assignmentByAsset, colorMode, layers, layerAssets, incidentsByAsset, workOrdersByAsset, selectedAssetId, activeVisualRule]
+    [assets, assignmentByAsset, colorMode, layers, layerAssets, incidentsByAsset, workOrdersByAsset, selectedAssetId, activeVisualRule, colorRules]
   );
 
   const fitKey = useMemo(() => assets.map(a => a.id).join(","), [assets]);
