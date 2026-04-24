@@ -462,12 +462,24 @@ export function getLegendEntries(colorMode, layers, assets, assignments, inciden
 export const EMPTY_MAP_FILTERS = {
   search: "",
   city: "",
+  municipality: "",
   shelter_type: "",
+  ordered_shelter_type: "",
+  installed_shelter_type: "",
   asset_status: "",
   assignment_status: "",
   assignment_type: "",
   priority_bucket: "",
   team_name: "",
+  order_year: "",
+  delivery_year: "",
+  inspection_status: "",
+  category: "",
+  asset_stage: "",
+  asset_source: "",
+  existing_condition: "",
+  has_bay: "",
+  phase: "",
   show_unassigned_only: false,
   has_incident: false,
   has_work_order: false,
@@ -490,8 +502,20 @@ export function applyMapFilters(assets, filters, assignmentByAssetId, incidentsB
       ) return false;
     }
     if (f.city && a.city !== f.city) return false;
+    if (f.municipality && a.municipality !== f.municipality) return false;
     if (f.shelter_type && a.shelter_type !== f.shelter_type) return false;
+    if (f.ordered_shelter_type && a.ordered_shelter_type !== f.ordered_shelter_type) return false;
+    if (f.installed_shelter_type && a.installed_shelter_type !== f.installed_shelter_type) return false;
     if (f.asset_status && a.status !== f.asset_status) return false;
+    if (f.order_year && String(a.order_year) !== f.order_year) return false;
+    if (f.delivery_year && String(a.delivery_year) !== f.delivery_year) return false;
+    if (f.inspection_status && a.inspection_status !== f.inspection_status) return false;
+    if (f.category && a.category !== f.category) return false;
+    if (f.asset_stage && a.asset_stage !== f.asset_stage) return false;
+    if (f.asset_source && a.asset_source !== f.asset_source) return false;
+    if (f.existing_condition && a.existing_condition !== f.existing_condition) return false;
+    if (f.has_bay && a.has_bay !== f.has_bay) return false;
+    if (f.phase && a.phase !== f.phase) return false;
 
     const asgn = assignmentByAssetId[a.id];
     if (f.show_unassigned_only && asgn) return false;
