@@ -301,7 +301,7 @@ export function getMapPinColor({ asset, assignment, colorMode, layers, layerAsse
 
 // ─── Legend entries per color mode ────────────────────────────────────────────
 
-export function getLegendEntries(colorMode, layers, assets, assignments, incidentsByAsset, workOrdersByAsset, layerAssets, activeVisualRule, colorRules) {
+export function getLegendEntries(colorMode, layers, assets, assignments, incidentsByAsset, workOrdersByAsset, layerAssets, activeVisualRule, colorRules, assignmentByAssetId) {
   // Helper to count assets matching a label
   function countMatches(label, mode) {
     return assets.filter(a => {
@@ -343,20 +343,20 @@ export function getLegendEntries(colorMode, layers, assets, assignments, inciden
 
   switch (colorMode) {
     case "assignment_status":
-      return Object.entries(ASSIGNMENT_STATUS_COLORS).map(([label, color]) => ({ label, color }))
-        .concat([{ label: "Unassigned", color: "#CBD5E1" }]);
+      return Object.entries(ASSIGNMENT_STATUS_COLORS).map(([label, color]) => ({ label, color, count: countMatches(label, "assignment_status") }))
+        .concat([{ label: "Unassigned", color: "#CBD5E1", count: assets.filter(a => !assignmentByAssetId[a.id]).length }]);
 
     case "assignment_type":
-      return Object.entries(ASSIGNMENT_TYPE_COLORS).map(([label, color]) => ({ label, color }))
-        .concat([{ label: "Unassigned", color: "#CBD5E1" }]);
+      return Object.entries(ASSIGNMENT_TYPE_COLORS).map(([label, color]) => ({ label, color, count: countMatches(label, "assignment_type") }))
+        .concat([{ label: "Unassigned", color: "#CBD5E1", count: assets.filter(a => !assignmentByAssetId[a.id]).length }]);
 
     case "priority":
       return [
-        { label: "P1 / Critical", color: "#EF4444" },
-        { label: "P2 / High",     color: "#F97316" },
-        { label: "Medium",        color: "#3B82F6" },
-        { label: "Low",           color: "#84CC16" },
-        { label: "Unassigned",    color: "#CBD5E1" },
+        { label: "P1 / Critical", color: "#EF4444", count: assets.filter(a => assignmentByAssetId[a.id]?.priority_bucket === "P1" || assignmentByAssetId[a.id]?.priority_bucket === "Critical").length },
+        { label: "P2 / High",     color: "#F97316", count: assets.filter(a => assignmentByAssetId[a.id]?.priority_bucket === "P2" || assignmentByAssetId[a.id]?.priority_bucket === "High").length },
+        { label: "Medium",        color: "#3B82F6", count: assets.filter(a => assignmentByAssetId[a.id]?.priority_bucket === "Medium").length },
+        { label: "Low",           color: "#84CC16", count: assets.filter(a => assignmentByAssetId[a.id]?.priority_bucket === "Low").length },
+        { label: "Unassigned",    color: "#CBD5E1", count: assets.filter(a => !assignmentByAssetId[a.id]).length },
       ];
 
     case "asset_status":
@@ -416,20 +416,20 @@ export function getLegendEntries(colorMode, layers, assets, assignments, inciden
 
     case "assigned_state":
       return [
-        { label: "Assigned",   color: "#6366F1" },
-        { label: "Unassigned", color: "#CBD5E1" },
+        { label: "Assigned",   color: "#6366F1", count: assets.filter(a => assignmentByAssetId[a.id]).length },
+        { label: "Unassigned", color: "#CBD5E1", count: assets.filter(a => !assignmentByAssetId[a.id]).length },
       ];
 
     case "incident_presence":
       return [
-        { label: "Has Incidents",    color: "#EF4444" },
-        { label: "No Incidents",     color: "#94A3B8" },
+        { label: "Has Incidents",    color: "#EF4444", count: assets.filter(a => incidentsByAsset[a.id]?.length > 0).length },
+        { label: "No Incidents",     color: "#94A3B8", count: assets.filter(a => !incidentsByAsset[a.id]?.length).length },
       ];
 
     case "work_order_presence":
       return [
-        { label: "Has Work Orders",  color: "#F59E0B" },
-        { label: "No Work Orders",   color: "#94A3B8" },
+        { label: "Has Work Orders",  color: "#F59E0B", count: assets.filter(a => workOrdersByAsset[a.id]?.length > 0).length },
+        { label: "No Work Orders",   color: "#94A3B8", count: assets.filter(a => !workOrdersByAsset[a.id]?.length).length },
       ];
 
     case "layer": {
@@ -441,7 +441,7 @@ export function getLegendEntries(colorMode, layers, assets, assignments, inciden
 
     case "city": {
       const cities = [...new Set(assets.map(a => a.city).filter(Boolean))];
-      return cities.map(c => ({ label: c, color: getCityColor(c) }));
+      return cities.map(c => ({ label: c, color: getCityColor(c), count: countMatches(c, "city") }));
     }
 
     default:
