@@ -93,7 +93,6 @@ export default function AssetActionDrawer({
 
   const TABS = [
     { id: "details", label: "Asset" },
-    { id: "assign", label: "Assign" },
     { id: "incidents", label: `Incidents ${assetIncidents.length ? `(${assetIncidents.length})` : ""}` },
     { id: "workorders", label: `Work Orders ${assetWOs.length ? `(${assetWOs.length})` : ""}` },
     { id: "layers", label: "Layers" },
@@ -136,169 +135,90 @@ export default function AssetActionDrawer({
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
 
-        {/* ── DETAILS TAB ───────────────────────────────── */}
-        {tab === "details" && (
-          <div className="space-y-3">
-            <Section label="Asset Details">
-              <Row label="ID" value={asset.asset_id} />
-              <Row label="Category" value={asset.category} />
-              <Row label="Type" value={asset.asset_type} />
-              <Row label="Status" value={asset.status} />
-              <Row label="City" value={asset.city} />
-              <Row label="Municipality" value={asset.municipality} />
-              <Row label="Shelter Type" value={asset.shelter_type} />
-              <Row label="Address" value={asset.location_address} />
-            </Section>
 
-            {assignment && (
-              <Section label="Current Assignment">
-                <Row label="Week" value={weeks.find(w => w.id === assignment.planning_week_id)?.week_name || assignment.planning_week_id} />
-                <Row label="Status" value={assignment.assignment_status} />
-                <Row label="Type" value={assignment.assignment_type} />
-                <Row label="Priority" value={assignment.priority_bucket} />
-                <Row label="Team" value={assignment.team_name} />
-                <Row label="Assigned To" value={assignment.assigned_to} />
-              </Section>
-            )}
-          </div>
-        )}
 
-        {/* ── ASSIGN TAB ───────────────────────────────── */}
-         {tab === "assign" && (
+        {/* ── ASSET INFO TAB (consolidated) ───────────────── */}
+         {tab === "details" && (
            <div className="space-y-3">
-             {/* Asset + Incident header */}
-             <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3 space-y-1.5">
-               <div className="text-xs font-semibold text-slate-700">{asset.asset_id}</div>
-               <div className="text-[10px] text-slate-500">{asset.city} · {asset.shelter_type}</div>
-               {assetIncidents.length > 0 && (
-                 <div className="text-[10px] text-red-600 font-medium mt-1">
-                   {assetIncidents.length} incident{assetIncidents.length > 1 ? "s" : ""} linked
+             {/* Quick Assign Card */}
+             <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3 space-y-2">
+               <div className="text-xs font-semibold text-slate-700">Quick Assign</div>
+               <div className="grid grid-cols-2 gap-2">
+                 <div>
+                   <Label className="text-[10px]">Type</Label>
+                   <Select value={form.assignment_type || "__none__"} onValueChange={v => set("assignment_type", v === "__none__" ? "" : v)}>
+                     <SelectTrigger className="mt-1 text-xs h-7"><SelectValue placeholder="Type..." /></SelectTrigger>
+                     <SelectContent style={{ zIndex: 99999 }}>
+                       <SelectItem value="__none__">— Type —</SelectItem>
+                       {typeOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                     </SelectContent>
+                   </Select>
                  </div>
-               )}
+                 <div>
+                   <Label className="text-[10px]">Week</Label>
+                   <Popover>
+                     <PopoverTrigger asChild>
+                       <button className="mt-1 w-full flex items-center justify-between border border-input rounded-md px-2 h-7 text-xs bg-white hover:bg-slate-50 transition-colors text-left">
+                         {form.planning_week_id ? (
+                           <span className="text-slate-700 text-xs">
+                             {weeks.find(w => w.id === form.planning_week_id)?.week_code || "—"}
+                           </span>
+                         ) : (
+                           <span className="text-slate-400 text-xs">Select...</span>
+                         )}
+                         <ChevronDown className="h-3 w-3 text-slate-400 shrink-0" />
+                       </button>
+                     </PopoverTrigger>
+                     <PopoverContent className="p-0 w-auto" style={{ zIndex: 99999 }} align="start">
+                       <Calendar
+                         mode="single"
+                         onSelect={(date) => {
+                           if (!date) return;
+                           const matched = weeks.find(w => {
+                             if (!w.start_date || !w.end_date) return false;
+                             return isWithinInterval(date, { start: parseISO(w.start_date), end: parseISO(w.end_date) });
+                           });
+                           if (matched) set("planning_week_id", matched.id);
+                         }}
+                         initialFocus
+                       />
+                     </PopoverContent>
+                   </Popover>
+                 </div>
+               </div>
+               <Button
+                 className="w-full bg-indigo-600 hover:bg-indigo-700 h-7 text-xs"
+                 onClick={handleSave}
+                 disabled={saving || !form.planning_week_id}
+               >
+                 {saving ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                 {saving ? "Saving..." : assignment ? "Update" : "Assign"}
+               </Button>
              </div>
 
-             {/* Assignment Type & Planning Week */}
-             <div className="grid grid-cols-2 gap-2">
-               <div>
-                 <Label className="text-xs font-semibold">Assignment Type</Label>
-                 <Select value={form.assignment_type || "__none__"} onValueChange={v => set("assignment_type", v === "__none__" ? "" : v)}>
-                   <SelectTrigger className="mt-1 text-xs h-8"><SelectValue placeholder="Type..." /></SelectTrigger>
-                   <SelectContent style={{ zIndex: 99999 }}>
-                     <SelectItem value="__none__">— Type —</SelectItem>
-                     {typeOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                   </SelectContent>
-                 </Select>
-               </div>
-               <div>
-                 <Label className="text-xs font-semibold">Planning Week</Label>
-                 <Popover>
-                   <PopoverTrigger asChild>
-                     <button className="mt-1 w-full flex items-center justify-between border border-input rounded-md px-2.5 h-8 text-xs bg-white hover:bg-slate-50 transition-colors text-left">
-                       {form.planning_week_id ? (
-                         <span className="text-slate-700">
-                           {weeks.find(w => w.id === form.planning_week_id)?.week_code || "—"}
-                         </span>
-                       ) : (
-                         <span className="text-slate-400">Select...</span>
-                       )}
-                       <ChevronDown className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                     </button>
-                   </PopoverTrigger>
-                   <PopoverContent className="p-0 w-auto" style={{ zIndex: 99999 }} align="start">
-                     <div className="p-3 border-b border-slate-100">
-                       <p className="text-xs text-slate-500">Select any date — the matching planning week will be chosen.</p>
-                     </div>
-                     <Calendar
-                       mode="single"
-                       onSelect={(date) => {
-                         if (!date) return;
-                         const matched = weeks.find(w => {
-                           if (!w.start_date || !w.end_date) return false;
-                           return isWithinInterval(date, { start: parseISO(w.start_date), end: parseISO(w.end_date) });
-                         });
-                         if (matched) set("planning_week_id", matched.id);
-                       }}
-                       initialFocus
-                     />
-                   </PopoverContent>
-                 </Popover>
-               </div>
-             </div>
+             {/* Asset Details */}
+             <Section label="Asset Details">
+               <Row label="ID" value={asset.asset_id} />
+               <Row label="Category" value={asset.category} />
+               <Row label="Type" value={asset.asset_type} />
+               <Row label="Status" value={asset.status} />
+               <Row label="City" value={asset.city} />
+               <Row label="Municipality" value={asset.municipality} />
+               <Row label="Shelter Type" value={asset.shelter_type} />
+               <Row label="Address" value={asset.location_address} />
+             </Section>
 
-             {/* Status & Priority */}
-             <div className="grid grid-cols-2 gap-2">
-               <div>
-                 <Label className="text-xs">Status</Label>
-                 <Select value={form.assignment_status} onValueChange={v => set("assignment_status", v)}>
-                   <SelectTrigger className="mt-1 text-xs h-8"><SelectValue /></SelectTrigger>
-                   <SelectContent style={{ zIndex: 99999 }}>
-                     {(statusOptions.length ? statusOptions : ["Planned","In Progress","Completed","Deferred","Cancelled"]).map(s => (
-                       <SelectItem key={s} value={s}>{s}</SelectItem>
-                     ))}
-                   </SelectContent>
-                 </Select>
-               </div>
-               <div>
-                 <Label className="text-xs">Priority</Label>
-                 <Select value={form.priority_bucket || "__auto__"} onValueChange={v => set("priority_bucket", v === "__auto__" ? "" : v)}>
-                   <SelectTrigger className="mt-1 text-xs h-8"><SelectValue placeholder="Auto" /></SelectTrigger>
-                   <SelectContent style={{ zIndex: 99999 }}>
-                     <SelectItem value="__auto__">Auto from incident</SelectItem>
-                     {PRIORITY_OPTIONS.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                   </SelectContent>
-                 </Select>
-               </div>
-             </div>
-
-             {/* Team & Assignment */}
-             <div className="grid grid-cols-2 gap-2">
-               <div>
-                 <Label className="text-xs">Assigned To</Label>
-                 <Input value={form.assigned_to} onChange={e => set("assigned_to", e.target.value)} className="mt-1 h-8 text-xs" placeholder="Technician..." />
-               </div>
-               <div>
-                 <Label className="text-xs">Team</Label>
-                 <Input value={form.team_name} onChange={e => set("team_name", e.target.value)} className="mt-1 h-8 text-xs" placeholder="Team..." />
-               </div>
-             </div>
-
-             {/* Route Zone */}
-             <div>
-               <Label className="text-xs">Route Zone</Label>
-               <Input value={form.route_zone} onChange={e => set("route_zone", e.target.value)} className="mt-1 h-8 text-xs" placeholder="Zone A..." />
-             </div>
-
-             {/* Notes */}
-             <div>
-               <Label className="text-xs">Notes</Label>
-               <Textarea value={form.notes} onChange={e => set("notes", e.target.value)} className="mt-1 text-xs" rows={2} placeholder="Notes..." />
-             </div>
-
-             {/* Link Incident */}
-             {assetIncidents.length > 0 && (
-               <div>
-                 <Label className="text-xs">Link Incident</Label>
-                 <Select value={form.source_incident_id || "__none__"} onValueChange={v => set("source_incident_id", v === "__none__" ? "" : v)}>
-                   <SelectTrigger className="mt-1 text-xs h-8"><SelectValue placeholder="None" /></SelectTrigger>
-                   <SelectContent style={{ zIndex: 99999 }}>
-                     <SelectItem value="__none__">None</SelectItem>
-                     {assetIncidents.map(i => (
-                       <SelectItem key={i.id} value={i.id}>{i.incident_id} – {i.title}</SelectItem>
-                     ))}
-                   </SelectContent>
-                 </Select>
-               </div>
+             {/* Current Assignment */}
+             {assignment && (
+               <Section label="Current Assignment">
+                 <Row label="Week" value={weeks.find(w => w.id === assignment.planning_week_id)?.week_name || assignment.planning_week_id} />
+                 <Row label="Status" value={assignment.assignment_status} />
+                 <Row label="Type" value={assignment.assignment_type} />
+                 <Row label="Priority" value={assignment.priority_bucket} />
+                 <Row label="Team" value={assignment.team_name} />
+                 <Row label="Assigned To" value={assignment.assigned_to} />
+               </Section>
              )}
-
-             {/* Save Button */}
-             <Button
-               className="w-full bg-indigo-600 hover:bg-indigo-700 h-8 text-xs"
-               onClick={handleSave}
-               disabled={saving || !form.planning_week_id}
-             >
-               {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
-               {saving ? "Saving..." : assignment ? "Update Assignment" : "Create Assignment"}
-             </Button>
            </div>
          )}
 
