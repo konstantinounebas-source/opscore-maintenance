@@ -57,7 +57,7 @@ export default function MultiSelectFilter({
       </button>
 
       {open && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-input rounded-md shadow-lg z-50 max-w-xs">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-input rounded-md shadow-lg z-[9999] max-w-xs" style={{ zIndex: 9999 }}>
           <div className="p-2 border-b border-slate-100">
             <Input
               autoFocus
