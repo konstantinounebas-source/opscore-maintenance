@@ -35,12 +35,10 @@ export default function MultiSelectFilter({
     onChange(newSelected);
   };
 
-  const handleSelectAll = () => {
-    onChange(options);
-  };
+  const allSelected = selected.length === options.length && options.length > 0;
 
-  const handleSelectNone = () => {
-    onChange([]);
+  const handleSelectAll = () => {
+    onChange(allSelected ? [] : options);
   };
 
   const displayText = selected.length === 0 
@@ -77,8 +75,7 @@ export default function MultiSelectFilter({
           style={{ 
             top: `${position.top}px`, 
             left: `${position.left}px`,
-            width: `${position.width}px`,
-            minWidth: '200px'
+            width: `${position.width}px`
           }}
           onClick={(e) => e.stopPropagation()}
         >
@@ -92,24 +89,15 @@ export default function MultiSelectFilter({
             />
           </div>
 
-          <div className="flex gap-1 p-2 border-b border-slate-100">
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-6 text-[10px] flex-1"
-              onClick={handleSelectAll}
-            >
-              All
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-6 text-[10px] flex-1"
-              onClick={handleSelectNone}
-            >
-              None
-            </Button>
-          </div>
+          <label className="flex items-center gap-2 px-2 py-2 border-b border-slate-100 cursor-pointer hover:bg-slate-50">
+            <input
+              type="checkbox"
+              checked={allSelected}
+              onChange={handleSelectAll}
+              className="w-3 h-3 shrink-0"
+            />
+            <span className="text-xs text-slate-700 font-medium">Select all</span>
+          </label>
 
           <div className="max-h-48 overflow-y-auto p-1 space-y-1">
             {filteredOptions.length === 0 ? (
