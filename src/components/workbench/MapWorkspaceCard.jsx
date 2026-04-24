@@ -8,6 +8,7 @@ import VisualLayerManager from "./VisualLayerManager";
 import WorkbenchMap from "./WorkbenchMap";
 import AssetActionDrawer from "./AssetActionDrawer";
 import { EMPTY_MAP_FILTERS, applyMapFilters, getLegendEntries } from "./workbenchUtils";
+import MapViewSaveLoad from "./MapViewSaveLoad";
 
 export default function MapWorkspaceCard({
   mapId,
@@ -46,6 +47,13 @@ export default function MapWorkspaceCard({
     setColorMode(mode);
     setColorOverrides({});
     setHiddenValues(new Set());
+  };
+
+  const handleLoadView = ({ colorMode: cm, colorOverrides: co, hiddenValues: hv, filters: f }) => {
+    setColorMode(cm);
+    setColorOverrides(co);
+    setHiddenValues(hv);
+    setFilters(f);
   };
   const [visibleLayerIds, setVisibleLayerIds] = useState([]);
   const [activeVisualRule, setActiveVisualRule] = useState(null);
@@ -195,6 +203,13 @@ export default function MapWorkspaceCard({
             </button>
           </div>
           <div className="flex items-center gap-1 shrink-0">
+            <MapViewSaveLoad
+              colorMode={colorMode}
+              colorOverrides={colorOverrides}
+              hiddenValues={hiddenValues}
+              filters={filters}
+              onLoad={handleLoadView}
+            />
             <button onClick={resetMap} title="Reset map" className="p-1 text-slate-400 hover:text-slate-600 rounded hover:bg-slate-100">
               <RotateCcw className="h-3.5 w-3.5" />
             </button>
