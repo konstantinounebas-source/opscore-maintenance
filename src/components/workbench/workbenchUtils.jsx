@@ -513,6 +513,7 @@ export const EMPTY_MAP_FILTERS = {
   has_bay: "",
   phase: "",
   planned_week: "",
+  asset_id: "",
   show_unassigned_only: false,
   has_incident: false,
   has_work_order: false,
@@ -593,6 +594,11 @@ export function applyMapFilters(assets, filters, assignmentByAssetId, incidentsB
         const weekIds = plannedWeekValues.filter(v => v !== "Unassigned").map(code => weeks.find(w => w.week_code === code)?.id).filter(Boolean);
         const matches = (hasRegular && asgn && weekIds.includes(asgn.planning_week_id)) || (hasUnassigned && !asgn);
         if (!matches) return false;
+      }
+
+      const assetIdValues = parseMultiSelect(f.asset_id);
+      if (assetIdValues.length > 0) {
+        if (!assetIdValues.includes(a.asset_id)) return false;
       }
 
       // Single-value filters (kept for backward compat)
