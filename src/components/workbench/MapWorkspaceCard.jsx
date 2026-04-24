@@ -111,6 +111,15 @@ export default function MapWorkspaceCard({
               <label className="flex items-center gap-1 cursor-pointer text-[11px] text-slate-500 hover:text-slate-700 select-none whitespace-nowrap">
                 <input
                   type="checkbox"
+                  checked={!filters.is_ordered && !filters.is_implementation_phase && !filters.has_work_order && !filters.show_unassigned_only}
+                  onChange={e => { if (e.target.checked) setFilters(f => ({ ...f, is_ordered: false, is_implementation_phase: false, has_work_order: false, show_unassigned_only: false })); }}
+                  className="rounded w-3 h-3"
+                />
+                All
+              </label>
+              <label className="flex items-center gap-1 cursor-pointer text-[11px] text-slate-500 hover:text-slate-700 select-none whitespace-nowrap">
+                <input
+                  type="checkbox"
                   checked={filters.is_ordered}
                   onChange={e => setFilters(f => ({ ...f, is_ordered: e.target.checked }))}
                   className="rounded w-3 h-3"
