@@ -4,7 +4,7 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json();
-    const batchSize = body.batchSize || 50;
+    const batchSize = body.batchSize || 200;
     const offset = body.offset || 0;
     
     // Get all assets and filter only those NOT active
