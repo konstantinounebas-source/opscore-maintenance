@@ -45,7 +45,7 @@ export default function MapLegend({ entries, onColorOverride, onHiddenChange, hi
       {open && (
         <div className="px-2.5 pb-2 space-y-1 max-h-56 overflow-y-auto">
           {entries.map((e, i) => {
-            const isHidden = hiddenValues?.has(e.label);
+            const isHidden = hiddenValues instanceof Set ? hiddenValues.has(e.label) : Array.isArray(hiddenValues) ? hiddenValues.includes(e.label) : false;
             return (
               <div key={i} className={`flex items-center gap-2 group ${isHidden ? "opacity-40" : ""}`}>
                 <ColorPicker

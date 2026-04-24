@@ -58,7 +58,7 @@ export default function MapWorkspaceCard({
   const handleLoadView = ({ colorMode: cm, colorOverrides: co, hiddenValues: hv, filters: f }) => {
     setColorMode(cm);
     setColorOverrides(co);
-    setHiddenValues(hv);
+    setHiddenValues(hv instanceof Set ? hv : new Set(hv || []));
     setFilters(f);
   };
   const [visibleLayerIds, setVisibleLayerIds] = useState([]);
