@@ -122,7 +122,7 @@ export default function MapFilterBar({ filters, onChange, assets, weeks = [] }) 
             <div>
               <p className="text-[10px] text-slate-400 font-medium mb-0.5 uppercase tracking-wide">City</p>
               <MultiSelectFilter
-                options={cities}
+                options={["Unassigned", ...cities]}
                 values={getValues("city")}
                 onChange={(v) => set("city", v)}
                 placeholder="All cities"
@@ -133,7 +133,7 @@ export default function MapFilterBar({ filters, onChange, assets, weeks = [] }) 
             <div>
               <p className="text-[10px] text-slate-400 font-medium mb-0.5 uppercase tracking-wide">Order Year</p>
               <MultiSelectFilter
-                options={orderYears.map(String)}
+                options={["Unassigned", ...orderYears.map(String)]}
                 values={getValues("order_year")}
                 onChange={(v) => set("order_year", v)}
                 placeholder="All years"
@@ -144,7 +144,7 @@ export default function MapFilterBar({ filters, onChange, assets, weeks = [] }) 
             <div>
               <p className="text-[10px] text-slate-400 font-medium mb-0.5 uppercase tracking-wide">Type Ordered</p>
               <MultiSelectFilter
-                options={orderedTypes}
+                options={["Unassigned", ...orderedTypes]}
                 values={getValues("ordered_shelter_type")}
                 onChange={(v) => set("ordered_shelter_type", v)}
                 placeholder="All"
@@ -155,7 +155,7 @@ export default function MapFilterBar({ filters, onChange, assets, weeks = [] }) 
             <div>
               <p className="text-[10px] text-slate-400 font-medium mb-0.5 uppercase tracking-wide">Type Installed</p>
               <MultiSelectFilter
-                options={installedTypes}
+                options={["Unassigned", ...installedTypes]}
                 values={getValues("installed_shelter_type")}
                 onChange={(v) => set("installed_shelter_type", v)}
                 placeholder="All"
@@ -166,7 +166,7 @@ export default function MapFilterBar({ filters, onChange, assets, weeks = [] }) 
             <div>
               <p className="text-[10px] text-slate-400 font-medium mb-0.5 uppercase tracking-wide">Planned Week</p>
               <MultiSelectFilter
-                options={planningWeeks}
+                options={["Unassigned", ...planningWeeks]}
                 values={getValues("planned_week")}
                 onChange={(v) => set("planned_week", v)}
                 placeholder="All weeks"
@@ -177,7 +177,7 @@ export default function MapFilterBar({ filters, onChange, assets, weeks = [] }) 
             <div>
               <p className="text-[10px] text-slate-400 font-medium mb-0.5 uppercase tracking-wide">Inspection</p>
               <MultiSelectFilter
-                options={inspectionStatuses}
+                options={["Unassigned", ...inspectionStatuses]}
                 values={getValues("inspection_status")}
                 onChange={(v) => set("inspection_status", v)}
                 placeholder="All"

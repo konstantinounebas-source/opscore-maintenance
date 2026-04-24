@@ -546,19 +546,44 @@ export function applyMapFilters(assets, filters, assignmentByAssetId, incidentsB
 
       // Multi-select filters (OR logic within each filter)
       const cityValues = parseMultiSelect(f.city);
-      if (cityValues.length > 0 && !cityValues.includes(a.city)) return false;
+      if (cityValues.length > 0) {
+        const hasUnassigned = cityValues.includes("Unassigned");
+        const hasRegular = cityValues.some(v => v !== "Unassigned");
+        const matches = (hasRegular && cityValues.includes(a.city)) || (hasUnassigned && !a.city);
+        if (!matches) return false;
+      }
 
       const orderYearValues = parseMultiSelect(f.order_year);
-      if (orderYearValues.length > 0 && !orderYearValues.includes(String(a.order_year))) return false;
+      if (orderYearValues.length > 0) {
+        const hasUnassigned = orderYearValues.includes("Unassigned");
+        const hasRegular = orderYearValues.some(v => v !== "Unassigned");
+        const matches = (hasRegular && orderYearValues.includes(String(a.order_year))) || (hasUnassigned && !a.order_year);
+        if (!matches) return false;
+      }
 
       const orderedTypeValues = parseMultiSelect(f.ordered_shelter_type);
-      if (orderedTypeValues.length > 0 && !orderedTypeValues.includes(a.ordered_shelter_type)) return false;
+      if (orderedTypeValues.length > 0) {
+        const hasUnassigned = orderedTypeValues.includes("Unassigned");
+        const hasRegular = orderedTypeValues.some(v => v !== "Unassigned");
+        const matches = (hasRegular && orderedTypeValues.includes(a.ordered_shelter_type)) || (hasUnassigned && !a.ordered_shelter_type);
+        if (!matches) return false;
+      }
 
       const installedTypeValues = parseMultiSelect(f.installed_shelter_type);
-      if (installedTypeValues.length > 0 && !installedTypeValues.includes(a.installed_shelter_type)) return false;
+      if (installedTypeValues.length > 0) {
+        const hasUnassigned = installedTypeValues.includes("Unassigned");
+        const hasRegular = installedTypeValues.some(v => v !== "Unassigned");
+        const matches = (hasRegular && installedTypeValues.includes(a.installed_shelter_type)) || (hasUnassigned && !a.installed_shelter_type);
+        if (!matches) return false;
+      }
 
       const inspectionValues = parseMultiSelect(f.inspection_status);
-      if (inspectionValues.length > 0 && !inspectionValues.includes(a.inspection_status)) return false;
+      if (inspectionValues.length > 0) {
+        const hasUnassigned = inspectionValues.includes("Unassigned");
+        const hasRegular = inspectionValues.some(v => v !== "Unassigned");
+        const matches = (hasRegular && inspectionValues.includes(a.inspection_status)) || (hasUnassigned && !a.inspection_status);
+        if (!matches) return false;
+      }
 
       const plannedWeekValues = parseMultiSelect(f.planned_week);
       if (plannedWeekValues.length > 0) {
