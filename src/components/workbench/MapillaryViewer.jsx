@@ -1,6 +1,7 @@
 import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { X } from "lucide-react";
+import { X, ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function MapillaryViewer({ asset, isOpen, onClose }) {
   if (!asset?.latitude || !asset?.longitude) {
@@ -9,26 +10,39 @@ export default function MapillaryViewer({ asset, isOpen, onClose }) {
 
   const mapillaryUrl = `https://www.mapillary.com/app/?lat=${asset.latitude}&lng=${asset.longitude}&z=17&focus=photo`;
 
+  const handleOpenMapillary = () => {
+    window.open(mapillaryUrl, "_blank", "width=1200,height=800");
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-full max-w-5xl max-h-[90vh] p-0 border-0 bg-black">
-        <div className="relative w-full h-[80vh] bg-black">
-          <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-black/70 to-transparent p-4 flex items-center justify-between">
-            <DialogTitle className="text-white text-lg">{asset.asset_id} - Street View</DialogTitle>
-            <button
-              onClick={onClose}
-              className="text-white hover:bg-white/20 rounded p-1"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
+      <DialogContent className="w-full max-w-md">
+        <DialogHeader className="flex items-center justify-between">
+          <DialogTitle>{asset.asset_id} - Street View</DialogTitle>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+            <X className="h-4 w-4" />
+          </button>
+        </DialogHeader>
 
-          <iframe
-            src={mapillaryUrl}
-            className="w-full h-full border-0"
-            title={`Mapillary Street View - ${asset.asset_id}`}
-            allowFullScreen
-          />
+        <div className="space-y-4 py-4">
+          <div className="text-sm text-slate-600">
+            <p className="font-medium mb-2">Coordinates:</p>
+            <p className="text-xs font-mono text-slate-500">
+              {asset.latitude.toFixed(6)}, {asset.longitude.toFixed(6)}
+            </p>
+          </div>
+          
+          <p className="text-sm text-slate-600">
+            Δες τη θέση του περιουσιακού στοιχείου από το δρόμο χρησιμοποιώντας τις εικόνες Mapillary.
+          </p>
+
+          <Button
+            onClick={handleOpenMapillary}
+            className="w-full bg-indigo-600 hover:bg-indigo-700 gap-2"
+          >
+            <ExternalLink className="h-4 w-4" />
+            Άνοιγμα Mapillary
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
