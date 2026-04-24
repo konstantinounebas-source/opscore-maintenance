@@ -203,7 +203,10 @@ export default function MapWorkspaceCard({
         {/* Asset count footer */}
         <div className="px-3 py-1.5 border-t border-slate-100 bg-slate-50 shrink-0">
           <span className="text-[10px] text-slate-400">
-            {filteredAssets.length} of {allAssets.length} assets shown
+            {filteredAssets.filter(a => a.latitude && a.longitude).length} σημεία στον χάρτη
+            {filteredAssets.length !== allAssets.length && (
+              <span className="ml-1 text-slate-300">· {filteredAssets.length} of {allAssets.length} assets</span>
+            )}
             {selectedAsset && <span className="ml-2 text-indigo-500 font-medium">· {selectedAsset.asset_id} selected</span>}
           </span>
         </div>
