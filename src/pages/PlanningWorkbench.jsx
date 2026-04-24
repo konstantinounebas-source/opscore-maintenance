@@ -339,13 +339,12 @@ export default function PlanningWorkbench() {
               assetsMap={assetsMap}
               incidentsByAsset={incidentsByAsset}
               workOrdersByAsset={workOrdersByAsset}
+              onZoomToAsset={(asset) => {
+                setZoomToAsset(asset);
+              }}
               onSelectAssetForPopup={(asset) => {
                 setSelectedAsset(asset);
                 setPopupPos({ x: 50, y: 50 });
-              }}
-              onOpenAssignmentModal={(asset, assignment) => {
-                setAssigningAsset(asset);
-                setAssignmentModalOpen(true);
               }}
             />
           )}

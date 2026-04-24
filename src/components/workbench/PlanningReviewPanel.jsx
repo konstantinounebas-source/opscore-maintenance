@@ -42,8 +42,8 @@ export default function PlanningReviewPanel({
   assetsMap, 
   incidentsByAsset, 
   workOrdersByAsset,
-  onSelectAssetForPopup,
-  onOpenAssignmentModal
+  onZoomToAsset,
+  onSelectAssetForPopup
 }) {
   // ── Panel-local state — NEVER shared with maps ─────────────────────────────
   const [weekSearch, setWeekSearch] = useState("");
@@ -392,16 +392,16 @@ export default function PlanningReviewPanel({
                                   </div>
                                   <div className="flex items-center gap-1 shrink-0">
                                     <button
-                                      onClick={(e) => { e.stopPropagation(); onSelectAssetForPopup?.(asset); }}
+                                      onClick={(e) => { e.stopPropagation(); onZoomToAsset?.(asset); }}
                                       className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-white rounded transition-colors"
-                                      title="View asset"
+                                      title="Zoom to location"
                                     >
                                       <MapPin className="h-3.5 w-3.5" />
                                     </button>
                                     <button
-                                      onClick={(e) => { e.stopPropagation(); onOpenAssignmentModal?.(asset, a); }}
+                                      onClick={(e) => { e.stopPropagation(); onSelectAssetForPopup?.(asset); }}
                                       className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-white rounded transition-colors"
-                                      title="Assign"
+                                      title="Edit assignment"
                                     >
                                       <Edit3 className="h-3.5 w-3.5" />
                                     </button>
