@@ -23,6 +23,16 @@ export default function AssetPopup({
   
   const assignedWeek = assignment ? weeks.find(w => w.id === assignment.planning_week_id) : null;
   const assignedType = assignment ? planningTypes.find(pt => pt.id === assignment.planning_type_id) : null;
+
+  // Debug logging
+  console.log("AssetPopup Debug:", {
+    asset: { id: asset?.id, asset_id: asset?.asset_id },
+    assignment: assignment,
+    planning_week_id: assignment?.planning_week_id,
+    weeks_count: weeks?.length,
+    assignedWeek: assignedWeek,
+    all_weeks: weeks,
+  });
   
   const filteredWeeks = planningTypeId 
     ? (weeks || []).filter(w => w.planning_type_id === planningTypeId)
