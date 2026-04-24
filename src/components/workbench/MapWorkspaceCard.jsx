@@ -240,6 +240,9 @@ export default function MapWorkspaceCard({
               filters={filters}
               onLoad={handleLoadView}
             />
+            <button onClick={resetMap} title="Reset map" className="p-1 text-slate-400 hover:text-slate-600 rounded hover:bg-slate-100">
+              <RotateCcw className="h-3.5 w-3.5" />
+            </button>
             {totalMaps > 1 && (
               <button onClick={() => onRemove(mapId)} title="Close map" className="p-1 text-slate-400 hover:text-red-500 rounded hover:bg-red-50">
                 <X className="h-3.5 w-3.5" />
