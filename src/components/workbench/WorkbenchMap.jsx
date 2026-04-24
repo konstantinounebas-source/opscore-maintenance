@@ -20,11 +20,11 @@ function FitBounds({ points, fitKey, zoomToAsset, onZoomCompleted }) {
   }, [fitKey, points.length]);
 
   useEffect(() => {
-    if (zoomToAsset && zoomToAsset.latitude && zoomToAsset.longitude) {
-      map.setView([zoomToAsset.latitude, zoomToAsset.longitude], 16);
-      onZoomCompleted?.();
-    }
-  }, [zoomToAsset, map, onZoomCompleted]);
+     if (zoomToAsset?.latitude && zoomToAsset?.longitude) {
+       map.setView([zoomToAsset.latitude, zoomToAsset.longitude], 16);
+       onZoomCompleted?.();
+     }
+   }, [zoomToAsset, map, onZoomCompleted]);
 
   return null;
 }
