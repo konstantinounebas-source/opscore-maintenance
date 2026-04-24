@@ -6,6 +6,7 @@ import { Loader2, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import MapWorkspaceContainer from "@/components/workbench/MapWorkspaceContainer";
 import PlanningReviewPanel from "@/components/workbench/PlanningReviewPanel";
+import AssetPopup from "@/components/workbench/AssetPopup";
 import { computePinColor, computePriorityBucket } from "@/components/planning/planningUtils";
 import PlanningWeekModal from "@/components/planning/PlanningWeekModal";
 
@@ -346,6 +347,24 @@ export default function PlanningWorkbench() {
           )}
         </div>
       </div>
+
+      {/* Asset Popup */}
+      {selectedAsset && popupPos && (
+        <AssetPopup
+          asset={selectedAsset}
+          popupPos={popupPos}
+          assignment={allAssignments.find(a => a.asset_id === selectedAsset.id) || null}
+          incidents={incidents || []}
+          workOrders={workOrders || []}
+          weeks={weeks || []}
+          planningTypes={planningTypes || []}
+          onClose={() => {
+            setSelectedAsset(null);
+            setPopupPos(null);
+          }}
+          onSaveAssignment={handleSaveAssignment}
+        />
+      )}
 
       {/* Week modal */}
       <PlanningWeekModal
