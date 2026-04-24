@@ -1,0 +1,117 @@
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { X, Loader2, AlertCircle, Wrench } from "lucide-react";
+
+export default function AssetPopup({
+  asset,
+  assignment,
+  incidents,
+  workOrders,
+  weeks,
+  onClose,
+  onSaveAssignment,
+}) {
+  const [assignmentType, setAssignmentType] = useState(assignment?.assignment_type || "");
+  const [weekId, setWeekId] = useState(assignment?.planning_week_id || "");
+  const [saving, setSaving] = useState(false);
+
+  const assetIncidents = incidents.filter(i => i.related_asset_id === asset?.id) || [];
+  const assetWorkOrders = workOrders.filter(w => w.related_asset_id === asset?.id) || [];
+
+  const handleAssign = async () => {
+    if (!weekId) return;
+    setSaving(true);
+    await onSaveAssignment({
+      assignment_type: assignmentType,
+      planning_week_id: weekId,
+      asset_id: asset.id,
+    }, assignment?.id);
+    setSaving(false);
+  };
+
+  if (!asset) return null;
+
+  return (
+    <div className="absolute bg-white border border-slate-300 rounded-lg shadow-xl p-4 z-50 w-80 max-w-sm">
+      {/* Header */}
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex-1">
+          <div className="font-bold text-sm text-slate-800">{asset.asset_id}</div>
+          <div className="text-xs text-slate-500 mt-0.5">{asset.shelter_type}</div>
+        </div>
+        <button onClick={onClose} className="text-slate-400 hover:text-slate-600 shrink-0">
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+
+      {/* Asset Info */}
+      <div className="space-y-2 mb-4 pb-3 border-b border-slate-100">
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-slate-500">Status:</span>
+          <span className="font-medium text-slate-700">{asset.status || "—"}</span>
+        </div>
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-slate-500">Type:</span>
+          <span className="font-medium text-slate-700">{asset.asset_type || "—"}</span>
+        </div>
+        {assetIncidents.length > 0 && (
+          <div className="flex items-center gap-1 text-xs text-red-600">
+            <AlertCircle className="h-3 w-3" />
+            <span>{assetIncidents.length} incident{assetIncidents.length !== 1 ? "s" : ""}</span>
+          </div>
+        )}
+        {assetWorkOrders.length > 0 && (
+          <div className="flex items-center gap-1 text-xs text-orange-600">
+            <Wrench className="h-3 w-3" />
+            <span>{assetWorkOrders.length} work order{assetWorkOrders.length !== 1 ? "s" : ""}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Assignment Form */}
+      <div className="space-y-2">
+        <div>
+          <label className="text-[10px] font-semibold text-slate-600">Assignment Type</label>
+          <Select value={assignmentType} onValueChange={setAssignmentType}>
+            <SelectTrigger className="mt-1 text-xs h-7">
+              <SelectValue placeholder="Select type..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Inspection">Inspection</SelectItem>
+              <SelectItem value="Preventive">Preventive</SelectItem>
+              <SelectItem value="Corrective">Corrective</SelectItem>
+              <SelectItem value="Review">Review</SelectItem>
+              <SelectItem value="Mixed">Mixed</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <label className="text-[10px] font-semibold text-slate-600">Planning Week</label>
+          <Select value={weekId} onValueChange={setWeekId}>
+            <SelectTrigger className="mt-1 text-xs h-7">
+              <SelectValue placeholder="Select week..." />
+            </SelectTrigger>
+            <SelectContent>
+              {weeks.map(w => (
+                <SelectItem key={w.id} value={w.id}>
+                  {w.week_code} - {w.week_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <Button
+          className="w-full bg-indigo-600 hover:bg-indigo-700 h-7 text-xs"
+          onClick={handleAssign}
+          disabled={saving || !weekId}
+        >
+          {saving ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+          {saving ? "Saving..." : assignment ? "Update" : "Assign"}
+        </Button>
+      </div>
+    </div>
+  );
+}

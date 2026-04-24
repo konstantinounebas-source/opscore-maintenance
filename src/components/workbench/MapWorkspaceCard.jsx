@@ -9,6 +9,7 @@ import WorkbenchMap from "./WorkbenchMap";
 
 import { EMPTY_MAP_FILTERS, applyMapFilters, getLegendEntries } from "./workbenchUtils";
 import MapViewSaveLoad from "./MapViewSaveLoad";
+import AssetPopup from "./AssetPopup";
 
 export default function MapWorkspaceCard({
   mapId,
@@ -58,6 +59,7 @@ export default function MapWorkspaceCard({
   const [visibleLayerIds, setVisibleLayerIds] = useState([]);
   const [activeVisualRule, setActiveVisualRule] = useState(null);
   const [selectedAsset, setSelectedAsset] = useState(null);
+  const [popupPos, setPopupPos] = useState(null);
   const [showLayers, setShowLayers] = useState(false);
   const [colorOverrides, setColorOverrides] = useState({}); // label -> hex
   const [hiddenValues, setHiddenValues] = useState(new Set());
@@ -78,6 +80,7 @@ export default function MapWorkspaceCard({
     setVisibleLayerIds([]);
     setActiveVisualRule(null);
     setSelectedAsset(null);
+    setPopupPos(null);
     setColorOverrides({});
     setHiddenValues(new Set());
   };
@@ -250,28 +253,51 @@ export default function MapWorkspaceCard({
         )}
 
         {/* Map canvas — fills remaining space */}
-        <div className="relative overflow-hidden p-1.5" style={{ flex: "1 1 0", minHeight: 0, height: 0 }}>
-          <WorkbenchMap
-            assets={visibleAssets}
-            allAssignments={allAssignments}
-            selectedAssetId={selectedAsset?.id}
-            onSelectAsset={setSelectedAsset}
-            colorMode={colorMode}
-            layers={layers}
-            layerAssets={layerAssets}
-            incidentsByAsset={incidentsByAsset}
-            workOrdersByAsset={workOrdersByAsset}
-            activeVisualRule={activeVisualRule}
-            colorRules={colorRules}
-            colorOverrides={colorOverrides}
-          />
-          <MapLegend
-            entries={legendEntries}
-            onColorOverride={handleColorOverride}
-            onHiddenChange={setHiddenValues}
-            hiddenValues={hiddenValues}
-          />
-        </div>
+         <div className="relative overflow-hidden p-1.5" style={{ flex: "1 1 0", minHeight: 0, height: 0 }}>
+           <WorkbenchMap
+             assets={visibleAssets}
+             allAssignments={allAssignments}
+             selectedAssetId={selectedAsset?.id}
+             onSelectAsset={(asset, e) => {
+               setSelectedAsset(asset);
+               if (e && e.clientX && e.clientY) {
+                 setPopupPos({ x: e.clientX, y: e.clientY });
+               }
+             }}
+             colorMode={colorMode}
+             layers={layers}
+             layerAssets={layerAssets}
+             incidentsByAsset={incidentsByAsset}
+             workOrdersByAsset={workOrdersByAsset}
+             activeVisualRule={activeVisualRule}
+             colorRules={colorRules}
+             colorOverrides={colorOverrides}
+           />
+           <MapLegend
+             entries={legendEntries}
+             onColorOverride={handleColorOverride}
+             onHiddenChange={setHiddenValues}
+             hiddenValues={hiddenValues}
+           />
+
+           {/* Asset Popup */}
+           {selectedAsset && popupPos && (
+             <div style={{ position: 'absolute', left: `${popupPos.x}px`, top: `${popupPos.y}px` }}>
+               <AssetPopup
+                 asset={selectedAsset}
+                 assignment={assignmentByAssetId[selectedAsset.id] || null}
+                 incidents={incidents}
+                 workOrders={workOrders}
+                 weeks={weeks}
+                 onClose={() => {
+                   setSelectedAsset(null);
+                   setPopupPos(null);
+                 }}
+                 onSaveAssignment={onSaveAssignment}
+               />
+             </div>
+           )}
+         </div>
 
         {/* Asset count footer */}
         <div className="px-3 py-1.5 border-t border-slate-100 bg-slate-50 shrink-0">
