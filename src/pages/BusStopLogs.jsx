@@ -64,8 +64,12 @@ export default function BusStopLogs() {
       const newLog = await base44.entities.StationLog.create({
         asset_id: assetId,
         current_stage: 1,
-        current_status: "Waiting",
-        can_move_forward: false,
+        current_status: "In Progress",
+        can_move_forward: true,
+        next_action: "Complete Order + Location",
+        planning_status: "Not Scheduled",
+        blocking_summary: [],
+        pending_summary: [],
       });
       return newLog;
     },
