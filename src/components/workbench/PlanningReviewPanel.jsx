@@ -45,6 +45,7 @@ export default function PlanningReviewPanel({ weeks, allAssignments, assetsMap, 
   const [assignmentStatusFilter, setAssignmentStatusFilter] = useState("__all__");
   const [weeksDropdownOpen, setWeeksDropdownOpen] = useState(false);
   const [weekFilterSearch, setWeekFilterSearch] = useState("");
+  const [expandedWeekIds, setExpandedWeekIds] = useState(new Set());
 
   // Fetch planning types from API
   const { data: planningTypes = [] } = useQuery({
@@ -259,33 +260,67 @@ export default function PlanningReviewPanel({ weeks, allAssignments, assetsMap, 
         ) : (
           selectedWeekIds.size > 0 && weeks.filter(w => selectedWeekIds.has(w.id)).map(week => {
             const weekCount = allAssignments.filter(a => a.planning_week_id === week.id).length;
+            const isExpanded = expandedWeekIds.has(week.id);
+            const wa = allAssignments.filter(a => a.planning_week_id === week.id);
+            const weekAssignmentsByType = {};
+            wa.forEach(a => {
+              const type = a.assignment_type || "Other";
+              weekAssignmentsByType[type] = (weekAssignmentsByType[type] || 0) + 1;
+            });
 
             return (
               <div key={week.id}>
-                <div className="px-4 py-3 border-b border-slate-100 bg-indigo-50 border-l-2 border-l-indigo-400">
+                <button
+                  onClick={() => {
+                    const newSet = new Set(expandedWeekIds);
+                    if (newSet.has(week.id)) {
+                      newSet.delete(week.id);
+                    } else {
+                      newSet.add(week.id);
+                    }
+                    setExpandedWeekIds(newSet);
+                  }}
+                  className="w-full px-4 py-3 border-b border-slate-100 bg-indigo-50 border-l-2 border-l-indigo-400 hover:bg-indigo-100 transition-colors text-left"
+                >
                   <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <ChevronDown className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
-                      <span className="text-xs font-bold text-slate-700">{week.week_code}</span>
-                      {week.is_active && <span className="text-[9px] bg-emerald-500 text-white px-1.5 py-0.5 rounded-full font-bold">ACTIVE</span>}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <ChevronRight className={`h-3.5 w-3.5 text-indigo-500 shrink-0 transition-transform ${isExpanded ? "rotate-90" : ""}`} />
+                        <span className="text-xs font-bold text-slate-700">{week.week_code}</span>
+                        {week.is_active && <span className="text-[9px] bg-emerald-500 text-white px-1.5 py-0.5 rounded-full font-bold">ACTIVE</span>}
+                      </div>
+                      <p className="text-xs text-slate-500 ml-5 truncate">{week.week_name}</p>
+                      <p className="text-[10px] text-slate-400 ml-5">
+                        {week.start_date && (() => { try { return format(new Date(week.start_date), "MMM d"); } catch { return ""; } })()}
+                        {" – "}
+                        {week.end_date && (() => { try { return format(new Date(week.end_date), "MMM d, yyyy"); } catch { return ""; } })()}
+                      </p>
                     </div>
-                    <p className="text-xs text-slate-500 ml-5 truncate">{week.week_name}</p>
-                    <p className="text-[10px] text-slate-400 ml-5">
-                      {week.start_date && (() => { try { return format(new Date(week.start_date), "MMM d"); } catch { return ""; } })()}
-                      {" – "}
-                      {week.end_date && (() => { try { return format(new Date(week.end_date), "MMM d, yyyy"); } catch { return ""; } })()}
-                    </p>
+                    <div className="flex flex-col items-end gap-1 shrink-0">
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded-full border font-medium ${WEEK_STATUS_COLORS[week.status] || WEEK_STATUS_COLORS.Draft}`}>
+                        {week.status}
+                      </span>
+                      {!isExpanded && (
+                        <span className="text-[10px] text-slate-400">{weekCount} assigned</span>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex flex-col items-end gap-1 shrink-0">
-                    <span className={`text-[9px] px-1.5 py-0.5 rounded-full border font-medium ${WEEK_STATUS_COLORS[week.status] || WEEK_STATUS_COLORS.Draft}`}>
-                      {week.status}
-                    </span>
-                    <span className="text-[10px] text-slate-400">{weekCount} assigned</span>
-                  </div>
-                  </div>
+                </button>
 
-                  {/* Show KPIs when week selected */}
+                {/* Collapsed view - show count by type */}
+                {!isExpanded && (
+                  <div className="px-4 py-2 bg-indigo-50/50 border-b border-slate-100 flex flex-wrap gap-2">
+                    {Object.entries(weekAssignmentsByType).map(([type, count]) => (
+                      <div key={type} className="text-center text-xs">
+                        <div className="font-semibold text-slate-700">{count}</div>
+                        <div className="text-[9px] text-slate-500">{type}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Expanded view - show full details */}
+                {isExpanded && (
                   <div className="bg-indigo-50/30 border-b border-slate-200">
                   {/* KPI row */}
                   {kpis && (
@@ -380,7 +415,7 @@ export default function PlanningReviewPanel({ weeks, allAssignments, assetsMap, 
                     })}
                   </div>
                   </div>
-                  </div>
+                  )}
                   </div>
                   );
                   })
