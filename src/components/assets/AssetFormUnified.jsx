@@ -210,7 +210,6 @@ export default function AssetFormUnified({ open, onOpenChange, onSave, asset }) 
 
   const validate = () => {
     const e = {};
-    if (!form.active_shelter_id?.trim()) e.active_shelter_id = true;
     if (!form.city) e.city = true;
     setErrors(e);
     return Object.keys(e).length === 0;
