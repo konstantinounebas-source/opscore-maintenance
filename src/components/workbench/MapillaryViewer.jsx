@@ -8,7 +8,7 @@ export default function MapillaryViewer({ asset, isOpen, onClose }) {
     return null;
   }
 
-  const streetViewUrl = `https://www.google.com/maps/@${asset.latitude},${asset.longitude},3a,75y,0h,90t`;
+  const streetViewUrl = `https://www.google.com/maps/place/@${asset.latitude},${asset.longitude},3a,75y,0h,90t`;
 
   const handleOpenStreetView = () => {
     window.open(streetViewUrl, "_blank", "width=1200,height=800");
