@@ -22,7 +22,10 @@ export default function AssetPopup({
   
   // Debug logging
   useEffect(() => {
-    console.log("AssetPopup DEBUG:", { assetId: asset?.id, incidents: incidents?.length, workOrders: workOrders?.length, assetIncidents: assetIncidents.length, assetWorkOrders: assetWorkOrders.length });
+    console.log("AssetPopup - Raw incidents:", incidents);
+    console.log("AssetPopup - Raw workOrders:", workOrders);
+    console.log("AssetPopup - Filtered incidents:", assetIncidents);
+    console.log("AssetPopup - Filtered workOrders:", assetWorkOrders);
   }, [asset?.id, incidents, workOrders, assetIncidents, assetWorkOrders]);
   
   const filteredWeeks = planningTypeId 
