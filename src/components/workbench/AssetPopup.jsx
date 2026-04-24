@@ -82,7 +82,7 @@ export default function AssetPopup({
         <div className="flex items-center gap-1">
           <button 
             onClick={(e) => { e.stopPropagation(); onZoomToAsset?.(asset); }} 
-            className="p-1 text-slate-400 hover:text-indigo-600 rounded"
+            className="p-1 text-slate-400 hover:text-indigo-600 rounded hover:bg-indigo-50"
             title="Zoom to location"
           >
             <MapPin className="h-4 w-4" />

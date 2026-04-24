@@ -38,6 +38,7 @@ export default function MapWorkspaceContainer({
   onRemoveFromLayer,
   zoomToAsset,
   onZoomCompleted,
+  onTriggerZoom,
 }) {
   const count = mapWorkspaces.length;
   const canAdd = count < 4;
@@ -93,6 +94,7 @@ export default function MapWorkspaceContainer({
                 onRemoveFromLayer={onRemoveFromLayer}
                 zoomToAsset={zoomToAsset}
                 onZoomCompleted={onZoomCompleted}
+                onTriggerZoom={onTriggerZoom}
               />
           );
         })}

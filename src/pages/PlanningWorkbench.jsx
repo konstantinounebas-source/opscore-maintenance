@@ -302,9 +302,8 @@ export default function PlanningWorkbench() {
            onAddToLayer={handleAddToLayer}
            onRemoveFromLayer={handleRemoveFromLayer}
            zoomToAsset={zoomToAsset}
-           onZoomCompleted={() => {
-             setZoomToAsset(null);
-           }}
+           onZoomCompleted={() => setZoomToAsset(null)}
+           onTriggerZoom={(asset) => setZoomToAsset(asset)}
           />
         </div>
 

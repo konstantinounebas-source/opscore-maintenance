@@ -42,7 +42,8 @@ export default function MapWorkspaceCard({
   onAddToLayer,
   onRemoveFromLayer,
   zoomToAsset,
-  onZoomCompleted
+  onZoomCompleted,
+  onTriggerZoom
 }) {
   // ── Per-map isolated state ─────────────────────────────────────────────────
   const [filters, setFilters] = useState({ ...EMPTY_MAP_FILTERS });
@@ -325,7 +326,7 @@ export default function MapWorkspaceCard({
                setPopupPos(null);
              }}
              onSaveAssignment={onSaveAssignment}
-             onZoomToAsset={zoomToAsset} />
+             onZoomToAsset={onTriggerZoom} />
 
           }
          </div>
