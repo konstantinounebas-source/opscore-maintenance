@@ -285,10 +285,10 @@ export default function MapWorkspaceCard({
                <AssetPopup
                  asset={selectedAsset}
                  assignment={assignmentByAssetId[selectedAsset.id] || null}
-                 incidents={incidents}
-                 workOrders={workOrders}
-                 weeks={weeks}
-                 planningTypes={planningTypes}
+                 incidents={incidents || []}
+                 workOrders={workOrders || []}
+                 weeks={weeks || []}
+                 planningTypes={planningTypes || []}
                  onClose={() => {
                    setSelectedAsset(null);
                    setPopupPos(null);
