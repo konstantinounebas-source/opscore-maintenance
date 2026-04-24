@@ -21,28 +21,10 @@ const MAP_LAYERS = [
     attribution: '&copy; <a href="https://opentopomap.org/">OpenTopoMap</a>',
   },
   {
-    id: "stamen-toner",
-    label: "Stamen Toner",
-    url: "https://tiles.stadiamaps.com/tiles/stamen_toner/{z}/{x}/{y}.png",
-    attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://www.stamen.com/">Stamen Design</a>',
-  },
-  {
-    id: "usgs-topo",
-    label: "USGS Topo",
-    url: "https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}",
-    attribution: '&copy; <a href="https://www.usgs.gov/">USGS</a>',
-  },
-  {
-    id: "cartodb-positron",
+    id: "cartodb-light",
     label: "CartoDB Light",
     url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
-  },
-  {
-    id: "osm-carto",
-    label: "OSM Carto",
-    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   },
 ];
 
