@@ -52,27 +52,34 @@ export function getColorRulePin(asset, assignment, colorRules, layerAssets) {
 // ─── Color Mode Options ────────────────────────────────────────────────────────
 
 export const COLOR_MODES = [
-  { value: "default",            label: "Default (Priority/Status)" },
-  { value: "layer",              label: "By Layer" },
-  // Asset fields
-  { value: "city",               label: "By City" },
-  { value: "municipality",       label: "By Municipality" },
-  { value: "asset_status",       label: "By Asset Status" },
-  { value: "asset_stage",        label: "By Asset Stage" },
-  { value: "asset_source",       label: "By Asset Source" },
-  { value: "shelter_type",       label: "By Shelter Type" },
-  { value: "existing_condition", label: "By Existing Condition" },
-  { value: "has_bay",            label: "By Has Bay" },
-  { value: "phase",              label: "By Phase" },
-  { value: "order_year",         label: "By Order Year" },
+  { value: "default",                label: "Default (Priority/Status)" },
+  { value: "layer",                  label: "By Layer" },
+  // Asset fields — status & stage
+  { value: "asset_status",           label: "By Asset Status" },
+  { value: "asset_stage",            label: "By Asset Stage" },
+  { value: "asset_source",           label: "By Asset Source" },
+  { value: "phase",                  label: "By Phase" },
+  // Shelter types
+  { value: "shelter_type",           label: "By Shelter Type (Current)" },
+  { value: "ordered_shelter_type",   label: "By Ordered Shelter Type" },
+  { value: "installed_shelter_type", label: "By Installed Shelter Type" },
+  // Locations
+  { value: "city",                   label: "By City" },
+  { value: "municipality",           label: "By Municipality" },
+  // Asset conditions
+  { value: "existing_condition",     label: "By Existing Condition" },
+  { value: "has_bay",                label: "By Has Bay" },
+  { value: "inspection_status",      label: "By Inspection Status" },
+  { value: "category",               label: "By Category" },
+  { value: "order_year",             label: "By Order Year" },
   // Assignment fields
-  { value: "assignment_status",  label: "By Assignment Status" },
-  { value: "assignment_type",    label: "By Assignment Type" },
-  { value: "priority",           label: "By Priority" },
-  { value: "assigned_state",     label: "Assigned / Unassigned" },
+  { value: "assignment_status",      label: "By Assignment Status" },
+  { value: "assignment_type",        label: "By Assignment Type" },
+  { value: "priority",               label: "By Priority" },
+  { value: "assigned_state",         label: "Assigned / Unassigned" },
   // Presence
-  { value: "incident_presence",  label: "By Incident Presence" },
-  { value: "work_order_presence","label": "By Work Order Presence" },
+  { value: "incident_presence",      label: "By Incident Presence" },
+  { value: "work_order_presence",    label: "By Work Order Presence" },
 ];
 
 // ─── City palette ─────────────────────────────────────────────────────────────
@@ -231,6 +238,12 @@ export function getMapPinColor({ asset, assignment, colorMode, layers, layerAsse
     case "shelter_type":
       return getGenericColor("shelter_type", asset.shelter_type);
 
+    case "ordered_shelter_type":
+      return getGenericColor("ordered_shelter_type", asset.ordered_shelter_type);
+
+    case "installed_shelter_type":
+      return getGenericColor("installed_shelter_type", asset.installed_shelter_type);
+
     case "existing_condition":
       return EXISTING_CONDITION_COLORS[asset.existing_condition] || "#94A3B8";
 
@@ -337,6 +350,26 @@ export function getLegendEntries(colorMode, layers, assets, assignments, inciden
 
     case "has_bay":
       return Object.entries(HAS_BAY_COLORS).map(([label, color]) => ({ label, color }));
+
+    case "inspection_status": {
+      const statuses = [...new Set(assets.map(a => a.inspection_status).filter(Boolean))].sort();
+      return statuses.map(s => ({ label: s, color: getGenericColor("inspection_status", s) }));
+    }
+
+    case "category": {
+      const categories = [...new Set(assets.map(a => a.category).filter(Boolean))].sort();
+      return categories.map(c => ({ label: c, color: getGenericColor("category", c) }));
+    }
+
+    case "ordered_shelter_type": {
+      const types = [...new Set(assets.map(a => a.ordered_shelter_type).filter(Boolean))].sort();
+      return types.map(t => ({ label: t, color: getGenericColor("ordered_shelter_type", t) }));
+    }
+
+    case "installed_shelter_type": {
+      const types = [...new Set(assets.map(a => a.installed_shelter_type).filter(Boolean))].sort();
+      return types.map(t => ({ label: t, color: getGenericColor("installed_shelter_type", t) }));
+    }
 
     case "municipality": {
       const munis = [...new Set(assets.map(a => a.municipality).filter(Boolean))].sort();

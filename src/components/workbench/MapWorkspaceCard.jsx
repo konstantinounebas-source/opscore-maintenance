@@ -128,6 +128,8 @@ export default function MapWorkspaceCard({
           case "city": return e.label === a.city;
           case "municipality": return e.label === a.municipality;
           case "shelter_type": return e.label === a.shelter_type;
+          case "ordered_shelter_type": return e.label === a.ordered_shelter_type;
+          case "installed_shelter_type": return e.label === a.installed_shelter_type;
           case "phase": return e.label === a.phase;
           case "order_year": return e.label === String(a.order_year);
           case "asset_status": return e.label === a.status;
@@ -135,6 +137,8 @@ export default function MapWorkspaceCard({
           case "asset_source": return e.label === a.asset_source;
           case "existing_condition": return e.label === a.existing_condition;
           case "has_bay": return e.label === a.has_bay;
+          case "inspection_status": return e.label === a.inspection_status;
+          case "category": return e.label === a.category;
           default: return false;
         }
       });
