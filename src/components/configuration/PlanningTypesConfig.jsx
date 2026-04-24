@@ -3,14 +3,20 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Trash2, Pencil, Check, X, ToggleLeft, ToggleRight } from "lucide-react";
+import { Plus, Trash2, Pencil, Check, X, ToggleLeft, ToggleRight, Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function PlanningTypesConfig() {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [editingId, setEditingId] = useState(null);
   const [editData, setEditData] = useState({});
   const [newName, setNewName] = useState("");
   const [newDescription, setNewDescription] = useState("");
+  const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
+  const [selectedTypeId, setSelectedTypeId] = useState(null);
+  const [generateYear, setGenerateYear] = useState(new Date().getFullYear());
 
   const { data: planningTypes = [] } = useQuery({
     queryKey: ["planningTypes"],
@@ -34,6 +40,16 @@ export default function PlanningTypesConfig() {
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.PlanningTypes.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["planningTypes"] }),
+  });
+
+  const generateWeeksMutation = useMutation({
+    mutationFn: (data) => base44.functions.invoke('generatePlanningWeeks', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["planningWeeks"] });
+      toast({ title: "52 weeks generated successfully" });
+      setGenerateDialogOpen(false);
+    },
+    onError: (err) => toast({ title: "Failed to generate weeks", description: err.message, variant: "destructive" }),
   });
 
   const handleAdd = () => {
@@ -69,6 +85,14 @@ export default function PlanningTypesConfig() {
     updateMutation.mutate({
       id: planningType.id,
       data: { is_active: !planningType.is_active },
+    });
+  };
+
+  const handleGenerateWeeks = () => {
+    if (!selectedTypeId) return;
+    generateWeeksMutation.mutate({
+      planning_type_id: selectedTypeId,
+      year: generateYear,
     });
   };
 
@@ -156,6 +180,15 @@ export default function PlanningTypesConfig() {
                   <Button
                     variant="ghost"
                     size="sm"
+                    onClick={() => { setSelectedTypeId(pt.id); setGenerateDialogOpen(true); }}
+                    title="Generate 52 weeks"
+                    className="h-7 px-2 text-xs text-indigo-600 hover:bg-indigo-50"
+                  >
+                    +52w
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => toggleActive(pt)}
                     title={pt.is_active ? "Deactivate" : "Activate"}
                     className="h-7 w-7 p-0"
@@ -187,7 +220,41 @@ export default function PlanningTypesConfig() {
             </div>
           </div>
         ))}
-      </div>
-    </div>
-  );
-}
+        </div>
+
+        {/* Generate 52 Weeks Dialog */}
+        <Dialog open={generateDialogOpen} onOpenChange={setGenerateDialogOpen}>
+         <DialogContent className="sm:max-w-sm">
+           <DialogHeader>
+             <DialogTitle>Generate 52 Planning Weeks</DialogTitle>
+           </DialogHeader>
+           <div className="space-y-4 py-4">
+             <div>
+               <label className="text-xs font-semibold text-slate-700 block mb-1.5">Year</label>
+               <Input
+                 type="number"
+                 value={generateYear}
+                 onChange={e => setGenerateYear(parseInt(e.target.value))}
+                 min={2020}
+                 max={2050}
+                 className="text-sm"
+               />
+               <p className="text-xs text-slate-400 mt-1">52 weeks will be created for {generateYear}</p>
+             </div>
+             <div className="flex gap-2 justify-end pt-2">
+               <Button variant="outline" onClick={() => setGenerateDialogOpen(false)}>Cancel</Button>
+               <Button
+                 className="bg-indigo-600 hover:bg-indigo-700"
+                 onClick={handleGenerateWeeks}
+                 disabled={generateWeeksMutation.isPending}
+               >
+                 {generateWeeksMutation.isPending && <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />}
+                 {generateWeeksMutation.isPending ? "Generating..." : "Generate"}
+               </Button>
+             </div>
+           </div>
+         </DialogContent>
+        </Dialog>
+        </div>
+        );
+        }
