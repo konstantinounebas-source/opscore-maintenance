@@ -128,11 +128,19 @@ export default function Assets() {
   };
 
   const handleSetAllActive = async () => {
-    if (!window.confirm("Set all assets to status 'Active'?")) return;
+    if (!window.confirm("Set all assets to status 'Active'? This will update in batches...")) return;
     setSettingActive(true);
     try {
-      const res = await base44.functions.invoke('setAllAssetsActive', {});
-      toast({ title: "Success", description: res.data.message });
+      let offset = 0;
+      let remaining = 1;
+      while (remaining > 0) {
+        const res = await base44.functions.invoke('bulkUpdateAssetsActive', { offset, batchSize: 10 });
+        remaining = res.data.remaining;
+        offset = res.data.nextOffset;
+        toast({ title: `Updated ${res.data.updatedBatch} assets`, description: `${remaining} remaining...` });
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+      toast({ title: "Complete", description: "All assets set to Active" });
       queryClient.invalidateQueries({ queryKey: ["assets"] });
     } catch (err) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
