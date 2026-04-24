@@ -154,7 +154,13 @@ export default function PlanningReviewPanel({
           <Popover>
             <PopoverTrigger asChild>
               <button className="w-full h-7 px-3 py-1 text-xs border border-input rounded-md bg-white text-slate-600 hover:bg-slate-50 flex items-center justify-between">
-                <span>{selectedPlanningTypeIds.size > 0 ? `${selectedPlanningTypeIds.size} selected` : "Select types..."}</span>
+                <span>
+                  {selectedPlanningTypeIds.size === 1 
+                    ? planningTypes.find(pt => selectedPlanningTypeIds.has(pt.id))?.name 
+                    : selectedPlanningTypeIds.size > 1 
+                    ? `${selectedPlanningTypeIds.size} selected`
+                    : "Select types..."}
+                </span>
                 <ChevronDown className="h-3 w-3 text-slate-400" />
               </button>
             </PopoverTrigger>
