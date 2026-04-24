@@ -312,19 +312,20 @@ export default function MapWorkspaceCard({
 
            {/* Asset Popup */}
            {selectedAsset && popupPos &&
-          <AssetPopup
-            asset={selectedAsset}
-            popupPos={popupPos}
-            assignment={assignmentByAssetId[selectedAsset.id] || null}
-            incidents={incidents || []}
-            workOrders={workOrders || []}
-            weeks={weeks || []}
-            planningTypes={planningTypes || []}
-            onClose={() => {
-              setSelectedAsset(null);
-              setPopupPos(null);
-            }}
-            onSaveAssignment={onSaveAssignment} />
+           <AssetPopup
+             asset={selectedAsset}
+             popupPos={popupPos}
+             assignment={assignmentByAssetId[selectedAsset.id] || null}
+             incidents={incidents || []}
+             workOrders={workOrders || []}
+             weeks={weeks || []}
+             planningTypes={planningTypes || []}
+             onClose={() => {
+               setSelectedAsset(null);
+               setPopupPos(null);
+             }}
+             onSaveAssignment={onSaveAssignment}
+             onZoomToAsset={zoomToAsset} />
 
           }
          </div>
