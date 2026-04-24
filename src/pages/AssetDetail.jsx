@@ -283,6 +283,8 @@ export default function AssetDetail() {
             <Field label="Shelter ID" value={asset.active_shelter_id || asset.asset_code} />
             <Field label="Status"><StatusBadge status={asset.status} /></Field>
             <Field label="Stage" value={asset.asset_stage} />
+            <Field label="Phase" value={asset.phase} />
+            <Field label="Inspection Status" value={asset.inspection_status} />
             <Field label="City" value={asset.city} />
             <Field label="Municipality" value={asset.municipality} />
             <Field label="Location / Address" value={asset.location_address} />
