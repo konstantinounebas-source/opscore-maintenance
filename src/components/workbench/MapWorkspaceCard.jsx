@@ -300,7 +300,7 @@ export default function MapWorkspaceCard({
              hiddenValues={hiddenValues}
              legendEntries={legendEntries}
              zoomToAsset={zoomToAsset}
-             onZoomCompleted={onZoomCompleted}
+             onZoomCompleted={() => onZoomCompleted?.()}
              mapLayer={mapLayer} />
           
            <MapLegend
