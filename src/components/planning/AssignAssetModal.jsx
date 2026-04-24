@@ -208,35 +208,60 @@ export default function AssignAssetModal({
           </div>
         )}
 
-        <Tabs defaultValue="assignment">
-          <TabsList className="w-full">
-            <TabsTrigger value="assignment" className="flex-1 text-xs">Assignment</TabsTrigger>
-            <TabsTrigger value="team" className="flex-1 text-xs">Team & Zone</TabsTrigger>
-            <TabsTrigger value="links" className="flex-1 text-xs">Links</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="assignment" className="space-y-3 pt-3">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-xs">Assignment Type</Label>
-                <Select value={form.assignment_type || "__none__"} onValueChange={v => set("assignment_type", v === "__none__" ? "" : v)}>
-                  <SelectTrigger className="mt-1 text-sm"><SelectValue placeholder="Select type…" /></SelectTrigger>
-                  <SelectContent style={{ zIndex: 99999 }}>
-                    <SelectItem value="__none__">— Select type —</SelectItem>
-                    {typeOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-xs">Status</Label>
-                <Select value={form.assignment_status || "__none__"} onValueChange={v => set("assignment_status", v === "__none__" ? "" : v)}>
-                  <SelectTrigger className="mt-1 text-sm"><SelectValue /></SelectTrigger>
-                  <SelectContent style={{ zIndex: 99999 }}>
-                    {statusOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
+        {/* Type & Week at top before tabs */}
+        <div className="bg-indigo-50 rounded-lg px-4 py-3 space-y-2.5 border border-indigo-100 mb-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs font-semibold">Type</Label>
+              <Select value={form.assignment_type || "__none__"} onValueChange={v => set("assignment_type", v === "__none__" ? "" : v)}>
+                <SelectTrigger className="mt-1.5 text-sm"><SelectValue placeholder="— Type —" /></SelectTrigger>
+                <SelectContent style={{ zIndex: 99999 }}>
+                  <SelectItem value="__none__">— Type —</SelectItem>
+                  {typeOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
+            <div>
+              <Label className="text-xs font-semibold">Planning Week</Label>
+              <Select value={resolvedWeek?.id || "__none__"} onValueChange={v => {
+                if (v === "__new__") {
+                  setWeekCreateOpen(true);
+                } else {
+                  const selected = weeks.find(w => w.id === v);
+                  if (selected) {
+                    // Note: This won't directly update resolvedWeek, 
+                    // but the user should use the week selector in the info box
+                  }
+                }
+              }}>
+                <SelectTrigger className="mt-1.5 text-sm"><SelectValue placeholder="Pick a week…" /></SelectTrigger>
+                <SelectContent style={{ zIndex: 99999 }}>
+                  <SelectItem value="__none__">— Select week —</SelectItem>
+                  {weeks.map(w => <SelectItem key={w.id} value={w.id}>{w.week_code} ({w.week_name})</SelectItem>)}
+                  <SelectItem value="__new__">+ Create new week</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+
+        <Tabs defaultValue="assignment">
+           <TabsList className="w-full">
+             <TabsTrigger value="assignment" className="flex-1 text-xs">Status & Priority</TabsTrigger>
+             <TabsTrigger value="team" className="flex-1 text-xs">Team & Zone</TabsTrigger>
+             <TabsTrigger value="links" className="flex-1 text-xs">Links</TabsTrigger>
+           </TabsList>
+
+           <TabsContent value="assignment" className="space-y-3 pt-3">
+             <div>
+               <Label className="text-xs">Status</Label>
+               <Select value={form.assignment_status || "__none__"} onValueChange={v => set("assignment_status", v === "__none__" ? "" : v)}>
+                 <SelectTrigger className="mt-1 text-sm"><SelectValue /></SelectTrigger>
+                 <SelectContent style={{ zIndex: 99999 }}>
+                   {statusOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                 </SelectContent>
+               </Select>
+             </div>
 
             {/* Priority — drawn from linked incident */}
             <div>
