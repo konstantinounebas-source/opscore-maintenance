@@ -8,10 +8,10 @@ export default function MapillaryViewer({ asset, isOpen, onClose }) {
     return null;
   }
 
-  const mapillaryUrl = `https://www.mapillary.com/app/?lat=${asset.latitude}&lng=${asset.longitude}&z=17&focus=photo`;
+  const googleMapsUrl = `https://maps.google.com/?q=loc:${asset.latitude},${asset.longitude}`;
 
-  const handleOpenMapillary = () => {
-    window.open(mapillaryUrl, "_blank", "width=1200,height=800");
+  const handleOpenStreetView = () => {
+    window.open(googleMapsUrl, "_blank", "width=1200,height=800");
   };
 
   return (
@@ -32,18 +32,16 @@ export default function MapillaryViewer({ asset, isOpen, onClose }) {
             </p>
           </div>
           
-          <div className="rounded-md bg-amber-50 border border-amber-200 p-3">
-            <p className="text-xs text-amber-800">
-              <span className="font-medium">Σημείωση:</span> Το Mapillary απαιτεί σύνδεση. Θα ανοίξει το Mapillary σε νέο παράθυρο. Συνδεθείτε με τον λογαριασμό σας για να δείτε τις εικόνες δρόμου.
-            </p>
-          </div>
+          <p className="text-sm text-slate-600">
+            Δες τη θέση του περιουσιακού στοιχείου από το δρόμο χρησιμοποιώντας το Google Maps Street View.
+          </p>
 
           <Button
-            onClick={handleOpenMapillary}
+            onClick={handleOpenStreetView}
             className="w-full bg-indigo-600 hover:bg-indigo-700 gap-2"
           >
             <ExternalLink className="h-4 w-4" />
-            Άνοιγμα Mapillary
+            Άνοιγμα Google Maps
           </Button>
         </div>
       </DialogContent>
