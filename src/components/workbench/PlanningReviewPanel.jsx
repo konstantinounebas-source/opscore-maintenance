@@ -359,64 +359,6 @@ export default function PlanningReviewPanel({
                 {/* Expanded assignments list */}
                 {isExpanded && (
                   <div className="bg-white border-b border-slate-100">
-                    {wa.filter(a => a.assignment_type === "Inspection").length > 0 && (
-                      <div className="border-b border-slate-100">
-                        <button
-                          onClick={() => {
-                            const inspectionAssignments = wa.filter(a => a.assignment_type === "Inspection");
-                            const newSet = new Set(expandedAssignmentIds);
-                            const key = `${week.id}-inspection`;
-                            if (newSet.has(key)) {
-                              newSet.delete(key);
-                            } else {
-                              newSet.add(key);
-                            }
-                            setExpandedAssignmentIds(newSet);
-                          }}
-                          className="w-full px-4 py-2 text-left hover:bg-slate-50 flex items-center gap-2 border-b border-slate-100"
-                        >
-                          <ChevronRight className={`h-3.5 w-3.5 text-slate-400 transition-transform ${expandedAssignmentIds.has(`${week.id}-inspection`) ? "rotate-90" : ""}`} />
-                          <span className="text-xs font-semibold text-slate-700">Inspection</span>
-                          <span className="text-[9px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded ml-auto">
-                            {wa.filter(a => a.assignment_type === "Inspection").length}
-                          </span>
-                        </button>
-
-                        {expandedAssignmentIds.has(`${week.id}-inspection`) && (
-                          <div className="bg-slate-50">
-                            {wa.filter(a => a.assignment_type === "Inspection").map(a => {
-                              const asset = assetsMap[a.asset_id];
-                              return (
-                                <div key={a.id} className="px-4 py-2 border-b border-slate-100 text-xs flex items-center justify-between gap-2">
-                                  <div className="min-w-0 flex-1">
-                                    <div className="font-medium text-slate-700">{asset?.asset_id || a.asset_id}</div>
-                                    <div className="text-[9px] text-slate-500 truncate">
-                                      {asset?.ordered_shelter_type || "—"}
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center gap-1 shrink-0">
-                                    <button
-                                      onClick={(e) => { e.stopPropagation(); onZoomToAsset?.(asset); }}
-                                      className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-white rounded transition-colors"
-                                      title="Zoom to location"
-                                    >
-                                      <MapPin className="h-3.5 w-3.5" />
-                                    </button>
-                                    <button
-                                      onClick={(e) => { e.stopPropagation(); onSelectAssetForPopup?.(asset); }}
-                                      className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-white rounded transition-colors"
-                                      title="Edit assignment"
-                                    >
-                                      <Edit3 className="h-3.5 w-3.5" />
-                                    </button>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    )}
                   </div>
                 )}
                    </div>
