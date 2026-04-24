@@ -523,57 +523,82 @@ export const EMPTY_MAP_FILTERS = {
 // ─── Apply map filters ─────────────────────────────────────────────────────────
 
 export function applyMapFilters(assets, filters, assignmentByAssetId, incidentsByAsset, workOrdersByAsset, visibleLayerIds, layerAssets, weeks = []) {
-   return assets.filter(a => {
-     const f = filters;
-     if (f.search) {
-       const q = f.search.toLowerCase();
-       if (
-         !a.asset_id?.toLowerCase().includes(q) &&
-         !a.active_shelter_id?.toLowerCase().includes(q) &&
-         !a.location_address?.toLowerCase().includes(q) &&
-         !a.city?.toLowerCase().includes(q)
-       ) return false;
+    const parseMultiSelect = (value) => {
+      if (!value) return [];
+      try {
+        return JSON.parse(value);
+      } catch {
+        return [];
+      }
+    };
+
+    return assets.filter(a => {
+      const f = filters;
+      if (f.search) {
+        const q = f.search.toLowerCase();
+        if (
+          !a.asset_id?.toLowerCase().includes(q) &&
+          !a.active_shelter_id?.toLowerCase().includes(q) &&
+          !a.location_address?.toLowerCase().includes(q) &&
+          !a.city?.toLowerCase().includes(q)
+        ) return false;
+      }
+
+      // Multi-select filters (OR logic within each filter)
+      const cityValues = parseMultiSelect(f.city);
+      if (cityValues.length > 0 && !cityValues.includes(a.city)) return false;
+
+      const orderYearValues = parseMultiSelect(f.order_year);
+      if (orderYearValues.length > 0 && !orderYearValues.includes(String(a.order_year))) return false;
+
+      const orderedTypeValues = parseMultiSelect(f.ordered_shelter_type);
+      if (orderedTypeValues.length > 0 && !orderedTypeValues.includes(a.ordered_shelter_type)) return false;
+
+      const installedTypeValues = parseMultiSelect(f.installed_shelter_type);
+      if (installedTypeValues.length > 0 && !installedTypeValues.includes(a.installed_shelter_type)) return false;
+
+      const inspectionValues = parseMultiSelect(f.inspection_status);
+      if (inspectionValues.length > 0 && !inspectionValues.includes(a.inspection_status)) return false;
+
+      const plannedWeekValues = parseMultiSelect(f.planned_week);
+      if (plannedWeekValues.length > 0) {
+        const asgn = assignmentByAssetId[a.id];
+        const weekCodes = plannedWeekValues;
+        const weekIds = weekCodes.map(code => weeks.find(w => w.week_code === code)?.id).filter(Boolean);
+        if (!asgn || !weekIds.includes(asgn.planning_week_id)) return false;
+      }
+
+      // Single-value filters (kept for backward compat)
+      if (f.municipality && a.municipality !== f.municipality) return false;
+      if (f.shelter_type && a.shelter_type !== f.shelter_type) return false;
+      if (f.asset_status && a.status !== f.asset_status) return false;
+      if (f.delivery_year && String(a.delivery_year) !== f.delivery_year) return false;
+      if (f.category && a.category !== f.category) return false;
+      if (f.asset_stage && a.asset_stage !== f.asset_stage) return false;
+      if (f.asset_source && a.asset_source !== f.asset_source) return false;
+      if (f.existing_condition && a.existing_condition !== f.existing_condition) return false;
+      if (f.has_bay && a.has_bay !== f.has_bay) return false;
+      if (f.phase && a.phase !== f.phase) return false;
+
+     const asgn = assignmentByAssetId[a.id];
+     if (f.show_unassigned_only && asgn) return false;
+     if (f.assignment_status && (!asgn || asgn.assignment_status !== f.assignment_status)) return false;
+     if (f.assignment_type && (!asgn || asgn.assignment_type !== f.assignment_type)) return false;
+     if (f.priority_bucket && (!asgn || asgn.priority_bucket !== f.priority_bucket)) return false;
+     if (f.team_name && (!asgn || asgn.team_name !== f.team_name)) return false;
+     if (f.has_incident && !incidentsByAsset[a.id]?.length) return false;
+     if (f.has_work_order && !workOrdersByAsset[a.id]?.length) return false;
+     if (f.is_ordered && !a.order_year) return false;
+     if (f.is_implementation_phase && a.phase !== "Implementation") return false;
+
+     if (visibleLayerIds && visibleLayerIds.length > 0) {
+       const assetLayerIds = layerAssets.filter(la => la.asset_id === a.id).map(la => la.planning_layer_id);
+       if (!visibleLayerIds.some(id => assetLayerIds.includes(id))) return false;
      }
-     if (f.city && a.city !== f.city) return false;
-     if (f.municipality && a.municipality !== f.municipality) return false;
-     if (f.shelter_type && a.shelter_type !== f.shelter_type) return false;
-     if (f.ordered_shelter_type && a.ordered_shelter_type !== f.ordered_shelter_type) return false;
-     if (f.installed_shelter_type && a.installed_shelter_type !== f.installed_shelter_type) return false;
-     if (f.asset_status && a.status !== f.asset_status) return false;
-     if (f.order_year && String(a.order_year) !== f.order_year) return false;
-     if (f.delivery_year && String(a.delivery_year) !== f.delivery_year) return false;
-     if (f.inspection_status && a.inspection_status !== f.inspection_status) return false;
-     if (f.category && a.category !== f.category) return false;
-     if (f.asset_stage && a.asset_stage !== f.asset_stage) return false;
-     if (f.asset_source && a.asset_source !== f.asset_source) return false;
-     if (f.existing_condition && a.existing_condition !== f.existing_condition) return false;
-     if (f.has_bay && a.has_bay !== f.has_bay) return false;
-     if (f.phase && a.phase !== f.phase) return false;
-     if (f.planned_week) {
-       const asgn = assignmentByAssetId[a.id];
-       const weekId = weeks.find(w => w.week_code === f.planned_week)?.id;
-       if (!asgn || asgn.planning_week_id !== weekId) return false;
-     }
 
-    const asgn = assignmentByAssetId[a.id];
-    if (f.show_unassigned_only && asgn) return false;
-    if (f.assignment_status && (!asgn || asgn.assignment_status !== f.assignment_status)) return false;
-    if (f.assignment_type && (!asgn || asgn.assignment_type !== f.assignment_type)) return false;
-    if (f.priority_bucket && (!asgn || asgn.priority_bucket !== f.priority_bucket)) return false;
-    if (f.team_name && (!asgn || asgn.team_name !== f.team_name)) return false;
-    if (f.has_incident && !incidentsByAsset[a.id]?.length) return false;
-    if (f.has_work_order && !workOrdersByAsset[a.id]?.length) return false;
-    if (f.is_ordered && !a.order_year) return false;
-    if (f.is_implementation_phase && a.phase !== "Implementation") return false;
-
-    if (visibleLayerIds && visibleLayerIds.length > 0) {
-      const assetLayerIds = layerAssets.filter(la => la.asset_id === a.id).map(la => la.planning_layer_id);
-      if (!visibleLayerIds.some(id => assetLayerIds.includes(id))) return false;
-    }
-
-    return true;
-  });
-}
+     return true;
+   });
+ }
 
 // ─── Unique values helpers ─────────────────────────────────────────────────────
 

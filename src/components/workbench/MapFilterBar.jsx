@@ -10,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import MultiSelectFilter from "./MultiSelectFilter";
 
 const ASSIGNMENT_STATUSES = ["Planned", "In Progress", "Completed", "Deferred", "Cancelled"];
 const ASSIGNMENT_TYPES = ["Inspection", "Preventive", "Corrective", "Review", "Mixed"];
@@ -40,7 +41,21 @@ const AVAILABLE_FILTER_FIELDS = {
 export default function MapFilterBar({ filters, onChange, assets, weeks = [] }) {
    const [expanded, setExpanded] = useState(false);
    const [customFields, setCustomFields] = useState(new Set());
-   const set = (k, v) => onChange({ ...filters, [k]: v });
+   const set = (k, v) => {
+     // Handle multi-select arrays — convert to JSON string for storage
+     const value = Array.isArray(v) && v.length > 0 ? JSON.stringify(v) : "";
+     onChange({ ...filters, [k]: value });
+   };
+   const getValues = (k) => {
+     // Parse stored JSON back to array for multi-select
+     const stored = filters[k];
+     if (!stored) return [];
+     try {
+       return JSON.parse(stored);
+     } catch {
+       return [];
+     }
+   };
    const reset = () => onChange({ ...EMPTY_MAP_FILTERS });
    const activeCount = countActiveMapFilters(filters);
    const cities = uniqueCities(assets);
@@ -106,73 +121,67 @@ export default function MapFilterBar({ filters, onChange, assets, weeks = [] }) 
             {/* City (always visible) */}
             <div>
               <p className="text-[10px] text-slate-400 font-medium mb-0.5 uppercase tracking-wide">City</p>
-              <Select value={filters.city || "__all__"} onValueChange={v => set("city", v === "__all__" ? "" : v)}>
-                <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="All cities" /></SelectTrigger>
-                <SelectContent style={{ zIndex: 99999 }}>
-                  <SelectItem value="__all__">All cities</SelectItem>
-                  {cities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <MultiSelectFilter
+                options={cities}
+                values={getValues("city")}
+                onChange={(v) => set("city", v)}
+                placeholder="All cities"
+              />
             </div>
-            
+
             {/* Order Year (always visible) */}
             <div>
               <p className="text-[10px] text-slate-400 font-medium mb-0.5 uppercase tracking-wide">Order Year</p>
-              <Select value={filters.order_year || "__all__"} onValueChange={v => set("order_year", v === "__all__" ? "" : v)}>
-                <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="All years" /></SelectTrigger>
-                <SelectContent style={{ zIndex: 99999 }}>
-                  <SelectItem value="__all__">All years</SelectItem>
-                  {orderYears.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <MultiSelectFilter
+                options={orderYears.map(String)}
+                values={getValues("order_year")}
+                onChange={(v) => set("order_year", v)}
+                placeholder="All years"
+              />
             </div>
-            
+
             {/* Type Ordered (always visible) */}
             <div>
               <p className="text-[10px] text-slate-400 font-medium mb-0.5 uppercase tracking-wide">Type Ordered</p>
-              <Select value={filters.ordered_shelter_type || "__all__"} onValueChange={v => set("ordered_shelter_type", v === "__all__" ? "" : v)}>
-                <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="All" /></SelectTrigger>
-                <SelectContent style={{ zIndex: 99999 }}>
-                  <SelectItem value="__all__">All</SelectItem>
-                  {orderedTypes.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <MultiSelectFilter
+                options={orderedTypes}
+                values={getValues("ordered_shelter_type")}
+                onChange={(v) => set("ordered_shelter_type", v)}
+                placeholder="All"
+              />
             </div>
-            
+
             {/* Type Installed (always visible) */}
             <div>
               <p className="text-[10px] text-slate-400 font-medium mb-0.5 uppercase tracking-wide">Type Installed</p>
-              <Select value={filters.installed_shelter_type || "__all__"} onValueChange={v => set("installed_shelter_type", v === "__all__" ? "" : v)}>
-                <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="All" /></SelectTrigger>
-                <SelectContent style={{ zIndex: 99999 }}>
-                  <SelectItem value="__all__">All</SelectItem>
-                  {installedTypes.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <MultiSelectFilter
+                options={installedTypes}
+                values={getValues("installed_shelter_type")}
+                onChange={(v) => set("installed_shelter_type", v)}
+                placeholder="All"
+              />
             </div>
-            
+
             {/* Planned Week (always visible) */}
             <div>
               <p className="text-[10px] text-slate-400 font-medium mb-0.5 uppercase tracking-wide">Planned Week</p>
-              <Select value={filters.planned_week || "__all__"} onValueChange={v => set("planned_week", v === "__all__" ? "" : v)}>
-                <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="All weeks" /></SelectTrigger>
-                <SelectContent style={{ zIndex: 99999 }}>
-                  <SelectItem value="__all__">All weeks</SelectItem>
-                  {planningWeeks.map(w => <SelectItem key={w} value={w}>{w}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <MultiSelectFilter
+                options={planningWeeks}
+                values={getValues("planned_week")}
+                onChange={(v) => set("planned_week", v)}
+                placeholder="All weeks"
+              />
             </div>
-            
+
             {/* Inspection Status (always visible) */}
             <div>
               <p className="text-[10px] text-slate-400 font-medium mb-0.5 uppercase tracking-wide">Inspection</p>
-              <Select value={filters.inspection_status || "__all__"} onValueChange={v => set("inspection_status", v === "__all__" ? "" : v)}>
-                <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="All" /></SelectTrigger>
-                <SelectContent style={{ zIndex: 99999 }}>
-                  <SelectItem value="__all__">All</SelectItem>
-                  {inspectionStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <MultiSelectFilter
+                options={inspectionStatuses}
+                values={getValues("inspection_status")}
+                onChange={(v) => set("inspection_status", v)}
+                placeholder="All"
+              />
             </div>
 
             {/* Dynamic optional filters */}
