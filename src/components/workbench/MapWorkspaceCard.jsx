@@ -128,29 +128,49 @@ export default function MapWorkspaceCard({
   const visibleAssets = useMemo(() => {
     if (hiddenValues.size === 0) return filteredAssets;
     return filteredAssets.filter(a => {
-      const entry = legendEntries.find(e => {
-        // match asset to legend entry label based on colorMode
-        switch (colorMode) {
-          case "city": return e.label === a.city;
-          case "municipality": return e.label === a.municipality;
-          case "shelter_type": return e.label === a.shelter_type;
-          case "ordered_shelter_type": return e.label === a.ordered_shelter_type;
-          case "installed_shelter_type": return e.label === a.installed_shelter_type;
-          case "phase": return e.label === a.phase;
-          case "order_year": return e.label === String(a.order_year);
-          case "asset_status": return e.label === a.status;
-          case "asset_stage": return e.label === a.asset_stage;
-          case "asset_source": return e.label === a.asset_source;
-          case "existing_condition": return e.label === a.existing_condition;
-          case "has_bay": return e.label === a.has_bay;
-          case "inspection_status": return e.label === a.inspection_status;
-          case "category": return e.label === a.category;
-          default: return false;
-        }
-      });
-      return !entry || !hiddenValues.has(entry.label);
+      const asgn = assignmentByAssetId[a.id];
+      let matchLabel = null;
+      
+      switch (colorMode) {
+        case "city": matchLabel = a.city; break;
+        case "municipality": matchLabel = a.municipality; break;
+        case "shelter_type": matchLabel = a.shelter_type; break;
+        case "ordered_shelter_type": matchLabel = a.ordered_shelter_type; break;
+        case "installed_shelter_type": matchLabel = a.installed_shelter_type; break;
+        case "phase": matchLabel = a.phase; break;
+        case "order_year": matchLabel = String(a.order_year); break;
+        case "asset_status": matchLabel = a.status; break;
+        case "asset_stage": matchLabel = a.asset_stage; break;
+        case "asset_source": matchLabel = a.asset_source; break;
+        case "existing_condition": matchLabel = a.existing_condition; break;
+        case "has_bay": matchLabel = a.has_bay; break;
+        case "inspection_status": matchLabel = a.inspection_status; break;
+        case "category": matchLabel = a.category; break;
+        case "assignment_status": matchLabel = asgn?.assignment_status || "Unassigned"; break;
+        case "assignment_type": matchLabel = asgn?.assignment_type || "Unassigned"; break;
+        case "priority": 
+          if (!asgn) matchLabel = "Unassigned";
+          else if (asgn.priority_bucket === "P1" || asgn.priority_bucket === "Critical") matchLabel = "P1 / Critical";
+          else if (asgn.priority_bucket === "P2" || asgn.priority_bucket === "High") matchLabel = "P2 / High";
+          else matchLabel = asgn.priority_bucket;
+          break;
+        case "assigned_state": matchLabel = asgn ? "Assigned" : "Unassigned"; break;
+        case "incident_presence": matchLabel = incidentsByAsset[a.id]?.length > 0 ? "Has Incidents" : "No Incidents"; break;
+        case "work_order_presence": matchLabel = workOrdersByAsset[a.id]?.length > 0 ? "Has Work Orders" : "No Work Orders"; break;
+        case "planned_week": 
+          if (asgn?.planning_week_id) {
+            const week = weeks.find(w => w.id === asgn.planning_week_id);
+            matchLabel = week ? `${week.week_code} - ${week.week_name}` : asgn.planning_week_id;
+          } else {
+            matchLabel = "Unassigned";
+          }
+          break;
+        default: matchLabel = null;
+      }
+      
+      return !matchLabel || !hiddenValues.has(matchLabel);
     });
-  }, [filteredAssets, hiddenValues, legendEntries, colorMode]);
+  }, [filteredAssets, hiddenValues, colorMode, assignmentByAssetId, incidentsByAsset, workOrdersByAsset, weeks]);
 
   const currentAssignment = selectedAsset ? (assignmentByAssetId[selectedAsset.id] || null) : null;
 
