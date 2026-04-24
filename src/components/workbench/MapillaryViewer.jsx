@@ -8,17 +8,17 @@ export default function MapillaryViewer({ asset, isOpen, onClose }) {
     return null;
   }
 
-  const mapillaryUrl = `https://www.mapillary.com/app/?lat=${asset.latitude}&lng=${asset.longitude}&z=17&focus=photo`;
+  const googleMapsUrl = `https://www.google.com/maps?q=${asset.latitude},${asset.longitude}&z=17`;
 
-  const handleOpenMapillary = () => {
-    window.open(mapillaryUrl, "_blank", "width=1200,height=800");
+  const handleOpenGoogleMaps = () => {
+    window.open(googleMapsUrl, "_blank", "width=1200,height=800");
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-full max-w-md">
         <DialogHeader className="flex items-center justify-between">
-          <DialogTitle>{asset.asset_id} - Street View</DialogTitle>
+          <DialogTitle>{asset.asset_id} - Location Map</DialogTitle>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
             <X className="h-4 w-4" />
           </button>
@@ -31,19 +31,13 @@ export default function MapillaryViewer({ asset, isOpen, onClose }) {
               {asset.latitude.toFixed(6)}, {asset.longitude.toFixed(6)}
             </p>
           </div>
-          
-          <div className="rounded-md bg-amber-50 border border-amber-200 p-3">
-            <p className="text-xs text-amber-800">
-              <span className="font-medium">Σημείωση:</span> Το Mapillary απαιτεί σύνδεση. Θα ανοίξει το Mapillary σε νέο παράθυρο. Συνδεθείτε με τον λογαριασμό σας για να δείτε τις εικόνες δρόμου.
-            </p>
-          </div>
 
           <Button
-            onClick={handleOpenMapillary}
+            onClick={handleOpenGoogleMaps}
             className="w-full bg-indigo-600 hover:bg-indigo-700 gap-2"
           >
             <ExternalLink className="h-4 w-4" />
-            Άνοιγμα Mapillary
+            Άνοιγμα Google Maps
           </Button>
         </div>
       </DialogContent>
