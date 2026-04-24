@@ -438,15 +438,15 @@ export default function MapFilterBar({ filters, onChange, assets, weeks = [] }) 
           </div>
 
           <div className="flex items-center gap-3 pt-1 border-t border-slate-100">
-            <label className="flex items-center gap-1.5 cursor-pointer text-xs text-slate-600">
+            <label className="flex items-center gap-1.5 cursor-pointer text-xs text-slate-600 hidden">
               <input type="checkbox" checked={filters.show_unassigned_only} onChange={(e) => set("show_unassigned_only", e.target.checked)} className="rounded" />
               Unassigned only
             </label>
-            <label className="flex items-center gap-1.5 cursor-pointer text-xs text-slate-600">
+            <label className="flex items-center gap-1.5 cursor-pointer text-xs text-slate-600 hidden">
               <input type="checkbox" checked={filters.has_incident} onChange={(e) => set("has_incident", e.target.checked)} className="rounded" />
               Has incident
             </label>
-            <label className="flex items-center gap-1.5 cursor-pointer text-xs text-slate-600">
+            <label className="flex items-center gap-1.5 cursor-pointer text-xs text-slate-600 hidden">
               <input type="checkbox" checked={filters.has_work_order} onChange={(e) => set("has_work_order", e.target.checked)} className="rounded" />
               Has WO
             </label>
