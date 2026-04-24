@@ -47,7 +47,7 @@ export default function MapWorkspaceCard({
 }) {
   // ── Per-map isolated state ─────────────────────────────────────────────────
   const [filters, setFilters] = useState({ ...EMPTY_MAP_FILTERS });
-  const [colorMode, setColorMode] = useState("default");
+  const [colorMode, setColorMode] = useState("ordered_shelter_type");
 
   const handleColorModeChange = (mode) => {
     setColorMode(mode);
