@@ -18,11 +18,10 @@ const PRIORITIES = ["P1", "P2", "Critical", "High", "Medium", "Low"];
 const ASSET_STATUSES = ["Active", "Inactive", "Under Maintenance", "Decommissioned"];
 
 // Fields always visible in the filter bar
-const ALWAYS_VISIBLE = ["city", "order_year", "ordered_shelter_type", "installed_shelter_type", "planned_week", "inspection_status"];
+const ALWAYS_VISIBLE = ["city", "order_year", "ordered_shelter_type", "installed_shelter_type", "planned_week", "inspection_status", "asset_id"];
 
 // All additional filter fields for "Add Filter" dropdown
 const AVAILABLE_FILTER_FIELDS = {
-  "asset_id": "Asset ID",
   "shelter_type": "Shelter Type",
   "asset_status": "Asset Status",
   "assignment_status": "Assignment Status",
@@ -76,6 +75,7 @@ export default function MapFilterBar({ filters, onChange, assets, weeks = [] }) 
    const municipalities = [...new Set(assets.map(a => a.municipality).filter(Boolean))].sort();
    const phases = [...new Set(assets.map(a => a.phase).filter(Boolean))].sort();
    const planningWeeks = (weeks || []).map(w => w.week_code).filter(Boolean).sort();
+   const assetIds = [...new Set(assets.map(a => a.asset_id).filter(Boolean))].sort();
   
   const addCustomField = (field) => {
     setCustomFields(prev => new Set([...prev, field]));
@@ -175,17 +175,28 @@ export default function MapFilterBar({ filters, onChange, assets, weeks = [] }) 
             </div>
 
             {/* Inspection Status (always visible) */}
-            <div>
-              <p className="text-[10px] text-slate-400 font-medium mb-0.5 uppercase tracking-wide">Inspection</p>
-              <MultiSelectFilter
-                options={["Unassigned", ...inspectionStatuses]}
-                values={getValues("inspection_status")}
-                onChange={(v) => set("inspection_status", v)}
-                placeholder="All"
-              />
-            </div>
+             <div>
+               <p className="text-[10px] text-slate-400 font-medium mb-0.5 uppercase tracking-wide">Inspection</p>
+               <MultiSelectFilter
+                 options={["Unassigned", ...inspectionStatuses]}
+                 values={getValues("inspection_status")}
+                 onChange={(v) => set("inspection_status", v)}
+                 placeholder="All"
+               />
+             </div>
 
-            {/* Dynamic optional filters */}
+             {/* Asset ID (always visible) */}
+             <div>
+               <p className="text-[10px] text-slate-400 font-medium mb-0.5 uppercase tracking-wide">Asset ID</p>
+               <MultiSelectFilter
+                 options={assetIds}
+                 values={getValues("asset_id")}
+                 onChange={(v) => set("asset_id", v)}
+                 placeholder="All assets"
+               />
+             </div>
+
+             {/* Dynamic optional filters */}
             {customFields.has("shelter_type") && (
               <div>
                 <div className="flex items-center justify-between mb-0.5">
@@ -437,22 +448,7 @@ export default function MapFilterBar({ filters, onChange, assets, weeks = [] }) 
               </div>
             )}
 
-            {customFields.has("asset_id") && (
-              <div>
-                <div className="flex items-center justify-between mb-0.5">
-                  <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">Asset ID</p>
-                  <button onClick={() => removeCustomField("asset_id")} className="text-slate-300 hover:text-slate-500">
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-                <Input
-                  value={filters.asset_id || ""}
-                  onChange={e => set("asset_id", e.target.value)}
-                  placeholder="Search asset ID..."
-                  className="h-7 text-xs border-0 shadow-none focus-visible:ring-0 px-1"
-                />
-              </div>
-            )}
+
           </div>
 
           <div className="flex items-center gap-3 pt-1 border-t border-slate-100">
