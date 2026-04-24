@@ -80,6 +80,7 @@ export const COLOR_MODES = [
   // Presence
   { value: "incident_presence",      label: "By Incident Presence" },
   { value: "work_order_presence",    label: "By Work Order Presence" },
+  { value: "planned_week",           label: "By Planned Week" },
 ];
 
 // ─── City palette ─────────────────────────────────────────────────────────────
@@ -277,6 +278,10 @@ export function getMapPinColor({ asset, assignment, colorMode, layers, layerAsse
     case "work_order_presence":
       return (workOrdersByAsset[asset.id]?.length > 0) ? "#F59E0B" : "#94A3B8";
 
+    case "planned_week":
+      if (!assignment) return "#CBD5E1";
+      return getGenericColor("planned_week", assignment.planning_week_id);
+
     case "layer": {
       const assetLayerIds = layerAssets.filter(la => la.asset_id === asset.id).map(la => la.planning_layer_id);
       const matchedLayer = layers.find(l => assetLayerIds.includes(l.id) && l.is_active);
@@ -431,6 +436,29 @@ export function getLegendEntries(colorMode, layers, assets, assignments, inciden
         { label: "Has Work Orders",  color: "#F59E0B", count: assets.filter(a => workOrdersByAsset[a.id]?.length > 0).length },
         { label: "No Work Orders",   color: "#94A3B8", count: assets.filter(a => !workOrdersByAsset[a.id]?.length).length },
       ];
+
+    case "planned_week": {
+      const weekMap = {};
+      assets.forEach(a => {
+        const asgn = assignmentByAssetId[a.id];
+        if (asgn?.planning_week_id) {
+          if (!weekMap[asgn.planning_week_id]) {
+            weekMap[asgn.planning_week_id] = 0;
+          }
+          weekMap[asgn.planning_week_id]++;
+        }
+      });
+      const unassignedCount = assets.filter(a => !assignmentByAssetId[a.id]).length;
+      const entries = Object.entries(weekMap).map(([weekId, count]) => ({
+        label: weekId,
+        color: getGenericColor("planned_week", weekId),
+        count
+      }));
+      if (unassignedCount > 0) {
+        entries.push({ label: "Unassigned", color: "#CBD5E1", count: unassignedCount });
+      }
+      return entries;
+    }
 
     case "layer": {
       const activeLayers = layers.filter(l => l.is_active);
