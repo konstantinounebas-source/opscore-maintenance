@@ -10,6 +10,7 @@ import UnifiedAssetsTable from "@/components/assets/UnifiedAssetsTable";
 import { Button } from "@/components/ui/button";
 import { Box, Activity, Link2, AlertTriangle, Wrench, Plus, Download, Upload } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import ExportAssetsDialog from "@/components/assets/ExportAssetsDialog";
 
 export default function Assets() {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ export default function Assets() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingAsset, setEditingAsset] = useState(null);
   const [importOpen, setImportOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
 
   const { data: assets = [] } = useQuery({ queryKey: ["assets"], queryFn: () => base44.entities.Assets.list() });
   const { data: childAssets = [] } = useQuery({ queryKey: ["childAssets"], queryFn: () => base44.entities.ChildAssets.list() });
@@ -131,22 +133,7 @@ export default function Assets() {
   const assetsWithOpenWO = assets.filter(a => getOpenWorkOrders(a.id) > 0).length;
   const assetsWithChilds = assets.filter(a => getChildCount(a.id) > 0).length;
 
-  const exportCSV = () => {
-    const headers = ["asset_id", "asset_name", "status", "ordered_shelter_type", "location_address", "city", "municipality", "latitude", "longitude", "installation_date", "delivery_date", "notes"];
-    const rows = assets.map(a => [
-      a.asset_id || "",
-      a.asset_name || "", a.status || "",
-      a.ordered_shelter_type || "",
-      a.location_address || "", a.city || "", a.municipality || "",
-      a.latitude || "", a.longitude || "",
-      a.installation_date || "", a.delivery_date || "", a.notes || "",
-    ]);
-    const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = "assets_export.csv"; a.click();
-    URL.revokeObjectURL(url);
-  };
+
 
   return (
     <div>
@@ -157,7 +144,7 @@ export default function Assets() {
             <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setImportOpen(true)}>
               <Upload className="w-3.5 h-3.5" /> Import
             </Button>
-            <Button variant="outline" size="sm" className="gap-1.5" onClick={exportCSV}>
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setExportOpen(true)}>
               <Download className="w-3.5 h-3.5" /> Export
             </Button>
             <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 gap-1.5" onClick={() => { setEditingAsset(null); setFormOpen(true); }}>
@@ -194,6 +181,11 @@ export default function Assets() {
         open={importOpen}
         onOpenChange={setImportOpen}
         onSuccess={() => queryClient.invalidateQueries({ queryKey: ["assets"] })}
+      />
+      <ExportAssetsDialog
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+        assets={assets}
       />
     </div>
   );
