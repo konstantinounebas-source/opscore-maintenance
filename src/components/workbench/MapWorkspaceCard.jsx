@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Maximize2, RotateCcw, ChevronDown, ChevronUp, Layers } from "lucide-react";
+import { X, Maximize2, RotateCcw, ChevronDown, ChevronUp, Layers, Search } from "lucide-react";
 import MapFilterBar from "./MapFilterBar";
 import MapColorModeSelector from "./MapColorModeSelector";
 import MapLegend from "./MapLegend";
@@ -48,6 +48,7 @@ export default function MapWorkspaceCard({
   // ── Per-map isolated state ─────────────────────────────────────────────────
   const [filters, setFilters] = useState({ ...EMPTY_MAP_FILTERS });
   const [colorMode, setColorMode] = useState("default");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleColorModeChange = (mode) => {
     setColorMode(mode);
@@ -90,6 +91,7 @@ export default function MapWorkspaceCard({
     setColorOverrides({});
     setHiddenValues(new Set());
     setMapLayer("openstreetmap");
+    setSearchQuery("");
   };
 
   // ── Derived: filtered assets for this map only ─────────────────────────────
@@ -128,7 +130,7 @@ export default function MapWorkspaceCard({
     return base.map((e) => colorOverrides[e.label] ? { ...e, color: colorOverrides[e.label] } : e);
   }, [colorMode, layers, filteredAssets, allAssignments, incidentsByAsset, workOrdersByAsset, layerAssets, activeVisualRule, colorOverrides, assignmentByAssetId, weeks]);
 
-  // Assets visible on map = filtered - hidden by legend
+  // Assets visible on map = filtered - hidden by legend - search query
   const visibleAssets = useMemo(() => {
     let results = filteredAssets;
     
@@ -179,8 +181,18 @@ export default function MapWorkspaceCard({
       });
     }
     
+    // Apply search filtering
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      results = results.filter((a) => 
+        a.asset_id?.toLowerCase().includes(query) ||
+        a.location_address?.toLowerCase().includes(query) ||
+        a.active_shelter_id?.toLowerCase().includes(query)
+      );
+    }
+    
     return results;
-  }, [filteredAssets, hiddenValues, colorMode, assignmentByAssetId, incidentsByAsset, workOrdersByAsset, weeks]);
+  }, [filteredAssets, hiddenValues, colorMode, assignmentByAssetId, incidentsByAsset, workOrdersByAsset, weeks, searchQuery]);
 
   const currentAssignment = selectedAsset ? assignmentByAssetId[selectedAsset.id] || null : null;
 
@@ -262,8 +274,18 @@ export default function MapWorkspaceCard({
           </div>
         </div>
 
-        {/* Filter bar */}
-        <div className="px-2 py-1.5 border-b border-slate-100 shrink-0">
+        {/* Search and Filter bar */}
+        <div className="px-2 py-1.5 border-b border-slate-100 shrink-0 space-y-1.5">
+          <div className="flex items-center gap-1 px-2 py-1.5 border border-input rounded-md bg-white">
+            <Search className="h-3.5 w-3.5 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search assets..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex-1 text-xs outline-none bg-transparent"
+            />
+          </div>
           <MapFilterBar filters={filters} onChange={setFilters} assets={allAssets} weeks={weeks} />
         </div>
 
