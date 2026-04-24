@@ -222,15 +222,15 @@ export default function MapWorkspaceCard({
                 Has WO
               </label>
             </div>
-            <button
-              onClick={() => setShowLayers((v) => !v)} className="flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors shrink-0 bg-indigo-100 text-indigo-700 hidden">
+            
 
 
-              
-              
-              <Layers className="lucide lucide-layers h-3.5 w-3.5 hidden" />
-              {visibleLayerIds.length > 0 && <span className="font-semibold">{visibleLayerIds.length}</span>}
-            </button>
+
+
+
+
+
+            
           </div>
           <div className="flex items-center gap-1 shrink-0">
             <MapViewSaveLoad
