@@ -10,6 +10,7 @@ import { Plus, Trash2, Pencil, Check, X, GripVertical, ToggleLeft, ToggleRight }
 import WorkflowConfig from "@/components/configuration/WorkflowConfig";
 import ChildLogicConfig from "@/components/configuration/ChildLogicConfig";
 import FormsConfig from "@/components/configuration/FormsConfig";
+import PlanningTypesConfig from "@/components/configuration/PlanningTypesConfig";
 
 const INCIDENT_LIST_TYPES = [
   { key: "incident_person", label: "Confirmed By / Persons" },
@@ -230,6 +231,12 @@ export default function Configuration() {
           <h2 className="text-sm font-semibold text-slate-900 mb-1">Child Logic</h2>
           <p className="text-xs text-slate-500 mb-6">Define child components, shelter type mappings, and templates. When a shelter type is selected during asset creation, children are auto-loaded from these templates.</p>
           <ChildLogicConfig />
+        </div>
+
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <h2 className="text-sm font-semibold text-slate-900 mb-1">Planning Types</h2>
+          <p className="text-xs text-slate-500 mb-6">Define different planning types (Inspection, Work Order, Installation) and their specific statuses and fields. Each planning week will use one of these types.</p>
+          <PlanningTypesConfig />
         </div>
 
         <div className="bg-white rounded-xl border border-slate-200 p-6">
