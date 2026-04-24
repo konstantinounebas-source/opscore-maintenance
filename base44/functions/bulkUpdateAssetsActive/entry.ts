@@ -4,23 +4,28 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json();
-    const batchSize = body.batchSize || 10;
+    const batchSize = body.batchSize || 50;
     const offset = body.offset || 0;
     
+    // Get all assets and filter only those NOT active
     const assets = await base44.asServiceRole.entities.Assets.list();
-    const assetsToUpdate = assets.filter(a => a.status !== "Active").slice(offset, offset + batchSize);
+    const nonActiveAssets = assets.filter(a => a.status !== "Active");
+    const assetsToUpdate = nonActiveAssets.slice(offset, offset + batchSize);
     
+    // Update only non-active assets
+    let updatedCount = 0;
     for (const asset of assetsToUpdate) {
       await base44.asServiceRole.entities.Assets.update(asset.id, { status: "Active" });
-      await new Promise(resolve => setTimeout(resolve, 300));
+      updatedCount++;
     }
 
-    const remaining = assets.filter(a => a.status !== "Active").length - (offset + batchSize);
+    const remaining = Math.max(0, nonActiveAssets.length - (offset + batchSize));
     return Response.json({ 
       success: true, 
-      updatedBatch: assetsToUpdate.length, 
-      remaining: Math.max(0, remaining),
-      nextOffset: offset + batchSize
+      updatedBatch: updatedCount, 
+      remaining: remaining,
+      nextOffset: offset + batchSize,
+      totalNonActive: nonActiveAssets.length
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
