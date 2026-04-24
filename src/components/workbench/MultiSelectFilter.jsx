@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { X, Search, ChevronDown } from "lucide-react";
@@ -12,6 +13,8 @@ export default function MultiSelectFilter({
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [position, setPosition] = useState({ top: 0, left: 0 });
+  const triggerRef = useRef(null);
 
   const selected = useMemo(() => 
     Array.isArray(values) ? values : (values ? [values] : []),
@@ -46,9 +49,21 @@ export default function MultiSelectFilter({
     ? selected[0]
     : `${selected.length} selected`;
 
+  useEffect(() => {
+    if (open && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setPosition({
+        top: rect.bottom + window.scrollY + 4,
+        left: rect.left + window.scrollX,
+        width: rect.width
+      });
+    }
+  }, [open]);
+
   return (
     <div className="relative">
       <button
+        ref={triggerRef}
         onClick={() => setOpen(!open)}
         className="w-full h-7 px-2 py-1 text-xs border border-input rounded-md bg-white text-slate-700 hover:bg-slate-50 flex items-center justify-between"
       >
@@ -56,8 +71,17 @@ export default function MultiSelectFilter({
         <ChevronDown className={`h-3 w-3 text-slate-400 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
 
-      {open && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-input rounded-md shadow-lg z-[9999] max-w-xs" style={{ zIndex: 9999 }}>
+      {open && createPortal(
+        <div 
+          className="fixed bg-white border border-input rounded-md shadow-lg z-[9999]"
+          style={{ 
+            top: `${position.top}px`, 
+            left: `${position.left}px`,
+            width: `${position.width}px`,
+            minWidth: '200px'
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="p-2 border-b border-slate-100">
             <Input
               autoFocus
@@ -107,7 +131,8 @@ export default function MultiSelectFilter({
               ))
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
