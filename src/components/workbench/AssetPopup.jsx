@@ -21,7 +21,8 @@ export default function AssetPopup({
   const assetIncidents = (incidents || []).filter(i => i.related_asset_id === asset?.id || i.asset_id === asset?.asset_id);
   const assetWorkOrders = (workOrders || []).filter(w => w.related_asset_id === asset?.id || w.asset_id === asset?.asset_id);
   
-
+  const assignedWeek = assignment ? weeks.find(w => w.id === assignment.planning_week_id) : null;
+  const assignedType = assignment ? planningTypes.find(pt => pt.id === assignment.planning_type_id) : null;
   
   const filteredWeeks = planningTypeId 
     ? (weeks || []).filter(w => w.planning_type_id === planningTypeId)
@@ -68,6 +69,12 @@ export default function AssetPopup({
           <span className="text-slate-500">Status:</span>
           <span className="font-medium text-slate-700">{asset.status || "—"}</span>
         </div>
+        {assignment && (
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-slate-500">Planned Week:</span>
+            <span className="font-medium text-slate-700">{assignedWeek?.week_code || "—"}</span>
+          </div>
+        )}
         <div className="flex items-center justify-between text-xs">
           <span className="text-slate-500">Shelter Type:</span>
           <span className="font-medium text-slate-700">{asset.ordered_shelter_type || "—"}</span>
