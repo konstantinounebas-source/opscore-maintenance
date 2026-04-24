@@ -30,6 +30,8 @@ export default function UnifiedAssetsTable({
   const [filterPhase, setFilterPhase] = useState("all");
   const [filterOrdered, setFilterOrdered] = useState("all");
   const [filterShelterType, setFilterShelterType] = useState("all");
+  const [filterStage, setFilterStage] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
   const [filterOpenIncidents, setFilterOpenIncidents] = useState("all");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -43,6 +45,8 @@ export default function UnifiedAssetsTable({
 
   const uniqueCities = [...new Set(assets.map(a => a.city).filter(Boolean))].sort();
   const uniquePhases = [...new Set(assets.map(a => a.phase).filter(Boolean))].sort();
+  const uniqueStages = [...new Set(assets.map(a => a.asset_stage).filter(Boolean))].sort();
+  const uniqueStatuses = [...new Set(assets.map(a => a.status).filter(Boolean))].sort();
   const uniqueShelterTypes = [...new Set(
     assets.flatMap(a => [a.shelter_type, a.ordered_shelter_type, a.installed_shelter_type]).filter(Boolean)
   )].sort();
@@ -55,6 +59,8 @@ export default function UnifiedAssetsTable({
       if (filterOrdered === "yes" && !a.order_year) return false;
       if (filterOrdered === "no" && a.order_year) return false;
       if (filterShelterType !== "all" && ![a.shelter_type, a.ordered_shelter_type, a.installed_shelter_type].includes(filterShelterType)) return false;
+      if (filterStage !== "all" && a.asset_stage !== filterStage) return false;
+      if (filterStatus !== "all" && a.status !== filterStatus) return false;
       if (filterOpenIncidents === "with" && getOpenIncidents(a.id) === 0) return false;
       if (filterOpenIncidents === "without" && getOpenIncidents(a.id) > 0) return false;
       if (search.trim()) {
@@ -75,14 +81,14 @@ export default function UnifiedAssetsTable({
       return (a.city || "").localeCompare(b.city || "");
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [assets, search, filterCity, filterPhase, filterOrdered, filterShelterType, filterOpenIncidents, incidents, workOrders, childAssets]);
+  }, [assets, search, filterCity, filterPhase, filterStage, filterStatus, filterOrdered, filterShelterType, filterOpenIncidents, incidents, workOrders, childAssets]);
 
   const totalRows = filtered.length;
   const effectivePageSize = pageSize === "All" ? totalRows : pageSize;
   const totalPages = pageSize === "All" ? 1 : Math.max(1, Math.ceil(totalRows / effectivePageSize));
   const paginated = pageSize === "All" ? filtered : filtered.slice((page - 1) * effectivePageSize, page * effectivePageSize);
 
-  const hasFilters = search || filterCity !== "all" || filterPhase !== "all" || filterOrdered !== "all" || filterShelterType !== "all" || filterOpenIncidents !== "all";
+  const hasFilters = search || filterCity !== "all" || filterPhase !== "all" || filterStage !== "all" || filterStatus !== "all" || filterOrdered !== "all" || filterShelterType !== "all" || filterOpenIncidents !== "all";
 
   return (
     <div className="space-y-3">
@@ -127,6 +133,20 @@ export default function UnifiedAssetsTable({
               {uniqueShelterTypes.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
             </SelectContent>
           </Select>
+          <Select value={filterStage} onValueChange={setFilterStage}>
+            <SelectTrigger className="h-9 text-sm w-44"><SelectValue placeholder="Stage" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Stages</SelectItem>
+              {uniqueStages.map(s => <SelectItem key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="h-9 text-sm w-40"><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              {uniqueStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            </SelectContent>
+          </Select>
           <Select value={filterOpenIncidents} onValueChange={setFilterOpenIncidents}>
             <SelectTrigger className="h-9 text-sm w-48"><SelectValue placeholder="Incidents" /></SelectTrigger>
             <SelectContent>
@@ -138,7 +158,7 @@ export default function UnifiedAssetsTable({
           {hasFilters && (
             <Button
               variant="ghost" size="sm"
-              onClick={() => { setSearch(""); setFilterCity("all"); setFilterPhase("all"); setFilterOrdered("all"); setFilterShelterType("all"); setFilterOpenIncidents("all"); }}
+              onClick={() => { setSearch(""); setFilterCity("all"); setFilterPhase("all"); setFilterStage("all"); setFilterStatus("all"); setFilterOrdered("all"); setFilterShelterType("all"); setFilterOpenIncidents("all"); }}
               className="h-9 gap-1.5 text-slate-500"
             >
               <X className="w-3.5 h-3.5" /> Clear
