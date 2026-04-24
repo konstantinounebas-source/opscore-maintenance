@@ -19,6 +19,10 @@ export default function AssetPopup({
 
   const assetIncidents = (incidents || []).filter(i => i.related_asset_id === asset?.id);
   const assetWorkOrders = (workOrders || []).filter(w => w.related_asset_id === asset?.id);
+  
+  const filteredWeeks = planningTypeId 
+    ? (weeks || []).filter(w => w.planning_type_id === planningTypeId)
+    : (weeks || []);
 
   const handleAssign = async () => {
     if (!weekId) return;
@@ -93,12 +97,12 @@ export default function AssetPopup({
 
         <div>
           <label className="text-[10px] font-semibold text-slate-600">Planning Week</label>
-          <Select value={weekId} onValueChange={setWeekId}>
+          <Select value={weekId} onValueChange={setWeekId} disabled={!planningTypeId}>
             <SelectTrigger className="mt-1 text-xs h-7">
-              <SelectValue placeholder="Select week..." />
+              <SelectValue placeholder={planningTypeId ? "Select week..." : "Select type first"} />
             </SelectTrigger>
             <SelectContent>
-              {weeks.map(w => (
+              {filteredWeeks.map(w => (
                 <SelectItem key={w.id} value={w.id}>
                   {w.week_code} - {w.week_name}
                 </SelectItem>
@@ -110,7 +114,7 @@ export default function AssetPopup({
         <Button
           className="w-full bg-indigo-600 hover:bg-indigo-700 h-7 text-xs"
           onClick={handleAssign}
-          disabled={saving || !weekId || !planningTypeId}
+          disabled={saving || !weekId || !planningTypeId || filteredWeeks.length === 0}
         >
           {saving ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
           {saving ? "Saving..." : assignment ? "Update" : "Assign"}
