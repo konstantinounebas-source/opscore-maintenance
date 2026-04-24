@@ -32,6 +32,7 @@ export default function WorkbenchMap({
   workOrdersByAsset,
   activeVisualRule,
   colorRules,
+  colorOverrides,
 }) {
   const assignmentByAsset = useMemo(() => {
     const m = {};
@@ -42,7 +43,7 @@ export default function WorkbenchMap({
   const markers = useMemo(() =>
     assets.filter(a => a.latitude && a.longitude).map(a => {
       const assignment = assignmentByAsset[a.id];
-      const color = getMapPinColor({
+      let color = getMapPinColor({
         asset: a,
         assignment,
         colorMode,
@@ -53,6 +54,28 @@ export default function WorkbenchMap({
         activeVisualRule,
         colorRules,
       });
+      // Apply color overrides from legend
+      if (colorOverrides) {
+        for (const [label, overrideColor] of Object.entries(colorOverrides)) {
+          // Find if this asset matches the label for the current colorMode
+          const matchesLabel = (() => {
+            switch (colorMode) {
+              case "city": return a.city === label;
+              case "municipality": return a.municipality === label;
+              case "shelter_type": return a.shelter_type === label;
+              case "phase": return a.phase === label;
+              case "order_year": return String(a.order_year) === label;
+              case "asset_status": return a.status === label;
+              case "asset_stage": return a.asset_stage === label;
+              case "asset_source": return a.asset_source === label;
+              case "existing_condition": return a.existing_condition === label;
+              case "has_bay": return a.has_bay === label;
+              default: return false;
+            }
+          })();
+          if (matchesLabel) { color = overrideColor; break; }
+        }
+      }
       return {
         asset: a,
         assignment,
@@ -62,7 +85,7 @@ export default function WorkbenchMap({
         isSelected: a.id === selectedAssetId,
       };
     }),
-    [assets, assignmentByAsset, colorMode, layers, layerAssets, incidentsByAsset, workOrdersByAsset, selectedAssetId, activeVisualRule, colorRules]
+    [assets, assignmentByAsset, colorMode, layers, layerAssets, incidentsByAsset, workOrdersByAsset, selectedAssetId, activeVisualRule, colorRules, colorOverrides]
   );
 
   const fitKey = useMemo(() => assets.map(a => a.id).join(","), [assets]);

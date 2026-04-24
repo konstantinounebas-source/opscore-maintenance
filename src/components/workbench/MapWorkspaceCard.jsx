@@ -41,10 +41,22 @@ export default function MapWorkspaceCard({
   // ── Per-map isolated state ─────────────────────────────────────────────────
   const [filters, setFilters] = useState({ ...EMPTY_MAP_FILTERS });
   const [colorMode, setColorMode] = useState("default");
+
+  const handleColorModeChange = (mode) => {
+    setColorMode(mode);
+    setColorOverrides({});
+    setHiddenValues(new Set());
+  };
   const [visibleLayerIds, setVisibleLayerIds] = useState([]);
   const [activeVisualRule, setActiveVisualRule] = useState(null);
   const [selectedAsset, setSelectedAsset] = useState(null);
   const [showLayers, setShowLayers] = useState(false);
+  const [colorOverrides, setColorOverrides] = useState({}); // label -> hex
+  const [hiddenValues, setHiddenValues] = useState(new Set());
+
+  const handleColorOverride = (label, color) => {
+    setColorOverrides(prev => ({ ...prev, [label]: color }));
+  };
 
   const toggleLayer = (layerId) => {
     setVisibleLayerIds(prev =>
@@ -58,6 +70,8 @@ export default function MapWorkspaceCard({
     setVisibleLayerIds([]);
     setActiveVisualRule(null);
     setSelectedAsset(null);
+    setColorOverrides({});
+    setHiddenValues(new Set());
   };
 
   // ── Derived: filtered assets for this map only ─────────────────────────────
@@ -90,10 +104,35 @@ export default function MapWorkspaceCard({
 
   const hasColorRules = colorRules && colorRules.length > 0;
 
-  const legendEntries = useMemo(() =>
-    getLegendEntries(colorMode, layers, filteredAssets, allAssignments, incidentsByAsset, workOrdersByAsset, layerAssets, activeVisualRule, null),
-    [colorMode, layers, filteredAssets, allAssignments, incidentsByAsset, workOrdersByAsset, layerAssets, activeVisualRule]
-  );
+  const legendEntries = useMemo(() => {
+    const base = getLegendEntries(colorMode, layers, filteredAssets, allAssignments, incidentsByAsset, workOrdersByAsset, layerAssets, activeVisualRule, null);
+    // Apply color overrides
+    return base.map(e => colorOverrides[e.label] ? { ...e, color: colorOverrides[e.label] } : e);
+  }, [colorMode, layers, filteredAssets, allAssignments, incidentsByAsset, workOrdersByAsset, layerAssets, activeVisualRule, colorOverrides]);
+
+  // Assets visible on map = filtered - hidden by legend
+  const visibleAssets = useMemo(() => {
+    if (hiddenValues.size === 0) return filteredAssets;
+    return filteredAssets.filter(a => {
+      const entry = legendEntries.find(e => {
+        // match asset to legend entry label based on colorMode
+        switch (colorMode) {
+          case "city": return e.label === a.city;
+          case "municipality": return e.label === a.municipality;
+          case "shelter_type": return e.label === a.shelter_type;
+          case "phase": return e.label === a.phase;
+          case "order_year": return e.label === String(a.order_year);
+          case "asset_status": return e.label === a.status;
+          case "asset_stage": return e.label === a.asset_stage;
+          case "asset_source": return e.label === a.asset_source;
+          case "existing_condition": return e.label === a.existing_condition;
+          case "has_bay": return e.label === a.has_bay;
+          default: return false;
+        }
+      });
+      return !entry || !hiddenValues.has(entry.label);
+    });
+  }, [filteredAssets, hiddenValues, legendEntries, colorMode]);
 
   const currentAssignment = selectedAsset ? (assignmentByAssetId[selectedAsset.id] || null) : null;
 
@@ -106,7 +145,7 @@ export default function MapWorkspaceCard({
           <div className="flex items-center gap-2 flex-1 min-w-0">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider shrink-0">Map {mapNumber}</span>
             <div className="h-3 w-px bg-slate-300 shrink-0" />
-            <MapColorModeSelector value={colorMode} onChange={setColorMode} />
+            <MapColorModeSelector value={colorMode} onChange={handleColorModeChange} />
             <div className="flex items-center gap-2 ml-1">
               <label className="flex items-center gap-1 cursor-pointer text-[11px] text-slate-500 hover:text-slate-700 select-none whitespace-nowrap">
                 <input
@@ -194,7 +233,7 @@ export default function MapWorkspaceCard({
         {/* Map canvas — fills remaining space */}
         <div className="relative overflow-hidden p-1.5" style={{ flex: "1 1 0", minHeight: 0, height: 0 }}>
           <WorkbenchMap
-            assets={filteredAssets}
+            assets={visibleAssets}
             allAssignments={allAssignments}
             selectedAssetId={selectedAsset?.id}
             onSelectAsset={setSelectedAsset}
@@ -205,8 +244,14 @@ export default function MapWorkspaceCard({
             workOrdersByAsset={workOrdersByAsset}
             activeVisualRule={activeVisualRule}
             colorRules={colorRules}
+            colorOverrides={colorOverrides}
           />
-          <MapLegend entries={legendEntries} />
+          <MapLegend
+            entries={legendEntries}
+            onColorOverride={handleColorOverride}
+            onHiddenChange={setHiddenValues}
+            hiddenValues={hiddenValues}
+          />
         </div>
 
         {/* Asset count footer */}
