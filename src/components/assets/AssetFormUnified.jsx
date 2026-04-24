@@ -97,12 +97,9 @@ function DocTypeUploader({ label, files = [], onAdd, onRemove }) {
 
 const emptyForm = {
   // Identity
-  active_shelter_id: "",
   asset_code: "",
   asset_name: "",
   status: "Active",
-  asset_stage: "",
-  category: "",
   // Location
   location_address: "",
   city: "",
@@ -110,7 +107,6 @@ const emptyForm = {
   latitude: "",
   longitude: "",
   // Shelter / Physical
-  shelter_type: "",
   ordered_shelter_type: "",
   installed_shelter_type: "",
   // Condition
@@ -166,12 +162,9 @@ export default function AssetFormUnified({ open, onOpenChange, onSave, asset }) 
     setChildComponents([]);
     setShowChildTemplate(false);
     if (isEdit && asset) {
-      // Merge asset fields; active_shelter_id falls back to asset_code for legacy BSO records
-      const sid = asset.active_shelter_id || asset.asset_code || "";
       setForm({
         ...emptyForm,
         ...asset,
-        active_shelter_id: sid,
         attachments: [],
       });
     } else {
@@ -199,23 +192,7 @@ export default function AssetFormUnified({ open, onOpenChange, onSave, asset }) 
     }));
   }, [form.warranty_base_year]);
 
-  // Auto-fill location from existing asset by shelter ID (create mode only)
-  useEffect(() => {
-    if (isEdit || !form.active_shelter_id || allAssets.length === 0) return;
-    const match = allAssets.find(a => a.active_shelter_id === form.active_shelter_id || a.asset_code === form.active_shelter_id);
-    if (match) {
-      setForm(f => ({
-        ...f,
-        location_address: match.location_address || f.location_address,
-        shelter_type: match.shelter_type || f.shelter_type,
-        status: match.status || f.status,
-        latitude: match.latitude ?? f.latitude,
-        longitude: match.longitude ?? f.longitude,
-        city: match.city || f.city,
-        municipality: match.municipality || f.municipality,
-      }));
-    }
-  }, [form.active_shelter_id, allAssets.length]);
+
 
   const set = (field, value) => setForm(f => ({ ...f, [field]: value }));
 
@@ -256,12 +233,8 @@ export default function AssetFormUnified({ open, onOpenChange, onSave, asset }) 
     if (payload.order_year !== "" && payload.order_year != null) payload.order_year = parseInt(payload.order_year); else delete payload.order_year;
 
     // Ensure canonical identifiers are consistent
-    if (!payload.asset_id) payload.asset_id = payload.active_shelter_id || `AST-${Date.now()}`;
-    if (!payload.asset_name) payload.asset_name = payload.active_shelter_id || payload.asset_id;
-    // Mirror active_shelter_id to asset_code for backward compat
-    if (!payload.asset_code) payload.asset_code = payload.active_shelter_id;
-    // Keep asset_source if already set on an existing record; default to maintenance
-    if (!payload.asset_source) payload.asset_source = "maintenance";
+    if (!payload.asset_id) payload.asset_id = `AST-${Date.now()}`;
+    if (!payload.asset_name) payload.asset_name = payload.asset_id;
 
     onSave(payload, attachments, childComponents);
     onOpenChange(false);
@@ -284,30 +257,12 @@ export default function AssetFormUnified({ open, onOpenChange, onSave, asset }) 
           {/* ── 1. Asset Identity ── */}
           <SectionHeader title="Asset Identity" color="indigo" />
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5 col-span-2 md:col-span-1">
-              <Label className="text-xs">Shelter ID <span className="text-red-500">*</span></Label>
-              <Input className={err("active_shelter_id")} value={form.active_shelter_id} onChange={e => set("active_shelter_id", e.target.value)} placeholder="e.g. SH-001" />
-              {errors.active_shelter_id && <p className="text-xs text-red-500">Required</p>}
-            </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Status</Label>
               <Select value={form.status || ""} onValueChange={v => set("status", v)}>
                 <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                 <SelectContent>
                   {(statuses.length ? statuses : ["Active", "Inactive", "Under Maintenance", "Decommissioned"]).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Stage</Label>
-              <Select value={form.asset_stage || ""} onValueChange={v => set("asset_stage", v)}>
-                <SelectTrigger><SelectValue placeholder="Select (optional)" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="planning">Planning</SelectItem>
-                  <SelectItem value="ordered">Ordered</SelectItem>
-                  <SelectItem value="installation">Installation</SelectItem>
-                  <SelectItem value="installed">Installed</SelectItem>
-                  <SelectItem value="maintenance">Maintenance</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -372,15 +327,6 @@ export default function AssetFormUnified({ open, onOpenChange, onSave, asset }) 
           <SectionHeader title="Shelter / Physical Details" color="slate" />
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-xs">Shelter Type</Label>
-              <Select value={form.shelter_type || ""} onValueChange={v => set("shelter_type", v)}>
-                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>
-                  {(shelterTypes.length ? shelterTypes : ["Standard Shelter", "Smart Shelter", "Solar Shelter"]).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
               <Label className="text-xs">Ordered Shelter Type</Label>
               <Input value={form.ordered_shelter_type || ""} onChange={e => set("ordered_shelter_type", e.target.value)} placeholder="e.g. TYPE A1" />
             </div>
@@ -388,28 +334,9 @@ export default function AssetFormUnified({ open, onOpenChange, onSave, asset }) 
               <Label className="text-xs">Installed Shelter Type</Label>
               <Input value={form.installed_shelter_type || ""} onChange={e => set("installed_shelter_type", e.target.value)} placeholder="e.g. TYPE A1" />
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Category</Label>
-              <Input value={form.category || ""} onChange={e => set("category", e.target.value)} placeholder="e.g. bus_shelter" />
-            </div>
           </div>
 
-          {/* Child template — only when shelter type is set */}
-          {form.shelter_type && (
-            !showChildTemplate ? (
-              <button type="button" onClick={() => setShowChildTemplate(true)} className="flex items-center gap-2 text-sm font-medium text-indigo-600 hover:text-indigo-800 border border-dashed border-indigo-300 rounded-lg px-4 py-2.5 w-full hover:bg-indigo-50 transition-colors">
-                <Plus className="w-4 h-4" /> Add Child Components from Type Template
-              </button>
-            ) : (
-              <>
-                <div className="flex items-center justify-between">
-                  <SectionHeader title="Child Components (from Type Template)" color="amber" />
-                  <button type="button" onClick={() => setShowChildTemplate(false)} className="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1"><ChevronDown className="w-3.5 h-3.5" /> Hide</button>
-                </div>
-                <AssetChildrenSection shelterType={form.shelter_type} deliveryDate={form.delivery_date} onChange={setChildComponents} existingChildren={[]} />
-              </>
-            )
-          )}
+
 
           {/* ── 4. Condition / Existing Site Details ── */}
           <SectionHeader title="Condition / Existing Site" color="amber" />

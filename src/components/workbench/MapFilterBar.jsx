@@ -23,14 +23,10 @@ const ALWAYS_VISIBLE = ["city", "ordered_shelter_type", "installed_shelter_type"
 // All additional filter fields for "Add Filter" dropdown
 const AVAILABLE_FILTER_FIELDS = {
   "asset_id": "Asset ID",
-  "shelter_type": "Shelter Type",
   "asset_status": "Asset Status",
   "assignment_status": "Assignment Status",
   "assignment_type": "Assignment Type",
   "priority_bucket": "Priority",
-  "category": "Category",
-  "asset_stage": "Asset Stage",
-  "asset_source": "Asset Source",
   "existing_condition": "Existing Condition",
   "has_bay": "Has Bay",
   "municipality": "Municipality",
@@ -59,7 +55,7 @@ export default function MapFilterBar({ filters, onChange, assets, weeks = [] }) 
   const reset = () => onChange({ ...EMPTY_MAP_FILTERS });
   const activeCount = countActiveMapFilters(filters);
   const cities = uniqueCities(assets);
-  const shelterTypes = uniqueShelterTypes(assets);
+
 
   // Get unique values for all fields
   const orderYears = [...new Set(assets.map((a) => a.order_year).filter(Boolean))].sort((a, b) => a - b);
@@ -184,24 +180,6 @@ export default function MapFilterBar({ filters, onChange, assets, weeks = [] }) 
             </div>
 
             {/* Dynamic optional filters */}
-            {customFields.has("shelter_type") &&
-          <div>
-                <div className="flex items-center justify-between mb-0.5">
-                  <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">Shelter Type</p>
-                  <button onClick={() => removeCustomField("shelter_type")} className="text-slate-300 hover:text-slate-500">
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-                <Select value={filters.shelter_type || "__all__"} onValueChange={(v) => set("shelter_type", v === "__all__" ? "" : v)}>
-                  <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="All types" /></SelectTrigger>
-                  <SelectContent style={{ zIndex: 99999 }}>
-                    <SelectItem value="__all__">All types</SelectItem>
-                    {shelterTypes.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-          }
-
             {customFields.has("asset_status") &&
           <div>
                 <div className="flex items-center justify-between mb-0.5">
@@ -292,41 +270,7 @@ export default function MapFilterBar({ filters, onChange, assets, weeks = [] }) 
               </div>
           }
 
-            {customFields.has("asset_stage") &&
-          <div>
-                <div className="flex items-center justify-between mb-0.5">
-                  <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">Asset Stage</p>
-                  <button onClick={() => removeCustomField("asset_stage")} className="text-slate-300 hover:text-slate-500">
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-                <Select value={filters.asset_stage || "__all__"} onValueChange={(v) => set("asset_stage", v === "__all__" ? "" : v)}>
-                  <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="All" /></SelectTrigger>
-                  <SelectContent style={{ zIndex: 99999 }}>
-                    <SelectItem value="__all__">All</SelectItem>
-                    {assetStages.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-          }
 
-            {customFields.has("asset_source") &&
-          <div>
-                <div className="flex items-center justify-between mb-0.5">
-                  <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">Asset Source</p>
-                  <button onClick={() => removeCustomField("asset_source")} className="text-slate-300 hover:text-slate-500">
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-                <Select value={filters.asset_source || "__all__"} onValueChange={(v) => set("asset_source", v === "__all__" ? "" : v)}>
-                  <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="All" /></SelectTrigger>
-                  <SelectContent style={{ zIndex: 99999 }}>
-                    <SelectItem value="__all__">All</SelectItem>
-                    {assetSources.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-          }
 
             {customFields.has("existing_condition") &&
           <div>

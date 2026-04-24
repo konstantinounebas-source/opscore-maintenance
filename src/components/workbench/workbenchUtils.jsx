@@ -56,11 +56,8 @@ export const COLOR_MODES = [
   { value: "layer",                  label: "By Layer" },
   // Asset fields — status & stage
   { value: "asset_status",           label: "By Asset Status" },
-  { value: "asset_stage",            label: "By Asset Stage" },
-  { value: "asset_source",           label: "By Asset Source" },
   { value: "phase",                  label: "By Phase" },
   // Shelter types
-  { value: "shelter_type",           label: "By Shelter Type (Current)" },
   { value: "ordered_shelter_type",   label: "By Ordered Shelter Type" },
   { value: "installed_shelter_type", label: "By Installed Shelter Type" },
   // Locations
@@ -70,7 +67,6 @@ export const COLOR_MODES = [
   { value: "existing_condition",     label: "By Existing Condition" },
   { value: "has_bay",                label: "By Has Bay" },
   { value: "inspection_status",      label: "By Inspection Status" },
-  { value: "category",               label: "By Category" },
   // Assignment fields
   { value: "assignment_status",      label: "By Assignment Status" },
   { value: "assignment_type",        label: "By Assignment Type" },
@@ -101,18 +97,7 @@ const ASSET_STATUS_COLORS = {
   "Decommissioned":    "#EF4444",
 };
 
-const ASSET_STAGE_COLORS = {
-  "planning":     "#94A3B8",
-  "ordered":      "#F59E0B",
-  "installation": "#3B82F6",
-  "installed":    "#22C55E",
-  "maintenance":  "#EF4444",
-};
 
-const ASSET_SOURCE_COLORS = {
-  "maintenance":        "#6366F1",
-  "bus_shelter_order":  "#F59E0B",
-};
 
 const EXISTING_CONDITION_COLORS = {
   "none":             "#94A3B8",
@@ -229,14 +214,7 @@ export function getMapPinColor({ asset, assignment, colorMode, layers, layerAsse
     case "asset_status":
       return ASSET_STATUS_COLORS[asset.status] || "#94A3B8";
 
-    case "asset_stage":
-      return ASSET_STAGE_COLORS[asset.asset_stage] || "#94A3B8";
 
-    case "asset_source":
-      return ASSET_SOURCE_COLORS[asset.asset_source] || "#94A3B8";
-
-    case "shelter_type":
-      return getGenericColor("shelter_type", asset.shelter_type);
 
     case "ordered_shelter_type":
       return getGenericColor("ordered_shelter_type", asset.ordered_shelter_type);
@@ -366,11 +344,7 @@ export function getLegendEntries(colorMode, layers, assets, assignments, inciden
     case "asset_status":
       return Object.entries(ASSET_STATUS_COLORS).map(([label, color]) => ({ label, color, count: countMatches(label, "asset_status") }));
 
-    case "asset_stage":
-      return Object.entries(ASSET_STAGE_COLORS).map(([label, color]) => ({ label, color, count: countMatches(label, "asset_stage") }));
 
-    case "asset_source":
-      return Object.entries(ASSET_SOURCE_COLORS).map(([label, color]) => ({ label, color, count: countMatches(label, "asset_source") }));
 
     case "existing_condition":
       return Object.entries(EXISTING_CONDITION_COLORS).map(([label, color]) => ({ label, color, count: countMatches(label, "existing_condition") }));
@@ -383,10 +357,7 @@ export function getLegendEntries(colorMode, layers, assets, assignments, inciden
       return statuses.map(s => ({ label: s, color: getGenericColor("inspection_status", s), count: countMatches(s, "inspection_status") }));
     }
 
-    case "category": {
-      const categories = [...new Set(assets.map(a => a.category).filter(Boolean))].sort();
-      return categories.map(c => ({ label: c, color: getGenericColor("category", c), count: countMatches(c, "category") }));
-    }
+
 
     case "ordered_shelter_type": {
       const types = [...new Set(assets.map(a => a.ordered_shelter_type).filter(Boolean))].sort();
@@ -403,10 +374,7 @@ export function getLegendEntries(colorMode, layers, assets, assignments, inciden
       return munis.map(m => ({ label: m, color: getGenericColor("municipality", m), count: countMatches(m, "municipality") }));
     }
 
-    case "shelter_type": {
-      const types = [...new Set(assets.map(a => a.shelter_type).filter(Boolean))].sort();
-      return types.map(t => ({ label: t, color: getGenericColor("shelter_type", t), count: countMatches(t, "shelter_type") }));
-    }
+
 
     case "phase": {
       const phases = [...new Set(assets.map(a => a.phase).filter(Boolean))].sort();
@@ -615,8 +583,6 @@ export function applyMapFilters(assets, filters, assignmentByAssetId, incidentsB
      if (f.team_name && (!asgn || asgn.team_name !== f.team_name)) return false;
      if (f.has_incident && !incidentsByAsset[a.id]?.length) return false;
      if (f.has_work_order && !workOrdersByAsset[a.id]?.length) return false;
-     if (f.is_ordered && !a.order_year) return false;
-     if (f.is_implementation_phase && a.phase !== "Implementation") return false;
 
      if (visibleLayerIds && visibleLayerIds.length > 0) {
        const assetLayerIds = layerAssets.filter(la => la.asset_id === a.id).map(la => la.planning_layer_id);

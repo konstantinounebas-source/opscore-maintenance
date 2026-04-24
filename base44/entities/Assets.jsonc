@@ -6,27 +6,6 @@
       "type": "string",
       "description": "Unique asset identifier"
     },
-    "asset_source": {
-      "type": "string",
-      "enum": [
-        "maintenance",
-        "bus_shelter_order"
-      ],
-      "default": "maintenance",
-      "description": "Source / type of asset record"
-    },
-    "asset_stage": {
-      "type": "string",
-      "enum": [
-        "planning",
-        "ordered",
-        "installation",
-        "installed",
-        "maintenance"
-      ],
-      "default": "planning",
-      "description": "Current stage of the asset lifecycle"
-    },
     "asset_code": {
       "type": "string",
       "description": "External reference ID (e.g. bus stop ID)"
@@ -63,14 +42,6 @@
       "type": "string",
       "description": "Shelter type as actually installed"
     },
-    "category": {
-      "type": "string",
-      "description": "Asset category"
-    },
-    "active_shelter_id": {
-      "type": "string",
-      "description": "Active Shelter ID (validated)"
-    },
     "location_address": {
       "type": "string",
       "description": "Location / Address"
@@ -82,10 +53,6 @@
     "municipality": {
       "type": "string",
       "description": "Municipality / \u0394\u03ae\u03bc\u03bf\u03c2 (e.g. Strovolos)"
-    },
-    "shelter_type": {
-      "type": "string",
-      "description": "Shelter type from dropdown"
     },
     "status": {
       "type": "string",

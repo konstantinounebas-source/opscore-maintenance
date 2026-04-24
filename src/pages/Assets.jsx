@@ -132,11 +132,11 @@ export default function Assets() {
   const assetsWithChilds = assets.filter(a => getChildCount(a.id) > 0).length;
 
   const exportCSV = () => {
-    const headers = ["active_shelter_id", "asset_name", "status", "asset_stage", "shelter_type", "location_address", "city", "municipality", "latitude", "longitude", "installation_date", "delivery_date", "notes"];
+    const headers = ["asset_id", "asset_name", "status", "ordered_shelter_type", "location_address", "city", "municipality", "latitude", "longitude", "installation_date", "delivery_date", "notes"];
     const rows = assets.map(a => [
-      a.active_shelter_id || a.asset_code || "",
-      a.asset_name || "", a.status || "", a.asset_stage || "",
-      a.shelter_type || a.ordered_shelter_type || "",
+      a.asset_id || "",
+      a.asset_name || "", a.status || "",
+      a.ordered_shelter_type || "",
       a.location_address || "", a.city || "", a.municipality || "",
       a.latitude || "", a.longitude || "",
       a.installation_date || "", a.delivery_date || "", a.notes || "",
