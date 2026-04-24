@@ -2,7 +2,7 @@ import React, { useState, useMemo, useCallback, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Loader2, Plus, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, Plus, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import MapWorkspaceContainer from "@/components/workbench/MapWorkspaceContainer";
 import PlanningReviewPanel from "@/components/workbench/PlanningReviewPanel";
@@ -42,6 +42,7 @@ export default function PlanningWorkbench() {
   const [popupPos, setPopupPos] = useState(null);
   const [assignmentModalOpen, setAssignmentModalOpen] = useState(false);
   const [assigningAsset, setAssigningAsset] = useState(null);
+  const [photoViewerAsset, setPhotoViewerAsset] = useState(null);
 
   // ── Shared lookups (read-only from map perspective) ─────────────────────────
   const assetsMap = useMemo(() => Object.fromEntries(assets.map(a => [a.id, a])), [assets]);
@@ -363,7 +364,48 @@ export default function PlanningWorkbench() {
             setPopupPos(null);
           }}
           onSaveAssignment={handleSaveAssignment}
+          onZoomToAsset={(asset) => {
+            // TODO: Pan map to asset location
+            console.log("Zoom to:", asset);
+          }}
+          onShowPhotos={(asset) => {
+            setPhotoViewerAsset(asset);
+          }}
         />
+      )}
+
+      {/* Photo Viewer Modal */}
+      {photoViewerAsset && (
+        <div 
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onClick={() => setPhotoViewerAsset(null)}
+        >
+          <div 
+            className="bg-white rounded-lg shadow-xl max-w-2xl max-h-96 overflow-auto p-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-slate-800">{photoViewerAsset.asset_id} - Φωτογραφίες</h2>
+              <button 
+                onClick={() => setPhotoViewerAsset(null)} 
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="text-sm text-slate-500">
+              {photoViewerAsset.evidence_types && photoViewerAsset.evidence_types.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {photoViewerAsset.evidence_types.map((type, idx) => (
+                    <span key={idx} className="bg-slate-100 px-2 py-1 rounded text-xs">{type}</span>
+                  ))}
+                </div>
+              ) : (
+                <p>Δεν υπάρχουν φωτογραφίες για αυτό το στοιχείο</p>
+              )}
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Week modal */}

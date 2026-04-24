@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { X, Loader2, AlertCircle, Wrench } from "lucide-react";
+import { X, Loader2, AlertCircle, Wrench, MapPin, Edit3, Camera } from "lucide-react";
 
 export default function AssetPopup({
   asset,
@@ -13,6 +13,8 @@ export default function AssetPopup({
   planningTypes = [],
   onClose,
   onSaveAssignment,
+  onZoomToAsset,
+  onShowPhotos,
 }) {
   const [planningTypeId, setPlanningTypeId] = useState(assignment?.planning_type_id || "");
   const [weekId, setWeekId] = useState(assignment?.planning_week_id || "");
@@ -75,9 +77,32 @@ export default function AssetPopup({
           <div className="font-bold text-sm text-slate-800">{asset.asset_id || asset.id}</div>
           <div className="text-xs text-slate-500 mt-0.5">{asset.shelter_type || asset.category || "—"}</div>
         </div>
-        <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="text-slate-400 hover:text-slate-600 shrink-0">
-          <X className="h-4 w-4" />
-        </button>
+        <div className="flex items-center gap-1">
+          <button 
+            onClick={(e) => { e.stopPropagation(); onZoomToAsset?.(asset); }} 
+            className="p-1 text-slate-400 hover:text-indigo-600 rounded"
+            title="Zoom to location"
+          >
+            <MapPin className="h-4 w-4" />
+          </button>
+          <button 
+            onClick={(e) => { e.stopPropagation(); onSaveAssignment?.({ planning_type_id: planningTypeId, planning_week_id: weekId, asset_id: asset.id }, assignment?.id); }} 
+            className="p-1 text-slate-400 hover:text-indigo-600 rounded"
+            title="Edit assignment"
+          >
+            <Edit3 className="h-4 w-4" />
+          </button>
+          <button 
+            onClick={(e) => { e.stopPropagation(); onShowPhotos?.(asset); }} 
+            className="p-1 text-slate-400 hover:text-indigo-600 rounded"
+            title="View photos"
+          >
+            <Camera className="h-4 w-4" />
+          </button>
+          <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="text-slate-400 hover:text-slate-600">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
       {/* Asset Info */}
