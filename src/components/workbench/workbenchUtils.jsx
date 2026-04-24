@@ -302,6 +302,29 @@ export function getMapPinColor({ asset, assignment, colorMode, layers, layerAsse
 // ─── Legend entries per color mode ────────────────────────────────────────────
 
 export function getLegendEntries(colorMode, layers, assets, assignments, incidentsByAsset, workOrdersByAsset, layerAssets, activeVisualRule, colorRules) {
+  // Helper to count assets matching a label
+  function countMatches(label, mode) {
+    return assets.filter(a => {
+      switch (mode) {
+        case "city": return a.city === label;
+        case "municipality": return a.municipality === label;
+        case "shelter_type": return a.shelter_type === label;
+        case "ordered_shelter_type": return a.ordered_shelter_type === label;
+        case "installed_shelter_type": return a.installed_shelter_type === label;
+        case "phase": return a.phase === label;
+        case "order_year": return String(a.order_year) === label;
+        case "asset_status": return a.status === label;
+        case "asset_stage": return a.asset_stage === label;
+        case "asset_source": return a.asset_source === label;
+        case "existing_condition": return a.existing_condition === label;
+        case "has_bay": return a.has_bay === label;
+        case "inspection_status": return a.inspection_status === label;
+        case "category": return a.category === label;
+        default: return false;
+      }
+    }).length;
+  }
+
   // New color rules legend
   if (colorRules && colorRules.length > 0) {
     return colorRules.map(r => ({
@@ -337,58 +360,58 @@ export function getLegendEntries(colorMode, layers, assets, assignments, inciden
       ];
 
     case "asset_status":
-      return Object.entries(ASSET_STATUS_COLORS).map(([label, color]) => ({ label, color }));
+      return Object.entries(ASSET_STATUS_COLORS).map(([label, color]) => ({ label, color, count: countMatches(label, "asset_status") }));
 
     case "asset_stage":
-      return Object.entries(ASSET_STAGE_COLORS).map(([label, color]) => ({ label, color }));
+      return Object.entries(ASSET_STAGE_COLORS).map(([label, color]) => ({ label, color, count: countMatches(label, "asset_stage") }));
 
     case "asset_source":
-      return Object.entries(ASSET_SOURCE_COLORS).map(([label, color]) => ({ label, color }));
+      return Object.entries(ASSET_SOURCE_COLORS).map(([label, color]) => ({ label, color, count: countMatches(label, "asset_source") }));
 
     case "existing_condition":
-      return Object.entries(EXISTING_CONDITION_COLORS).map(([label, color]) => ({ label, color }));
+      return Object.entries(EXISTING_CONDITION_COLORS).map(([label, color]) => ({ label, color, count: countMatches(label, "existing_condition") }));
 
     case "has_bay":
-      return Object.entries(HAS_BAY_COLORS).map(([label, color]) => ({ label, color }));
+      return Object.entries(HAS_BAY_COLORS).map(([label, color]) => ({ label, color, count: countMatches(label, "has_bay") }));
 
     case "inspection_status": {
       const statuses = [...new Set(assets.map(a => a.inspection_status).filter(Boolean))].sort();
-      return statuses.map(s => ({ label: s, color: getGenericColor("inspection_status", s) }));
+      return statuses.map(s => ({ label: s, color: getGenericColor("inspection_status", s), count: countMatches(s, "inspection_status") }));
     }
 
     case "category": {
       const categories = [...new Set(assets.map(a => a.category).filter(Boolean))].sort();
-      return categories.map(c => ({ label: c, color: getGenericColor("category", c) }));
+      return categories.map(c => ({ label: c, color: getGenericColor("category", c), count: countMatches(c, "category") }));
     }
 
     case "ordered_shelter_type": {
       const types = [...new Set(assets.map(a => a.ordered_shelter_type).filter(Boolean))].sort();
-      return types.map(t => ({ label: t, color: getGenericColor("ordered_shelter_type", t) }));
+      return types.map(t => ({ label: t, color: getGenericColor("ordered_shelter_type", t), count: countMatches(t, "ordered_shelter_type") }));
     }
 
     case "installed_shelter_type": {
       const types = [...new Set(assets.map(a => a.installed_shelter_type).filter(Boolean))].sort();
-      return types.map(t => ({ label: t, color: getGenericColor("installed_shelter_type", t) }));
+      return types.map(t => ({ label: t, color: getGenericColor("installed_shelter_type", t), count: countMatches(t, "installed_shelter_type") }));
     }
 
     case "municipality": {
       const munis = [...new Set(assets.map(a => a.municipality).filter(Boolean))].sort();
-      return munis.map(m => ({ label: m, color: getGenericColor("municipality", m) }));
+      return munis.map(m => ({ label: m, color: getGenericColor("municipality", m), count: countMatches(m, "municipality") }));
     }
 
     case "shelter_type": {
       const types = [...new Set(assets.map(a => a.shelter_type).filter(Boolean))].sort();
-      return types.map(t => ({ label: t, color: getGenericColor("shelter_type", t) }));
+      return types.map(t => ({ label: t, color: getGenericColor("shelter_type", t), count: countMatches(t, "shelter_type") }));
     }
 
     case "phase": {
       const phases = [...new Set(assets.map(a => a.phase).filter(Boolean))].sort();
-      return phases.map(p => ({ label: p, color: getGenericColor("phase", p) }));
+      return phases.map(p => ({ label: p, color: getGenericColor("phase", p), count: countMatches(p, "phase") }));
     }
 
     case "order_year": {
       const years = [...new Set(assets.map(a => a.order_year).filter(Boolean))].sort();
-      return years.map(y => ({ label: String(y), color: getGenericColor("order_year", String(y)) }));
+      return years.map(y => ({ label: String(y), color: getGenericColor("order_year", String(y)), count: countMatches(String(y), "order_year") }));
     }
 
     case "assigned_state":

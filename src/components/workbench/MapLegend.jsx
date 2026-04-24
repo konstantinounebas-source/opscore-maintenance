@@ -58,6 +58,9 @@ export default function MapLegend({ entries, onColorOverride, onHiddenChange, hi
                   title={isHidden ? "Click to show" : "Click to hide"}
                 >
                   {e.label}
+                  {e.count !== undefined && (
+                    <span className="ml-1 text-slate-400 font-medium">({e.count})</span>
+                  )}
                 </span>
                 <button
                   onClick={() => toggleHidden(e.label)}
