@@ -1,0 +1,69 @@
+{
+  "name": "PlanningWeeks",
+  "type": "object",
+  "properties": {
+    "week_code": {
+      "type": "string",
+      "description": "Unique planning week code (e.g. W2026-12)"
+    },
+    "week_name": {
+      "type": "string",
+      "description": "Display name for the planning week"
+    },
+    "planning_type_id": {
+      "type": "string",
+      "description": "FK \u2192 PlanningTypes record ID"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Start date of the planning week"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "End date of the planning week"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Draft",
+        "Active",
+        "Locked",
+        "Archived"
+      ],
+      "default": "Draft",
+      "description": "Status of the planning week"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional notes for the planning week"
+    },
+    "map_view_mode": {
+      "type": "string",
+      "enum": [
+        "Default",
+        "Inspection",
+        "Priority",
+        "Custom"
+      ],
+      "default": "Default",
+      "description": "Map view mode preset for this week"
+    },
+    "color_code": {
+      "type": "string",
+      "description": "Optional hex color code for this week on the map"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this is the currently active planning week"
+    }
+  },
+  "required": [
+    "week_code",
+    "week_name",
+    "start_date",
+    "end_date"
+  ]
+}
