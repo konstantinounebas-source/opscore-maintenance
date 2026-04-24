@@ -48,7 +48,12 @@ export default function AssetPopup({
     setSaving(true);
     try {
       if (assignment?.id) {
-        await onSaveAssignment(null, assignment.id);
+        const formData = {
+          planning_type_id: null,
+          planning_week_id: null,
+          asset_id: asset.id,
+        };
+        await onSaveAssignment(formData, assignment.id);
       }
     } catch (err) {
       console.error("Error clearing assignment:", err);
