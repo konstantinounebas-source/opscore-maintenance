@@ -44,6 +44,18 @@ export default function AssetPopup({
     setSaving(false);
   };
 
+  const handleClearAssignment = async () => {
+    setSaving(true);
+    try {
+      if (assignment?.id) {
+        await onSaveAssignment(null, assignment.id);
+      }
+    } catch (err) {
+      console.error("Error clearing assignment:", err);
+    }
+    setSaving(false);
+  };
+
   if (!asset) return null;
 
   return (
@@ -126,14 +138,25 @@ export default function AssetPopup({
           </Select>
         </div>
 
-        <Button
-          className="w-full bg-indigo-600 hover:bg-indigo-700 h-7 text-xs"
-          onClick={handleAssign}
-          disabled={saving || !weekId || !planningTypeId || filteredWeeks.length === 0}
-        >
-          {saving ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
-          {saving ? "Saving..." : assignment ? "Update" : "Assign"}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            className="flex-1 bg-indigo-600 hover:bg-indigo-700 h-7 text-xs"
+            onClick={handleAssign}
+            disabled={saving || !weekId || !planningTypeId || filteredWeeks.length === 0}
+          >
+            {saving ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+            {saving ? "Saving..." : assignment ? "Update" : "Assign"}
+          </Button>
+          {assignment && (
+            <Button
+              className="bg-red-500 hover:bg-red-600 h-7 text-xs"
+              onClick={handleClearAssignment}
+              disabled={saving}
+            >
+              Clear
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
