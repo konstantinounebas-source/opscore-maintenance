@@ -97,8 +97,8 @@ export default function MapWorkspaceCard({
   const activeLayerFilter = visibleLayerIds.length > 0 ? visibleLayerIds : null;
 
   const filteredAssets = useMemo(() =>
-    applyMapFilters(allAssets, filters, assignmentByAssetId, incidentsByAsset, workOrdersByAsset, activeLayerFilter, layerAssets),
-    [allAssets, filters, assignmentByAssetId, incidentsByAsset, workOrdersByAsset, activeLayerFilter, layerAssets]
+    applyMapFilters(allAssets, filters, assignmentByAssetId, incidentsByAsset, workOrdersByAsset, activeLayerFilter, layerAssets, weeks),
+    [allAssets, filters, assignmentByAssetId, incidentsByAsset, workOrdersByAsset, activeLayerFilter, layerAssets, weeks]
   );
 
   // Per-map active color rules (sorted by priority desc)
