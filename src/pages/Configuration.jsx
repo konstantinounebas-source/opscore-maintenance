@@ -54,6 +54,8 @@ const ASSET_LIST_TYPES = [
   { key: "Asset Child Subcategories", label: "Child Subcategories" },
   { key: "Asset Status", label: "Status" },
   { key: "Asset Evidence Types", label: "Evidence Types" },
+  { key: "Asset Phase", label: "Phase" },
+  { key: "Asset Inspection Status", label: "Inspection Status" },
 ];
 
 function ListManager({ listTypes, allItems, queryClient }) {

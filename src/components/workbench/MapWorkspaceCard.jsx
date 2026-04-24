@@ -8,6 +8,8 @@ import VisualLayerManager from "./VisualLayerManager";
 import WorkbenchMap from "./WorkbenchMap";
 import AssetActionDrawer from "./AssetActionDrawer";
 import { EMPTY_MAP_FILTERS, applyMapFilters, getLegendEntries } from "./workbenchUtils";
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 
 export default function MapWorkspaceCard({
   mapId,
@@ -45,6 +47,10 @@ export default function MapWorkspaceCard({
   const [activeVisualRule, setActiveVisualRule] = useState(null);
   const [selectedAsset, setSelectedAsset] = useState(null);
   const [showLayers, setShowLayers] = useState(false);
+
+  // Phases from config for the phase quick-filter
+  const { data: configLists = [] } = useQuery({ queryKey: ["configLists"], queryFn: () => base44.entities.ConfigLists.list() });
+  const phases = configLists.filter(i => i.list_type === "Asset Phase" && i.is_active !== false).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)).map(i => i.value);
 
   const toggleLayer = (layerId) => {
     setVisibleLayerIds(prev =>
@@ -107,6 +113,34 @@ export default function MapWorkspaceCard({
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider shrink-0">Map {mapNumber}</span>
             <div className="h-3 w-px bg-slate-300 shrink-0" />
             <MapColorModeSelector value={colorMode} onChange={setColorMode} />
+
+            {/* Quick view filters */}
+            <div className="flex items-center gap-1 text-xs shrink-0">
+              <button
+                onClick={() => setFilters(f => ({ ...f, show_ordered_only: !f.show_ordered_only }))}
+                className={`px-2 py-0.5 rounded transition-colors border text-xs ${
+                  filters.show_ordered_only
+                    ? "bg-amber-100 text-amber-700 border-amber-300 font-semibold"
+                    : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"
+                }`}
+              >
+                Ordered
+              </button>
+              {phases.map(p => (
+                <button
+                  key={p}
+                  onClick={() => setFilters(f => ({ ...f, phase: f.phase === p ? "" : p }))}
+                  className={`px-2 py-0.5 rounded transition-colors border text-xs ${
+                    filters.phase === p
+                      ? "bg-indigo-100 text-indigo-700 border-indigo-300 font-semibold"
+                      : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"
+                  }`}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+
             <button
               onClick={() => setShowLayers(v => !v)}
               className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors shrink-0 ${

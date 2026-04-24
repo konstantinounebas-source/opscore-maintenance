@@ -165,6 +165,19 @@
     "description": {
       "type": "string",
       "description": "General description of the asset"
+    },
+    "ordered": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this asset has been ordered"
+    },
+    "phase": {
+      "type": "string",
+      "description": "Asset phase (configurable via Configuration > Asset Phase)"
+    },
+    "inspection_status": {
+      "type": "string",
+      "description": "Inspection status (configurable via Configuration > Inspection Status)"
     }
   },
   "required": [

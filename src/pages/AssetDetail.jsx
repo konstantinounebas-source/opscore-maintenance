@@ -311,6 +311,14 @@ export default function AssetDetail() {
             <Field label="Open Incidents" value={incidents.filter(i => i.status !== "Closed" && i.status !== "Resolved").length} />
           </div>
 
+          {/* ── Classification ── */}
+          <SectionDivider label="Classification & Inspection" />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <Field label="Ordered">{asset.ordered ? <span className="text-green-600 font-semibold">Yes</span> : <span className="text-slate-400">No</span>}</Field>
+            <Field label="Phase" value={asset.phase} />
+            <Field label="Inspection Status" value={asset.inspection_status} />
+          </div>
+
           {/* ── Warranty / Inspection ── */}
           <SectionDivider label="Warranty / Inspection" />
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
