@@ -362,17 +362,18 @@ export default function PlanningReviewPanel({
                     {wa.map(a => {
                       const asset = assetsMap[a.asset_id];
                       return (
-                        <div key={a.id} className="p-2 rounded border border-slate-100 hover:bg-slate-50 cursor-pointer text-xs">
-                          <div className="flex items-start justify-between gap-2">
+                        <button
+                          key={a.id}
+                          onClick={() => onSelectAssetForPopup?.(asset)}
+                          className="w-full p-2 rounded border border-slate-100 hover:bg-indigo-50 hover:border-indigo-200 transition-colors text-left text-xs"
+                        >
+                          <div className="flex items-center justify-between gap-2">
                             <div className="flex-1 min-w-0">
                               <div className="font-semibold text-slate-700">{asset?.asset_id || a.asset_id}</div>
-                              <div className="text-slate-500">{asset?.city || "—"}</div>
+                              <div className="text-slate-500">{asset?.ordered_shelter_type || "—"}</div>
                             </div>
-                            <Badge className={ASSIGNMENT_STATUS_COLORS[a.assignment_status] || "bg-slate-100 text-slate-600"}>
-                              {a.assignment_status}
-                            </Badge>
                           </div>
-                        </div>
+                        </button>
                       );
                     })}
                   </div>
