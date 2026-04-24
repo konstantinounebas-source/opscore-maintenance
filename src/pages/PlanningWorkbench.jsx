@@ -328,6 +328,8 @@ export default function PlanningWorkbench() {
               assetsMap={assetsMap}
               incidentsByAsset={incidentsByAsset}
               workOrdersByAsset={workOrdersByAsset}
+              onSelectAssetForPopup={(asset) => console.log("Select asset:", asset)}
+              onOpenAssignmentModal={(asset, assignment) => console.log("Open assignment modal:", asset, assignment)}
             />
           )}
         </div>
