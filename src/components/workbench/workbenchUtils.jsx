@@ -446,13 +446,13 @@ export function getLegendEntries(colorMode, layers, assets, assignments, inciden
 
     default:
       return [
-        { label: "P1 / Critical", color: "#EF4444" },
-        { label: "P2 / High",     color: "#F97316" },
-        { label: "Medium",        color: "#3B82F6" },
-        { label: "Low",           color: "#84CC16" },
-        { label: "Completed",     color: "#22C55E" },
-        { label: "Deferred",      color: "#A78BFA" },
-        { label: "Unassigned",    color: "#CBD5E1" },
+        { label: "P1 / Critical", color: "#EF4444", count: assets.filter(a => assignmentByAssetId[a.id]?.priority_bucket === "P1" || assignmentByAssetId[a.id]?.priority_bucket === "Critical").length },
+        { label: "P2 / High",     color: "#F97316", count: assets.filter(a => assignmentByAssetId[a.id]?.priority_bucket === "P2" || assignmentByAssetId[a.id]?.priority_bucket === "High").length },
+        { label: "Medium",        color: "#3B82F6", count: assets.filter(a => assignmentByAssetId[a.id]?.priority_bucket === "Medium").length },
+        { label: "Low",           color: "#84CC16", count: assets.filter(a => assignmentByAssetId[a.id]?.priority_bucket === "Low").length },
+        { label: "Completed",     color: "#22C55E", count: assets.filter(a => assignmentByAssetId[a.id]?.assignment_status === "Completed").length },
+        { label: "Deferred",      color: "#A78BFA", count: assets.filter(a => assignmentByAssetId[a.id]?.assignment_status === "Deferred").length },
+        { label: "Unassigned",    color: "#CBD5E1", count: assets.filter(a => !assignmentByAssetId[a.id]).length },
       ];
   }
 }
