@@ -265,7 +265,7 @@ export default function AssetFormUnified({ open, onOpenChange, onSave, asset }) 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs">Shelter ID</Label>
-              <Input value={form.active_shelter_id || ""} readOnly className="bg-slate-100 text-slate-600" />
+              <Input value={form.asset_id || ""} readOnly className="bg-slate-100 text-slate-600" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Status</Label>
