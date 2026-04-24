@@ -112,7 +112,7 @@ export default function MapWorkspaceCard({
                 <input
                   type="checkbox"
                   checked={!filters.is_ordered && !filters.is_implementation_phase && !filters.has_work_order && !filters.show_unassigned_only}
-                  onChange={e => { if (e.target.checked) setFilters(f => ({ ...f, is_ordered: false, is_implementation_phase: false, has_work_order: false, show_unassigned_only: false })); }}
+                  onChange={e => { if (e.target.checked) setFilters({ ...EMPTY_MAP_FILTERS }); }}
                   className="rounded w-3 h-3"
                 />
                 All
