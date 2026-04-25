@@ -3,8 +3,58 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, RefreshCw, Clock, Plus, CheckCircle, XCircle, RotateCcw, Eye } from "lucide-react";
+import { MapPin, RefreshCw, Clock, Plus, CheckCircle, XCircle, RotateCcw, Eye, ChevronDown, ChevronRight, AlertTriangle, Paperclip, History, Flag } from "lucide-react";
 import OrderAttachmentsPanel from "./OrderAttachmentsPanel";
+
+// ─── Collapsible Section ────────────────────────────────────────────────────────
+function CollapsibleSection({ title, badge, defaultOpen = false, children, accentColor = "slate" }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="border border-slate-200 rounded-lg overflow-hidden">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between px-3 py-2 bg-slate-50 hover:bg-slate-100 transition-colors text-left"
+      >
+        <div className="flex items-center gap-2">
+          {open ? <ChevronDown className="h-3.5 w-3.5 text-slate-400" /> : <ChevronRight className="h-3.5 w-3.5 text-slate-400" />}
+          <span className="text-xs font-bold text-slate-600 uppercase tracking-wide">{title}</span>
+          {badge != null && (
+            <span className="text-[10px] bg-slate-200 text-slate-600 rounded-full px-1.5 py-0.5 font-semibold">{badge}</span>
+          )}
+        </div>
+      </button>
+      {open && <div className="p-3">{children}</div>}
+    </div>
+  );
+}
+
+// ─── Required fields check ──────────────────────────────────────────────────────
+const REQUIRED_FIELDS = [
+  { key: "authority_order_reference", label: "Authority Order Reference" },
+  { key: "order_received_date", label: "Order Received Date" },
+  { key: "bus_stop_name", label: "Bus Stop Name" },
+  { key: "location_address", label: "Location Address" },
+  { key: "municipality", label: "Municipality" },
+  { key: "latitude", label: "Latitude" },
+  { key: "longitude", label: "Longitude" },
+];
+
+function checkReadiness({ currentData, activeVersion, draftVersion, pendingVersion, tasks = [], instructions = [] }) {
+  const missing = [];
+  if (!currentData) { missing.push("No Order + Location data initialized"); return { ready: false, missing }; }
+  if (!activeVersion) missing.push("No active version exists");
+  if (draftVersion) missing.push("A draft revision is in progress — submit or delete it first");
+  if (pendingVersion) missing.push("A revision is pending approval — approve or reject it first");
+  REQUIRED_FIELDS.forEach(({ key, label }) => {
+    const val = currentData[key];
+    if (val == null || val === "") missing.push(`Missing required field: ${label}`);
+  });
+  const blockingTasks = tasks.filter(t => t.is_blocking && t.status !== "Completed" && (t.stage === 1 || !t.stage));
+  if (blockingTasks.length > 0) missing.push(`${blockingTasks.length} blocking task(s) not completed`);
+  const blockingInstructions = instructions.filter(i => i.is_blocking && i.status !== "Implemented" && (i.stage === 1 || !i.stage));
+  if (blockingInstructions.length > 0) missing.push(`${blockingInstructions.length} blocking authority instruction(s) not resolved`);
+  return { ready: missing.length === 0, missing };
+}
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 const SOURCES = ["A.A. Order", "A.A. Instruction", "Site Finding", "Internal Review", "QA Finding", "Delivery", "Acceptance", "Other"];
@@ -163,6 +213,7 @@ export default function OrderLocationModule({ log, asset }) {
   const [rejecting, setRejecting] = useState(false);
   const [submittingDraft, setSubmittingDraft] = useState(false);
   const [deletingDraft, setDeletingDraft] = useState(false);
+  const [completing, setCompleting] = useState(false);
 
   const { data: currentData } = useQuery({
     queryKey: ["stationLogCurrentData", log.id],
@@ -175,23 +226,41 @@ export default function OrderLocationModule({ log, asset }) {
     queryFn: () => base44.entities.StationLogDataVersions.filter({ station_log_id: log.id }),
   });
 
+  const { data: attachments = [] } = useQuery({
+    queryKey: ["orderAttachments", log.id],
+    queryFn: () => base44.entities.StationLogOrderAttachments.filter({ station_log_id: log.id }),
+    select: d => d.filter(a => a.is_active !== false),
+  });
+
+  const { data: tasks = [] } = useQuery({
+    queryKey: ["stage1tasks", log.id],
+    queryFn: () => base44.entities.StationLogTasks.filter({ station_log_id: log.id }),
+    select: d => d.filter(t => t.stage === 1 || !t.stage),
+  });
+
+  const { data: instructions = [] } = useQuery({
+    queryKey: ["stage1instructions", log.id],
+    queryFn: () => base44.entities.StationLogAuthorityInstructions.filter({ station_log_id: log.id }),
+    select: d => d.filter(i => i.stage === 1 || !i.stage),
+  });
+
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: ["stationLogCurrentData", log.id] });
     queryClient.invalidateQueries({ queryKey: ["stationLogVersions", log.id] });
+    queryClient.invalidateQueries({ queryKey: ["orderAttachments", log.id] });
   };
 
   const sortedVersions = [...versions].sort((a, b) => b.version_no - a.version_no);
   const activeVersion = versions.find(v => v.is_active);
-  // Draft: created by restore flow, not yet submitted
   const draftVersion = currentData?.pending_version_id
     ? versions.find(v => v.id === currentData.pending_version_id && v.status === "Draft")
     : versions.find(v => v.status === "Draft");
-  // Pending: submitted, awaiting approval
   const pendingVersion = currentData?.pending_version_id
     ? versions.find(v => v.id === currentData.pending_version_id && v.status === "Pending Approval")
     : versions.find(v => v.status === "Pending Approval");
-  // Either draft or pending blocks new revisions
   const hasActiveRevision = !!(draftVersion || pendingVersion);
+
+  const readiness = checkReadiness({ currentData, activeVersion, draftVersion, pendingVersion, tasks, instructions });
 
   const handleApprove = async () => {
     if (!pendingVersion || !currentData) return;
@@ -238,9 +307,7 @@ export default function OrderLocationModule({ log, asset }) {
     if (!draftVersion || !currentData) return;
     setSubmittingDraft(true);
     await base44.entities.StationLogDataVersions.update(draftVersion.id, {
-      status: "Pending Approval",
-      is_active: false,
-      is_working: false,
+      status: "Pending Approval", is_active: false, is_working: false,
     });
     await base44.entities.StationLogCurrentData.update(currentData.id, {
       revision_status: "Revision Pending Approval",
@@ -266,6 +333,32 @@ export default function OrderLocationModule({ log, asset }) {
     refresh();
   };
 
+  const handleCompleteStage = async () => {
+    if (!readiness.ready) return;
+    if (!window.confirm("Mark Stage 1: Order + Location as complete and advance to Stage 2?")) return;
+    setCompleting(true);
+    const today = new Date().toISOString().split("T")[0];
+    await base44.entities.StationLog.update(log.id, {
+      current_stage: 2,
+      current_status: "In Progress",
+      can_move_forward: true,
+      next_action: "Complete Work Categorization & Time Estimation",
+    });
+    await logActivity(log.id, "stage_complete", "Order + Location completed", 1);
+    await base44.entities.StationLogMilestones.create({
+      station_log_id: log.id,
+      category: "Order",
+      name: "Order + Location completed",
+      related_stage: 1,
+      milestone_date: new Date().toISOString(),
+      source: "Stage Completion",
+      is_important: true,
+    });
+    setCompleting(false);
+    queryClient.invalidateQueries({ queryKey: ["stationLogs"] });
+    refresh();
+  };
+
   if (!currentData) {
     return (
       <div className="p-6 text-center space-y-3 bg-slate-50 rounded-lg border border-dashed border-slate-300">
@@ -277,54 +370,87 @@ export default function OrderLocationModule({ log, asset }) {
     );
   }
 
+  const DEFAULT_OPEN_GROUPS = ["Order Info", "Location"];
+
   return (
-    <div className="space-y-5">
-      {/* Header row */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Badge className={
+    <div className="space-y-3">
+
+      {/* ── Summary Card ── */}
+      <div className="grid grid-cols-4 gap-2 p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs">
+        <div>
+          <p className="text-[10px] font-semibold text-slate-400 uppercase">Active Version</p>
+          <p className="font-bold text-slate-700">{activeVersion ? `v${activeVersion.version_no}` : "—"}</p>
+        </div>
+        <div>
+          <p className="text-[10px] font-semibold text-slate-400 uppercase">Revision Status</p>
+          <Badge className={`text-[10px] mt-0.5 ${
             draftVersion ? "bg-blue-100 text-blue-800" :
             pendingVersion ? "bg-yellow-100 text-yellow-800" :
             "bg-green-100 text-green-800"
-          }>
-            {draftVersion ? "Draft Revision" : currentData.revision_status || "No Pending Revision"}
+          }`}>
+            {draftVersion ? "Draft" : pendingVersion ? "Pending Approval" : "No Revision"}
           </Badge>
+        </div>
+        <div>
+          <p className="text-[10px] font-semibold text-slate-400 uppercase">Bus Stop</p>
+          <p className="text-slate-700 truncate">{currentData.bus_stop_name || "—"}</p>
+        </div>
+        <div>
+          <p className="text-[10px] font-semibold text-slate-400 uppercase">Municipality</p>
+          <p className="text-slate-700">{currentData.municipality || "—"}</p>
+        </div>
+        <div>
+          <p className="text-[10px] font-semibold text-slate-400 uppercase">Location</p>
+          <p className="text-slate-700 truncate">{currentData.location_address || "—"}</p>
+        </div>
+        <div>
+          <p className="text-[10px] font-semibold text-slate-400 uppercase">Order Deadline</p>
+          <p className="text-slate-700">{currentData.order_deadline_date || "—"}</p>
+        </div>
+        <div>
+          <p className="text-[10px] font-semibold text-slate-400 uppercase">Risk Level</p>
+          <p className={`font-semibold ${currentData.risk_level === "High" ? "text-red-600" : currentData.risk_level === "Medium" ? "text-amber-600" : "text-slate-700"}`}>
+            {currentData.risk_level || "—"}
+          </p>
+        </div>
+        <div>
+          <p className="text-[10px] font-semibold text-slate-400 uppercase">Attachments</p>
+          <p className="text-slate-700">{attachments.length}</p>
+        </div>
+      </div>
+
+      {/* ── Header: actions row ── */}
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-2">
           {activeVersion && <span className="text-xs text-slate-500">Active: v{activeVersion.version_no}</span>}
         </div>
         {!hasActiveRevision && (
-          <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={() => setShowRevisionDialog(true)}>
+          <Button size="sm" variant="outline" className="gap-1 text-xs h-7" onClick={() => setShowRevisionDialog(true)}>
             <RefreshCw className="h-3 w-3" /> Request Revision
           </Button>
         )}
       </div>
 
-      {/* Draft block */}
+      {/* ── Draft block ── */}
       {draftVersion && (
-        <div className="p-4 bg-blue-50 border border-blue-300 rounded-lg space-y-3">
+        <div className="p-3 bg-blue-50 border border-blue-300 rounded-lg space-y-2">
           <div className="flex items-center gap-2 flex-wrap">
-            <Clock className="h-4 w-4 text-blue-600 flex-shrink-0" />
-            <span className="text-sm font-semibold text-blue-900">
-              Draft Revision v{draftVersion.version_no}
-            </span>
-            <span className="text-xs text-blue-700">— {draftVersion.source} · {draftVersion.date_of_request}</span>
-            {draftVersion.restored_from_version_id && (
-              <Badge className="text-xs bg-purple-100 text-purple-700">Restored</Badge>
-            )}
+            <Clock className="h-3.5 w-3.5 text-blue-600 flex-shrink-0" />
+            <span className="text-xs font-semibold text-blue-900">Draft Revision v{draftVersion.version_no}</span>
+            <span className="text-[11px] text-blue-700">— {draftVersion.source} · {draftVersion.date_of_request}</span>
+            {draftVersion.restored_from_version_id && <Badge className="text-[10px] bg-purple-100 text-purple-700">Restored</Badge>}
           </div>
-          <p className="text-xs text-blue-800">{draftVersion.reason}</p>
-          {draftVersion.related_stage && (
-            <p className="text-xs text-blue-700">Stage {draftVersion.related_stage}: {STAGE_NAMES[draftVersion.related_stage]}</p>
-          )}
-          <div className="flex gap-2 flex-wrap">
-            <Button size="sm" variant="outline" className="gap-1 text-xs border-blue-300 text-blue-700 hover:bg-blue-100"
+          {draftVersion.reason && <p className="text-[11px] text-blue-800 italic">{draftVersion.reason}</p>}
+          <div className="flex gap-1.5 flex-wrap">
+            <Button size="sm" variant="outline" className="gap-1 text-[11px] h-6 border-blue-300 text-blue-700 hover:bg-blue-100"
               onClick={() => setEditDraftVersion(draftVersion)}>
               <RefreshCw className="h-3 w-3" /> Edit Draft
             </Button>
-            <Button size="sm" className="gap-1 bg-blue-600 hover:bg-blue-700 text-white text-xs"
+            <Button size="sm" className="gap-1 h-6 bg-blue-600 hover:bg-blue-700 text-white text-[11px]"
               disabled={submittingDraft} onClick={handleSubmitDraft}>
               <CheckCircle className="h-3 w-3" /> {submittingDraft ? "Submitting..." : "Submit for Approval"}
             </Button>
-            <Button size="sm" variant="outline" className="gap-1 text-red-600 border-red-300 hover:bg-red-50 text-xs"
+            <Button size="sm" variant="outline" className="gap-1 h-6 text-red-600 border-red-300 hover:bg-red-50 text-[11px]"
               disabled={deletingDraft} onClick={handleDeleteDraft}>
               <XCircle className="h-3 w-3" /> {deletingDraft ? "Deleting..." : "Delete Draft"}
             </Button>
@@ -332,97 +458,129 @@ export default function OrderLocationModule({ log, asset }) {
         </div>
       )}
 
-      {/* Pending Revision block */}
+      {/* ── Pending Revision block ── */}
       {pendingVersion && (
-        <div className="p-4 bg-yellow-50 border border-yellow-300 rounded-lg space-y-3">
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-yellow-600 flex-shrink-0" />
-            <span className="text-sm font-semibold text-yellow-900">
-              Revision v{pendingVersion.version_no} pending approval
-            </span>
-            <span className="text-xs text-yellow-700">— {pendingVersion.source} · {pendingVersion.date_of_request}</span>
+        <div className="p-3 bg-yellow-50 border border-yellow-300 rounded-lg space-y-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Clock className="h-3.5 w-3.5 text-yellow-600 flex-shrink-0" />
+            <span className="text-xs font-semibold text-yellow-900">Revision v{pendingVersion.version_no} pending approval</span>
+            <span className="text-[11px] text-yellow-700">— {pendingVersion.source} · {pendingVersion.date_of_request}</span>
           </div>
-          <p className="text-xs text-yellow-800">{pendingVersion.reason}</p>
-          {pendingVersion.related_stage && (
-            <p className="text-xs text-yellow-700">Identified in Stage {pendingVersion.related_stage}: {STAGE_NAMES[pendingVersion.related_stage]}</p>
-          )}
-          <div className="flex gap-2">
-            <Button size="sm" className="gap-1 bg-green-600 hover:bg-green-700 text-white" disabled={approving} onClick={handleApprove}>
-              <CheckCircle className="h-3 w-3" /> {approving ? "Approving..." : "Approve Revision"}
+          {pendingVersion.reason && <p className="text-[11px] text-yellow-800 italic">{pendingVersion.reason}</p>}
+          <div className="flex gap-1.5">
+            <Button size="sm" className="gap-1 h-6 bg-green-600 hover:bg-green-700 text-white text-[11px]" disabled={approving} onClick={handleApprove}>
+              <CheckCircle className="h-3 w-3" /> {approving ? "Approving..." : "Approve"}
             </Button>
-            <Button size="sm" variant="outline" className="gap-1 text-red-600 border-red-300 hover:bg-red-50" disabled={rejecting} onClick={handleReject}>
-              <XCircle className="h-3 w-3" /> {rejecting ? "Rejecting..." : "Reject Revision"}
+            <Button size="sm" variant="outline" className="gap-1 h-6 text-red-600 border-red-300 hover:bg-red-50 text-[11px]" disabled={rejecting} onClick={handleReject}>
+              <XCircle className="h-3 w-3" /> {rejecting ? "Rejecting..." : "Reject"}
             </Button>
           </div>
         </div>
       )}
 
-      {/* Current Data grouped */}
+      {/* ── Collapsible Data Groups ── */}
       {Object.entries(FIELD_GROUPS).map(([groupTitle, fields]) => (
-        <div key={groupTitle}>
-          <p className="text-xs font-bold text-slate-600 uppercase tracking-wide mb-2 border-b border-slate-100 pb-1">{groupTitle}</p>
-          <div className="grid grid-cols-2 gap-2">
-            {fields.map(key => (
-              <DataField key={key} label={formatLabel(key)} value={currentData[key]} />
-            ))}
+        <CollapsibleSection
+          key={groupTitle}
+          title={groupTitle}
+          defaultOpen={DEFAULT_OPEN_GROUPS.includes(groupTitle)}
+        >
+          <div className="grid grid-cols-3 gap-1.5">
+            {fields.map(key => {
+              const val = currentData[key];
+              const display = val === true ? "Yes" : val === false ? "No" : val;
+              const isRequired = REQUIRED_FIELDS.some(f => f.key === key);
+              const isEmpty = val == null || val === "";
+              return (
+                <div key={key} className={`p-1.5 rounded border ${isEmpty && isRequired ? "border-red-200 bg-red-50" : "border-slate-100 bg-slate-50"} ${key.includes("notes") || key.includes("description") ? "col-span-3" : ""}`}>
+                  <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-wide leading-none">{formatLabel(key)}{isRequired && <span className="text-red-400 ml-0.5">*</span>}</p>
+                  <p className="text-xs text-slate-800 mt-0.5 leading-tight">{display ?? <span className="text-slate-300">—</span>}</p>
+                </div>
+              );
+            })}
           </div>
-        </div>
+        </CollapsibleSection>
       ))}
 
-      {/* Attachments */}
-      <div className="border-t pt-4">
+      {/* ── Attachments (collapsible) ── */}
+      <CollapsibleSection title="Attachments / Photos" badge={attachments.length} defaultOpen={false}>
         <OrderAttachmentsPanel log={log} activeVersionId={activeVersion?.id} />
-      </div>
+      </CollapsibleSection>
 
-      {/* Version History */}
+      {/* ── Version History (collapsible) ── */}
       {sortedVersions.length > 0 && (
-        <div className="border-t pt-3">
-          <p className="text-xs font-bold text-slate-600 uppercase mb-2">Version History</p>
-          <div className="space-y-2">
+        <CollapsibleSection title="Version History" badge={sortedVersions.length} defaultOpen={false}>
+          <div className="space-y-1.5">
             {sortedVersions.map(v => (
-              <div key={v.id} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 space-y-1">
-                {/* Row 1: version, status badges, date */}
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-mono font-bold text-slate-700 text-xs w-8">v{v.version_no}</span>
-                  <Badge className={`text-xs ${
-                    v.status === "Active" ? "bg-green-100 text-green-800" :
-                    v.status === "Pending Approval" ? "bg-yellow-100 text-yellow-800" :
-                    v.status === "Draft" ? "bg-blue-100 text-blue-800" :
-                    v.status === "Rejected" ? "bg-red-100 text-red-800" :
-                    v.status === "Superseded" ? "bg-slate-200 text-slate-500" :
-                    "bg-slate-100 text-slate-600"
-                  }`}>{v.status}</Badge>
-                  {v.is_active && <Badge className="text-xs bg-emerald-100 text-emerald-800">Active</Badge>}
-                  {v.is_working && <Badge className="text-xs bg-sky-100 text-sky-800">Working</Badge>}
-                  {v.restored_from_version_id && <Badge className="text-xs bg-purple-100 text-purple-700">Restored</Badge>}
-                  <span className="text-xs text-slate-400 ml-auto">{v.date_of_request || v.created_date?.split("T")[0] || "—"}</span>
-                </div>
-                {/* Row 2: source, stage, reason */}
-                <div className="flex items-center gap-2 text-xs text-slate-500 flex-wrap">
-                  <span className="font-medium">{v.source || "—"}</span>
-                  {v.related_stage && <span>· Stage {v.related_stage}: {STAGE_NAMES[v.related_stage]}</span>}
-                </div>
-                {v.reason && <p className="text-xs text-slate-600 italic truncate">{v.reason}</p>}
-                {/* Row 3: actions */}
-                <div className="flex gap-1.5 pt-1">
-                  <Button size="sm" variant="outline" className="h-6 text-xs px-2 gap-1"
+              <div key={v.id} className="flex items-center gap-2 px-2 py-1.5 rounded border border-slate-200 bg-slate-50 flex-wrap">
+                <span className="font-mono font-bold text-slate-700 text-xs w-6">v{v.version_no}</span>
+                <Badge className={`text-[10px] ${
+                  v.status === "Active" ? "bg-green-100 text-green-800" :
+                  v.status === "Pending Approval" ? "bg-yellow-100 text-yellow-800" :
+                  v.status === "Draft" ? "bg-blue-100 text-blue-800" :
+                  v.status === "Rejected" ? "bg-red-100 text-red-800" :
+                  v.status === "Superseded" ? "bg-slate-200 text-slate-500" :
+                  "bg-slate-100 text-slate-600"
+                }`}>{v.status}</Badge>
+                {v.restored_from_version_id && <Badge className="text-[10px] bg-purple-100 text-purple-700">Restored</Badge>}
+                <span className="text-[11px] text-slate-500 flex-1 truncate">{v.source} {v.date_of_request ? `· ${v.date_of_request}` : ""}</span>
+                {v.reason && <span className="text-[10px] text-slate-400 italic truncate max-w-24">{v.reason}</span>}
+                <div className="flex gap-1 ml-auto">
+                  <Button size="sm" variant="outline" className="h-5 text-[10px] px-1.5 gap-0.5"
                     onClick={() => setViewVersion(v)}>
-                    <Eye className="h-3 w-3" /> View
+                    <Eye className="h-2.5 w-2.5" /> View
                   </Button>
                   {!hasActiveRevision && v.status !== "Pending Approval" && v.status !== "Draft" && (
-                    <Button size="sm" variant="outline" className="h-6 text-xs px-2 gap-1 text-purple-700 border-purple-200 hover:bg-purple-50"
+                    <Button size="sm" variant="outline" className="h-5 text-[10px] px-1.5 gap-0.5 text-purple-700 border-purple-200 hover:bg-purple-50"
                       onClick={() => setRestoreSourceVersion(v)}>
-                      <RotateCcw className="h-3 w-3" /> Restore as New Revision
+                      <RotateCcw className="h-2.5 w-2.5" /> Restore
                     </Button>
                   )}
                 </div>
               </div>
             ))}
           </div>
-        </div>
+        </CollapsibleSection>
       )}
 
-      {/* Revision Dialog */}
+      {/* ── Stage 1 Completion ── */}
+      <div className={`rounded-lg border p-3 space-y-2 ${readiness.ready ? "border-green-300 bg-green-50" : "border-slate-200 bg-slate-50"}`}>
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            {readiness.ready
+              ? <CheckCircle className="h-4 w-4 text-green-600" />
+              : <AlertTriangle className="h-4 w-4 text-amber-500" />
+            }
+            <span className={`text-xs font-bold ${readiness.ready ? "text-green-800" : "text-slate-700"}`}>
+              Stage 1 Completion: {readiness.ready ? "Ready to Complete" : "Not Ready"}
+            </span>
+          </div>
+          <Button
+            size="sm"
+            disabled={!readiness.ready || completing || log.current_stage > 1}
+            onClick={handleCompleteStage}
+            className={`gap-1 text-xs h-7 ${readiness.ready && log.current_stage === 1 ? "bg-green-600 hover:bg-green-700 text-white" : ""}`}
+          >
+            <Flag className="h-3 w-3" />
+            {completing ? "Completing..." : log.current_stage > 1 ? "Already Completed" : "Complete Order + Location"}
+          </Button>
+        </div>
+        {!readiness.ready && readiness.missing.length > 0 && (
+          <ul className="space-y-0.5 mt-1">
+            {readiness.missing.map((m, i) => (
+              <li key={i} className="flex items-start gap-1.5 text-[11px] text-amber-800">
+                <span className="mt-0.5 text-amber-500 flex-shrink-0">•</span>
+                {m}
+              </li>
+            ))}
+          </ul>
+        )}
+        {log.current_stage > 1 && (
+          <p className="text-[11px] text-green-700">Stage 1 was completed. Currently on Stage {log.current_stage}.</p>
+        )}
+      </div>
+
+      {/* ── Dialogs ── */}
       {showRevisionDialog && (
         <RevisionFormDialog
           log={log}
@@ -432,8 +590,6 @@ export default function OrderLocationModule({ log, asset }) {
           onClose={() => setShowRevisionDialog(false)}
         />
       )}
-
-      {/* Edit Draft Dialog */}
       {editDraftVersion && (
         <EditDraftDialog
           log={log}
@@ -442,8 +598,6 @@ export default function OrderLocationModule({ log, asset }) {
           onClose={() => setEditDraftVersion(null)}
         />
       )}
-
-      {/* Restore Dialog */}
       {restoreSourceVersion && (
         <RestoreVersionDialog
           log={log}
@@ -454,8 +608,6 @@ export default function OrderLocationModule({ log, asset }) {
           onClose={() => setRestoreSourceVersion(null)}
         />
       )}
-
-      {/* View Version Dialog */}
       {viewVersion && (
         <ViewVersionDialog version={viewVersion} onClose={() => setViewVersion(null)} />
       )}
