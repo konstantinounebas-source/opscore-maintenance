@@ -1,0 +1,162 @@
+{
+  "name": "StationLogCurrentData",
+  "type": "object",
+  "properties": {
+    "station_log_id": {
+      "type": "string",
+      "description": "Reference to StationLog record ID"
+    },
+    "asset_id": {
+      "type": "string",
+      "description": "Reference to Assets record ID"
+    },
+    "active_version_id": {
+      "type": "string",
+      "description": "ID of the currently active version"
+    },
+    "working_version_id": {
+      "type": "string",
+      "description": "ID of the current working version"
+    },
+    "pending_version_id": {
+      "type": "string",
+      "description": "ID of the pending approval version"
+    },
+    "authority_order_reference": {
+      "type": "string"
+    },
+    "order_received_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "order_received_from": {
+      "type": "string"
+    },
+    "order_description": {
+      "type": "string"
+    },
+    "order_type": {
+      "type": "string"
+    },
+    "order_priority": {
+      "type": "string"
+    },
+    "order_priority_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "order_deadline_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "order_notes": {
+      "type": "string"
+    },
+    "bus_stop_name": {
+      "type": "string"
+    },
+    "location_address": {
+      "type": "string"
+    },
+    "municipality": {
+      "type": "string"
+    },
+    "district": {
+      "type": "string"
+    },
+    "area": {
+      "type": "string"
+    },
+    "latitude": {
+      "type": "number"
+    },
+    "longitude": {
+      "type": "number"
+    },
+    "map_link": {
+      "type": "string"
+    },
+    "installation_type": {
+      "type": "string"
+    },
+    "intervention_scope": {
+      "type": "string"
+    },
+    "road_side": {
+      "type": "string"
+    },
+    "traffic_direction": {
+      "type": "string"
+    },
+    "existing_infrastructure_type": {
+      "type": "string"
+    },
+    "pavement_type": {
+      "type": "string"
+    },
+    "pavement_width": {
+      "type": "number"
+    },
+    "has_tactile_paving": {
+      "type": "boolean"
+    },
+    "has_bus_bay": {
+      "type": "boolean"
+    },
+    "has_road_marking": {
+      "type": "boolean"
+    },
+    "requires_footway": {
+      "type": "boolean"
+    },
+    "access_notes": {
+      "type": "string"
+    },
+    "has_underground_utilities": {
+      "type": "boolean"
+    },
+    "utility_type": {
+      "type": "string"
+    },
+    "traffic_impact_level": {
+      "type": "string"
+    },
+    "requires_traffic_management": {
+      "type": "boolean"
+    },
+    "requires_permits": {
+      "type": "boolean"
+    },
+    "permit_type": {
+      "type": "string"
+    },
+    "site_constraints_notes": {
+      "type": "string"
+    },
+    "risk_level": {
+      "type": "string"
+    },
+    "risk_description": {
+      "type": "string"
+    },
+    "shelter_type": {
+      "type": "string"
+    },
+    "revision_status": {
+      "type": "string",
+      "enum": [
+        "No Pending Revision",
+        "Revision Pending Approval"
+      ],
+      "default": "No Pending Revision"
+    },
+    "last_updated": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "station_log_id",
+    "asset_id"
+  ]
+}
