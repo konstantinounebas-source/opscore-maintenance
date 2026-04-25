@@ -72,6 +72,7 @@ export default function StationLogDetail({ log, onBack, stages, assets }) {
             stages={stages}
             expandedStage={expandedStage}
             setExpandedStage={setExpandedStage}
+            asset={asset}
           />
         </div>
 

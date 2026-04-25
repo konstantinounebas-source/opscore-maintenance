@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, CheckCircle, Lock } from "lucide-react";
+import OrderLocationModule from "@/components/stationlogs/stage1/OrderLocationModule.jsx";
 
 const STAGE_FIELDS = {
   1: { title: "Order + Location", fields: ["Asset Code", "Location Address", "Municipality", "Latitude", "Longitude"] },
@@ -39,6 +40,7 @@ export default function StationLogAccordion({
   stages,
   expandedStage,
   setExpandedStage,
+  asset,
 }) {
   const getStageTasks = (stageId) => tasks.filter(t => t.stage === stageId);
   const getStageApprovals = (stageId) => approvals.filter(a => a.stage === stageId);
@@ -91,7 +93,13 @@ export default function StationLogAccordion({
                 </AccordionTrigger>
 
                 <AccordionContent className="border-t border-gray-200 p-4 space-y-4">
-                  {/* Stage Fields */}
+                  {/* Stage 1: Order + Location Module */}
+                  {stage.id === 1 && (
+                    <OrderLocationModule log={log} asset={asset} />
+                  )}
+
+                  {/* Other stages: placeholder fields */}
+                  {stage.id !== 1 && (
                   <div>
                     <p className="text-xs font-bold text-gray-700 uppercase mb-3">Stage Fields</p>
                     <div className="grid grid-cols-2 gap-3">
@@ -103,6 +111,7 @@ export default function StationLogAccordion({
                       ))}
                     </div>
                   </div>
+                  )}
 
                   {/* Approval Gates */}
                   {stageApprovals.length > 0 && (
