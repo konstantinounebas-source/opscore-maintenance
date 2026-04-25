@@ -1,10 +1,12 @@
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, X, Pencil, AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, X, Pencil, AlertTriangle, ChevronLeft, ChevronRight, ClipboardList, Loader2 } from "lucide-react";
 import StatusBadge from "@/components/shared/StatusBadge";
 
 const STAGE_COLORS = {
@@ -25,6 +27,42 @@ export default function UnifiedAssetsTable({
   onEdit,
 }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [openingLogForAsset, setOpeningLogForAsset] = useState(null);
+
+  const { data: stationLogs = [] } = useQuery({
+    queryKey: ["stationLogs"],
+    queryFn: () => base44.entities.StationLog.list(),
+  });
+
+  const createLogMutation = useMutation({
+    mutationFn: (assetId) => base44.entities.StationLog.create({
+      asset_id: assetId,
+      current_stage: 1,
+      current_status: "In Progress",
+      can_move_forward: true,
+      next_action: "Complete Order + Location",
+      planning_status: "Not Scheduled",
+      blocking_summary: [],
+      pending_summary: [],
+    }),
+    onSuccess: (newLog) => {
+      queryClient.invalidateQueries({ queryKey: ["stationLogs"] });
+      navigate(`/BusStopLogs?logId=${newLog.id}`);
+      setOpeningLogForAsset(null);
+    },
+  });
+
+  const handleOpenStationLog = async (e, asset) => {
+    e.stopPropagation();
+    const existing = stationLogs.find(l => l.asset_id === asset.id);
+    if (existing) {
+      navigate(`/BusStopLogs?logId=${existing.id}`);
+    } else {
+      setOpeningLogForAsset(asset.id);
+      createLogMutation.mutate(asset.id);
+    }
+  };
   const [search, setSearch] = useState("");
   const [filterCity, setFilterCity] = useState("all");
   const [filterPhase, setFilterPhase] = useState("all");
@@ -183,6 +221,7 @@ export default function UnifiedAssetsTable({
                 <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Incidents</th>
                 <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">WOs</th>
                 <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Childs</th>
+                <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Station Log</th>
                 <th className="text-left px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap"></th>
               </tr>
             </thead>
@@ -246,6 +285,24 @@ export default function UnifiedAssetsTable({
                       ) : (
                         <span className="text-slate-300 text-xs">—</span>
                       )}
+                    </td>
+                    <td className="px-3 py-2.5 whitespace-nowrap" onClick={e => e.stopPropagation()}>
+                      {(() => {
+                        const hasLog = stationLogs.some(l => l.asset_id === a.id);
+                        const isLoading = openingLogForAsset === a.id;
+                        return (
+                          <Button
+                            variant={hasLog ? "outline" : "ghost"}
+                            size="sm"
+                            className={`h-7 gap-1 text-xs px-2 ${hasLog ? "text-indigo-600 border-indigo-200 hover:bg-indigo-50" : "text-slate-400 hover:text-slate-700"}`}
+                            onClick={(e) => handleOpenStationLog(e, a)}
+                            disabled={isLoading}
+                          >
+                            {isLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <ClipboardList className="w-3 h-3" />}
+                            {hasLog ? "View Log" : "Open Log"}
+                          </Button>
+                        );
+                      })()}
                     </td>
                     <td className="px-3 py-2.5 whitespace-nowrap" onClick={e => e.stopPropagation()}>
                       <Button

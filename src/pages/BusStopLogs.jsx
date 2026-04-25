@@ -44,10 +44,13 @@ const WORKFLOW_STAGES = [
 
 export default function BusStopLogs() {
   const [search, setSearch] = useState("");
-  const [selectedLog, setSelectedLog] = useState(null);
   const [showNewLogDialog, setShowNewLogDialog] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState(null);
   const queryClient = useQueryClient();
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const logIdFromUrl = urlParams.get("logId");
+  const [selectedLogId, setSelectedLogId] = useState(logIdFromUrl || null);
 
   const { data: assets = [] } = useQuery({
     queryKey: ["assets"],
@@ -100,11 +103,16 @@ export default function BusStopLogs() {
     return colors[status] || "bg-gray-100 text-gray-800";
   };
 
+  const selectedLog = selectedLogId ? logs.find(l => l.id === selectedLogId) : null;
+
   if (selectedLog) {
     return (
       <StationLogDetail
         log={selectedLog}
-        onBack={() => setSelectedLog(null)}
+        onBack={() => {
+          setSelectedLogId(null);
+          window.history.replaceState({}, "", "/BusStopLogs");
+        }}
         stages={WORKFLOW_STAGES}
         assets={assets}
       />
@@ -198,7 +206,7 @@ export default function BusStopLogs() {
             const stage = WORKFLOW_STAGES.find(s => s.id === log.current_stage);
             
             return (
-              <Card key={log.id} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setSelectedLog(log)}>
+              <Card key={log.id} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setSelectedLogId(log.id)}>
                 <CardContent className="pt-6">
                   <div className="grid grid-cols-5 gap-4 items-start">
                     <div>
