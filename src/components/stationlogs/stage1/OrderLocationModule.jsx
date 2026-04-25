@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, RefreshCw, Clock, Plus, CheckCircle, XCircle } from "lucide-react";
+import { MapPin, RefreshCw, Clock, Plus, CheckCircle, XCircle, RotateCcw, Eye } from "lucide-react";
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 const SOURCES = ["A.A. Order", "A.A. Instruction", "Site Finding", "Internal Review", "QA Finding", "Delivery", "Acceptance", "Other"];
@@ -141,6 +141,8 @@ function FormSection({ title, fields, form, setForm }) {
 export default function OrderLocationModule({ log, asset }) {
   const queryClient = useQueryClient();
   const [showRevisionDialog, setShowRevisionDialog] = useState(false);
+  const [restoreSourceVersion, setRestoreSourceVersion] = useState(null);
+  const [viewVersion, setViewVersion] = useState(null);
   const [approving, setApproving] = useState(false);
   const [rejecting, setRejecting] = useState(false);
 
@@ -280,20 +282,44 @@ export default function OrderLocationModule({ log, asset }) {
       {sortedVersions.length > 0 && (
         <div className="border-t pt-3">
           <p className="text-xs font-bold text-slate-600 uppercase mb-2">Version History</p>
-          <div className="space-y-1">
+          <div className="space-y-2">
             {sortedVersions.map(v => (
-              <div key={v.id} className="flex items-center gap-2 text-xs py-1.5 px-2 rounded bg-slate-50 border border-slate-100">
-                <span className="font-mono font-semibold text-slate-700 w-8">v{v.version_no}</span>
-                <Badge className={`text-xs ${
-                  v.status === "Active" ? "bg-green-100 text-green-800" :
-                  v.status === "Pending Approval" ? "bg-yellow-100 text-yellow-800" :
-                  v.status === "Rejected" ? "bg-red-100 text-red-800" :
-                  v.status === "Superseded" ? "bg-slate-100 text-slate-600" :
-                  "bg-blue-100 text-blue-800"
-                }`}>{v.status}</Badge>
-                <span className="text-slate-500 flex-1 truncate">{v.reason || "—"}</span>
-                <span className="text-slate-400 whitespace-nowrap">{v.source}</span>
-                {v.related_stage && <span className="text-slate-400">S{v.related_stage}</span>}
+              <div key={v.id} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 space-y-1">
+                {/* Row 1: version, status badges, date */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-mono font-bold text-slate-700 text-xs w-8">v{v.version_no}</span>
+                  <Badge className={`text-xs ${
+                    v.status === "Active" ? "bg-green-100 text-green-800" :
+                    v.status === "Pending Approval" ? "bg-yellow-100 text-yellow-800" :
+                    v.status === "Draft" ? "bg-blue-100 text-blue-800" :
+                    v.status === "Rejected" ? "bg-red-100 text-red-800" :
+                    v.status === "Superseded" ? "bg-slate-200 text-slate-500" :
+                    "bg-slate-100 text-slate-600"
+                  }`}>{v.status}</Badge>
+                  {v.is_active && <Badge className="text-xs bg-emerald-100 text-emerald-800">Active</Badge>}
+                  {v.is_working && <Badge className="text-xs bg-sky-100 text-sky-800">Working</Badge>}
+                  {v.restored_from_version_id && <Badge className="text-xs bg-purple-100 text-purple-700">Restored</Badge>}
+                  <span className="text-xs text-slate-400 ml-auto">{v.date_of_request || v.created_date?.split("T")[0] || "—"}</span>
+                </div>
+                {/* Row 2: source, stage, reason */}
+                <div className="flex items-center gap-2 text-xs text-slate-500 flex-wrap">
+                  <span className="font-medium">{v.source || "—"}</span>
+                  {v.related_stage && <span>· Stage {v.related_stage}: {STAGE_NAMES[v.related_stage]}</span>}
+                </div>
+                {v.reason && <p className="text-xs text-slate-600 italic truncate">{v.reason}</p>}
+                {/* Row 3: actions */}
+                <div className="flex gap-1.5 pt-1">
+                  <Button size="sm" variant="outline" className="h-6 text-xs px-2 gap-1"
+                    onClick={() => setViewVersion(v)}>
+                    <Eye className="h-3 w-3" /> View
+                  </Button>
+                  {!pendingVersion && v.status !== "Pending Approval" && v.status !== "Draft" && (
+                    <Button size="sm" variant="outline" className="h-6 text-xs px-2 gap-1 text-purple-700 border-purple-200 hover:bg-purple-50"
+                      onClick={() => setRestoreSourceVersion(v)}>
+                      <RotateCcw className="h-3 w-3" /> Restore as New Revision
+                    </Button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -309,6 +335,22 @@ export default function OrderLocationModule({ log, asset }) {
           onSaved={() => { refresh(); setShowRevisionDialog(false); }}
           onClose={() => setShowRevisionDialog(false)}
         />
+      )}
+
+      {/* Restore Dialog */}
+      {restoreSourceVersion && (
+        <RestoreVersionDialog
+          log={log}
+          sourceVersion={restoreSourceVersion}
+          nextVersionNo={(Math.max(...versions.map(v => v.version_no), 0)) + 1}
+          onSaved={() => { refresh(); setRestoreSourceVersion(null); }}
+          onClose={() => setRestoreSourceVersion(null)}
+        />
+      )}
+
+      {/* View Version Dialog */}
+      {viewVersion && (
+        <ViewVersionDialog version={viewVersion} onClose={() => setViewVersion(null)} />
       )}
     </div>
   );
@@ -499,6 +541,165 @@ function RevisionFormDialog({ log, currentData, nextVersionNo, onSaved, onClose 
           <Button size="sm" disabled={saving} onClick={handleSave}>
             {saving ? "Saving..." : "Submit for Approval"}
           </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Restore Version Dialog ────────────────────────────────────────────────────
+function RestoreVersionDialog({ log, sourceVersion, nextVersionNo, onSaved, onClose }) {
+  const [saving, setSaving] = useState(false);
+  const [meta, setMeta] = useState({
+    source: "Internal Review",
+    reason: `Restored from Version ${sourceVersion.version_no}`,
+    date_of_request: new Date().toISOString().split("T")[0],
+    related_stage: log.current_stage || 1,
+  });
+
+  // Preview of key fields copied
+  const previewFields = ["bus_stop_name", "location_address", "municipality", "installation_type",
+    "road_side", "authority_order_reference", "order_type", "order_priority", "risk_level"];
+
+  const handleSave = async () => {
+    setSaving(true);
+    const copiedData = pickDataFields(sourceVersion);
+    await base44.entities.StationLogDataVersions.create({
+      station_log_id: log.id,
+      asset_id: log.asset_id,
+      version_no: nextVersionNo,
+      status: "Draft",
+      is_active: false,
+      is_working: false,
+      source: meta.source,
+      date_of_request: meta.date_of_request,
+      reason: meta.reason,
+      related_stage: meta.related_stage,
+      restored_from_version_id: sourceVersion.id,
+      ...copiedData,
+    });
+    await logActivity(
+      log.id,
+      "restore",
+      `Version v${sourceVersion.version_no} restored as new draft revision v${nextVersionNo}`,
+      meta.related_stage
+    );
+    setSaving(false);
+    onSaved();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-xl max-h-[85vh] overflow-y-auto p-6 space-y-4">
+        <div className="flex items-center gap-2">
+          <RotateCcw className="h-5 w-5 text-purple-600" />
+          <h2 className="text-base font-bold text-slate-800">Restore v{sourceVersion.version_no} as New Revision (v{nextVersionNo})</h2>
+        </div>
+
+        {/* Source version summary */}
+        <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg space-y-2">
+          <p className="text-xs font-bold text-purple-800 uppercase">Copying from Version {sourceVersion.version_no}</p>
+          <div className="grid grid-cols-2 gap-1.5">
+            {previewFields.map(key => (
+              sourceVersion[key] != null && sourceVersion[key] !== "" ? (
+                <div key={key} className="text-xs">
+                  <span className="text-slate-500">{formatLabel(key)}: </span>
+                  <span className="text-slate-800 font-medium">
+                    {sourceVersion[key] === true ? "Yes" : sourceVersion[key] === false ? "No" : String(sourceVersion[key])}
+                  </span>
+                </div>
+              ) : null
+            ))}
+          </div>
+          <p className="text-xs text-purple-600 mt-1">All other fields will also be copied. You can edit after creation.</p>
+        </div>
+
+        {/* Metadata */}
+        <div className="grid grid-cols-2 gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+          <div>
+            <label className="text-xs font-semibold text-slate-600 uppercase">Source *</label>
+            <select className="mt-1 w-full border border-slate-200 rounded px-2 py-1.5 text-sm"
+              value={meta.source} onChange={e => setMeta(m => ({ ...m, source: e.target.value }))}>
+              {SOURCES.map(s => <option key={s}>{s}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-slate-600 uppercase">Date of Request *</label>
+            <input type="date" className="mt-1 w-full border border-slate-200 rounded px-2 py-1.5 text-sm"
+              value={meta.date_of_request} onChange={e => setMeta(m => ({ ...m, date_of_request: e.target.value }))} />
+          </div>
+          <div className="col-span-2">
+            <label className="text-xs font-semibold text-slate-600 uppercase">Identified in Stage *</label>
+            <select className="mt-1 w-full border border-slate-200 rounded px-2 py-1.5 text-sm"
+              value={meta.related_stage} onChange={e => setMeta(m => ({ ...m, related_stage: Number(e.target.value) }))}>
+              {STAGES.map(s => <option key={s} value={s}>Stage {s} — {STAGE_NAMES[s]}</option>)}
+            </select>
+          </div>
+          <div className="col-span-2">
+            <label className="text-xs font-semibold text-slate-600 uppercase">Reason *</label>
+            <textarea className="mt-1 w-full border border-slate-200 rounded px-2 py-1.5 text-sm h-16"
+              value={meta.reason} onChange={e => setMeta(m => ({ ...m, reason: e.target.value }))} />
+          </div>
+        </div>
+
+        <p className="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded p-2">
+          This will create a new <strong>Draft</strong> revision (v{nextVersionNo}). The current active data will remain unchanged until this draft is submitted for approval and approved.
+        </p>
+
+        <div className="flex justify-end gap-2 pt-2 border-t">
+          <Button variant="outline" size="sm" onClick={onClose}>Cancel</Button>
+          <Button size="sm" disabled={saving} className="bg-purple-600 hover:bg-purple-700 text-white" onClick={handleSave}>
+            {saving ? "Creating Draft..." : "Create Draft Revision"}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── View Version Dialog ───────────────────────────────────────────────────────
+function ViewVersionDialog({ version, onClose }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h2 className="text-base font-bold text-slate-800">Version {version.version_no} — Read Only</h2>
+            <Badge className={`text-xs ${
+              version.status === "Active" ? "bg-green-100 text-green-800" :
+              version.status === "Pending Approval" ? "bg-yellow-100 text-yellow-800" :
+              version.status === "Draft" ? "bg-blue-100 text-blue-800" :
+              version.status === "Rejected" ? "bg-red-100 text-red-800" :
+              "bg-slate-100 text-slate-600"
+            }`}>{version.status}</Badge>
+          </div>
+          <Button variant="ghost" size="sm" onClick={onClose}>✕</Button>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs">
+          <div><span className="text-slate-500">Source:</span> <span className="font-medium">{version.source || "—"}</span></div>
+          <div><span className="text-slate-500">Date:</span> <span className="font-medium">{version.date_of_request || "—"}</span></div>
+          <div><span className="text-slate-500">Stage:</span> <span className="font-medium">{version.related_stage ? `${version.related_stage} — ${STAGE_NAMES[version.related_stage]}` : "—"}</span></div>
+          <div><span className="text-slate-500">Created by:</span> <span className="font-medium">{version.created_by || "—"}</span></div>
+          {version.restored_from_version_id && (
+            <div className="col-span-2"><span className="text-purple-600">Restored from an earlier version</span></div>
+          )}
+          <div className="col-span-2"><span className="text-slate-500">Reason:</span> <span className="font-medium">{version.reason || "—"}</span></div>
+        </div>
+
+        {Object.entries(FIELD_GROUPS).map(([groupTitle, fields]) => (
+          <div key={groupTitle}>
+            <p className="text-xs font-bold text-slate-600 uppercase tracking-wide mb-2 border-b border-slate-100 pb-1">{groupTitle}</p>
+            <div className="grid grid-cols-2 gap-2">
+              {fields.map(key => (
+                <DataField key={key} label={formatLabel(key)} value={version[key]} />
+              ))}
+            </div>
+          </div>
+        ))}
+
+        <div className="flex justify-end pt-2 border-t">
+          <Button variant="outline" size="sm" onClick={onClose}>Close</Button>
         </div>
       </div>
     </div>

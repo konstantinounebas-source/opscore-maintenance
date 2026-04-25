@@ -1,0 +1,256 @@
+{
+  "name": "StationLogDataVersions",
+  "type": "object",
+  "properties": {
+    "station_log_id": {
+      "type": "string",
+      "description": "Reference to StationLog record ID"
+    },
+    "asset_id": {
+      "type": "string",
+      "description": "Reference to Assets record ID"
+    },
+    "version_no": {
+      "type": "number",
+      "description": "Version number starting at 1"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Initial",
+        "Draft",
+        "Pending Approval",
+        "Active",
+        "Superseded",
+        "Rejected"
+      ],
+      "default": "Draft"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": false
+    },
+    "is_working": {
+      "type": "boolean",
+      "default": false
+    },
+    "related_stage": {
+      "type": "number"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "A.A. Order",
+        "A.A. Instruction",
+        "Site Finding",
+        "Internal Review",
+        "QA Finding",
+        "Delivery",
+        "Acceptance",
+        "Other"
+      ]
+    },
+    "date_of_request": {
+      "type": "string",
+      "format": "date"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "created_by": {
+      "type": "string"
+    },
+    "restored_from_version_id": {
+      "type": "string",
+      "description": "ID of the version this was restored from"
+    },
+    "authority_order_reference": {
+      "type": "string"
+    },
+    "order_received_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "order_received_from": {
+      "type": "string"
+    },
+    "order_description": {
+      "type": "string"
+    },
+    "order_type": {
+      "type": "string"
+    },
+    "order_priority": {
+      "type": "string",
+      "enum": [
+        "Low",
+        "Medium",
+        "High",
+        "Critical"
+      ]
+    },
+    "order_priority_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "order_deadline_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "order_notes": {
+      "type": "string"
+    },
+    "bus_stop_name": {
+      "type": "string"
+    },
+    "location_address": {
+      "type": "string"
+    },
+    "municipality": {
+      "type": "string"
+    },
+    "district": {
+      "type": "string"
+    },
+    "area": {
+      "type": "string"
+    },
+    "latitude": {
+      "type": "number"
+    },
+    "longitude": {
+      "type": "number"
+    },
+    "map_link": {
+      "type": "string"
+    },
+    "shelter_type": {
+      "type": "string"
+    },
+    "installation_type": {
+      "type": "string",
+      "enum": [
+        "New",
+        "Replacement",
+        "Relocation",
+        "Removal"
+      ]
+    },
+    "intervention_scope": {
+      "type": "string",
+      "enum": [
+        "Shelter Only",
+        "Civil Works",
+        "Full Installation",
+        "Marking Only"
+      ]
+    },
+    "road_side": {
+      "type": "string",
+      "enum": [
+        "Left",
+        "Right",
+        "Center Island"
+      ]
+    },
+    "traffic_direction": {
+      "type": "string",
+      "enum": [
+        "One Way",
+        "Two Way"
+      ]
+    },
+    "existing_infrastructure_type": {
+      "type": "string",
+      "enum": [
+        "None",
+        "Old Shelter",
+        "Pole",
+        "Sign Only",
+        "Other"
+      ]
+    },
+    "pavement_type": {
+      "type": "string",
+      "enum": [
+        "Asphalt",
+        "Concrete",
+        "Tiles",
+        "Soil"
+      ]
+    },
+    "pavement_width": {
+      "type": "number"
+    },
+    "has_tactile_paving": {
+      "type": "boolean"
+    },
+    "has_bus_bay": {
+      "type": "boolean"
+    },
+    "has_road_marking": {
+      "type": "boolean"
+    },
+    "requires_footway": {
+      "type": "boolean"
+    },
+    "access_notes": {
+      "type": "string"
+    },
+    "has_underground_utilities": {
+      "type": "boolean"
+    },
+    "utility_type": {
+      "type": "string",
+      "enum": [
+        "Electric",
+        "Water",
+        "Telecom",
+        "Sewer",
+        "Unknown"
+      ]
+    },
+    "traffic_impact_level": {
+      "type": "string",
+      "enum": [
+        "Low",
+        "Medium",
+        "High"
+      ]
+    },
+    "requires_traffic_management": {
+      "type": "boolean"
+    },
+    "requires_permits": {
+      "type": "boolean"
+    },
+    "permit_type": {
+      "type": "string",
+      "enum": [
+        "Municipality",
+        "Police",
+        "PWD",
+        "Multiple"
+      ]
+    },
+    "site_constraints_notes": {
+      "type": "string"
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": [
+        "Low",
+        "Medium",
+        "High"
+      ]
+    },
+    "risk_description": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "station_log_id",
+    "asset_id",
+    "version_no"
+  ]
+}
