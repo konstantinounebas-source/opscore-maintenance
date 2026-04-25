@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, RefreshCw, Clock, Plus, CheckCircle, XCircle, RotateCcw, Eye, ChevronDown, ChevronRight, AlertTriangle, Paperclip, History, Flag } from "lucide-react";
 import OrderAttachmentsPanel from "./OrderAttachmentsPanel";
+import { useStationLogDropdowns } from "@/hooks/useStationLogDropdowns";
 
 // ─── Collapsible Section ────────────────────────────────────────────────────────
 function CollapsibleSection({ title, badge, defaultOpen = false, children, accentColor = "slate" }) {
@@ -57,7 +58,6 @@ function checkReadiness({ currentData, activeVersion, draftVersion, pendingVersi
 }
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
-const SOURCES = ["A.A. Order", "A.A. Instruction", "Site Finding", "Internal Review", "QA Finding", "Delivery", "Acceptance", "Other"];
 const STAGES = Array.from({ length: 18 }, (_, i) => i + 1);
 
 const STAGE_NAMES = {
@@ -66,20 +66,6 @@ const STAGE_NAMES = {
   9: "RCA", 10: "RCA Approval Gate", 11: "Schedule Verification", 12: "Work Execution",
   13: "Filing / Station Log", 14: "QA Check", 15: "Delivery / Acceptance", 16: "Snagging / Rework",
   17: "Final Acceptance", 18: "Invoicing"
-};
-
-const SELECT_OPTIONS = {
-  order_priority: ["Low", "Medium", "High", "Critical"],
-  installation_type: ["New", "Replacement", "Relocation", "Removal"],
-  intervention_scope: ["Shelter Only", "Civil Works", "Full Installation", "Marking Only"],
-  road_side: ["Left", "Right", "Center Island"],
-  traffic_direction: ["One Way", "Two Way"],
-  existing_infrastructure_type: ["None", "Old Shelter", "Pole", "Sign Only", "Other"],
-  pavement_type: ["Asphalt", "Concrete", "Tiles", "Soil"],
-  utility_type: ["Electric", "Water", "Telecom", "Sewer", "Unknown"],
-  traffic_impact_level: ["Low", "Medium", "High"],
-  permit_type: ["Municipality", "Police", "PWD", "Multiple"],
-  risk_level: ["Low", "Medium", "High"],
 };
 
 const BOOL_FIELDS = ["has_tactile_paving", "has_bus_bay", "has_road_marking", "requires_footway",
@@ -148,7 +134,7 @@ async function logActivity(stationLogId, action, description, stage = 1) {
 }
 
 // ─── Field Input ───────────────────────────────────────────────────────────────
-function FieldInput({ fieldKey, value, onChange }) {
+function FieldInput({ fieldKey, value, onChange, selectOptions = {} }) {
   const cls = "mt-1 w-full border border-slate-200 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400";
   if (BOOL_FIELDS.includes(fieldKey)) {
     return (
@@ -160,11 +146,11 @@ function FieldInput({ fieldKey, value, onChange }) {
       </select>
     );
   }
-  if (SELECT_OPTIONS[fieldKey]) {
+  if (selectOptions[fieldKey]) {
     return (
       <select className={cls} value={value ?? ""} onChange={e => onChange(e.target.value)}>
         <option value="">— select —</option>
-        {SELECT_OPTIONS[fieldKey].map(o => <option key={o}>{o}</option>)}
+        {selectOptions[fieldKey].map(o => <option key={o}>{o}</option>)}
       </select>
     );
   }
@@ -189,7 +175,7 @@ function DataField({ label, value }) {
 }
 
 // ─── Form Section Renderer ─────────────────────────────────────────────────────
-function FormSection({ title, fields, form, setForm }) {
+function FormSection({ title, fields, form, setForm, selectOptions = {} }) {
   return (
     <div>
       <p className="text-xs font-bold text-slate-600 uppercase tracking-wide mb-2 mt-3">{title}</p>
@@ -197,7 +183,7 @@ function FormSection({ title, fields, form, setForm }) {
         {fields.map(key => (
           <div key={key} className={key.includes("notes") || key.includes("description") ? "col-span-2" : ""}>
             <label className="text-xs font-semibold text-slate-500 uppercase">{formatLabel(key)}</label>
-            <FieldInput fieldKey={key} value={form[key]} onChange={v => setForm(f => ({ ...f, [key]: v }))} />
+            <FieldInput fieldKey={key} value={form[key]} onChange={v => setForm(f => ({ ...f, [key]: v }))} selectOptions={selectOptions} />
           </div>
         ))}
       </div>
@@ -208,6 +194,7 @@ function FormSection({ title, fields, form, setForm }) {
 // ─── Main Module ───────────────────────────────────────────────────────────────
 export default function OrderLocationModule({ log, asset }) {
   const queryClient = useQueryClient();
+  const { selectOptions } = useStationLogDropdowns();
   const [showRevisionDialog, setShowRevisionDialog] = useState(false);
   const [restoreSourceVersion, setRestoreSourceVersion] = useState(null);
   const [editDraftVersion, setEditDraftVersion] = useState(null);
@@ -368,7 +355,7 @@ export default function OrderLocationModule({ log, asset }) {
         <MapPin className="h-8 w-8 text-slate-400 mx-auto" />
         <p className="text-sm font-medium text-slate-600">No Order + Location data initialized yet.</p>
         <p className="text-xs text-slate-400">Initialize this stage to start tracking order and location information.</p>
-        <InitialVersionDialog log={log} asset={asset} onSaved={refresh} />
+        <InitialVersionDialog log={log} asset={asset} onSaved={refresh} selectOptions={selectOptions} />
       </div>
     );
   }
@@ -591,6 +578,7 @@ export default function OrderLocationModule({ log, asset }) {
           nextVersionNo={(Math.max(...versions.map(v => v.version_no), 0)) + 1}
           onSaved={() => { refresh(); setShowRevisionDialog(false); }}
           onClose={() => setShowRevisionDialog(false)}
+          selectOptions={selectOptions}
         />
       )}
       {editDraftVersion && (
@@ -599,6 +587,7 @@ export default function OrderLocationModule({ log, asset }) {
           draftVersion={editDraftVersion}
           onSaved={() => { refresh(); setEditDraftVersion(null); }}
           onClose={() => setEditDraftVersion(null)}
+          selectOptions={selectOptions}
         />
       )}
       {restoreSourceVersion && (
@@ -609,6 +598,7 @@ export default function OrderLocationModule({ log, asset }) {
           currentData={currentData}
           onSaved={() => { refresh(); setRestoreSourceVersion(null); }}
           onClose={() => setRestoreSourceVersion(null)}
+          selectOptions={selectOptions}
         />
       )}
       {viewVersion && (
@@ -619,7 +609,7 @@ export default function OrderLocationModule({ log, asset }) {
 }
 
 // ─── Initialize Dialog ─────────────────────────────────────────────────────────
-function InitialVersionDialog({ log, asset, onSaved }) {
+function InitialVersionDialog({ log, asset, onSaved, selectOptions = {} }) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
@@ -710,7 +700,7 @@ function InitialVersionDialog({ log, asset, onSaved }) {
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto p-6 space-y-2">
         <h2 className="text-base font-bold text-slate-800">Initialize Order + Location (v1)</h2>
         {Object.entries(FIELD_GROUPS).map(([groupTitle, fields]) => (
-          <FormSection key={groupTitle} title={groupTitle} fields={fields} form={form} setForm={setForm} />
+          <FormSection key={groupTitle} title={groupTitle} fields={fields} form={form} setForm={setForm} selectOptions={selectOptions} />
         ))}
         <div className="flex justify-end gap-2 pt-4 border-t">
           <Button variant="outline" size="sm" onClick={() => setOpen(false)}>Cancel</Button>
@@ -724,7 +714,7 @@ function InitialVersionDialog({ log, asset, onSaved }) {
 }
 
 // ─── Revision Dialog ───────────────────────────────────────────────────────────
-function RevisionFormDialog({ log, currentData, nextVersionNo, onSaved, onClose }) {
+function RevisionFormDialog({ log, currentData, nextVersionNo, onSaved, onClose, selectOptions = {} }) {
   const [saving, setSaving] = useState(false);
   const [meta, setMeta] = useState({
     source: "Site Finding",
@@ -773,7 +763,8 @@ function RevisionFormDialog({ log, currentData, nextVersionNo, onSaved, onClose 
             <label className="text-xs font-semibold text-slate-600 uppercase">Source *</label>
             <select className="mt-1 w-full border border-slate-200 rounded px-2 py-1.5 text-sm"
               value={meta.source} onChange={e => setMeta(m => ({ ...m, source: e.target.value }))}>
-              {SOURCES.map(s => <option key={s}>{s}</option>)}
+              <option value="">— select —</option>
+              {(selectOptions.revision_source || ["A.A. Order", "A.A. Instruction", "Site Finding", "Internal Review", "QA Finding", "Delivery", "Acceptance", "Other"]).map(s => <option key={s}>{s}</option>)}
             </select>
           </div>
           <div>
@@ -798,7 +789,7 @@ function RevisionFormDialog({ log, currentData, nextVersionNo, onSaved, onClose 
 
         {/* Data fields grouped */}
         {Object.entries(FIELD_GROUPS).map(([groupTitle, fields]) => (
-          <FormSection key={groupTitle} title={groupTitle} fields={fields} form={form} setForm={setForm} />
+          <FormSection key={groupTitle} title={groupTitle} fields={fields} form={form} setForm={setForm} selectOptions={selectOptions} />
         ))}
 
         <div className="flex justify-end gap-2 pt-4 border-t">
@@ -813,7 +804,7 @@ function RevisionFormDialog({ log, currentData, nextVersionNo, onSaved, onClose 
 }
 
 // ─── Edit Draft Dialog ─────────────────────────────────────────────────────────
-function EditDraftDialog({ log, draftVersion, onSaved, onClose }) {
+function EditDraftDialog({ log, draftVersion, onSaved, onClose, selectOptions = {} }) {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(pickDataFields(draftVersion));
 
@@ -831,7 +822,7 @@ function EditDraftDialog({ log, draftVersion, onSaved, onClose }) {
         <h2 className="text-base font-bold text-slate-800">Edit Draft v{draftVersion.version_no}</h2>
         <p className="text-xs text-slate-500">Changes are saved to the draft only. The active data is unchanged until the draft is approved.</p>
         {Object.entries(FIELD_GROUPS).map(([groupTitle, fields]) => (
-          <FormSection key={groupTitle} title={groupTitle} fields={fields} form={form} setForm={setForm} />
+          <FormSection key={groupTitle} title={groupTitle} fields={fields} form={form} setForm={setForm} selectOptions={selectOptions} />
         ))}
         <div className="flex justify-end gap-2 pt-4 border-t">
           <Button variant="outline" size="sm" onClick={onClose}>Cancel</Button>
@@ -845,7 +836,7 @@ function EditDraftDialog({ log, draftVersion, onSaved, onClose }) {
 }
 
 // ─── Restore Version Dialog ────────────────────────────────────────────────────
-function RestoreVersionDialog({ log, sourceVersion, nextVersionNo, currentData, onSaved, onClose }) {
+function RestoreVersionDialog({ log, sourceVersion, nextVersionNo, currentData, onSaved, onClose, selectOptions = {} }) {
   const [saving, setSaving] = useState(false);
   const [meta, setMeta] = useState({
     source: "Internal Review",
@@ -927,7 +918,8 @@ function RestoreVersionDialog({ log, sourceVersion, nextVersionNo, currentData, 
             <label className="text-xs font-semibold text-slate-600 uppercase">Source *</label>
             <select className="mt-1 w-full border border-slate-200 rounded px-2 py-1.5 text-sm"
               value={meta.source} onChange={e => setMeta(m => ({ ...m, source: e.target.value }))}>
-              {SOURCES.map(s => <option key={s}>{s}</option>)}
+              <option value="">— select —</option>
+              {(selectOptions.revision_source || ["A.A. Order", "A.A. Instruction", "Site Finding", "Internal Review", "QA Finding", "Delivery", "Acceptance", "Other"]).map(s => <option key={s}>{s}</option>)}
             </select>
           </div>
           <div>

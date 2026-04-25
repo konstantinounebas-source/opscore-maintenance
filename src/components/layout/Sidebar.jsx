@@ -12,7 +12,9 @@ const navItems = [
   ]},
   { path: "/Incidents", label: "Incidents", icon: AlertTriangle },
   { path: "/WorkOrders", label: "Work Orders", icon: Wrench },
-  { path: "/BusStopLogs", label: "Bus Stop Logs", icon: Clipboard },
+  { path: "/BusStopLogs", label: "Bus Stop Logs", icon: Clipboard, submenu: [
+    { path: "/StationLogSettings", label: "Station Log Settings", icon: Settings }
+  ]},
   { path: "/Planning", label: "Planning Workbench", icon: MapPin },
   { path: "/Forms", label: "Forms", icon: FileText },
   { path: "/Configuration", label: "Configuration", icon: Settings },

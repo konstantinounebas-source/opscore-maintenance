@@ -24,6 +24,7 @@ import Analytics from '@/pages/Analytics';
 import Crews from '@/pages/Crews';
 import SLAConfig from '@/pages/SLAConfig';
 import BusStopLogs from '@/pages/BusStopLogs';
+import StationLogSettings from '@/pages/StationLogSettings';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -66,6 +67,7 @@ const AuthenticatedApp = () => {
         <Route path="/SLAConfig" element={<SLAConfig />} />
         <Route path="/Configuration" element={<Configuration />} />
         <Route path="/BusStopLogs" element={<BusStopLogs />} />
+        <Route path="/StationLogSettings" element={<StationLogSettings />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
