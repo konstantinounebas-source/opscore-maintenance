@@ -192,18 +192,6 @@ export default function StationLogAccordion({
                     </div>
                   )}
 
-                  {/* Stage Actions */}
-                  {isCurrent && (
-                    <div className="border-t pt-4 flex gap-2">
-                      <Button size="sm" className="bg-blue-600 hover:bg-blue-700">Add Task</Button>
-                      <Button size="sm" variant="outline">Add Note</Button>
-                      {log.can_move_forward && (
-                        <Button size="sm" className="bg-green-600 hover:bg-green-700 ml-auto">
-                          ✓ Proceed to Next Stage
-                        </Button>
-                      )}
-                    </div>
-                  )}
 
                   {!isCompleted && !isCurrent && (
                     <div className="text-xs text-gray-500 p-3 bg-gray-50 rounded-lg border border-gray-200 flex gap-2">
