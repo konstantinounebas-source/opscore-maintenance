@@ -122,8 +122,11 @@ function pickDataFields(obj) {
     if (obj[k] !== undefined) {
       if (NUMERIC_FIELDS.includes(k)) {
         out[k] = (obj[k] === "" || obj[k] == null) ? null : Number(obj[k]);
+      } else if (BOOL_FIELDS.includes(k)) {
+        const v = obj[k];
+        out[k] = v === true || v === "true" ? true : v === false || v === "false" ? false : null;
       } else {
-        out[k] = obj[k];
+        out[k] = obj[k] === "" ? null : obj[k];
       }
     }
   });
