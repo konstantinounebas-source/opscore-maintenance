@@ -20,7 +20,7 @@
     },
     "pending_version_id": {
       "type": "string",
-      "description": "ID of the pending approval version"
+      "description": "ID of the pending draft or approval version"
     },
     "authority_order_reference": {
       "type": "string"
@@ -146,6 +146,7 @@
       "type": "string",
       "enum": [
         "No Pending Revision",
+        "Draft Revision",
         "Revision Pending Approval"
       ],
       "default": "No Pending Revision"

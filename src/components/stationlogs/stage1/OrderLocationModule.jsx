@@ -59,14 +59,28 @@ const FIELD_GROUPS = {
 };
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
+const NUMERIC_FIELDS = ["latitude", "longitude", "pavement_width"];
+
 function formatLabel(key) {
   return key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 }
 
 function pickDataFields(obj) {
   const out = {};
-  DATA_FIELDS.forEach(k => { if (obj[k] !== undefined) out[k] = obj[k]; });
+  DATA_FIELDS.forEach(k => {
+    if (obj[k] !== undefined) {
+      if (NUMERIC_FIELDS.includes(k)) {
+        out[k] = (obj[k] === "" || obj[k] == null) ? null : Number(obj[k]);
+      } else {
+        out[k] = obj[k];
+      }
+    }
+  });
   return out;
+}
+
+async function getCurrentUser() {
+  try { return await base44.auth.me(); } catch { return null; }
 }
 
 async function logActivity(stationLogId, action, description, stage = 1) {
@@ -142,9 +156,12 @@ export default function OrderLocationModule({ log, asset }) {
   const queryClient = useQueryClient();
   const [showRevisionDialog, setShowRevisionDialog] = useState(false);
   const [restoreSourceVersion, setRestoreSourceVersion] = useState(null);
+  const [editDraftVersion, setEditDraftVersion] = useState(null);
   const [viewVersion, setViewVersion] = useState(null);
   const [approving, setApproving] = useState(false);
   const [rejecting, setRejecting] = useState(false);
+  const [submittingDraft, setSubmittingDraft] = useState(false);
+  const [deletingDraft, setDeletingDraft] = useState(false);
 
   const { data: currentData } = useQuery({
     queryKey: ["stationLogCurrentData", log.id],
@@ -164,24 +181,28 @@ export default function OrderLocationModule({ log, asset }) {
 
   const sortedVersions = [...versions].sort((a, b) => b.version_no - a.version_no);
   const activeVersion = versions.find(v => v.is_active);
+  // Draft: created by restore flow, not yet submitted
+  const draftVersion = currentData?.pending_version_id
+    ? versions.find(v => v.id === currentData.pending_version_id && v.status === "Draft")
+    : versions.find(v => v.status === "Draft");
+  // Pending: submitted, awaiting approval
   const pendingVersion = currentData?.pending_version_id
-    ? versions.find(v => v.id === currentData.pending_version_id)
+    ? versions.find(v => v.id === currentData.pending_version_id && v.status === "Pending Approval")
     : versions.find(v => v.status === "Pending Approval");
+  // Either draft or pending blocks new revisions
+  const hasActiveRevision = !!(draftVersion || pendingVersion);
 
   const handleApprove = async () => {
     if (!pendingVersion || !currentData) return;
     setApproving(true);
-    // Supersede old active
     if (activeVersion) {
       await base44.entities.StationLogDataVersions.update(activeVersion.id, {
         status: "Superseded", is_active: false, is_working: false,
       });
     }
-    // Activate pending
     await base44.entities.StationLogDataVersions.update(pendingVersion.id, {
       status: "Active", is_active: true, is_working: true,
     });
-    // Update current data with all fields from approved version
     const dataSnapshot = pickDataFields(pendingVersion);
     await base44.entities.StationLogCurrentData.update(currentData.id, {
       ...dataSnapshot,
@@ -212,6 +233,38 @@ export default function OrderLocationModule({ log, asset }) {
     refresh();
   };
 
+  const handleSubmitDraft = async () => {
+    if (!draftVersion || !currentData) return;
+    setSubmittingDraft(true);
+    await base44.entities.StationLogDataVersions.update(draftVersion.id, {
+      status: "Pending Approval",
+      is_active: false,
+      is_working: false,
+    });
+    await base44.entities.StationLogCurrentData.update(currentData.id, {
+      revision_status: "Revision Pending Approval",
+      last_updated: new Date().toISOString(),
+    });
+    await logActivity(log.id, "draft_submitted", `Draft v${draftVersion.version_no} submitted for approval`, draftVersion.related_stage);
+    setSubmittingDraft(false);
+    refresh();
+  };
+
+  const handleDeleteDraft = async () => {
+    if (!draftVersion || !currentData) return;
+    if (!window.confirm(`Delete Draft v${draftVersion.version_no}? This cannot be undone.`)) return;
+    setDeletingDraft(true);
+    await base44.entities.StationLogDataVersions.delete(draftVersion.id);
+    await base44.entities.StationLogCurrentData.update(currentData.id, {
+      pending_version_id: null,
+      revision_status: "No Pending Revision",
+      last_updated: new Date().toISOString(),
+    });
+    await logActivity(log.id, "draft_deleted", `Draft v${draftVersion.version_no} deleted`);
+    setDeletingDraft(false);
+    refresh();
+  };
+
   if (!currentData) {
     return (
       <div className="p-6 text-center space-y-3 bg-slate-50 rounded-lg border border-dashed border-slate-300">
@@ -228,18 +281,55 @@ export default function OrderLocationModule({ log, asset }) {
       {/* Header row */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Badge className={currentData.revision_status === "Revision Pending Approval"
-            ? "bg-yellow-100 text-yellow-800" : "bg-green-100 text-green-800"}>
-            {currentData.revision_status || "No Pending Revision"}
+          <Badge className={
+            draftVersion ? "bg-blue-100 text-blue-800" :
+            pendingVersion ? "bg-yellow-100 text-yellow-800" :
+            "bg-green-100 text-green-800"
+          }>
+            {draftVersion ? "Draft Revision" : currentData.revision_status || "No Pending Revision"}
           </Badge>
           {activeVersion && <span className="text-xs text-slate-500">Active: v{activeVersion.version_no}</span>}
         </div>
-        {!pendingVersion && (
+        {!hasActiveRevision && (
           <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={() => setShowRevisionDialog(true)}>
             <RefreshCw className="h-3 w-3" /> Request Revision
           </Button>
         )}
       </div>
+
+      {/* Draft block */}
+      {draftVersion && (
+        <div className="p-4 bg-blue-50 border border-blue-300 rounded-lg space-y-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Clock className="h-4 w-4 text-blue-600 flex-shrink-0" />
+            <span className="text-sm font-semibold text-blue-900">
+              Draft Revision v{draftVersion.version_no}
+            </span>
+            <span className="text-xs text-blue-700">— {draftVersion.source} · {draftVersion.date_of_request}</span>
+            {draftVersion.restored_from_version_id && (
+              <Badge className="text-xs bg-purple-100 text-purple-700">Restored</Badge>
+            )}
+          </div>
+          <p className="text-xs text-blue-800">{draftVersion.reason}</p>
+          {draftVersion.related_stage && (
+            <p className="text-xs text-blue-700">Stage {draftVersion.related_stage}: {STAGE_NAMES[draftVersion.related_stage]}</p>
+          )}
+          <div className="flex gap-2 flex-wrap">
+            <Button size="sm" variant="outline" className="gap-1 text-xs border-blue-300 text-blue-700 hover:bg-blue-100"
+              onClick={() => setEditDraftVersion(draftVersion)}>
+              <RefreshCw className="h-3 w-3" /> Edit Draft
+            </Button>
+            <Button size="sm" className="gap-1 bg-blue-600 hover:bg-blue-700 text-white text-xs"
+              disabled={submittingDraft} onClick={handleSubmitDraft}>
+              <CheckCircle className="h-3 w-3" /> {submittingDraft ? "Submitting..." : "Submit for Approval"}
+            </Button>
+            <Button size="sm" variant="outline" className="gap-1 text-red-600 border-red-300 hover:bg-red-50 text-xs"
+              disabled={deletingDraft} onClick={handleDeleteDraft}>
+              <XCircle className="h-3 w-3" /> {deletingDraft ? "Deleting..." : "Delete Draft"}
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Pending Revision block */}
       {pendingVersion && (
@@ -313,7 +403,7 @@ export default function OrderLocationModule({ log, asset }) {
                     onClick={() => setViewVersion(v)}>
                     <Eye className="h-3 w-3" /> View
                   </Button>
-                  {!pendingVersion && v.status !== "Pending Approval" && v.status !== "Draft" && (
+                  {!hasActiveRevision && v.status !== "Pending Approval" && v.status !== "Draft" && (
                     <Button size="sm" variant="outline" className="h-6 text-xs px-2 gap-1 text-purple-700 border-purple-200 hover:bg-purple-50"
                       onClick={() => setRestoreSourceVersion(v)}>
                       <RotateCcw className="h-3 w-3" /> Restore as New Revision
@@ -337,12 +427,23 @@ export default function OrderLocationModule({ log, asset }) {
         />
       )}
 
+      {/* Edit Draft Dialog */}
+      {editDraftVersion && (
+        <EditDraftDialog
+          log={log}
+          draftVersion={editDraftVersion}
+          onSaved={() => { refresh(); setEditDraftVersion(null); }}
+          onClose={() => setEditDraftVersion(null)}
+        />
+      )}
+
       {/* Restore Dialog */}
       {restoreSourceVersion && (
         <RestoreVersionDialog
           log={log}
           sourceVersion={restoreSourceVersion}
           nextVersionNo={(Math.max(...versions.map(v => v.version_no), 0)) + 1}
+          currentData={currentData}
           onSaved={() => { refresh(); setRestoreSourceVersion(null); }}
           onClose={() => setRestoreSourceVersion(null)}
         />
@@ -404,6 +505,7 @@ function InitialVersionDialog({ log, asset, onSaved }) {
 
   const handleSave = async () => {
     setSaving(true);
+    const me = await getCurrentUser();
     const version = await base44.entities.StationLogDataVersions.create({
       station_log_id: log.id,
       asset_id: log.asset_id,
@@ -415,6 +517,7 @@ function InitialVersionDialog({ log, asset, onSaved }) {
       date_of_request: new Date().toISOString().split("T")[0],
       reason: "Initial version",
       related_stage: 1,
+      created_by: me?.email || "",
       ...pickDataFields(form),
     });
     await base44.entities.StationLogCurrentData.create({
@@ -473,6 +576,7 @@ function RevisionFormDialog({ log, currentData, nextVersionNo, onSaved, onClose 
   const handleSave = async () => {
     if (!meta.reason) return alert("Please provide a reason for this revision.");
     setSaving(true);
+    const me = await getCurrentUser();
     const version = await base44.entities.StationLogDataVersions.create({
       station_log_id: log.id,
       asset_id: log.asset_id,
@@ -484,9 +588,9 @@ function RevisionFormDialog({ log, currentData, nextVersionNo, onSaved, onClose 
       date_of_request: meta.date_of_request,
       reason: meta.reason,
       related_stage: meta.related_stage,
-      ...form,
+      created_by: me?.email || "",
+      ...pickDataFields(form),
     });
-    // Only update revision_status and pending_version_id — do NOT touch working data
     await base44.entities.StationLogCurrentData.update(currentData.id, {
       pending_version_id: version.id,
       revision_status: "Revision Pending Approval",
@@ -547,8 +651,40 @@ function RevisionFormDialog({ log, currentData, nextVersionNo, onSaved, onClose 
   );
 }
 
+// ─── Edit Draft Dialog ─────────────────────────────────────────────────────────
+function EditDraftDialog({ log, draftVersion, onSaved, onClose }) {
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState(pickDataFields(draftVersion));
+
+  const handleSave = async () => {
+    setSaving(true);
+    await base44.entities.StationLogDataVersions.update(draftVersion.id, pickDataFields(form));
+    await logActivity(log.id, "draft_edited", `Draft v${draftVersion.version_no} edited`, draftVersion.related_stage);
+    setSaving(false);
+    onSaved();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto p-6 space-y-2">
+        <h2 className="text-base font-bold text-slate-800">Edit Draft v{draftVersion.version_no}</h2>
+        <p className="text-xs text-slate-500">Changes are saved to the draft only. The active data is unchanged until the draft is approved.</p>
+        {Object.entries(FIELD_GROUPS).map(([groupTitle, fields]) => (
+          <FormSection key={groupTitle} title={groupTitle} fields={fields} form={form} setForm={setForm} />
+        ))}
+        <div className="flex justify-end gap-2 pt-4 border-t">
+          <Button variant="outline" size="sm" onClick={onClose}>Cancel</Button>
+          <Button size="sm" disabled={saving} onClick={handleSave}>
+            {saving ? "Saving..." : "Save Draft"}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Restore Version Dialog ────────────────────────────────────────────────────
-function RestoreVersionDialog({ log, sourceVersion, nextVersionNo, onSaved, onClose }) {
+function RestoreVersionDialog({ log, sourceVersion, nextVersionNo, currentData, onSaved, onClose }) {
   const [saving, setSaving] = useState(false);
   const [meta, setMeta] = useState({
     source: "Internal Review",
@@ -563,8 +699,9 @@ function RestoreVersionDialog({ log, sourceVersion, nextVersionNo, onSaved, onCl
 
   const handleSave = async () => {
     setSaving(true);
+    const me = await getCurrentUser();
     const copiedData = pickDataFields(sourceVersion);
-    await base44.entities.StationLogDataVersions.create({
+    const newDraft = await base44.entities.StationLogDataVersions.create({
       station_log_id: log.id,
       asset_id: log.asset_id,
       version_no: nextVersionNo,
@@ -576,8 +713,17 @@ function RestoreVersionDialog({ log, sourceVersion, nextVersionNo, onSaved, onCl
       reason: meta.reason,
       related_stage: meta.related_stage,
       restored_from_version_id: sourceVersion.id,
+      created_by: me?.email || "",
       ...copiedData,
     });
+    // Update CurrentData to reflect draft
+    if (currentData) {
+      await base44.entities.StationLogCurrentData.update(currentData.id, {
+        pending_version_id: newDraft.id,
+        revision_status: "Draft Revision",
+        last_updated: new Date().toISOString(),
+      });
+    }
     await logActivity(
       log.id,
       "restore",
