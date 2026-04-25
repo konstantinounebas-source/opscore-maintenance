@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, RefreshCw, Clock, Plus, CheckCircle, XCircle, RotateCcw, Eye } from "lucide-react";
+import OrderAttachmentsPanel from "./OrderAttachmentsPanel";
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 const SOURCES = ["A.A. Order", "A.A. Instruction", "Site Finding", "Internal Review", "QA Finding", "Delivery", "Acceptance", "Other"];
@@ -367,6 +368,11 @@ export default function OrderLocationModule({ log, asset }) {
           </div>
         </div>
       ))}
+
+      {/* Attachments */}
+      <div className="border-t pt-4">
+        <OrderAttachmentsPanel log={log} activeVersionId={activeVersion?.id} />
+      </div>
 
       {/* Version History */}
       {sortedVersions.length > 0 && (

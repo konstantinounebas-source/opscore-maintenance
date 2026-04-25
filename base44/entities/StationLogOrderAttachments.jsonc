@@ -1,0 +1,86 @@
+{
+  "name": "StationLogOrderAttachments",
+  "type": "object",
+  "properties": {
+    "station_log_id": {
+      "type": "string",
+      "description": "Reference to StationLog record ID"
+    },
+    "asset_id": {
+      "type": "string",
+      "description": "Reference to Assets record ID"
+    },
+    "version_id": {
+      "type": "string",
+      "description": "Reference to StationLogDataVersions record ID (active version at upload time)"
+    },
+    "related_stage": {
+      "type": "number",
+      "description": "Related workflow stage (default 1)"
+    },
+    "attachment_category": {
+      "type": "string",
+      "enum": [
+        "Authority Order",
+        "Authority Instruction",
+        "Location Photo",
+        "Site Photo",
+        "Map / Coordinates",
+        "Approval Evidence",
+        "PDF Document",
+        "Other"
+      ],
+      "description": "Category of the attachment"
+    },
+    "file_name": {
+      "type": "string",
+      "description": "Original file name"
+    },
+    "file_url": {
+      "type": "string",
+      "description": "Uploaded file URL"
+    },
+    "file_type": {
+      "type": "string",
+      "enum": [
+        "Photo",
+        "PDF",
+        "Document",
+        "Other"
+      ],
+      "description": "Type of file"
+    },
+    "file_size": {
+      "type": "string",
+      "description": "Human-readable file size (e.g. 1.2 MB)"
+    },
+    "mime_type": {
+      "type": "string",
+      "description": "MIME type of the file"
+    },
+    "uploaded_by": {
+      "type": "string",
+      "description": "Email of the user who uploaded the file"
+    },
+    "uploaded_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the file was uploaded"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional notes for this attachment"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "False = soft-deleted"
+    }
+  },
+  "required": [
+    "station_log_id",
+    "asset_id",
+    "file_url",
+    "file_name"
+  ]
+}
