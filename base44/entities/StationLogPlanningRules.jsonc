@@ -47,6 +47,18 @@
       ],
       "description": "Type of planning item to generate"
     },
+    "output_date_key": {
+      "type": "string",
+      "description": "Unique key produced by this rule (e.g. rca_approval_deadline, qa_check_due). Must be lowercase snake_case."
+    },
+    "output_flow_stage_id": {
+      "type": "number",
+      "description": "Workflow stage (1-18) where this generated date belongs"
+    },
+    "output_flow_stage_name": {
+      "type": "string",
+      "description": "Display name of the workflow stage"
+    },
     "base_date_type": {
       "type": "string",
       "enum": [
@@ -57,11 +69,15 @@
         "Execution Finish",
         "Another Planning Item"
       ],
-      "description": "Reference date for calculating the planning item date"
+      "description": "Backwards compatibility field. Use base_date_key for new rules."
+    },
+    "base_date_key": {
+      "type": "string",
+      "description": "The actual key used for date calculation (e.g. work_start_date, rca_approval_deadline)"
     },
     "base_planning_rule_id": {
       "type": "string",
-      "description": "FK \u2192 StationLogPlanningRules (used when base_date_type = 'Another Planning Item')"
+      "description": "FK \u2192 StationLogPlanningRules (used when referencing another rule's output)"
     },
     "offset_direction": {
       "type": "string",
@@ -107,7 +123,9 @@
     "rule_name",
     "planning_item_name",
     "planning_item_type",
-    "base_date_type",
+    "output_date_key",
+    "output_flow_stage_id",
+    "base_date_key",
     "offset_direction",
     "offset_days",
     "required"

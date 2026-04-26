@@ -1,3 +1,26 @@
+// ─── Workflow Stages ────────────────────────────────────────────────────────
+
+export const WORKFLOW_STAGES = [
+  { id: 1, name: "Order + Location" },
+  { id: 2, name: "Work Categorization & Time Estimation" },
+  { id: 3, name: "Master Planning" },
+  { id: 4, name: "Inspection Planning" },
+  { id: 5, name: "Inspection Execution" },
+  { id: 6, name: "Inspection Approval Gate" },
+  { id: 7, name: "Work Instruction" },
+  { id: 8, name: "Draft Weekly Schedule" },
+  { id: 9, name: "RCA" },
+  { id: 10, name: "RCA Approval Gate" },
+  { id: 11, name: "Schedule Verification" },
+  { id: 12, name: "Work Execution" },
+  { id: 13, name: "Filing / Station Log" },
+  { id: 14, name: "QA Check" },
+  { id: 15, name: "Delivery / Acceptance" },
+  { id: 16, name: "Snagging / Rework" },
+  { id: 17, name: "Final Acceptance" },
+  { id: 18, name: "Invoicing" }
+];
+
 // ─── Constants ──────────────────────────────────────────────────────────────
 
 export const APPLIES_WHEN_OPERATORS = [
@@ -8,6 +31,20 @@ export const APPLIES_WHEN_OPERATORS = [
   { value: "contains", label: "Contains" }
 ];
 
+export const APPLIES_WHEN_FIELDS = [
+  { value: "always", label: "Always" },
+  { value: "shelter_type", label: "Shelter Type" },
+  { value: "municipality", label: "Municipality" },
+  { value: "risk_level", label: "Risk Level" },
+  { value: "requires_permits", label: "Requires Permits" },
+  { value: "requires_rca", label: "Requires RCA" },
+  { value: "priority_deadline", label: "Priority Deadline" },
+  { value: "final_deadline", label: "Final Deadline" },
+  { value: "work_start_date", label: "Work Start Date" },
+  { value: "stage2_resource_type", label: "Stage 2 Resource Type" },
+  { value: "stage2_work_item", label: "Stage 2 Work Item" }
+];
+
 export const PLANNING_ITEM_TYPES = [
   { value: "Deadline", label: "Deadline" },
   { value: "Planned Date", label: "Planned Date" },
@@ -15,13 +52,13 @@ export const PLANNING_ITEM_TYPES = [
   { value: "Task", label: "Task" }
 ];
 
-export const BASE_DATE_TYPES = [
-  { value: "Work Start Date", label: "Work Start Date" },
-  { value: "Final Deadline", label: "Final Deadline" },
-  { value: "Priority Deadline", label: "Priority Deadline" },
-  { value: "Execution Date", label: "Execution Date" },
-  { value: "Execution Finish", label: "Execution Finish" },
-  { value: "Another Planning Item", label: "Another Planning Item" }
+// Core base dates (Stage 1 and Stage 3)
+const CORE_BASE_DATES = [
+  { key: "work_start_date", name: "Work Start Date", stage: 1, stage_name: "Order + Location" },
+  { key: "final_deadline", name: "Final Deadline", stage: 1, stage_name: "Order + Location" },
+  { key: "priority_deadline", name: "Priority Deadline", stage: 1, stage_name: "Order + Location" },
+  { key: "execution_date", name: "Execution Date", stage: 3, stage_name: "Master Planning" },
+  { key: "execution_finish", name: "Execution Finish", stage: 3, stage_name: "Master Planning" }
 ];
 
 export const OFFSET_DIRECTIONS = [
@@ -29,6 +66,48 @@ export const OFFSET_DIRECTIONS = [
   { value: "After", label: "After" },
   { value: "Same Day", label: "Same Day" }
 ];
+
+/**
+ * Get available base date options including core dates and generated dates from existing rules.
+ * @param {Array} allRules - All active planning rules
+ * @returns {Array} Options grouped by category
+ */
+export function getAvailableBaseDateOptions(allRules = []) {
+  const options = [];
+
+  // Group 1: Core Station Dates
+  options.push({ group: "Core Station Dates", items: CORE_BASE_DATES });
+
+  // Group 2: Generated Rule Dates (from active rules with output_date_key)
+  const generatedDates = (allRules || [])
+    .filter(r => r.is_active !== false && r.output_date_key && r.output_flow_stage_id)
+    .map(r => ({
+      key: r.output_date_key,
+      name: r.planning_item_name,
+      stage: r.output_flow_stage_id,
+      stage_name: r.output_flow_stage_name
+    }));
+
+  if (generatedDates.length > 0) {
+    options.push({ group: "Generated Rule Dates", items: generatedDates });
+  }
+
+  return options;
+}
+
+/**
+ * Infer base_date_key from old base_date_type for backwards compatibility.
+ */
+export function inferBaseDateKeyFromType(baseDateType) {
+  const mapping = {
+    "Work Start Date": "work_start_date",
+    "Final Deadline": "final_deadline",
+    "Priority Deadline": "priority_deadline",
+    "Execution Date": "execution_date",
+    "Execution Finish": "execution_finish"
+  };
+  return mapping[baseDateType] || baseDateType;
+}
 
 // ─── Seed Data ──────────────────────────────────────────────────────────────
 
@@ -53,7 +132,11 @@ export const SEED_PLANNING_RULES = [
     applies_when_value: "",
     planning_item_name: "Inspection Planning Due",
     planning_item_type: "Deadline",
+    output_date_key: "inspection_planning_due",
+    output_flow_stage_id: 4,
+    output_flow_stage_name: "Inspection Planning",
     base_date_type: "Work Start Date",
+    base_date_key: "work_start_date",
     base_planning_rule_id: null,
     offset_direction: "Before",
     offset_days: 3,
@@ -65,37 +148,45 @@ export const SEED_PLANNING_RULES = [
   // RCA category
   {
     category_name: "RCA",
-    rule_name: "RCA Submission Deadline",
-    description: "Deadline for RCA submission",
-    applies_when_field: "requires_rca",
-    applies_when_operator: "equals",
-    applies_when_value: "true",
-    planning_item_name: "RCA Submission",
-    planning_item_type: "Deadline",
-    base_date_type: "Execution Date",
-    base_planning_rule_id: null,
-    offset_direction: "Before",
-    offset_days: 8,
-    use_working_days: true,
-    required: true,
-    notes: "RCA must be submitted 8 working days before execution"
-  },
-  {
-    category_name: "RCA",
     rule_name: "RCA Approval Deadline",
     description: "Deadline for RCA approval",
     applies_when_field: "requires_rca",
     applies_when_operator: "equals",
     applies_when_value: "true",
-    planning_item_name: "RCA Approval",
+    planning_item_name: "RCA Approval Deadline",
     planning_item_type: "Deadline",
+    output_date_key: "rca_approval_deadline",
+    output_flow_stage_id: 10,
+    output_flow_stage_name: "RCA Approval Gate",
     base_date_type: "Execution Date",
+    base_date_key: "execution_date",
     base_planning_rule_id: null,
     offset_direction: "Before",
     offset_days: 5,
     use_working_days: true,
     required: true,
     notes: "RCA approval required 5 working days before execution"
+  },
+  {
+    category_name: "RCA",
+    rule_name: "RCA Submission Deadline",
+    description: "Deadline for RCA submission",
+    applies_when_field: "requires_rca",
+    applies_when_operator: "equals",
+    applies_when_value: "true",
+    planning_item_name: "RCA Submission Deadline",
+    planning_item_type: "Deadline",
+    output_date_key: "rca_submission_deadline",
+    output_flow_stage_id: 9,
+    output_flow_stage_name: "RCA",
+    base_date_type: "Another Planning Item",
+    base_date_key: "rca_approval_deadline",
+    base_planning_rule_id: null,
+    offset_direction: "Before",
+    offset_days: 3,
+    use_working_days: true,
+    required: true,
+    notes: "RCA must be submitted 3 working days before RCA approval deadline"
   },
 
   // QA category
@@ -108,7 +199,11 @@ export const SEED_PLANNING_RULES = [
     applies_when_value: "",
     planning_item_name: "QA Check Due",
     planning_item_type: "Deadline",
+    output_date_key: "qa_check_due",
+    output_flow_stage_id: 14,
+    output_flow_stage_name: "QA Check",
     base_date_type: "Execution Finish",
+    base_date_key: "execution_finish",
     base_planning_rule_id: null,
     offset_direction: "After",
     offset_days: 2,
@@ -127,13 +222,17 @@ export const SEED_PLANNING_RULES = [
     applies_when_value: "",
     planning_item_name: "Acceptance Due",
     planning_item_type: "Deadline",
-    base_date_type: "Execution Finish",
+    output_date_key: "acceptance_due",
+    output_flow_stage_id: 15,
+    output_flow_stage_name: "Delivery / Acceptance",
+    base_date_type: "Another Planning Item",
+    base_date_key: "qa_check_due",
     base_planning_rule_id: null,
     offset_direction: "After",
     offset_days: 3,
     use_working_days: true,
     required: true,
-    notes: "Acceptance must be completed 3 working days after execution finish"
+    notes: "Acceptance must be completed 3 working days after QA check due"
   }
 ];
 
@@ -147,11 +246,6 @@ export function getLabelForOperator(operator) {
 export function getLabelForItemType(type) {
   const found = PLANNING_ITEM_TYPES.find(t => t.value === type);
   return found ? found.label : type;
-}
-
-export function getLabelForBaseDate(baseDate) {
-  const found = BASE_DATE_TYPES.find(b => b.value === baseDate);
-  return found ? found.label : baseDate;
 }
 
 export function getLabelForDirection(direction) {
@@ -168,9 +262,13 @@ export function formatAppliesToString(field, operator, value) {
   return `${field} ${opLabel} ${value}`;
 }
 
-export function formatDateOffsetString(baseDate, direction, days, ruleId) {
-  const baseLabel = getLabelForBaseDate(baseDate);
-  if (days === 0) return `${baseLabel}`;
+export function formatDateOffsetString(baseDateKey, direction, days) {
+  if (days === 0) return `${baseDateKey}`;
   const dayText = days === 1 ? "day" : "days";
-  return `${direction} ${days} ${dayText} from ${baseLabel}`;
+  return `${direction} ${days} ${dayText} from ${baseDateKey}`;
+}
+
+export function getWorkflowStageName(stageId) {
+  const stage = WORKFLOW_STAGES.find(s => s.id === stageId);
+  return stage ? stage.name : `Stage ${stageId}`;
 }

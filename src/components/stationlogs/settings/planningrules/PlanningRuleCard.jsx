@@ -8,6 +8,7 @@ import {
   formatAppliesToString,
   formatDateOffsetString,
   getLabelForItemType,
+  inferBaseDateKeyFromType,
 } from "./planningRulesUtils";
 
 export default function PlanningRuleCard({ category, rules, allRules, onRefresh }) {
@@ -63,33 +64,35 @@ export default function PlanningRuleCard({ category, rules, allRules, onRefresh 
         <div className="p-3 space-y-3 border-t border-slate-200">
           {/* Rules Table */}
           {sortedRules.length > 0 && (
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50">
-                    <th className="text-left px-2 py-1 text-[10px] font-bold text-slate-600 uppercase">Rule Name</th>
-                    <th className="text-left px-2 py-1 text-[10px] font-bold text-slate-600 uppercase">Applies When</th>
-                    <th className="text-left px-2 py-1 text-[10px] font-bold text-slate-600 uppercase">Planning Item</th>
-                    <th className="text-left px-2 py-1 text-[10px] font-bold text-slate-600 uppercase">Type</th>
-                    <th className="text-left px-2 py-1 text-[10px] font-bold text-slate-600 uppercase">Base Date</th>
-                    <th className="text-left px-2 py-1 text-[10px] font-bold text-slate-600 uppercase">Offset</th>
-                    <th className="text-left px-2 py-1 text-[10px] font-bold text-slate-600 uppercase">Req</th>
-                    <th className="text-center px-2 py-1 text-[10px] font-bold text-slate-600 uppercase">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sortedRules.map(rule => (
-                    <tr key={rule.id} className={`border-b border-slate-100 ${!rule.is_active ? "bg-slate-50 opacity-60" : ""}`}>
-                      <td className="px-2 py-1 text-slate-800 font-medium">{rule.rule_name}</td>
-                      <td className="px-2 py-1 text-slate-600 text-[10px]">
-                        {formatAppliesToString(rule.applies_when_field, rule.applies_when_operator, rule.applies_when_value)}
-                      </td>
-                      <td className="px-2 py-1 text-slate-700">{rule.planning_item_name}</td>
-                      <td className="px-2 py-1 text-slate-600">{getLabelForItemType(rule.planning_item_type)}</td>
-                      <td className="px-2 py-1 text-slate-600 text-[10px]">{rule.base_date_type}</td>
-                      <td className="px-2 py-1 text-slate-600 text-[10px]">
-                        {formatDateOffsetString(rule.base_date_type, rule.offset_direction, rule.offset_days, rule.base_planning_rule_id)}
-                      </td>
+           <div className="overflow-x-auto">
+             <table className="w-full text-xs">
+               <thead>
+                 <tr className="border-b border-slate-200 bg-slate-50">
+                   <th className="text-left px-2 py-1 text-[10px] font-bold text-slate-600 uppercase">Rule Name</th>
+                   <th className="text-left px-2 py-1 text-[10px] font-bold text-slate-600 uppercase">Planning Item</th>
+                   <th className="text-left px-2 py-1 text-[10px] font-bold text-slate-600 uppercase">Output Key</th>
+                   <th className="text-left px-2 py-1 text-[10px] font-bold text-slate-600 uppercase">Stage</th>
+                   <th className="text-left px-2 py-1 text-[10px] font-bold text-slate-600 uppercase">Base Date</th>
+                   <th className="text-left px-2 py-1 text-[10px] font-bold text-slate-600 uppercase">Offset</th>
+                   <th className="text-left px-2 py-1 text-[10px] font-bold text-slate-600 uppercase">Req</th>
+                   <th className="text-center px-2 py-1 text-[10px] font-bold text-slate-600 uppercase">Actions</th>
+                 </tr>
+               </thead>
+               <tbody>
+                 {sortedRules.map(rule => {
+                   const baseDateKey = rule.base_date_key || inferBaseDateKeyFromType(rule.base_date_type);
+                   return (
+                   <tr key={rule.id} className={`border-b border-slate-100 ${!rule.is_active ? "bg-slate-50 opacity-60" : ""}`}>
+                     <td className="px-2 py-1 text-slate-800 font-medium">{rule.rule_name}</td>
+                     <td className="px-2 py-1 text-slate-700">{rule.planning_item_name}</td>
+                     <td className="px-2 py-1 text-slate-600 text-[10px] font-mono">{rule.output_date_key || "—"}</td>
+                     <td className="px-2 py-1 text-slate-600 text-[10px]">
+                       {rule.output_flow_stage_id ? `${rule.output_flow_stage_id}. ${rule.output_flow_stage_name}` : "—"}
+                     </td>
+                     <td className="px-2 py-1 text-slate-600 text-[10px] font-mono">{baseDateKey}</td>
+                     <td className="px-2 py-1 text-slate-600 text-[10px]">
+                       {formatDateOffsetString(baseDateKey, rule.offset_direction, rule.offset_days)}
+                     </td>
                       <td className="px-2 py-1 text-center">
                         {rule.required ? <span className="text-blue-600 font-bold">✓</span> : <span className="text-slate-300">—</span>}
                       </td>
@@ -128,7 +131,8 @@ export default function PlanningRuleCard({ category, rules, allRules, onRefresh 
                         </Button>
                       </td>
                     </tr>
-                  ))}
+                  );
+                  })}
                 </tbody>
               </table>
             </div>
