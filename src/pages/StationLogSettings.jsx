@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Plus, Pencil, CheckCircle, XCircle, ChevronUp, ChevronDown, Settings, ChevronRight } from "lucide-react";
+import Stage2WorkRulesTab from "@/components/stationlogs/settings/Stage2WorkRulesTab";
+import Stage2WorkItemsTab from "@/components/stationlogs/settings/Stage2WorkItemsTab";
+import Stage2ResourceTypesTab from "@/components/stationlogs/settings/Stage2ResourceTypesTab";
 
 const CATEGORY_GROUPS = [
   {
@@ -41,6 +44,15 @@ const CATEGORY_GROUPS = [
     group: "Milestones",
     categories: [
       { key: "milestone_category", label: "Milestone Category" },
+    ],
+  },
+  {
+    group: "Stage 2 — Work & Resource Estimation",
+    isSpecial: true,
+    categories: [
+      { key: "stage2_work_rules", label: "Work Rules" },
+      { key: "stage2_work_items", label: "Work Items Library" },
+      { key: "stage2_resource_types", label: "Resource Types" },
     ],
   },
 ];
@@ -225,9 +237,11 @@ export default function StationLogSettings() {
                     className={`w-full flex items-center justify-between pl-6 pr-3 py-2 text-left transition-colors ${selectedCategory === cat.key ? "bg-blue-50 text-blue-800" : "hover:bg-slate-50 text-slate-700"}`}
                   >
                     <span className="text-sm font-medium truncate">{cat.label}</span>
-                    <span className={`text-[10px] rounded-full px-1.5 py-0.5 font-semibold ml-1 flex-shrink-0 ${selectedCategory === cat.key ? "bg-blue-200 text-blue-800" : "bg-slate-100 text-slate-500"}`}>
-                      {countByCategory(cat.key)}
-                    </span>
+                    {!group.isSpecial && (
+                      <span className={`text-[10px] rounded-full px-1.5 py-0.5 font-semibold ml-1 flex-shrink-0 ${selectedCategory === cat.key ? "bg-blue-200 text-blue-800" : "bg-slate-100 text-slate-500"}`}>
+                        {countByCategory(cat.key)}
+                      </span>
+                    )}
                   </button>
                 ))}
               </div>
@@ -237,54 +251,62 @@ export default function StationLogSettings() {
 
         {/* Right: Options for selected category */}
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-base font-bold text-slate-800">{selectedCategoryLabel}</h2>
-              <p className="text-xs text-slate-500 font-mono">{selectedCategory}</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <label className="flex items-center gap-1.5 text-xs text-slate-500 cursor-pointer">
-                <input type="checkbox" checked={showInactive} onChange={e => setShowInactive(e.target.checked)} className="rounded" />
-                Show inactive
-              </label>
-              <Button size="sm" className="gap-1 h-8" onClick={() => setEditingOpt(false)}>
-                <Plus className="h-3.5 w-3.5" /> Add Option
-              </Button>
-            </div>
-          </div>
+          {/* Stage 2 special tabs */}
+          {selectedCategory === "stage2_work_rules" && <Stage2WorkRulesTab />}
+          {selectedCategory === "stage2_work_items" && <Stage2WorkItemsTab />}
+          {selectedCategory === "stage2_resource_types" && <Stage2ResourceTypesTab />}
 
-          {/* New / Edit form */}
-          {editingOpt !== null && (
-            <OptionForm
-              categoryKey={selectedCategory}
-              opt={editingOpt || null}
-              onSave={refresh}
-              onCancel={() => setEditingOpt(null)}
-            />
-          )}
+          {/* Standard dropdown category panel */}
+          {!selectedCategory.startsWith("stage2_") && (
+            <>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-base font-bold text-slate-800">{selectedCategoryLabel}</h2>
+                  <p className="text-xs text-slate-500 font-mono">{selectedCategory}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="flex items-center gap-1.5 text-xs text-slate-500 cursor-pointer">
+                    <input type="checkbox" checked={showInactive} onChange={e => setShowInactive(e.target.checked)} className="rounded" />
+                    Show inactive
+                  </label>
+                  <Button size="sm" className="gap-1 h-8" onClick={() => setEditingOpt(false)}>
+                    <Plus className="h-3.5 w-3.5" /> Add Option
+                  </Button>
+                </div>
+              </div>
 
-          {/* Options list */}
-          {isLoading ? (
-            <div className="text-sm text-slate-400 py-8 text-center">Loading...</div>
-          ) : categoryOptions.length === 0 ? (
-            <div className="text-sm text-slate-400 py-8 text-center border-2 border-dashed border-slate-200 rounded-lg">
-              No options yet. Click "Add Option" to create one.
-            </div>
-          ) : (
-            <div className="space-y-1.5">
-              {categoryOptions.map((opt, idx) => (
-                <OptionRow
-                  key={opt.id}
-                  opt={opt}
-                  isFirst={idx === 0}
-                  isLast={idx === categoryOptions.length - 1}
-                  onEdit={() => setEditingOpt(opt)}
-                  onToggle={handleToggle}
-                  onMoveUp={() => handleMoveUp(opt, idx)}
-                  onMoveDown={() => handleMoveDown(opt, idx)}
+              {editingOpt !== null && (
+                <OptionForm
+                  categoryKey={selectedCategory}
+                  opt={editingOpt || null}
+                  onSave={refresh}
+                  onCancel={() => setEditingOpt(null)}
                 />
-              ))}
-            </div>
+              )}
+
+              {isLoading ? (
+                <div className="text-sm text-slate-400 py-8 text-center">Loading...</div>
+              ) : categoryOptions.length === 0 ? (
+                <div className="text-sm text-slate-400 py-8 text-center border-2 border-dashed border-slate-200 rounded-lg">
+                  No options yet. Click "Add Option" to create one.
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  {categoryOptions.map((opt, idx) => (
+                    <OptionRow
+                      key={opt.id}
+                      opt={opt}
+                      isFirst={idx === 0}
+                      isLast={idx === categoryOptions.length - 1}
+                      onEdit={() => setEditingOpt(opt)}
+                      onToggle={handleToggle}
+                      onMoveUp={() => handleMoveUp(opt, idx)}
+                      onMoveDown={() => handleMoveDown(opt, idx)}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
