@@ -65,8 +65,12 @@
     }
   },
   "required": [
+    "category_id",
+    "trigger_value_id",
     "trigger_field",
     "trigger_value",
-    "work_item_id"
+    "work_item_id",
+    "resource_type_id",
+    "estimated_time_minutes"
   ]
 }

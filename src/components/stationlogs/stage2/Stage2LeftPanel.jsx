@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
   MapPin, FileText, Image, ExternalLink,
-  ChevronDown, ChevronRight, Eye, Pencil, X
+  ChevronDown, ChevronRight, Eye, Pencil, X, ArrowLeft
 } from "lucide-react";
 import Stage2AttachmentPreview from "./Stage2AttachmentPreview";
 import OrderLocationModule from "@/components/stationlogs/stage1/OrderLocationModule";
@@ -69,7 +69,7 @@ function AttachmentRow({ att, onPreview }) {
   );
 }
 
-export default function Stage2LeftPanel({ log, currentData, attachments, stationLogId }) {
+export default function Stage2LeftPanel({ log, currentData, attachments, stationLogId, onGoToStage1, onCloseWorkspace }) {
   const [editOpen, setEditOpen] = useState(false);
   const [previewAtt, setPreviewAtt] = useState(null);
 
@@ -194,9 +194,21 @@ export default function Stage2LeftPanel({ log, currentData, attachments, station
         <div className="fixed inset-0 z-[70] bg-black/60 flex flex-col">
           <div className="flex items-center justify-between bg-white border-b border-slate-200 px-6 py-3 shrink-0">
             <p className="font-bold text-slate-800">Stage 1 — Order + Location (Edit / Revision)</p>
-            <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => setEditOpen(false)}>
-              <X className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-2">
+              {onGoToStage1 && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs gap-1.5 border-amber-300 text-amber-700 hover:bg-amber-50"
+                  onClick={() => { setEditOpen(false); onGoToStage1(); }}
+                >
+                  <ArrowLeft className="h-3 w-3" /> Go to Stage 1 in Accordion
+                </Button>
+              )}
+              <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => setEditOpen(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
           <div className="flex-1 overflow-y-auto bg-gray-50 p-6">
             <OrderLocationModule log={log} asset={asset} />

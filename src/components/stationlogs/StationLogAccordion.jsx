@@ -280,7 +280,10 @@ export default function StationLogAccordion({
         onClose={() => setStage2Open(false)}
         onCompleted={() => {
           setStage2Open(false);
-          // Parent will re-fetch log via react-query invalidation
+        }}
+        onGoToStage1={() => {
+          setStage2Open(false);
+          setExpandedStage("1");
         }}
       />
     )}

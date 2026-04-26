@@ -44,18 +44,21 @@ export default function AddTemplateWorkDialog({ workItems, resources, rules = []
   };
 
   const handleAdd = () => {
+    const baseMinutes = hours * 60 + minutes;
     if (mode === "rule") {
       if (!selectedRuleId) return alert("Please select a rule.");
+      if (!resourceId) return alert("Resource type is required.");
+      if (baseMinutes <= 0) return alert("Base time must be greater than 0.");
       const rule = rules.find(r => r.id === selectedRuleId);
       const item = workItems.find(w => w.id === rule?.work_item_id) || { id: rule?.work_item_id, work_name: rule?.work_item_name_snapshot };
       const res = resources.find(r => r.id === resourceId);
-      const baseMinutes = hours * 60 + minutes;
       onAdd(item, resourceId, res?.resource_name || rule?.resource_type_name_snapshot || "", baseMinutes);
     } else {
       if (!selectedItemId) return alert("Please select a work item.");
+      if (!resourceId) return alert("Resource type is required.");
+      if (baseMinutes <= 0) return alert("Base time must be greater than 0.");
       const item = workItems.find(w => w.id === selectedItemId);
       const res = resources.find(r => r.id === resourceId);
-      const baseMinutes = hours * 60 + minutes;
       onAdd(item, resourceId, res?.resource_name || "", baseMinutes);
     }
     onClose();
@@ -124,7 +127,7 @@ export default function AddTemplateWorkDialog({ workItems, resources, rules = []
           )}
 
           <div>
-            <label className="text-xs font-semibold text-slate-600 uppercase">Resource Type</label>
+            <label className="text-xs font-semibold text-slate-600 uppercase">Resource Type *</label>
             <select
               className="mt-1 w-full border border-slate-200 rounded px-2 py-2 text-sm bg-white"
               value={resourceId}
@@ -136,7 +139,7 @@ export default function AddTemplateWorkDialog({ workItems, resources, rules = []
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-slate-600 uppercase">Base Time</label>
+            <label className="text-xs font-semibold text-slate-600 uppercase">Base Time *</label>
             <div className="flex gap-2 mt-1 items-center">
               <div className="flex-1">
                 <input type="number" min={0} className="w-full border border-slate-200 rounded px-2 py-1.5 text-sm"

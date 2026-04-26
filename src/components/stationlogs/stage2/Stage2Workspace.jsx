@@ -27,7 +27,7 @@ function buildResourceBreakdown(rows) {
   return Object.values(map).map(g => ({ ...g, display: minutesToDisplay(g.total_minutes) }));
 }
 
-export default function Stage2Workspace({ log, currentData, attachments, onClose, onCompleted }) {
+export default function Stage2Workspace({ log, currentData, attachments, onClose, onCompleted, onGoToStage1 }) {
   const queryClient = useQueryClient();
   const stationLogId = log.id;
 
@@ -312,6 +312,8 @@ export default function Stage2Workspace({ log, currentData, attachments, onClose
             currentData={currentData}
             attachments={attachments}
             stationLogId={stationLogId}
+            onGoToStage1={onGoToStage1}
+            onCloseWorkspace={onClose}
           />
         </div>
 

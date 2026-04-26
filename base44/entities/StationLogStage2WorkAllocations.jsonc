@@ -1,0 +1,89 @@
+{
+  "name": "StationLogStage2WorkAllocations",
+  "type": "object",
+  "properties": {
+    "station_log_id": {
+      "type": "string",
+      "description": "FK \u2192 StationLog"
+    },
+    "stage1_version_id": {
+      "type": "string",
+      "description": "FK \u2192 StationLogDataVersions (active version when Stage 2 was run)"
+    },
+    "category_id": {
+      "type": "string",
+      "description": "FK \u2192 StationLogWorkRuleCategories"
+    },
+    "category_name_snapshot": {
+      "type": "string"
+    },
+    "trigger_value_id": {
+      "type": "string",
+      "description": "FK \u2192 StationLogWorkRuleTriggerValues (null for manual/template)"
+    },
+    "trigger_value_snapshot": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "Auto",
+        "Template",
+        "Manual"
+      ],
+      "default": "Auto"
+    },
+    "work_item_id": {
+      "type": "string",
+      "description": "FK \u2192 StationLogWorkItems (null for manual)"
+    },
+    "work_name_snapshot": {
+      "type": "string"
+    },
+    "resource_type_id": {
+      "type": "string",
+      "description": "FK \u2192 StationLogResourceTypes"
+    },
+    "resource_type_name_snapshot": {
+      "type": "string"
+    },
+    "base_minutes": {
+      "type": "number",
+      "default": 0
+    },
+    "extra_minutes": {
+      "type": "number",
+      "default": 0
+    },
+    "total_minutes": {
+      "type": "number",
+      "default": 0
+    },
+    "selected": {
+      "type": "boolean",
+      "default": true
+    },
+    "notes": {
+      "type": "string"
+    },
+    "sort_order": {
+      "type": "number",
+      "default": 0
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "station_log_id",
+    "source",
+    "work_name_snapshot",
+    "resource_type_id",
+    "resource_type_name_snapshot",
+    "base_minutes",
+    "extra_minutes",
+    "total_minutes",
+    "selected"
+  ]
+}
