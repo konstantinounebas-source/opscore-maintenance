@@ -143,12 +143,20 @@ export default function Stage3PlanningWorkspace({ log, currentData, asset, onClo
     const milestones = savedItems.filter(i => i.planning_item_type === "Milestone" && i.is_active !== false);
 
     try {
+      console.log("Complete Stage 3 IDs", {
+        logId: log?.id,
+        currentDataId: currentData?.id,
+        assetId: asset?.id
+      });
+
       console.log("Completing Stage 3 for log id:", log.id);
 
-      const updated = await base44.entities.StationLog.update(log.id, {
+      const user = await base44.auth.me();
+      
+      await base44.entities.StationLog.update(log.id, {
         stage_3_completed: true,
         stage_3_completed_at: new Date().toISOString(),
-        stage_3_completed_by: (await base44.auth.me()).email,
+        stage_3_completed_by: user.email,
         stage_3_planning_status: "Completed",
         stage_3_planned_start: minDate,
         stage_3_planned_finish: maxDate,
@@ -156,15 +164,23 @@ export default function Stage3PlanningWorkspace({ log, currentData, asset, onClo
         stage_3_milestones_json: JSON.stringify(milestones),
       });
 
-      console.log("Stage 3 completed update result:", updated);
+      // Read back from database to verify
+      const refreshedLog = await base44.entities.StationLog.get(log.id);
+      console.log("Refreshed log after complete:", refreshedLog);
 
       // Verify completion was successful
-      if (!updated.stage_3_completed) {
-        throw new Error("Stage 3 completion failed: stage_3_completed not set to true");
+      if (refreshedLog.stage_3_completed !== true) {
+        throw new Error(`Verification failed: stage_3_completed is ${refreshedLog.stage_3_completed}`);
+      }
+      if (refreshedLog.stage_3_planning_status !== "Completed") {
+        throw new Error(`Verification failed: stage_3_planning_status is ${refreshedLog.stage_3_planning_status}`);
       }
 
-      // Invalidate and refetch the station log
+      // Invalidate all relevant queries
       await queryClient.invalidateQueries({ queryKey: ["stationLogs"] });
+      await queryClient.invalidateQueries({ queryKey: ["stationLog"] });
+      await queryClient.invalidateQueries({ queryKey: ["stage3PlanningItems"] });
+      await queryClient.invalidateQueries({ queryKey: ["stage3PlanningItems", log.id] });
       
       setCompleting(false);
       onCompleted();
