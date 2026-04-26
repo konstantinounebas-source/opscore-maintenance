@@ -216,13 +216,33 @@ export function evaluateAppliesWhen(rule, stationData) {
 }
 
 /**
+ * Build human-readable rule logic text
+ * Example: "Base: Execution Finish (2026-05-19) + 3 working days"
+ */
+function buildRuleLogicText(baseKey, baseDate, offsetDirection, offsetDays, useWorkingDays) {
+  const baseLabel = CORE_DATE_KEYS[baseKey]?.label || baseKey;
+  
+  if (offsetDays === 0 || offsetDirection === "Same Day") {
+    return `Base: ${baseLabel} (${baseDate}) - same day`;
+  }
+  
+  const sign = offsetDirection === "After" ? "+" : "-";
+  const dayText = offsetDays === 1 ? "day" : "days";
+  const dayTypeText = useWorkingDays ? `working ${dayText}` : `calendar ${dayText}`;
+  
+  return `Base: ${baseLabel} (${baseDate}) ${sign} ${offsetDays} ${dayTypeText}`;
+}
+
+/**
  * Generate rule suggestions with comprehensive validation
  * 
  * Returns array of suggestion objects:
  * {
  *   rule_id, rule_name, planning_item_name, planning_item_type,
  *   output_date_key, output_flow_stage_id, output_flow_stage_name,
- *   base_date_key, calculated_date,
+ *   base_date_key, base_date_value, base_date_source,
+ *   offset_direction, offset_days, use_working_days, rule_logic_text,
+ *   calculated_date,
  *   required, status,
  *   applies: boolean,
  *   validationWarning: string | null,
@@ -294,6 +314,12 @@ export function generateRuleSuggestionsV2(activeRules, stationData, stage3Items)
           output_flow_stage_id: rule.output_flow_stage_id,
           output_flow_stage_name: rule.output_flow_stage_name,
           base_date_key: rule.base_date_key,
+          base_date_value: baseResolution.date,
+          base_date_source: baseResolution.source,
+          offset_direction: rule.offset_direction,
+          offset_days: rule.offset_days,
+          use_working_days: rule.use_working_days,
+          rule_logic_text: null,
           calculated_date: null,
           required: rule.required,
           status: "Error",
@@ -309,6 +335,14 @@ export function generateRuleSuggestionsV2(activeRules, stationData, stage3Items)
       generatedDateMap[rule.output_date_key] = calcResult.date;
       processedInThisPass++;
 
+      const ruleLogicText = buildRuleLogicText(
+        rule.base_date_key,
+        baseResolution.date,
+        rule.offset_direction,
+        rule.offset_days,
+        rule.use_working_days
+      );
+
       suggestionMap.set(rule.id, {
         rule_id: rule.id,
         rule_name: rule.rule_name,
@@ -318,6 +352,12 @@ export function generateRuleSuggestionsV2(activeRules, stationData, stage3Items)
         output_flow_stage_id: rule.output_flow_stage_id || null,
         output_flow_stage_name: rule.output_flow_stage_name,
         base_date_key: rule.base_date_key,
+        base_date_value: baseResolution.date,
+        base_date_source: baseResolution.source,
+        offset_direction: rule.offset_direction,
+        offset_days: rule.offset_days,
+        use_working_days: rule.use_working_days,
+        rule_logic_text: ruleLogicText,
         calculated_date: calcResult.date,
         required: rule.required,
         status: "Suggested",
@@ -347,6 +387,12 @@ export function generateRuleSuggestionsV2(activeRules, stationData, stage3Items)
         output_flow_stage_id: rule.output_flow_stage_id,
         output_flow_stage_name: rule.output_flow_stage_name,
         base_date_key: rule.base_date_key,
+        base_date_value: null,
+        base_date_source: null,
+        offset_direction: rule.offset_direction,
+        offset_days: rule.offset_days,
+        use_working_days: rule.use_working_days,
+        rule_logic_text: null,
         calculated_date: null,
         required: rule.required,
         status: "Blocked",
@@ -382,6 +428,12 @@ export function generateRuleSuggestionsV2(activeRules, stationData, stage3Items)
         output_flow_stage_id: rule.output_flow_stage_id,
         output_flow_stage_name: rule.output_flow_stage_name,
         base_date_key: rule.base_date_key,
+        base_date_value: null,
+        base_date_source: null,
+        offset_direction: rule.offset_direction,
+        offset_days: rule.offset_days,
+        use_working_days: rule.use_working_days,
+        rule_logic_text: null,
         calculated_date: null,
         required: rule.required,
         status: "Blocked",

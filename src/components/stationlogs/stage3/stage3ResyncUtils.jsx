@@ -22,13 +22,16 @@ export function detectOutOfSyncItems(savedItems, suggestions) {
 
     if (item.planned_date !== suggestion.calculated_date) {
       result.push({
-        itemId: item.id,
-        itemName: item.planning_item_name_snapshot || item.planning_item_name,
+        id: item.id,
+        name: item.planning_item_name_snapshot || item.planning_item_name,
         ruleName: suggestion.rule_name,
         savedDate: item.planned_date,
-        calculatedDate: suggestion.calculated_date,
-        baseDateKey: suggestion.base_date_key,
-        lastCalculatedDate: item.last_calculated_date,
+        newDate: suggestion.calculated_date,
+        baseDate: suggestion.base_date_key,
+        oldBaseDateValue: item.base_date_value,
+        newBaseDateValue: suggestion.base_date_value,
+        oldRuleLogicText: item.rule_logic_text,
+        newRuleLogicText: suggestion.rule_logic_text,
         wasManuallyEdited: item.was_manually_edited === true,
       });
     }

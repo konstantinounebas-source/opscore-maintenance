@@ -31,7 +31,7 @@ export default function Stage3OutOfSyncWarning({ items, onUpdateItem }) {
                 <p className="text-[10px] text-slate-500">Rule: {item.ruleName}</p>
               </div>
               
-              <div className="grid grid-cols-2 gap-2 text-[10px]">
+              <div className="grid grid-cols-2 gap-2 text-[10px] space-y-1">
                 <div>
                   <p className="text-slate-500 font-semibold uppercase">Your Saved Date</p>
                   <p className="font-mono text-slate-800">{item.savedDate}</p>
@@ -41,6 +41,28 @@ export default function Stage3OutOfSyncWarning({ items, onUpdateItem }) {
                   <p className="font-mono text-slate-800">{item.newDate}</p>
                 </div>
               </div>
+
+              {item.oldBaseDateValue && (
+                <div className="grid grid-cols-2 gap-2 text-[10px] bg-slate-50 p-1.5 rounded">
+                  <div>
+                    <p className="text-slate-500 font-semibold uppercase">Old Base Date</p>
+                    <p className="text-slate-700">{item.oldBaseDateValue}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-500 font-semibold uppercase">New Base Date</p>
+                    <p className="text-slate-700">{item.newBaseDateValue}</p>
+                  </div>
+                </div>
+              )}
+
+              {item.oldRuleLogicText && (
+                <div className="text-[10px] space-y-0.5">
+                  <p className="text-slate-500 font-semibold uppercase">Old Logic</p>
+                  <p className="text-slate-700">{item.oldRuleLogicText}</p>
+                  <p className="text-slate-500 font-semibold uppercase mt-1">New Logic</p>
+                  <p className="text-slate-700">{item.newRuleLogicText}</p>
+                </div>
+              )}
 
               <Button
                 size="sm"

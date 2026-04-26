@@ -114,6 +114,12 @@ export default function Stage3RightPanel({
         planning_item_name_snapshot: suggestion.planning_item_name,
         planning_item_type: suggestion.planning_item_type,
         base_date_key: suggestion.base_date_key,
+        base_date_value: suggestion.base_date_value,
+        base_date_source: suggestion.base_date_source,
+        offset_direction: suggestion.offset_direction,
+        offset_days: suggestion.offset_days,
+        use_working_days: suggestion.use_working_days,
+        rule_logic_text: suggestion.rule_logic_text,
         status: determineItemStatus(suggestion.calculated_date),
         required: suggestion.required,
         ...dateFields,
@@ -313,6 +319,22 @@ export default function Stage3RightPanel({
                           <Check className={`h-4 w-4 ${item.status === "Completed" ? "text-green-600" : "text-slate-300"}`} />
                         </button>
                       </div>
+                      {item.source === "Rule" && item.rule_logic_text && (
+                        <div className="space-y-1 text-[10px] bg-slate-100 p-1.5 rounded">
+                          <div>
+                            <p className="text-slate-500 font-semibold uppercase">Base Field</p>
+                            <p className="text-slate-800">{item.base_date_key}</p>
+                          </div>
+                          <div>
+                            <p className="text-slate-500 font-semibold uppercase">Base Date</p>
+                            <p className="text-slate-800">{item.base_date_value}</p>
+                          </div>
+                          <div>
+                            <p className="text-slate-500 font-semibold uppercase">Logic</p>
+                            <p className="text-slate-800">{item.rule_logic_text}</p>
+                          </div>
+                        </div>
+                      )}
                       <div className="flex items-center gap-2 flex-wrap">
                         <div className="flex-1 text-[10px] text-slate-500 font-semibold uppercase mb-1">
                           {item.planning_item_type === "Deadline" || item.planning_item_type === "Milestone" ? "Deadline" : item.planning_item_type === "Planned Date" ? "Start" : "Date"}
@@ -464,13 +486,21 @@ export default function Stage3RightPanel({
                      <span>{sugg.validationWarning}</span>
                    </div>
                  ) : (
-                   <div className="grid grid-cols-2 gap-2 text-[10px]">
+                   <div className="space-y-2 text-[10px]">
                      <div>
-                       <p className="text-slate-500 font-semibold">Base</p>
-                       <p className="text-slate-800 font-mono">{sugg.base_date_key}</p>
+                       <p className="text-slate-500 font-semibold uppercase">Base Field</p>
+                       <p className="text-slate-800">{sugg.base_date_key}</p>
                      </div>
                      <div>
-                       <p className="text-slate-500 font-semibold">Calculated</p>
+                       <p className="text-slate-500 font-semibold uppercase">Base Date</p>
+                       <p className="text-slate-800">{sugg.base_date_value}</p>
+                     </div>
+                     <div>
+                       <p className="text-slate-500 font-semibold uppercase">Logic</p>
+                       <p className="text-slate-800">{sugg.rule_logic_text}</p>
+                     </div>
+                     <div>
+                       <p className="text-slate-500 font-semibold uppercase">Calculated</p>
                        <p className="text-slate-800 font-mono">{sugg.calculated_date}</p>
                      </div>
                    </div>
