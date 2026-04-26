@@ -2,9 +2,9 @@ import React from "react";
 
 export default function Stage3CoreDates({ currentData = {} }) {
   const dates = [
-    { label: "Work Start Date", value: currentData.work_start_date, source: "Stage 1" },
-    { label: "Final Deadline", value: currentData.final_deadline, source: "Stage 1" },
-    { label: "Priority Deadline", value: currentData.priority_deadline, source: "Stage 1" },
+    { label: "Work Start Date", value: currentData.order_received_date, source: "Stage 1" },
+    { label: "Final Deadline", value: currentData.order_deadline_date, source: "Stage 1" },
+    { label: "Priority Deadline", value: currentData.order_priority_date, source: "Stage 1" },
     { label: "Execution Start", value: currentData.stage_3_execution_date, source: "Stage 3" },
     { label: "Execution Finish", value: currentData.stage_3_execution_finish, source: "Stage 3" },
   ];
