@@ -158,7 +158,7 @@ export default function StationLogSettings() {
   const [editingOpt, setEditingOpt] = useState(null);
   const [showInactive, setShowInactive] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState(() =>
-    Object.fromEntries(CATEGORY_GROUPS.map(g => [g.group, true]))
+    Object.fromEntries(CATEGORY_GROUPS.map(g => [g.group, false]))
   );
 
   const toggleGroup = (group) =>
