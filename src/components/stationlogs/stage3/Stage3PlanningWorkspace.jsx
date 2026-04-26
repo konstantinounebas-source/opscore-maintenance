@@ -43,20 +43,6 @@ export default function Stage3PlanningWorkspace({ log, currentData, asset, onClo
     execution_finish: log?.stage_3_execution_finish || "",
   });
 
-  // Debug: Log stationData on mount and when dates change
-  useEffect(() => {
-    console.log("📊 STAGE 3 STATION DATA:", {
-      stage_3_execution_date: stationData?.stage_3_execution_date,
-      stage_3_execution_finish: stationData?.stage_3_execution_finish,
-      execution_date: stationData?.execution_date,
-      execution_finish: stationData?.execution_finish,
-      from_log: {
-        stage_3_execution_date: log?.stage_3_execution_date,
-        stage_3_execution_finish: log?.stage_3_execution_finish,
-      },
-    });
-  }, [stationData, log]);
-
   // Build normalized station data for rule evaluation
   // CRITICAL: Use normalized keys that match rule base_date_key
   const stationData = {
@@ -73,6 +59,20 @@ export default function Stage3PlanningWorkspace({ log, currentData, asset, onClo
     execution_date: executionDates.execution_date,
     execution_finish: executionDates.execution_finish,
   };
+
+  // Debug: Log stationData on mount and when dates change
+  useEffect(() => {
+    console.log("📊 STAGE 3 STATION DATA:", {
+      stage_3_execution_date: stationData.stage_3_execution_date,
+      stage_3_execution_finish: stationData.stage_3_execution_finish,
+      execution_date: stationData.execution_date,
+      execution_finish: stationData.execution_finish,
+      from_log: {
+        stage_3_execution_date: log?.stage_3_execution_date,
+        stage_3_execution_finish: log?.stage_3_execution_finish,
+      },
+    });
+  }, [stationData, log]);
 
   // Generate suggestions when dates or rules change
   // Dependencies on local state values for immediate updates
