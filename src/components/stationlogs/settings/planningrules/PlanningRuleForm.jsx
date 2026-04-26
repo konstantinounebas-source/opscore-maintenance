@@ -63,8 +63,8 @@ export default function PlanningRuleForm({ rule, categoryId, rules = [], onSaved
       alert("Output Flow Stage is required");
       return;
     }
-    if (!form.base_date_key.trim()) {
-      alert("Base Date is required");
+    if (!form.base_date_key || !form.base_date_key.trim()) {
+      alert("Base Date is required. Please select a date from the dropdown.");
       return;
     }
     if (form.offset_days < 0) {
@@ -264,11 +264,11 @@ export default function PlanningRuleForm({ rule, categoryId, rules = [], onSaved
                 </span>
               </label>
               <select
-                className="mt-1 w-full border border-slate-200 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
+                className={`mt-1 w-full border rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 ${!form.base_date_key ? 'border-red-300 ring-1 ring-red-300' : 'border-slate-200 focus:ring-blue-400'}`}
                 value={form.base_date_key}
                 onChange={e => setForm(f => ({ ...f, base_date_key: e.target.value }))}
               >
-                <option value="">— Select Base Date —</option>
+                <option value="">— Select Base Date — *</option>
                 {availableBaseDates.map(group => (
                   <optgroup key={group.group} label={group.group}>
                     {group.items.map(item => (
