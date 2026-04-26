@@ -130,7 +130,40 @@ export default function StationLogAccordion({
                   )}
 
                   {/* Stage 2: Work Categorization & Time Estimation */}
-                  {stage.id === 2 && (
+                  {stage.id === 2 && (() => {
+                    // Check if Stage 1 is ready
+                    const stage1 = stages.find(s => s.id === 1);
+                    const stage1Tasks = getStageTasks(1);
+                    const stage1Instructions = getStageInstructions(1);
+                    const stage1Readiness = stage1 && currentData ? {
+                      ready: !!(
+                        currentData.authority_order_reference && 
+                        currentData.order_received_date && 
+                        currentData.bus_stop_name && 
+                        currentData.location_address && 
+                        currentData.municipality && 
+                        currentData.latitude !== null && 
+                        currentData.latitude !== "" &&
+                        currentData.longitude !== null && 
+                        currentData.longitude !== "" &&
+                        !stage1Tasks.some(t => t.is_blocking && t.status !== "Completed") &&
+                        !stage1Instructions.some(i => i.is_blocking && i.status !== "Implemented")
+                      )
+                    } : { ready: false };
+
+                    if (!stage1Readiness.ready) {
+                      return (
+                        <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex gap-2">
+                          <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5" />
+                          <div>
+                            <p className="text-xs font-bold text-red-800 uppercase">Stage 1 Not Ready</p>
+                            <p className="text-xs text-red-700 mt-1">Complete Stage 1: Order + Location with all required fields before opening Stage 2.</p>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    return (
                     <div className="space-y-3">
                       {/* Summary row */}
                       <div className="grid grid-cols-3 gap-3">
@@ -184,11 +217,24 @@ export default function StationLogAccordion({
                         <ClipboardList className="h-4 w-4" />
                         Open Stage 2 Workspace
                       </Button>
-                    </div>
-                  )}
+                      </div>
+                      );
+                      })()}
 
-                  {/* Stage 3: Master Planning */}
-                   {stage.id === 3 && (
+                      {/* Stage 3: Master Planning */}
+                   {stage.id === 3 && (() => {
+                     if (!log.stage_2_completed) {
+                       return (
+                         <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex gap-2">
+                           <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5" />
+                           <div>
+                             <p className="text-xs font-bold text-red-800 uppercase">Stage 2 Not Completed</p>
+                             <p className="text-xs text-red-700 mt-1">Complete Stage 2: Work Categorization & Time Estimation before opening Stage 3 Planning Workspace.</p>
+                           </div>
+                         </div>
+                       );
+                     }
+                     return (
                      <div className="space-y-3">
                        {/* Top Summary Boxes */}
                        <div className="grid grid-cols-3 gap-3">
@@ -224,24 +270,18 @@ export default function StationLogAccordion({
                          <Stage3DeadlinesSummary savedItems={stage3Items} />
                        </div>
 
-                      {log.stage_2_completed ? (
-                        <Button
-                          className="w-full gap-2 bg-blue-600 hover:bg-blue-700 text-white"
-                          onClick={() => setStage3Open(true)}
-                        >
-                          <ClipboardList className="h-4 w-4" />
-                          Open Stage 3 Planning Workspace
-                        </Button>
-                      ) : (
-                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg flex gap-2">
-                          <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                          <p className="text-xs text-amber-800">Complete Stage 2 before opening Stage 3 Planning Workspace.</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                      <Button
+                        className="w-full gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+                        onClick={() => setStage3Open(true)}
+                      >
+                        <ClipboardList className="h-4 w-4" />
+                        Open Stage 3 Planning Workspace
+                      </Button>
+                      </div>
+                     );
+                   })()}
 
-                  {/* Other stages: placeholder fields */}
+                      {/* Other stages: placeholder fields */}
                   {stage.id !== 1 && stage.id !== 2 && stage.id !== 3 && stageFields.fields?.length > 0 && (
                   <div>
                     <p className="text-xs font-bold text-gray-700 uppercase mb-3">Stage Fields</p>
