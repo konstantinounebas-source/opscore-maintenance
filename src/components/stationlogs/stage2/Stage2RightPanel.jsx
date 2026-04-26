@@ -4,78 +4,68 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
   Plus, Trash2, AlertCircle, Clock, ChevronDown, ChevronRight,
-  Sparkles, X, Eye, CheckCircle2
+  Info, X, Eye
 } from "lucide-react";
 import { minutesToDisplay } from "../settings/workrules/workRulesUtils";
 import AddTemplateWorkDialog from "./AddTemplateWorkDialog";
 import AddManualWorkDialog from "./AddManualWorkDialog";
 import ReviewChangesModal from "./ReviewChangesModal";
 
-// ── Status config ──────────────────────────────────────────────────────────────
-const STATUS_CONFIG = {
-  current_match: { dot: "bg-green-500", label: "Matching", labelColor: "text-green-700" },
-  no_longer_matches: { dot: "bg-red-500", label: "No longer matches", labelColor: "text-red-600" },
-  new_suggestion: { dot: "bg-yellow-400", label: "New suggestion", labelColor: "text-yellow-700" },
-  template: { dot: "bg-purple-500", label: "Template", labelColor: "text-purple-700" },
-  manual: { dot: "bg-orange-500", label: "Manual", labelColor: "text-orange-700" },
-};
+// ── Source badge (outline, neutral) ───────────────────────────────────────────
+function SourceBadge({ source }) {
+  return (
+    <span className="text-[10px] border border-slate-300 text-slate-500 rounded px-1.5 py-0.5 font-medium">
+      {source}
+    </span>
+  );
+}
 
-const SOURCE_COLORS = {
-  Auto: "bg-blue-100 text-blue-700",
-  Template: "bg-purple-100 text-purple-700",
-  Manual: "bg-orange-100 text-orange-700",
-};
-
-// ── Rule Change Banner ─────────────────────────────────────────────────────────
+// ── Rule Change Banner (calm, compact) ────────────────────────────────────────
 function RuleChangeBanner({ ruleDiff, onReview, onApplyAll, onDismiss }) {
   const newCount = ruleDiff?.newSuggestions?.length ?? 0;
   const outdatedCount = ruleDiff?.noLongerMatching?.length ?? 0;
   return (
-    <div className="flex items-center gap-3 px-4 py-2.5 bg-amber-50 border-b border-amber-300 flex-wrap">
-      <Sparkles className="h-4 w-4 text-amber-600 shrink-0" />
-      <p className="text-xs font-semibold text-amber-900 flex-1">Stage 1 data has changed — rule-based suggestions have been updated.</p>
-      <div className="flex items-center gap-1.5 flex-wrap">
+    <div className="flex items-center gap-2 px-4 py-2 bg-white border-b border-slate-200 flex-wrap">
+      <Info className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+      <p className="text-xs text-slate-600 flex-1">Stage 1 data changed. Review updated rule suggestions.</p>
+      <div className="flex items-center gap-1.5">
         {newCount > 0 && (
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-800">+{newCount} new</span>
+          <span className="text-[10px] border border-slate-300 text-slate-600 rounded-full px-2 py-0.5">
+            {newCount} new suggestion{newCount !== 1 ? "s" : ""}
+          </span>
         )}
         {outdatedCount > 0 && (
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700">{outdatedCount} outdated</span>
+          <span className="text-[10px] border border-slate-300 text-slate-600 rounded-full px-2 py-0.5">
+            {outdatedCount} outdated saved work{outdatedCount !== 1 ? "s" : ""}
+          </span>
         )}
       </div>
-      <div className="flex gap-1.5">
-        <Button size="sm" variant="outline" className="h-6 text-[11px] border-amber-300 text-amber-800 hover:bg-amber-100 px-2" onClick={onReview}>
+      <div className="flex gap-1.5 items-center">
+        <Button size="sm" variant="outline" className="h-6 text-[11px] px-2" onClick={onReview}>
           <Eye className="h-3 w-3 mr-1" /> Review
         </Button>
         {newCount > 0 && (
-          <Button size="sm" className="h-6 text-[11px] bg-amber-600 hover:bg-amber-700 text-white px-2" onClick={onApplyAll}>
-            <Plus className="h-3 w-3 mr-1" /> Apply All New
+          <Button size="sm" variant="outline" className="h-6 text-[11px] px-2" onClick={onApplyAll}>
+            <Plus className="h-3 w-3 mr-1" /> Apply New
           </Button>
         )}
-        <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-amber-600" onClick={onDismiss}>
+        <button className="text-slate-400 hover:text-slate-600 ml-1" onClick={onDismiss}>
           <X className="h-3.5 w-3.5" />
-        </Button>
+        </button>
       </div>
     </div>
   );
 }
 
-// ── Allocation Row ─────────────────────────────────────────────────────────────
+// ── Saved Allocation Row ───────────────────────────────────────────────────────
 function AllocationRow({ row, resources, onUpdate, onRemove }) {
-  const status = STATUS_CONFIG[row.rule_match_status] || STATUS_CONFIG.current_match;
   const isNoLonger = row.rule_match_status === "no_longer_matches";
 
   return (
     <>
-      <tr className={`border-b border-slate-100 text-xs ${!row.selected ? "opacity-50 bg-slate-50" : isNoLonger ? "bg-red-50 hover:bg-red-100" : "hover:bg-slate-50"}`}>
-        {/* Status dot */}
-        <td className="px-2 py-2 w-6">
-          <div className="flex items-center justify-center">
-            <div className={`w-2 h-2 rounded-full ${status.dot}`} title={status.label} />
-          </div>
-        </td>
-
+      <tr className={`border-b border-slate-100 text-xs ${!row.selected ? "opacity-50 bg-slate-50" : "hover:bg-slate-50"}`}>
         {/* Checkbox */}
-        <td className="px-2 py-2 w-8">
+        <td className="px-3 py-2 w-8">
           <input
             type="checkbox"
             checked={row.selected}
@@ -84,16 +74,21 @@ function AllocationRow({ row, resources, onUpdate, onRemove }) {
           />
         </td>
 
-        {/* Work Item */}
-        <td className="px-2 py-2 min-w-[140px]">
-          <span className="font-medium text-slate-800">{row.work_name_snapshot}</span>
+        {/* Work Item + status inline */}
+        <td className="px-2 py-2 min-w-[160px]">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="font-medium text-slate-800">{row.work_name_snapshot}</span>
+            {isNoLonger && (
+              <span className="text-[10px] border border-amber-300 text-amber-700 rounded px-1.5 py-0.5 font-medium whitespace-nowrap">
+                Outdated
+              </span>
+            )}
+          </div>
         </td>
 
         {/* Source */}
         <td className="px-2 py-2 w-20">
-          <Badge className={`text-[10px] ${SOURCE_COLORS[row.source] || "bg-slate-100 text-slate-600"}`}>
-            {row.source}
-          </Badge>
+          <SourceBadge source={row.source} />
         </td>
 
         {/* Resource Type */}
@@ -119,7 +114,7 @@ function AllocationRow({ row, resources, onUpdate, onRemove }) {
 
         {/* Base Time */}
         <td className="px-2 py-2 w-20">
-          <span className="font-mono text-slate-600">{minutesToDisplay(row.base_minutes)}</span>
+          <span className="font-mono text-slate-500">{minutesToDisplay(row.base_minutes)}</span>
         </td>
 
         {/* Extra Time */}
@@ -169,25 +164,25 @@ function AllocationRow({ row, resources, onUpdate, onRemove }) {
 
         {/* Actions */}
         <td className="px-2 py-2 w-10">
-          <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-red-400 hover:text-red-600"
+          <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-slate-400 hover:text-red-500"
             onClick={() => onRemove(row._key)}>
             <Trash2 className="h-3.5 w-3.5" />
           </Button>
         </td>
       </tr>
 
-      {/* Warning row for no-longer-matching */}
+      {/* Outdated note row — no colored background, just a subtle text note */}
       {isNoLonger && (
-        <tr className="border-b border-red-200 bg-red-50">
-          <td colSpan={10} className="px-3 py-1.5">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-[11px] text-red-700 font-medium">
-                ⚠ No longer matches current Stage 1 data
+        <tr className="border-b border-slate-100">
+          <td colSpan={9} className="px-3 pb-2 pt-0">
+            <div className="flex items-center justify-between gap-2 bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5">
+              <p className="text-[11px] text-slate-500">
+                This saved work no longer matches the current Stage 1 data. It still affects totals until removed.
               </p>
               <Button
                 size="sm"
                 variant="outline"
-                className="h-5 text-[10px] px-2 border-red-300 text-red-600 hover:bg-red-100"
+                className="h-5 text-[10px] px-2 shrink-0"
                 onClick={() => onRemove(row._key)}
               >
                 Remove
@@ -200,63 +195,26 @@ function AllocationRow({ row, resources, onUpdate, onRemove }) {
   );
 }
 
-// ── Ghost Row (new suggestion not yet added) ───────────────────────────────────
-function GhostRow({ suggestion, onAdd }) {
-  return (
-    <tr className="border-b border-yellow-200 bg-yellow-50 text-xs opacity-80 hover:opacity-100">
-      <td className="px-2 py-2 w-6">
-        <div className="flex items-center justify-center">
-          <div className="w-2 h-2 rounded-full bg-yellow-400" title="New suggestion" />
-        </div>
-      </td>
-      <td className="px-2 py-2 w-8">
-        <input type="checkbox" disabled className="rounded opacity-30" />
-      </td>
-      <td className="px-2 py-2 min-w-[140px]">
-        <span className="font-medium text-slate-600 italic">{suggestion.workName}</span>
-      </td>
-      <td className="px-2 py-2 w-20">
-        <Badge className="text-[10px] bg-yellow-100 text-yellow-700">New</Badge>
-      </td>
-      <td className="px-2 py-2 min-w-[130px]">
-        <span className="text-slate-500 text-[11px]">{suggestion.resourceName || "—"}</span>
-      </td>
-      <td className="px-2 py-2 w-20">
-        <span className="font-mono text-slate-500">{minutesToDisplay(suggestion.baseMinutes)}</span>
-      </td>
-      <td className="px-2 py-2 w-28" />
-      <td className="px-2 py-2 w-20" />
-      <td className="px-2 py-2 min-w-[120px]" />
-      <td className="px-2 py-2 w-10">
-        <Button size="sm" className="h-6 text-[10px] px-2 bg-yellow-500 hover:bg-yellow-600 text-white gap-0.5"
-          onClick={() => onAdd(suggestion)}>
-          <Plus className="h-3 w-3" /> Add
-        </Button>
-      </td>
-    </tr>
-  );
-}
-
-// ── Group Block ────────────────────────────────────────────────────────────────
-function GroupBlock({ group, resources, onUpdate, onRemove, newSuggestionsForGroup = [], onAddSuggestion }) {
+// ── Saved Allocation Group Block ───────────────────────────────────────────────
+function AllocationGroupBlock({ group, resources, onUpdate, onRemove }) {
   const [open, setOpen] = useState(true);
   const selectedCount = group.rows.filter(r => r.selected).length;
   const groupMinutes = group.rows.filter(r => r.selected).reduce((s, r) => s + (r.total_minutes || 0), 0);
-  const hasWarnings = group.rows.some(r => r.rule_match_status === "no_longer_matches");
-  const hasNew = newSuggestionsForGroup.length > 0;
+  const outdatedCount = group.rows.filter(r => r.rule_match_status === "no_longer_matches").length;
 
   return (
-    <div className="mb-1">
+    <div className="mb-2">
       <button
-        className={`w-full flex items-center gap-2 px-3 py-2 rounded-t text-left ${hasWarnings ? "bg-red-50 hover:bg-red-100" : "bg-slate-100 hover:bg-slate-200"}`}
+        className="w-full flex items-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded-t text-left"
         onClick={() => setOpen(o => !o)}
       >
-        {open ? <ChevronDown className="h-3.5 w-3.5 text-slate-500" /> : <ChevronRight className="h-3.5 w-3.5 text-slate-500" />}
-        <span className="text-xs font-bold text-slate-700">{group.category}</span>
+        {open ? <ChevronDown className="h-3.5 w-3.5 text-slate-400" /> : <ChevronRight className="h-3.5 w-3.5 text-slate-400" />}
+        <span className="text-xs font-semibold text-slate-700">{group.category}</span>
         <span className="text-[10px] text-slate-400 mx-1">→</span>
-        <span className="text-xs text-slate-600 italic">{group.triggerValue}</span>
-        {hasWarnings && <AlertCircle className="h-3 w-3 text-red-500 ml-1" />}
-        {hasNew && <Sparkles className="h-3 w-3 text-yellow-500 ml-1" />}
+        <span className="text-xs text-slate-500">{group.triggerValue}</span>
+        {outdatedCount > 0 && (
+          <span className="text-[10px] text-amber-600 ml-1">· {outdatedCount} outdated</span>
+        )}
         <span className="ml-auto text-[10px] text-slate-400">
           {selectedCount}/{group.rows.length} selected · {minutesToDisplay(groupMinutes)}
         </span>
@@ -266,8 +224,7 @@ function GroupBlock({ group, resources, onUpdate, onRemove, newSuggestionsForGro
           <table className="w-full text-xs">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200 text-[10px] text-slate-500 uppercase">
-                <th className="px-2 py-1.5 w-6"></th>
-                <th className="px-2 py-1.5 w-8"></th>
+                <th className="px-3 py-1.5 w-8"></th>
                 <th className="px-2 py-1.5 text-left">Work Item</th>
                 <th className="px-2 py-1.5 text-left w-20">Source</th>
                 <th className="px-2 py-1.5 text-left min-w-[130px]">Resource Type</th>
@@ -288,10 +245,6 @@ function GroupBlock({ group, resources, onUpdate, onRemove, newSuggestionsForGro
                   onRemove={onRemove}
                 />
               ))}
-              {/* Ghost rows for new suggestions in this group */}
-              {newSuggestionsForGroup.map((s, i) => (
-                <GhostRow key={`ghost_${i}`} suggestion={s} onAdd={onAddSuggestion} />
-              ))}
             </tbody>
           </table>
         </div>
@@ -300,6 +253,65 @@ function GroupBlock({ group, resources, onUpdate, onRemove, newSuggestionsForGro
   );
 }
 
+// ── Rule Suggestions Section ───────────────────────────────────────────────────
+function SuggestionRow({ suggestion, onAdd }) {
+  return (
+    <div className="flex items-center gap-3 px-3 py-2 bg-slate-50 border border-dashed border-slate-300 rounded-lg">
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs font-medium text-slate-700">{suggestion.workName}</span>
+          <span className="text-[10px] border border-slate-300 text-slate-400 rounded px-1 py-0.5">Suggested</span>
+        </div>
+        <p className="text-[11px] text-slate-400 mt-0.5">{suggestion.categoryName} → {suggestion.triggerValueSnapshot}</p>
+        <p className="text-[11px] text-slate-400">{suggestion.resourceName || "—"} · {minutesToDisplay(suggestion.baseMinutes)}</p>
+      </div>
+      <Button size="sm" variant="outline" className="h-7 text-xs shrink-0 gap-1" onClick={() => onAdd(suggestion)}>
+        <Plus className="h-3 w-3" /> Add
+      </Button>
+    </div>
+  );
+}
+
+function RuleSuggestionsSection({ suggestions, onAdd, onApplyAll }) {
+  const [open, setOpen] = useState(true);
+
+  if (!suggestions || suggestions.length === 0) return null;
+
+  return (
+    <div className="mt-6">
+      {/* Section header */}
+      <div className="flex items-center gap-2 mb-1">
+        <button
+          className="flex items-center gap-1.5 text-left"
+          onClick={() => setOpen(o => !o)}
+        >
+          {open ? <ChevronDown className="h-3.5 w-3.5 text-slate-400" /> : <ChevronRight className="h-3.5 w-3.5 text-slate-400" />}
+          <span className="text-sm font-semibold text-slate-700">
+            Rule Suggestions
+            <span className="ml-1.5 text-[11px] font-normal text-slate-400 border border-slate-300 rounded-full px-1.5 py-0.5">{suggestions.length}</span>
+          </span>
+        </button>
+        {open && (
+          <Button size="sm" variant="outline" className="h-6 text-[11px] px-2 ml-auto" onClick={onApplyAll}>
+            <Plus className="h-3 w-3 mr-1" /> Add All
+          </Button>
+        )}
+      </div>
+      <p className="text-[11px] text-slate-400 mb-2 ml-5">
+        Generated from the revised Stage 1 data. Not saved yet — they do not affect totals or planning status.
+      </p>
+      {open && (
+        <div className="space-y-1.5">
+          {suggestions.map((s, i) => (
+            <SuggestionRow key={i} suggestion={s} onAdd={onAdd} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Row grouping helper ────────────────────────────────────────────────────────
 function groupRows(rows) {
   const groups = {};
   for (const row of rows) {
@@ -326,22 +338,7 @@ export default function Stage2RightPanel({
 
   const groups = groupRows(rows);
   const selectedRows = rows.filter(r => r.selected);
-
-  // Map new suggestions by group key for ghost rows
-  const newSuggestionsByGroup = {};
-  if (ruleDiff?.newSuggestions) {
-    for (const s of ruleDiff.newSuggestions) {
-      const gKey = `${s.categoryName}|||${s.triggerValueSnapshot}`;
-      if (!newSuggestionsByGroup[gKey]) newSuggestionsByGroup[gKey] = [];
-      newSuggestionsByGroup[gKey].push(s);
-    }
-  }
-
-  // New suggestions that don't belong to any existing group (new category/trigger)
-  const orphanSuggestions = ruleDiff?.newSuggestions?.filter(s => {
-    const gKey = `${s.categoryName}|||${s.triggerValueSnapshot}`;
-    return !groups.some(g => `${g.category}|||${g.triggerValue}` === gKey);
-  }) || [];
+  const allNewSuggestions = ruleDiff?.newSuggestions || [];
 
   return (
     <div className="flex flex-col h-full">
@@ -359,12 +356,12 @@ export default function Stage2RightPanel({
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white sticky top-0 z-10">
         <div>
           <p className="text-sm font-bold text-slate-800">Work Allocation</p>
-          <p className="text-xs text-slate-500">{selectedRows.length} works selected · {minutesToDisplay(totalMinutes)} total</p>
+          <p className="text-xs text-slate-400">{selectedRows.length} works selected · {minutesToDisplay(totalMinutes)} total</p>
         </div>
         <div className="flex gap-2 items-center">
           {hasDiff && bannerDismissed && (
-            <Button size="sm" variant="outline" className="h-7 text-xs gap-1 border-amber-300 text-amber-700" onClick={() => setShowReview(true)}>
-              <Sparkles className="h-3.5 w-3.5" /> Rule Changes
+            <Button size="sm" variant="outline" className="h-7 text-xs gap-1 text-slate-600" onClick={() => setShowReview(true)}>
+              <Info className="h-3.5 w-3.5" /> Rule Changes
             </Button>
           )}
           <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => setShowTemplate(true)}>
@@ -376,78 +373,61 @@ export default function Stage2RightPanel({
         </div>
       </div>
 
-      {/* Status Legend */}
-      <div className="flex items-center gap-3 px-4 py-1.5 bg-slate-50 border-b border-slate-100 flex-wrap">
-        {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
-          <div key={key} className="flex items-center gap-1">
-            <div className={`w-2 h-2 rounded-full ${cfg.dot}`} />
-            <span className={`text-[10px] ${cfg.labelColor}`}>{cfg.label}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* Groups */}
+      {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto p-4">
-        {rows.length === 0 && orphanSuggestions.length === 0 ? (
-          <div className="text-center py-12 text-slate-400">
-            <AlertCircle className="h-8 w-8 mx-auto mb-2 text-slate-300" />
-            <p className="text-sm">No works matched from Stage 1 data.</p>
-            <p className="text-xs mt-1">Add template or manual works using the buttons above.</p>
-          </div>
-        ) : (
-          <>
-            {groups.map((g, i) => {
-              const gKey = `${g.category}|||${g.triggerValue}`;
-              const newForGroup = newSuggestionsByGroup[gKey] || [];
-              return (
-                <GroupBlock
-                  key={i}
-                  group={g}
-                  resources={resources}
-                  onUpdate={onUpdateRow}
-                  onRemove={onRemoveRow}
-                  newSuggestionsForGroup={hasDiff && !bannerDismissed ? newForGroup : []}
-                  onAddSuggestion={onAddNewSuggestion}
-                />
-              );
-            })}
 
-            {/* Orphan new suggestions (new category/trigger not yet in any group) */}
-            {hasDiff && !bannerDismissed && orphanSuggestions.length > 0 && (
-              <div className="mb-1">
-                <div className="w-full flex items-center gap-2 px-3 py-2 bg-yellow-50 rounded-t border border-yellow-200 text-left">
-                  <Sparkles className="h-3.5 w-3.5 text-yellow-500" />
-                  <span className="text-xs font-bold text-yellow-800">New Suggested Works (New Categories)</span>
-                  <span className="ml-auto text-[10px] text-yellow-600">{orphanSuggestions.length} suggestions</span>
-                </div>
-                <div className="border border-t-0 border-yellow-200 rounded-b overflow-hidden">
-                  <table className="w-full text-xs">
-                    <tbody>
-                      {orphanSuggestions.map((s, i) => (
-                        <GhostRow key={i} suggestion={s} onAdd={onAddNewSuggestion} />
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-          </>
+        {/* ── Saved Allocation ──────────────────────────────────────────────── */}
+        <div className="mb-1">
+          <div className="mb-2">
+            <p className="text-sm font-semibold text-slate-700">Saved Allocation</p>
+            <p className="text-[11px] text-slate-400">These works are saved for planning. They affect totals and resource breakdown.</p>
+          </div>
+
+          {rows.length === 0 ? (
+            <div className="text-center py-10 border border-dashed border-slate-200 rounded-lg text-slate-400">
+              <AlertCircle className="h-6 w-6 mx-auto mb-2 text-slate-300" />
+              <p className="text-sm">No works in saved allocation.</p>
+              <p className="text-xs mt-1">Add from template, manually, or apply rule suggestions.</p>
+            </div>
+          ) : (
+            groups.map((g, i) => (
+              <AllocationGroupBlock
+                key={i}
+                group={g}
+                resources={resources}
+                onUpdate={onUpdateRow}
+                onRemove={onRemoveRow}
+              />
+            ))
+          )}
+        </div>
+
+        {/* ── Rule Suggestions ─────────────────────────────────────────────── */}
+        {hasDiff && allNewSuggestions.length > 0 && (
+          <RuleSuggestionsSection
+            suggestions={allNewSuggestions}
+            onAdd={onAddNewSuggestion}
+            onApplyAll={onApplyAllNewSuggestions}
+          />
         )}
       </div>
 
-      {/* Resource Breakdown Summary */}
+      {/* Resource Breakdown + Planning Status note */}
       <div className="border-t border-slate-200 bg-slate-50 px-4 py-3 shrink-0">
-        <p className="text-[10px] font-bold text-slate-500 uppercase mb-2">Resource Breakdown</p>
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-[10px] font-bold text-slate-500 uppercase">Resource Breakdown</p>
+          <p className="text-[10px] text-slate-400">Calculated from selected saved allocation only</p>
+        </div>
         {resourceBreakdown.length === 0 ? (
           <p className="text-xs text-slate-400">No selected works.</p>
         ) : (
           <div className="flex flex-wrap gap-2">
             {resourceBreakdown.map((rb, i) => (
-              <div key={i} className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-3 py-1.5">
-                <Clock className="h-3.5 w-3.5 text-slate-400" />
-                <span className="text-xs font-semibold text-slate-700">{rb.name}</span>
-                <span className="text-[10px] text-slate-400">— {rb.count} work{rb.count !== 1 ? "s" : ""}</span>
-                <span className="text-xs font-mono text-slate-800 ml-1">{rb.display}</span>
+              <div key={i} className="flex items-center gap-1.5 bg-white border border-slate-200 rounded px-2.5 py-1.5">
+                <Clock className="h-3 w-3 text-slate-400" />
+                <span className="text-xs font-medium text-slate-700">{rb.name}</span>
+                <span className="text-[10px] text-slate-400">· {rb.count} work{rb.count !== 1 ? "s" : ""}</span>
+                <span className="text-xs font-mono text-slate-800">{rb.display}</span>
               </div>
             ))}
           </div>
@@ -476,7 +456,7 @@ export default function Stage2RightPanel({
       {showReview && ruleDiff && (
         <ReviewChangesModal
           ruleDiff={ruleDiff}
-          onAddSuggestion={(s) => { onAddNewSuggestion(s); }}
+          onAddSuggestion={onAddNewSuggestion}
           onRemoveRow={onRemoveRow}
           onClose={() => setShowReview(false)}
         />
