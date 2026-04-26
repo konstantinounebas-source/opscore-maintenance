@@ -1,0 +1,115 @@
+{
+  "name": "StationLogPlanningRules",
+  "type": "object",
+  "properties": {
+    "category_id": {
+      "type": "string",
+      "description": "FK \u2192 StationLogPlanningRuleCategories"
+    },
+    "rule_name": {
+      "type": "string",
+      "description": "Name of the planning rule"
+    },
+    "description": {
+      "type": "string",
+      "description": "Optional description of the rule"
+    },
+    "applies_when_field": {
+      "type": "string",
+      "description": "Stage 1 field or 'always' to apply unconditionally"
+    },
+    "applies_when_operator": {
+      "type": "string",
+      "enum": [
+        "equals",
+        "not_equals",
+        "exists",
+        "not_exists",
+        "contains"
+      ],
+      "description": "Condition operator for applies_when logic"
+    },
+    "applies_when_value": {
+      "type": "string",
+      "description": "Value to compare against (not needed for exists/not_exists)"
+    },
+    "planning_item_name": {
+      "type": "string",
+      "description": "Name of the planning item that will be suggested"
+    },
+    "planning_item_type": {
+      "type": "string",
+      "enum": [
+        "Deadline",
+        "Planned Date",
+        "Milestone",
+        "Task"
+      ],
+      "description": "Type of planning item to generate"
+    },
+    "base_date_type": {
+      "type": "string",
+      "enum": [
+        "Work Start Date",
+        "Final Deadline",
+        "Priority Deadline",
+        "Execution Date",
+        "Execution Finish",
+        "Another Planning Item"
+      ],
+      "description": "Reference date for calculating the planning item date"
+    },
+    "base_planning_rule_id": {
+      "type": "string",
+      "description": "FK \u2192 StationLogPlanningRules (used when base_date_type = 'Another Planning Item')"
+    },
+    "offset_direction": {
+      "type": "string",
+      "enum": [
+        "Before",
+        "After",
+        "Same Day"
+      ],
+      "description": "Direction of offset from base date"
+    },
+    "offset_days": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of days to offset (cannot be negative)"
+    },
+    "use_working_days": {
+      "type": "boolean",
+      "default": true,
+      "description": "If true, offset calculation skips weekends"
+    },
+    "required": {
+      "type": "boolean",
+      "default": true,
+      "description": "If true, this planning item is required; otherwise optional"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Only active rules are considered during Stage 3 planning"
+    },
+    "sort_order": {
+      "type": "number",
+      "default": 0,
+      "description": "Sort order within the category"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional notes about this rule"
+    }
+  },
+  "required": [
+    "category_id",
+    "rule_name",
+    "planning_item_name",
+    "planning_item_type",
+    "base_date_type",
+    "offset_direction",
+    "offset_days",
+    "required"
+  ]
+}

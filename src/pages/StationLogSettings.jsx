@@ -8,6 +8,7 @@ import { Plus, Pencil, CheckCircle, XCircle, ChevronUp, ChevronDown, Settings, C
 import Stage2WorkRulesTab from "@/components/stationlogs/settings/Stage2WorkRulesTab";
 import Stage2WorkItemsTab from "@/components/stationlogs/settings/Stage2WorkItemsTab";
 import Stage2ResourceTypesTab from "@/components/stationlogs/settings/Stage2ResourceTypesTab";
+import Stage3PlanningRulesTab from "@/components/stationlogs/settings/Stage3PlanningRulesTab";
 
 const CATEGORY_GROUPS = [
   {
@@ -53,6 +54,13 @@ const CATEGORY_GROUPS = [
       { key: "stage2_work_rules", label: "Work Rules" },
       { key: "stage2_work_items", label: "Work Items Library" },
       { key: "stage2_resource_types", label: "Resource Types" },
+    ],
+  },
+  {
+    group: "Stage 3 — Master Planning",
+    isSpecial: true,
+    categories: [
+      { key: "stage3_planning_rules", label: "Planning Rules" },
     ],
   },
 ];
@@ -252,12 +260,15 @@ export default function StationLogSettings() {
         {/* Right: Options for selected category */}
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {/* Stage 2 special tabs */}
-          {selectedCategory === "stage2_work_rules" && <Stage2WorkRulesTab />}
-          {selectedCategory === "stage2_work_items" && <Stage2WorkItemsTab />}
-          {selectedCategory === "stage2_resource_types" && <Stage2ResourceTypesTab />}
+           {selectedCategory === "stage2_work_rules" && <Stage2WorkRulesTab />}
+           {selectedCategory === "stage2_work_items" && <Stage2WorkItemsTab />}
+           {selectedCategory === "stage2_resource_types" && <Stage2ResourceTypesTab />}
 
-          {/* Standard dropdown category panel */}
-          {!selectedCategory.startsWith("stage2_") && (
+           {/* Stage 3 special tabs */}
+           {selectedCategory === "stage3_planning_rules" && <Stage3PlanningRulesTab />}
+
+           {/* Standard dropdown category panel */}
+           {!selectedCategory.startsWith("stage2_") && !selectedCategory.startsWith("stage3_") && (
             <>
               <div className="flex items-center justify-between">
                 <div>
