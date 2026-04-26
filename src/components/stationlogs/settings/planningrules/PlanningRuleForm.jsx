@@ -73,12 +73,10 @@ export default function PlanningRuleForm({ rule, categoryId, rules = [], onSaved
     }
 
     // Check for duplicate output_date_key
-    if (!rule?.id) {
-      const duplicate = rules.find(r => r.output_date_key === form.output_date_key);
-      if (duplicate) {
-        alert("A rule with this Output Date Key already exists");
-        return;
-      }
+    const duplicate = rules.find(r => r.output_date_key === form.output_date_key && r.id !== rule?.id);
+    if (duplicate) {
+      alert("A rule with this Output Date Key already exists");
+      return;
     }
 
     // Check for duplicate rule_name in same category
