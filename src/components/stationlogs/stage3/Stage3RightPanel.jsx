@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,11 +32,20 @@ export default function Stage3RightPanel({
 
   const handleSaveDates = async () => {
     setSavingDates(true);
-    await base44.entities.StationLog.update(log.id, {
-      stage_3_execution_date: executionDate || null,
-      stage_3_execution_finish: executionFinish || null,
-    });
-    setSavingDates(false);
+    try {
+      await base44.entities.StationLog.update(log.id, {
+        stage_3_execution_date: executionDate || null,
+        stage_3_execution_finish: executionFinish || null,
+      });
+      // Trigger parent refresh to recalculate suggestions
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('stage3DatesSaved'));
+      }, 100);
+    } catch (err) {
+      alert(`Error saving dates: ${err.message}`);
+    } finally {
+      setSavingDates(false);
+    }
   };
 
   const handleAddSuggestion = async (suggestion) => {

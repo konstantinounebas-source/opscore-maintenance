@@ -36,25 +36,32 @@ export default function Stage3PlanningWorkspace({ log, currentData, asset, onClo
     queryFn: () => base44.entities.StationLogPlanningRules.list(),
   });
 
-  // Build station data for rule evaluation
+  // Build normalized station data for rule evaluation
+  // CRITICAL: Use normalized keys that match rule base_date_key
   const stationData = {
     ...currentData,
-    stage_3_execution_date: log.stage_3_execution_date,
-    stage_3_execution_finish: log.stage_3_execution_finish,
+    // Stage 1 core dates (normalized keys)
     work_start_date: currentData?.order_received_date,
     final_deadline: currentData?.order_deadline_date,
     priority_deadline: currentData?.order_priority_date,
+    // Stage 3 execution dates (normalized keys for rules)
+    execution_date: log.stage_3_execution_date,
+    execution_finish: log.stage_3_execution_finish,
+    // Keep originals for component reference
+    stage_3_execution_date: log.stage_3_execution_date,
+    stage_3_execution_finish: log.stage_3_execution_finish,
   };
 
-  // Generate suggestions on load and when execution dates change
+  // Generate suggestions when dates or rules change
+  // Dependencies on actual values, not object reference
   useEffect(() => {
-    const newSuggestions = generateRuleSuggestions(allRules, stationData, savedItems, suggestions);
+    const newSuggestions = generateRuleSuggestions(allRules, stationData, savedItems);
     // Filter out suggestions that are already saved
     const filtered = newSuggestions.filter(
       sugg => !savedItems.find(item => item.output_date_key === sugg.output_date_key)
     );
     setSuggestions(filtered);
-  }, [stationData.stage_3_execution_date, stationData.stage_3_execution_finish, allRules, savedItems]);
+  }, [log.stage_3_execution_date, log.stage_3_execution_finish, allRules, savedItems]);
 
   // Calculate Stage 2 summary
   let stage2Summary = null;
@@ -128,6 +135,17 @@ export default function Stage3PlanningWorkspace({ log, currentData, asset, onClo
     setRefreshTrigger(t => t + 1);
     queryClient.invalidateQueries({ queryKey: ["stage3PlanningItems"] });
   };
+
+  // Listen for date save events to trigger suggestion recalculation
+  useEffect(() => {
+    const handleDatesSaved = () => {
+      // Force refresh of suggestions by refetching log
+      queryClient.invalidateQueries({ queryKey: ["stationLogs"] });
+      setRefreshTrigger(t => t + 1);
+    };
+    window.addEventListener('stage3DatesSaved', handleDatesSaved);
+    return () => window.removeEventListener('stage3DatesSaved', handleDatesSaved);
+  }, [queryClient]);
 
   const canComplete =
     planningStatus === "Ready" || (planningStatus === "Draft Planned" && savedItems.length > 0);

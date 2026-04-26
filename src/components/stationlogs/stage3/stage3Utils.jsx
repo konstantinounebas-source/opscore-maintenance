@@ -19,32 +19,20 @@ export const STAGE3_DRIVER_DATES = {
 
 /**
  * Resolve a base_date_key to an actual date value
- * Checks: Stage 1 constraints, Stage 3 driver dates, saved planning items, current suggestions
+ * Checks: stationData (Stage 1 + Stage 3 dates), saved planning items
+ * CRITICAL: Does NOT check suggestions to avoid circular logic
  */
-export function resolveBaseDate(baseKey, stationData, stage3Items, suggestions) {
-  // Check Stage 1 core dates
-  if (CORE_STAGE1_DATES[baseKey] && stationData[baseKey]) {
+export function resolveBaseDate(baseKey, stationData, stage3Items) {
+  // Priority 1: Check direct stationData (Stage 1 core dates + Stage 3 execution dates)
+  if (stationData && stationData[baseKey]) {
     return stationData[baseKey];
   }
 
-  // Check Stage 3 driver dates
-  if (STAGE3_DRIVER_DATES[baseKey] && stationData[baseKey]) {
-    return stationData[baseKey];
-  }
-
-  // Check saved planning items
+  // Priority 2: Check saved planning items (for chained rules)
   if (stage3Items && stage3Items.length > 0) {
     const item = stage3Items.find(i => i.output_date_key === baseKey && i.is_active !== false);
     if (item && item.planned_date) {
       return item.planned_date;
-    }
-  }
-
-  // Check current suggestions in session
-  if (suggestions && suggestions.length > 0) {
-    const suggestion = suggestions.find(s => s.output_date_key === baseKey);
-    if (suggestion && suggestion.calculated_date) {
-      return suggestion.calculated_date;
     }
   }
 
@@ -137,9 +125,22 @@ export function evaluateAppliesWhen(rule, stationData) {
 
 /**
  * Generate rule suggestions for current session
+ * Rules with base dates in stationData are calculated first
+ * Rules depending on generated dates use saved items only
  */
-export function generateRuleSuggestions(rules, stationData, stage3Items, existingSuggestions = []) {
-  return rules
+export function generateRuleSuggestions(rules, stationData, stage3Items) {
+  const suggestions = [];
+  
+  // Sort rules: core dates first, then those depending on saved items
+  const sortedRules = [...rules].sort((a, b) => {
+    const aIsCore = a.base_date_key && CORE_STAGE1_DATES[a.base_date_key] || STAGE3_DRIVER_DATES[a.base_date_key];
+    const bIsCore = b.base_date_key && CORE_STAGE1_DATES[b.base_date_key] || STAGE3_DRIVER_DATES[b.base_date_key];
+    if (aIsCore && !bIsCore) return -1;
+    if (!aIsCore && bIsCore) return 1;
+    return 0;
+  });
+
+  return sortedRules
     .filter(r => r.is_active !== false)
     .map(rule => {
       // Check if applies
@@ -148,7 +149,7 @@ export function generateRuleSuggestions(rules, stationData, stage3Items, existin
       }
 
       // Resolve base date
-      const baseDate = resolveBaseDate(rule.base_date_key, stationData, stage3Items, existingSuggestions);
+      const baseDate = resolveBaseDate(rule.base_date_key, stationData, stage3Items);
 
       if (!baseDate) {
         // Cannot calculate - missing base date
@@ -165,7 +166,7 @@ export function generateRuleSuggestions(rules, stationData, stage3Items, existin
           base_date_key: rule.base_date_key,
           calculated_date: null,
           status: "Blocked",
-          missing_base_date: rule.base_date_key,
+          missing_base_date: `${rule.base_date_key} (not found)`,
           required: rule.required,
         };
       }
