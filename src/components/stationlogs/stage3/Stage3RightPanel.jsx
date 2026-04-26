@@ -60,18 +60,6 @@ export default function Stage3RightPanel({
       alert(`Cannot add: ${suggestion.validationWarning}`);
       return;
     }
-    if (!suggestion.calculated_date) {
-      alert("Error: Missing calculated date in suggestion.");
-      return;
-    }
-    if (!suggestion.output_date_key) {
-      alert("Error: Missing output_date_key. Rule is not properly configured. Please edit the rule to add an Output Date Key.");
-      return;
-    }
-    if (!suggestion.output_flow_stage_id) {
-      alert("Error: Missing output_flow_stage_id. Rule is not properly configured. Please edit the rule to set the Flow Stage.");
-      return;
-    }
 
     // Set loading state for this specific rule
     setAddingMap(prev => ({ ...prev, [suggestion.rule_id]: true }));
