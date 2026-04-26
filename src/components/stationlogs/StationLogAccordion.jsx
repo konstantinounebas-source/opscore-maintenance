@@ -163,7 +163,7 @@ export default function StationLogAccordion({
                   )}
 
                   {/* Other stages: placeholder fields */}
-                  {stage.id !== 1 && stage.id !== 2 && (
+                  {stage.id !== 1 && stage.id !== 2 && stageFields.fields?.length > 0 && (
                   <div>
                     <p className="text-xs font-bold text-gray-700 uppercase mb-3">Stage Fields</p>
                     <div className="grid grid-cols-2 gap-3">
