@@ -30,9 +30,17 @@ export default function Stage3RightPanel({
     setExecutionFinish(stationData?.stage_3_execution_finish || "");
   }, [stationData?.stage_3_execution_date, stationData?.stage_3_execution_finish]);
 
-  // Sync execution dates with stationData changes
+  // Debug: Log execution dates on mount and when stationData changes
   useEffect(() => {
-    // Dates are already synced via local state
+    console.log("📝 EXECUTION DATES IN RIGHT PANEL:", {
+      stage_3_execution_date: executionDate,
+      stage_3_execution_finish: executionFinish,
+      hasExecutionDates: !!(executionDate && executionFinish),
+      stationData_dates: {
+        stage_3_execution_date: stationData?.stage_3_execution_date,
+        stage_3_execution_finish: stationData?.stage_3_execution_finish,
+      },
+    });
   }, [executionDate, executionFinish, stationData]);
 
   // Detect out-of-sync items when suggestions regenerate
@@ -41,7 +49,12 @@ export default function Stage3RightPanel({
       setOutOfSyncItems([]);
       return;
     }
+    
     const outOfSync = detectOutOfSyncItems(savedItems, suggestions);
+    console.log("🔄 OUT OF SYNC DETECTION:", {
+      outOfSyncCount: outOfSync.length,
+      items: outOfSync,
+    });
     setOutOfSyncItems(outOfSync);
   }, [suggestions, savedItems]);
   
@@ -60,9 +73,20 @@ export default function Stage3RightPanel({
   const handleSaveDates = async () => {
     setSavingDates(true);
     try {
-      await base44.entities.StationLog.update(log.id, {
+      console.log("💾 Saving execution dates", {
         stage_3_execution_date: executionDate || null,
         stage_3_execution_finish: executionFinish || null,
+      });
+      
+      const updatedRecord = await base44.entities.StationLog.update(log.id, {
+        stage_3_execution_date: executionDate || null,
+        stage_3_execution_finish: executionFinish || null,
+      });
+      
+      console.log("✅ Saved station record", {
+        id: updatedRecord.id,
+        stage_3_execution_date: updatedRecord.stage_3_execution_date,
+        stage_3_execution_finish: updatedRecord.stage_3_execution_finish,
       });
       
       // Notify parent to update local state and recalculate suggestions
@@ -70,6 +94,7 @@ export default function Stage3RightPanel({
         onDatesSaved(executionDate, executionFinish);
       }
     } catch (err) {
+      console.error("❌ Error saving dates:", err);
       alert(`Error saving dates: ${err.message}`);
     } finally {
       setSavingDates(false);
@@ -77,6 +102,17 @@ export default function Stage3RightPanel({
   };
 
   const handleAddSuggestion = async (suggestion) => {
+    console.log("✅ ADDING SUGGESTION:", {
+      rule_id: suggestion.rule_id,
+      rule_name: suggestion.rule_name,
+      output_date_key: suggestion.output_date_key,
+      calculated_date: suggestion.calculated_date,
+      base_date_key: suggestion.base_date_key,
+      output_flow_stage_id: suggestion.output_flow_stage_id,
+      status: suggestion.status,
+      validationWarning: suggestion.validationWarning
+    });
+
     // Validate rule can be added
     if (suggestion.status !== "Suggested") {
       alert("This rule cannot be added. Please check the status.");
@@ -441,7 +477,10 @@ export default function Stage3RightPanel({
           </div>
         ) : (
           <div className="space-y-2">
-            {suggestions.map(sugg => (
+            {suggestions.map(sugg => {
+              // Debug: log suggestion object
+              console.log("Suggestion:", sugg);
+              return (
               <div
                 key={sugg.output_date_key}
                 className={`p-2 rounded border ${
@@ -501,9 +540,10 @@ export default function Stage3RightPanel({
                      </>
                    )}
                  </Button>
-                 </div>
-                 ))}
-                 </div>
+              </div>
+            );
+            })}
+          </div>
         )}
       </div>
     </div>
