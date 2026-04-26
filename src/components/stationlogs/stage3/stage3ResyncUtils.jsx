@@ -12,46 +12,26 @@
 export function detectOutOfSyncItems(savedItems, suggestions) {
   const outOfSync = [];
 
-  for (const savedItem of savedItems) {
-    // Skip inactive items
-    if (savedItem.is_active === false) continue;
+  for (const item of savedItems) {
+    if (item.is_active === false) continue;
 
-    // Only check rule-based items (not manual or template)
-    if (savedItem.source !== "Rule") continue;
-
-    // Skip items that have been manually edited by user
-    if (savedItem.was_manually_edited) continue;
-
-    // Find matching suggestion by planning_rule_id first
-    let matchingSuggestion = suggestions.find(
-      s => s.rule_id === savedItem.planning_rule_id
+    const match = suggestions.find(s =>
+      s.rule_id === item.planning_rule_id ||
+      s.output_date_key === item.output_date_key
     );
 
-    // Fallback: match by output_date_key
-    if (!matchingSuggestion) {
-      matchingSuggestion = suggestions.find(
-        s => s.output_date_key === savedItem.output_date_key
-      );
-    }
+    if (!match) continue;
 
-    // No matching suggestion found - rule may have changed
-    if (!matchingSuggestion) continue;
+    if (!item.planned_date || !match.calculated_date) continue;
 
-    // Compare dates: if saved != recalculated, it's out of sync
-    if (savedItem.planned_date !== matchingSuggestion.calculated_date) {
+    if (item.planned_date !== match.calculated_date) {
       outOfSync.push({
-        itemId: savedItem.id,
-        itemName: savedItem.planning_item_name_snapshot,
-        ruleName: savedItem.planning_rule_name_snapshot,
-        ruleId: savedItem.planning_rule_id,
-        outputDateKey: savedItem.output_date_key,
-        baseDateKey: savedItem.base_date_key,
-        outputFlowStageId: savedItem.output_flow_stage_id,
-        savedDate: savedItem.planned_date,
-        calculatedDate: matchingSuggestion.calculated_date,
-        lastCalculatedDate: savedItem.last_calculated_date,
-        originalCalculatedDate: savedItem.original_calculated_date,
-        wasManuallyEdited: savedItem.was_manually_edited,
+        itemId: item.id,
+        itemName: item.planning_item_name_snapshot || item.planning_item_name,
+        ruleName: match.rule_name || item.planning_rule_name_snapshot,
+        savedDate: item.planned_date,
+        calculatedDate: match.calculated_date,
+        baseDateKey: match.base_date_key
       });
     }
   }

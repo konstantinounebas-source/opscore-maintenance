@@ -42,6 +42,7 @@ export default function Stage3RightPanel({
       return;
     }
     const outOfSync = detectOutOfSyncItems(savedItems, suggestions);
+    console.log("OUT OF SYNC:", outOfSync);
     setOutOfSyncItems(outOfSync);
   }, [suggestions, savedItems]);
   
@@ -269,8 +270,13 @@ export default function Stage3RightPanel({
       {/* Out of Sync Warning */}
       {outOfSyncItems.length > 0 && (
         <Stage3OutOfSyncWarning 
-          outOfSyncItems={outOfSyncItems} 
-          onResync={onSuggestionAdded}
+          items={outOfSyncItems} 
+          onUpdateItem={(id, newDate) => {
+            base44.entities.StationLogStage3PlanningItems.update(id, {
+              planned_date: newDate
+            });
+            onSuggestionAdded();
+          }}
         />
       )}
 
