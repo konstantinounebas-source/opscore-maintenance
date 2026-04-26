@@ -15,7 +15,7 @@ export default function AddManualWorkDialog({ resources, onAdd, onClose }) {
     if (!workName.trim()) return alert("Work name is required.");
     if (!resourceId) return alert("Resource type is required.");
     const baseMinutes = hours * 60 + minutes;
-    if (baseMinutes <= 0) return alert("Base time must be greater than 0.");
+    if (baseMinutes <= 0) return alert("Base time must be greater than 0 minutes.");
     const res = resources.find(r => r.id === resourceId);
     onAdd(workName.trim(), resourceId, res?.resource_name || "", baseMinutes, notes);
     onClose();

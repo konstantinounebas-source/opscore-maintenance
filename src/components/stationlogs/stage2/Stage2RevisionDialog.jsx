@@ -3,14 +3,13 @@ import { Button } from "@/components/ui/button";
 import { X, AlertTriangle, ArrowLeft } from "lucide-react";
 
 /**
- * Lightweight bridge: directs user to create a Stage 1 revision via the existing
- * OrderLocationModule / revision flow (Stage 1 accordion). Stage 2 will re-run
- * matching on next open once Stage 1 data is updated.
+ * Directs user to create a Stage 1 revision via the existing OrderLocationModule flow.
+ * Provides a shortcut button to close Stage 2 and jump directly to Stage 1 in the accordion.
  */
 export default function Stage2RevisionDialog({ log, currentData, onClose, onGoToStage1 }) {
   const handleGoToStage1 = () => {
-    onClose(); // close Stage 2 workspace first
-    if (onGoToStage1) onGoToStage1(); // then signal parent to expand Stage 1
+    onClose();
+    if (onGoToStage1) onGoToStage1();
   };
 
   return (
