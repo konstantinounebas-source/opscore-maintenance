@@ -3,11 +3,11 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
-  MapPin, FileText, Image, ExternalLink, AlertTriangle,
-  ChevronDown, ChevronRight, Eye, Pencil
+  MapPin, FileText, Image, ExternalLink,
+  ChevronDown, ChevronRight, Eye, Pencil, X
 } from "lucide-react";
-import Stage2RevisionDialog from "./Stage2RevisionDialog";
 import Stage2AttachmentPreview from "./Stage2AttachmentPreview";
+import OrderLocationModule from "@/components/stationlogs/stage1/OrderLocationModule";
 
 function Section({ title, icon: SectionIcon, children, defaultOpen = true }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -67,7 +67,7 @@ function AttachmentRow({ att, onPreview }) {
 }
 
 export default function Stage2LeftPanel({ log, currentData, attachments, stationLogId }) {
-  const [revisionOpen, setRevisionOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [previewAtt, setPreviewAtt] = useState(null);
 
   // Load attachments if not passed
@@ -93,7 +93,7 @@ export default function Stage2LeftPanel({ log, currentData, attachments, station
           size="sm"
           variant="outline"
           className="h-7 text-xs gap-1.5 mt-2 border-amber-300 text-amber-700 hover:bg-amber-50 w-full"
-          onClick={() => setRevisionOpen(true)}
+          onClick={() => setEditOpen(true)}
         >
           <Pencil className="h-3 w-3" /> Edit / Request Revision
         </Button>
@@ -167,13 +167,19 @@ export default function Stage2LeftPanel({ log, currentData, attachments, station
         }
       </Section>
 
-      {/* Revision Dialog */}
-      {revisionOpen && (
-        <Stage2RevisionDialog
-          log={log}
-          currentData={d}
-          onClose={() => setRevisionOpen(false)}
-        />
+      {/* Edit / Revision Overlay */}
+      {editOpen && (
+        <div className="fixed inset-0 z-[70] bg-black/60 flex flex-col">
+          <div className="flex items-center justify-between bg-white border-b border-slate-200 px-6 py-3 shrink-0">
+            <p className="font-bold text-slate-800">Stage 1 — Order + Location (Edit / Revision)</p>
+            <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => setEditOpen(false)}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="flex-1 overflow-y-auto bg-gray-50 p-6">
+            <OrderLocationModule log={log} asset={null} />
+          </div>
+        </div>
       )}
 
       {/* Attachment Preview */}
