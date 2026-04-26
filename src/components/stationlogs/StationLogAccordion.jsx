@@ -1,5 +1,4 @@
-import React, { useState } from "react";
-import { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Accordion,
   AccordionContent,
@@ -10,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, CheckCircle, Lock, ClipboardList, Clock } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import OrderLocationModule from "@/components/stationlogs/stage1/OrderLocationModule.jsx";
 import Stage2Workspace from "@/components/stationlogs/stage2/Stage2Workspace.jsx";
@@ -53,6 +52,7 @@ export default function StationLogAccordion({
 }) {
   const [stage2Open, setStage2Open] = useState(false);
   const [stage3Open, setStage3Open] = useState(false);
+  const queryClient = useQueryClient();
 
   // Handle stage toggle with auto-collapse of other completed stages
   const handleStageToggle = (stageId) => {
@@ -364,9 +364,13 @@ export default function StationLogAccordion({
         log={log}
         currentData={currentData}
         asset={asset}
-        onClose={() => setStage3Open(false)}
+        onClose={() => {
+          setStage3Open(false);
+          queryClient.invalidateQueries({ queryKey: ["stage3PlanningItemsForAccordion", log.id] });
+        }}
         onCompleted={() => {
           setStage3Open(false);
+          queryClient.invalidateQueries({ queryKey: ["stage3PlanningItemsForAccordion", log.id] });
         }}
       />
     )}
