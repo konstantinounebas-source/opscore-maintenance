@@ -246,6 +246,7 @@ export default function StationLogSettings() {
                 >
                   <ChevronRight className={`h-3 w-3 text-slate-400 transition-transform flex-shrink-0 ${expandedGroups[group.group] ? "rotate-90" : ""}`} />
                   <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide truncate">{group.group}</span>
+                  <span className="text-[10px] text-slate-400 ml-auto flex-shrink-0">{group.categories.length}</span>
                 </button>
                 {/* Group categories */}
                 {expandedGroups[group.group] && group.categories.map(cat => (
