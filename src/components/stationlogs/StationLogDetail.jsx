@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -39,6 +39,17 @@ export default function StationLogDetail({ log, onBack, stages, assets }) {
     queryFn: () => base44.entities.StationLogMilestones.filter({ station_log_id: log.id }),
   });
 
+  const { data: currentData } = useQuery({
+    queryKey: ["stationLogCurrentData", log.id],
+    queryFn: () => base44.entities.StationLogCurrentData.filter({ station_log_id: log.id }),
+    select: d => d[0] || null,
+  });
+
+  const { data: attachments = [] } = useQuery({
+    queryKey: ["stationLogAttachments", log.id],
+    queryFn: () => base44.entities.StationLogOrderAttachments.filter({ station_log_id: log.id }),
+  });
+
   // Compute blocking & pending items
   const blockingItems = [
     ...tasks.filter(t => t.is_blocking && t.status !== "Completed").map(t => ({ type: "Task", text: t.description, id: t.id })),
@@ -73,6 +84,8 @@ export default function StationLogDetail({ log, onBack, stages, assets }) {
             expandedStage={expandedStage}
             setExpandedStage={setExpandedStage}
             asset={asset}
+            currentData={currentData}
+            attachments={attachments}
           />
         </div>
 

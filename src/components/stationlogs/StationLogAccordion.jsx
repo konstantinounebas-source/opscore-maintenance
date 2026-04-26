@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Accordion,
   AccordionContent,
@@ -8,8 +8,10 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, CheckCircle, Lock } from "lucide-react";
+import { AlertCircle, CheckCircle, Lock, ClipboardList, Clock } from "lucide-react";
 import OrderLocationModule from "@/components/stationlogs/stage1/OrderLocationModule.jsx";
+import Stage2Workspace from "@/components/stationlogs/stage2/Stage2Workspace.jsx";
+import { minutesToDisplay } from "@/components/stationlogs/settings/workrules/workRulesUtils";
 
 const STAGE_FIELDS = {
   1: { title: "Order + Location", fields: ["Asset Code", "Location Address", "Municipality", "Latitude", "Longitude"] },
@@ -41,12 +43,16 @@ export default function StationLogAccordion({
   expandedStage,
   setExpandedStage,
   asset,
+  currentData,
+  attachments,
 }) {
+  const [stage2Open, setStage2Open] = useState(false);
   const getStageTasks = (stageId) => tasks.filter(t => t.stage === stageId);
   const getStageApprovals = (stageId) => approvals.filter(a => a.stage === stageId);
   const getStageInstructions = (stageId) => instructions.filter(i => i.related_stage === stageId);
 
   return (
+    <>
     <Card className="shadow-sm border-gray-200">
       <CardHeader className="border-b border-gray-200 bg-gray-50">
         <CardTitle className="text-base">18-Stage Workflow</CardTitle>
@@ -98,8 +104,66 @@ export default function StationLogAccordion({
                     <OrderLocationModule log={log} asset={asset} />
                   )}
 
+                  {/* Stage 2: Work Categorization & Time Estimation */}
+                  {stage.id === 2 && (
+                    <div className="space-y-3">
+                      {/* Summary row */}
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                          <p className="text-[10px] font-semibold text-slate-500 uppercase">Planning Status</p>
+                          <p className={`text-sm font-bold mt-1 ${log.stage_2_planning_status === "Ready for Planning" ? "text-green-600" : "text-amber-600"}`}>
+                            {log.stage_2_planning_status || "Incomplete"}
+                          </p>
+                        </div>
+                        <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                          <p className="text-[10px] font-semibold text-slate-500 uppercase">Total Time</p>
+                          <p className="text-sm font-bold text-slate-800 mt-1 font-mono">
+                            {log.stage_2_total_minutes ? minutesToDisplay(log.stage_2_total_minutes) : "—"}
+                          </p>
+                        </div>
+                        <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                          <p className="text-[10px] font-semibold text-slate-500 uppercase">Stage 2</p>
+                          <p className={`text-sm font-bold mt-1 ${log.stage_2_completed ? "text-green-600" : "text-slate-400"}`}>
+                            {log.stage_2_completed ? "Completed" : "Not started"}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Resource breakdown */}
+                      {log.stage_2_resource_breakdown_json && (() => {
+                        try {
+                          const rb = JSON.parse(log.stage_2_resource_breakdown_json);
+                          if (rb.length > 0) return (
+                            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                              <p className="text-[10px] font-semibold text-slate-500 uppercase mb-2">Resource Breakdown</p>
+                              <div className="flex flex-wrap gap-2">
+                                {rb.map((r, i) => (
+                                  <div key={i} className="flex items-center gap-1.5 bg-white border border-slate-200 rounded px-2 py-1">
+                                    <Clock className="h-3 w-3 text-slate-400" />
+                                    <span className="text-xs font-semibold text-slate-700">{r.name}</span>
+                                    <span className="text-[10px] text-slate-400">— {r.count} works</span>
+                                    <span className="text-xs font-mono text-slate-800">{r.display}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        } catch {}
+                        return null;
+                      })()}
+
+                      <Button
+                        className="w-full gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+                        onClick={() => setStage2Open(true)}
+                      >
+                        <ClipboardList className="h-4 w-4" />
+                        Open Stage 2 Workspace
+                      </Button>
+                    </div>
+                  )}
+
                   {/* Other stages: placeholder fields */}
-                  {stage.id !== 1 && (
+                  {stage.id !== 1 && stage.id !== 2 && (
                   <div>
                     <p className="text-xs font-bold text-gray-700 uppercase mb-3">Stage Fields</p>
                     <div className="grid grid-cols-2 gap-3">
@@ -206,5 +270,20 @@ export default function StationLogAccordion({
         </Accordion>
       </CardContent>
     </Card>
+
+    {/* Stage 2 full-screen workspace */}
+    {stage2Open && (
+      <Stage2Workspace
+        log={log}
+        currentData={currentData}
+        attachments={attachments}
+        onClose={() => setStage2Open(false)}
+        onCompleted={() => {
+          setStage2Open(false);
+          // Parent will re-fetch log via react-query invalidation
+        }}
+      />
+    )}
+  </>
   );
 }
