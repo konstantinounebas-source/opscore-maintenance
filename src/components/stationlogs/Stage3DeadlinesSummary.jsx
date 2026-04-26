@@ -98,38 +98,54 @@ export default function Stage3DeadlinesSummary({ savedItems = [] }) {
           <p className="text-xs text-slate-500 py-2">No active planning items to display.</p>
         ) : (
           <div className="bg-white border border-slate-200 rounded overflow-hidden">
-            {displayItems.map((item, idx) => (
-              <div
-                key={item.id}
-                className={`flex items-center justify-between gap-2 px-2.5 py-2 text-xs ${
-                  idx % 2 === 0 ? "bg-white" : "bg-slate-50"
-                } ${idx !== displayItems.length - 1 ? "border-b border-slate-100" : ""}`}
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-semibold text-slate-800">Stage {item.output_flow_stage_id}</span>
-                    <span className="text-slate-600 truncate">
-                      {item.planning_item_name_snapshot || item.planning_item_name}
-                    </span>
-                    {item.status === "Completed" && (
-                      <CheckCircle className="h-3.5 w-3.5 text-green-600 flex-shrink-0" />
-                    )}
+            {displayItems.map((item, idx) => {
+              const planStart = item.planned_start_date || (item.planned_date && `${item.planned_date} (start)`) || "No planning start";
+              const planEnd = item.planned_end_date || (item.planned_date && `${item.planned_date} (end)`) || "No planning end";
+              const deadline = item.planned_date || "No deadline";
+              const completion = item.actual_date ? `${item.actual_date}` : "Not completed";
+
+              return (
+                <div
+                  key={item.id}
+                  className={`flex flex-col gap-1.5 px-2.5 py-2 text-xs ${
+                    idx % 2 === 0 ? "bg-white" : "bg-slate-50"
+                  } ${idx !== displayItems.length - 1 ? "border-b border-slate-100" : ""}`}
+                >
+                  {/* Header row */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                      <span className="font-semibold text-slate-800">Stage {item.output_flow_stage_id}</span>
+                      <span className="text-slate-600 truncate font-medium">
+                        {item.planning_item_name_snapshot || item.planning_item_name}
+                      </span>
+                    </div>
+                    <Badge className={`text-[9px] flex-shrink-0 whitespace-nowrap ${getStatusBadgeColor(item.status)}`}>
+                      {item.status}
+                    </Badge>
                   </div>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <Calendar className="h-3 w-3 text-slate-400" />
-                    <span className="text-slate-500 font-mono">{item.planned_date || "—"}</span>
-                    {item.planning_item_type === "Deadline" && (
-                      <Clock className="h-3 w-3 text-slate-400" />
-                    )}
+
+                  {/* Date rows */}
+                  <div className="grid grid-cols-2 gap-2 ml-4">
+                    <div className="flex items-center gap-1">
+                      <span className="text-slate-500 font-semibold min-w-max">Start:</span>
+                      <span className="text-slate-600 font-mono text-[10px]">{planStart}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-slate-500 font-semibold min-w-max">End:</span>
+                      <span className="text-slate-600 font-mono text-[10px]">{planEnd}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-slate-500 font-semibold min-w-max">Deadline:</span>
+                      <span className="text-slate-600 font-mono text-[10px]">{deadline}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-slate-500 font-semibold min-w-max">Completed:</span>
+                      <span className="text-slate-600 font-mono text-[10px]">{completion}</span>
+                    </div>
                   </div>
                 </div>
-                {item.status !== "Completed" && (
-                  <Badge className={`text-[9px] flex-shrink-0 whitespace-nowrap ${getStatusBadgeColor(item.status)}`}>
-                    {item.status}
-                  </Badge>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
