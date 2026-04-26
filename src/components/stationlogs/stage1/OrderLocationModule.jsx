@@ -360,7 +360,7 @@ export default function OrderLocationModule({ log, asset }) {
     );
   }
 
-  const DEFAULT_OPEN_GROUPS = ["Order Info", "Location"];
+  const DEFAULT_OPEN_GROUPS = [];
 
   return (
     <div className="space-y-3">
