@@ -1,0 +1,30 @@
+{
+  "name": "StationLogWorkRuleTriggerValues",
+  "type": "object",
+  "properties": {
+    "category_id": {
+      "type": "string",
+      "description": "FK \u2192 StationLogWorkRuleCategories record ID"
+    },
+    "trigger_value": {
+      "type": "string",
+      "description": "The Stage 1 field value to match (e.g. TYPE C3, Yes, Tactile Warning Tiles)"
+    },
+    "display_label": {
+      "type": "string",
+      "description": "Optional friendly display label"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "sort_order": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "category_id",
+    "trigger_value"
+  ]
+}

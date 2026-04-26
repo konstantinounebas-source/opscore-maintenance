@@ -2,9 +2,17 @@
   "name": "StationLogWorkRules",
   "type": "object",
   "properties": {
+    "category_id": {
+      "type": "string",
+      "description": "FK \u2192 StationLogWorkRuleCategories record ID"
+    },
+    "trigger_value_id": {
+      "type": "string",
+      "description": "FK \u2192 StationLogWorkRuleTriggerValues record ID"
+    },
     "trigger_field": {
       "type": "string",
-      "description": "Stage 1 field key (e.g. shelter_type, pavement_type)"
+      "description": "Stage 1 field key (e.g. shelter_type, pavement_type) \u2014 denormalized for fast lookup"
     },
     "trigger_label": {
       "type": "string",
