@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { timeToMinutes, minutesToDisplay, minutesToParts } from "./workRulesUtils";
 
-export default function WorkRuleForm({ categoryId, triggerValueId, triggerField, triggerValue, workItems, resources, opt, onSave, onCancel }) {
+export default function WorkRuleForm({ categoryId, triggerValueId, triggerField, triggerValue, workItems, resources, existingRules = [], opt, onSave, onCancel }) {
   const initialParts = opt?.estimated_time_minutes != null ? minutesToParts(opt.estimated_time_minutes) : { hours: 0, minutes: 0 };
   const [form, setForm] = useState({
     work_item_id: opt?.work_item_id || "",
@@ -19,8 +19,16 @@ export default function WorkRuleForm({ categoryId, triggerValueId, triggerField,
 
   const handleSave = async () => {
     if (!form.work_item_id) return alert("Work item is required.");
+    if (!form.resource_type_id) return alert("Resource type is required.");
     const mins = timeToMinutes(form.hours, form.minutes);
-    if (mins === 0) return alert("Estimated time is required.");
+    if (mins === 0) return alert("Estimated time is required (hours + minutes must be > 0).");
+    // Duplicate check: same work_item_id under same trigger_value_id
+    const duplicate = existingRules.find(r =>
+      r.trigger_value_id === triggerValueId &&
+      r.work_item_id === form.work_item_id &&
+      r.id !== opt?.id
+    );
+    if (duplicate) return alert(`Work item "${workItems.find(w => w.id === form.work_item_id)?.work_name}" already exists under this trigger value.`);
     const workItem = workItems.find(w => w.id === form.work_item_id);
     const resource = resources.find(r => r.id === form.resource_type_id);
     setSaving(true);
@@ -66,10 +74,10 @@ export default function WorkRuleForm({ categoryId, triggerValueId, triggerField,
               </select>
             </div>
             <div>
-              <label className="text-xs font-semibold text-slate-600 uppercase">Resource Type</label>
+              <label className="text-xs font-semibold text-slate-600 uppercase">Resource Type *</label>
               <select className="mt-1 w-full border border-slate-200 rounded px-2 py-1.5 text-sm bg-white"
                 value={form.resource_type_id} onChange={e => setForm(f => ({ ...f, resource_type_id: e.target.value }))}>
-                <option value="">— none —</option>
+                <option value="">— select resource —</option>
                 {resources.map(r => <option key={r.id} value={r.id}>{r.resource_name}</option>)}
               </select>
             </div>

@@ -99,6 +99,7 @@ export default function Stage2WorkRulesTab() {
       {addingCategory && (
         <CategoryForm
           opt={null}
+          existingCategories={categories}
           onSave={refresh}
           onCancel={() => setAddingCategory(false)}
         />
@@ -118,6 +119,7 @@ export default function Stage2WorkRulesTab() {
               key={cat.id}
               category={cat}
               triggerValues={triggerValues}
+              allCategories={categories}
               rules={rules}
               workItems={workItems}
               resources={resources}

@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-export default function TriggerValueForm({ categoryId, fieldType, dropdownOptions, linkedField, opt, onSave, onCancel }) {
+export default function TriggerValueForm({ categoryId, fieldType, dropdownOptions, linkedField, opt, existingTriggerValues = [], onSave, onCancel }) {
   const [form, setForm] = useState({
     trigger_value: opt?.trigger_value || "",
     display_label: opt?.display_label || "",
@@ -17,8 +17,25 @@ export default function TriggerValueForm({ categoryId, fieldType, dropdownOption
     .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
   const hasEnumOptions = enumOptions.length > 0;
 
+  // When selecting from dropdown, auto-populate display_label
+  const handleValueSelect = (val) => {
+    const option = enumOptions.find(o => (o.value || o.label) === val);
+    setForm(f => ({
+      ...f,
+      trigger_value: val,
+      display_label: f.display_label || option?.label || val,
+    }));
+  };
+
   const handleSave = async () => {
     if (!form.trigger_value.trim()) return alert("Trigger value is required.");
+    // Duplicate check within same category
+    const duplicate = existingTriggerValues.find(tv =>
+      tv.category_id === categoryId &&
+      tv.trigger_value === form.trigger_value &&
+      tv.id !== opt?.id
+    );
+    if (duplicate) return alert(`Trigger value "${form.trigger_value}" already exists in this category.`);
     setSaving(true);
     const payload = {
       category_id: categoryId,
@@ -40,18 +57,18 @@ export default function TriggerValueForm({ categoryId, fieldType, dropdownOption
     <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg space-y-2">
       <p className="text-xs font-bold text-amber-800 uppercase">{opt ? "Edit Trigger Value" : "Add Trigger Value"}</p>
       <div className="grid grid-cols-3 gap-2">
-        <div className="col-span-2">
+        <div>
           <label className="text-xs font-semibold text-slate-600 uppercase">Trigger Value *</label>
           {isBoolean ? (
             <select className="mt-1 w-full border border-slate-200 rounded px-2 py-1.5 text-sm bg-white"
-              value={form.trigger_value} onChange={e => setForm(f => ({ ...f, trigger_value: e.target.value }))}>
+              value={form.trigger_value} onChange={e => handleValueSelect(e.target.value)}>
               <option value="">— select —</option>
-              <option value="Yes">Yes</option>
-              <option value="No">No</option>
+              <option value="true">Yes (true)</option>
+              <option value="false">No (false)</option>
             </select>
           ) : hasEnumOptions ? (
             <select className="mt-1 w-full border border-slate-200 rounded px-2 py-1.5 text-sm bg-white"
-              value={form.trigger_value} onChange={e => setForm(f => ({ ...f, trigger_value: e.target.value }))}>
+              value={form.trigger_value} onChange={e => handleValueSelect(e.target.value)}>
               <option value="">— select —</option>
               {enumOptions.map(o => <option key={o.id} value={o.value || o.label}>{o.label || o.value}</option>)}
             </select>
@@ -60,6 +77,16 @@ export default function TriggerValueForm({ categoryId, fieldType, dropdownOption
               onChange={e => setForm(f => ({ ...f, trigger_value: e.target.value }))}
               placeholder="e.g. TYPE C3" />
           )}
+          {isBoolean && (
+            <p className="text-[10px] text-amber-700 mt-0.5">Stored as "true"/"false" — matches boolean Stage 1 field</p>
+          )}
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-slate-600 uppercase">Display Label</label>
+          <Input className="mt-1 h-8 text-sm" value={form.display_label}
+            onChange={e => setForm(f => ({ ...f, display_label: e.target.value }))}
+            placeholder="e.g. Footway Required" />
+          <p className="text-[10px] text-slate-400 mt-0.5">Friendly name shown in UI</p>
         </div>
         <div>
           <label className="text-xs font-semibold text-slate-600 uppercase">Sort Order</label>

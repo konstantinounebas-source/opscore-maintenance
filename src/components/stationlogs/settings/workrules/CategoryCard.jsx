@@ -7,7 +7,7 @@ import CategoryForm from "./CategoryForm";
 import TriggerValueForm from "./TriggerValueForm";
 import TriggerValueSection from "./TriggerValueSection";
 
-export default function CategoryCard({ category, triggerValues, rules, workItems, resources, dropdownOptions, onRefresh }) {
+export default function CategoryCard({ category, triggerValues, allCategories = [], rules, workItems, resources, dropdownOptions, onRefresh }) {
   const [collapsed, setCollapsed] = useState(false);
   const [editing, setEditing] = useState(false);
   const [addingTrigger, setAddingTrigger] = useState(false);
@@ -44,6 +44,7 @@ export default function CategoryCard({ category, triggerValues, rules, workItems
     return (
       <CategoryForm
         opt={category}
+        existingCategories={allCategories}
         onSave={() => { setEditing(false); onRefresh(); }}
         onCancel={() => setEditing(false)}
       />
@@ -92,6 +93,7 @@ export default function CategoryCard({ category, triggerValues, rules, workItems
               fieldType={category.field_type}
               dropdownOptions={dropdownOptions}
               linkedField={category.linked_stage1_field}
+              existingTriggerValues={myTriggerValues}
               opt={null}
               onSave={() => { setAddingTrigger(false); onRefresh(); }}
               onCancel={() => setAddingTrigger(false)}
@@ -114,6 +116,7 @@ export default function CategoryCard({ category, triggerValues, rules, workItems
               dropdownOptions={dropdownOptions}
               linkedField={category.linked_stage1_field}
               fieldType={category.field_type}
+              allTriggerValues={myTriggerValues}
               onRefresh={onRefresh}
             />
           ))}

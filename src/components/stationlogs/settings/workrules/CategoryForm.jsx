@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { STAGE1_FIELDS } from "./workRulesUtils";
 
-export default function CategoryForm({ opt, onSave, onCancel }) {
+export default function CategoryForm({ opt, existingCategories = [], onSave, onCancel }) {
   const [form, setForm] = useState({
     category_name: opt?.category_name || "",
     description: opt?.description || "",
@@ -24,6 +24,11 @@ export default function CategoryForm({ opt, onSave, onCancel }) {
   const handleSave = async () => {
     if (!form.category_name.trim()) return alert("Category name is required.");
     if (!form.linked_stage1_field) return alert("Linked Stage 1 field is required.");
+    // Duplicate check: same linked_stage1_field not allowed (except when editing same record)
+    const duplicate = existingCategories.find(c =>
+      c.linked_stage1_field === form.linked_stage1_field && c.id !== opt?.id
+    );
+    if (duplicate) return alert(`A category for field "${form.linked_stage1_field}" already exists ("${duplicate.category_name}"). Each Stage 1 field can only have one category.`);
     setSaving(true);
     if (opt?.id) {
       await base44.entities.StationLogWorkRuleCategories.update(opt.id, form);

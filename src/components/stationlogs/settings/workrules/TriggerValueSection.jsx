@@ -8,7 +8,7 @@ import TriggerValueForm from "./TriggerValueForm";
 import WorkRuleForm from "./WorkRuleForm";
 
 function WorkRulesTable({ triggerValue, rules, workItems, resources, onRefresh }) {
-  const [editingRule, setEditingRule] = useState(null); // null=none, "new"=new form, rule obj=edit
+  const [editingRule, setEditingRule] = useState(null);
   const rulesForTv = rules
     .filter(r => r.trigger_value_id === triggerValue.id)
     .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
@@ -46,6 +46,7 @@ function WorkRulesTable({ triggerValue, rules, workItems, resources, onRefresh }
               triggerValue={triggerValue.trigger_value}
               workItems={workItems}
               resources={resources}
+              existingRules={rules}
               opt={null}
               onSave={() => { onRefresh(); setEditingRule(null); }}
               onCancel={() => setEditingRule(null)}
@@ -68,6 +69,7 @@ function WorkRulesTable({ triggerValue, rules, workItems, resources, onRefresh }
                 triggerValue={triggerValue.trigger_value}
                 workItems={workItems}
                 resources={resources}
+                existingRules={rules}
                 opt={rule}
                 onSave={() => { onRefresh(); setEditingRule(null); }}
                 onCancel={() => setEditingRule(null)}
@@ -118,7 +120,7 @@ function WorkRulesTable({ triggerValue, rules, workItems, resources, onRefresh }
   );
 }
 
-export default function TriggerValueSection({ triggerValue, rules, workItems, resources, dropdownOptions, linkedField, fieldType, onRefresh }) {
+export default function TriggerValueSection({ triggerValue, rules, workItems, resources, dropdownOptions, linkedField, fieldType, allTriggerValues = [], onRefresh }) {
   const [collapsed, setCollapsed] = useState(false);
   const [editing, setEditing] = useState(false);
 
@@ -151,6 +153,7 @@ export default function TriggerValueSection({ triggerValue, rules, workItems, re
         fieldType={fieldType}
         dropdownOptions={dropdownOptions}
         linkedField={linkedField}
+        existingTriggerValues={allTriggerValues}
         opt={triggerValue}
         onSave={() => { setEditing(false); onRefresh(); }}
         onCancel={() => setEditing(false)}
@@ -164,7 +167,14 @@ export default function TriggerValueSection({ triggerValue, rules, workItems, re
       <div className="flex items-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-150">
         <button onClick={() => setCollapsed(c => !c)} className="flex items-center gap-1.5 flex-1 text-left">
           {collapsed ? <ChevronRight className="h-3.5 w-3.5 text-slate-400" /> : <ChevronDown className="h-3.5 w-3.5 text-slate-400" />}
-          <span className="text-sm font-semibold text-slate-700">{triggerValue.trigger_value}</span>
+          <span className="text-sm font-semibold text-slate-700">
+            {triggerValue.display_label && triggerValue.display_label !== triggerValue.trigger_value
+              ? triggerValue.display_label
+              : triggerValue.trigger_value}
+          </span>
+          {triggerValue.display_label && triggerValue.display_label !== triggerValue.trigger_value && (
+            <span className="text-[10px] font-mono text-slate-400 bg-white border border-slate-200 px-1 rounded">{triggerValue.trigger_value}</span>
+          )}
           <span className="text-[10px] bg-white border border-slate-200 text-slate-500 rounded-full px-1.5 py-0.5 font-semibold ml-1">{rulesCount} rule{rulesCount !== 1 ? "s" : ""}</span>
           {triggerValue.is_active === false && <Badge className="text-[10px] bg-slate-200 text-slate-500 ml-1">Inactive</Badge>}
         </button>
