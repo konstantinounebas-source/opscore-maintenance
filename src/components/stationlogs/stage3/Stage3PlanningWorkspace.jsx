@@ -162,6 +162,8 @@ export default function Stage3PlanningWorkspace({ log, currentData, asset, onClo
         stage_3_planned_finish: maxDate,
         stage_3_deadlines_json: JSON.stringify(deadlines),
         stage_3_milestones_json: JSON.stringify(milestones),
+        current_stage: log.current_stage <= 3 ? 4 : log.current_stage,
+        current_status: "In Progress",
       });
 
       // Read back from database to verify
@@ -174,6 +176,9 @@ export default function Stage3PlanningWorkspace({ log, currentData, asset, onClo
       }
       if (refreshedLog.stage_3_planning_status !== "Completed") {
         throw new Error(`Verification failed: stage_3_planning_status is ${refreshedLog.stage_3_planning_status}`);
+      }
+      if (refreshedLog.current_stage !== 4) {
+        throw new Error(`Verification failed: current_stage is ${refreshedLog.current_stage}, expected 4`);
       }
 
       // Invalidate all relevant queries
