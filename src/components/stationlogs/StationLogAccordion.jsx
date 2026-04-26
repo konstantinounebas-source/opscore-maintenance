@@ -82,7 +82,7 @@ export default function StationLogAccordion({
         <CardTitle className="text-base">18-Stage Workflow</CardTitle>
       </CardHeader>
       <CardContent className="pt-0">
-        <Accordion value={expandedStage || ""} onValueChange={handleStageToggle} className="w-full">
+        <Accordion value={expandedStage || ""} onValueChange={handleStageToggle} type="single" collapsible className="w-full">
           {stages.map(stage => {
             const isCompleted = stage.id < log.current_stage;
             const isCurrent = stage.id === log.current_stage;
