@@ -62,31 +62,31 @@ export default function Stage3DeadlinesSummary({ savedItems = [] }) {
     <div className="space-y-3">
       {/* Summary Stats */}
       <div className="grid grid-cols-4 gap-2">
-        <div className="p-2 bg-slate-50 rounded border border-slate-100">
-          <p className="text-[9px] font-semibold text-slate-400 uppercase">Total</p>
-          <p className="text-sm font-bold text-slate-800 mt-0.5">{savedItems.length}</p>
+        <div className="p-3 bg-slate-50 rounded border border-slate-100">
+          <p className="text-[10px] font-semibold text-slate-500 uppercase">Total</p>
+          <p className="text-lg font-bold text-slate-800 mt-1">{savedItems.length}</p>
         </div>
-        <div className={`p-2 rounded border ${overdue > 0 ? "bg-red-50 border-red-200" : "bg-slate-50 border-slate-100"}`}>
-          <p className="text-[9px] font-semibold uppercase" style={{ color: overdue > 0 ? "#991b1b" : "#64748b" }}>
+        <div className={`p-3 rounded border ${overdue > 0 ? "bg-red-50 border-red-200" : "bg-slate-50 border-slate-100"}`}>
+          <p className="text-[10px] font-semibold uppercase" style={{ color: overdue > 0 ? "#991b1b" : "#64748b" }}>
             Overdue
           </p>
-          <p className="text-sm font-bold" style={{ color: overdue > 0 ? "#dc2626" : "#64748b" }}>
+          <p className="text-lg font-bold" style={{ color: overdue > 0 ? "#dc2626" : "#64748b" }}>
             {overdue}
           </p>
         </div>
-        <div className={`p-2 rounded border ${dueSoon > 0 ? "bg-amber-50 border-amber-200" : "bg-slate-50 border-slate-100"}`}>
-          <p className="text-[9px] font-semibold uppercase" style={{ color: dueSoon > 0 ? "#92400e" : "#64748b" }}>
+        <div className={`p-3 rounded border ${dueSoon > 0 ? "bg-amber-50 border-amber-200" : "bg-slate-50 border-slate-100"}`}>
+          <p className="text-[10px] font-semibold uppercase" style={{ color: dueSoon > 0 ? "#92400e" : "#64748b" }}>
             Due Soon
           </p>
-          <p className="text-sm font-bold" style={{ color: dueSoon > 0 ? "#f59e0b" : "#64748b" }}>
+          <p className="text-lg font-bold" style={{ color: dueSoon > 0 ? "#f59e0b" : "#64748b" }}>
             {dueSoon}
           </p>
         </div>
-        <div className={`p-2 rounded border ${completed > 0 ? "bg-green-50 border-green-200" : "bg-slate-50 border-slate-100"}`}>
-          <p className="text-[9px] font-semibold uppercase" style={{ color: completed > 0 ? "#166534" : "#64748b" }}>
+        <div className={`p-3 rounded border ${completed > 0 ? "bg-green-50 border-green-200" : "bg-slate-50 border-slate-100"}`}>
+          <p className="text-[10px] font-semibold uppercase" style={{ color: completed > 0 ? "#166534" : "#64748b" }}>
             Done
           </p>
-          <p className="text-sm font-bold" style={{ color: completed > 0 ? "#16a34a" : "#64748b" }}>
+          <p className="text-lg font-bold" style={{ color: completed > 0 ? "#16a34a" : "#64748b" }}>
             {completed}
           </p>
         </div>
@@ -107,40 +107,40 @@ export default function Stage3DeadlinesSummary({ savedItems = [] }) {
               return (
                 <div
                   key={item.id}
-                  className={`flex flex-col gap-1.5 px-2.5 py-2 text-xs ${
+                  className={`flex flex-col gap-2.5 px-4 py-3 ${
                     idx % 2 === 0 ? "bg-white" : "bg-slate-50"
                   } ${idx !== displayItems.length - 1 ? "border-b border-slate-100" : ""}`}
                 >
                   {/* Header row */}
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                      <span className="font-semibold text-slate-800">Stage {item.output_flow_stage_id}</span>
-                      <span className="text-slate-600 truncate font-medium">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-baseline gap-2 flex-1 min-w-0">
+                      <span className="font-bold text-slate-800 text-sm">Stage {item.output_flow_stage_id}</span>
+                      <span className="text-slate-700 truncate font-medium text-sm">
                         {item.planning_item_name_snapshot || item.planning_item_name}
                       </span>
                     </div>
-                    <Badge className={`text-[9px] flex-shrink-0 whitespace-nowrap ${getStatusBadgeColor(item.status)}`}>
+                    <Badge className={`text-[10px] flex-shrink-0 whitespace-nowrap ${getStatusBadgeColor(item.status)}`}>
                       {item.status}
                     </Badge>
                   </div>
 
                   {/* Date rows */}
-                  <div className="grid grid-cols-2 gap-2 ml-4">
-                    <div className="flex items-center gap-1">
-                      <span className="text-slate-500 font-semibold min-w-max">Start:</span>
-                      <span className="text-slate-600 font-mono text-[10px]">{planStart}</span>
+                  <div className="grid grid-cols-2 gap-3 ml-0">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-xs text-slate-500 font-semibold uppercase">Start</span>
+                      <span className="text-sm text-slate-700 font-mono">{planStart}</span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <span className="text-slate-500 font-semibold min-w-max">End:</span>
-                      <span className="text-slate-600 font-mono text-[10px]">{planEnd}</span>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-xs text-slate-500 font-semibold uppercase">End</span>
+                      <span className="text-sm text-slate-700 font-mono">{planEnd}</span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <span className="text-slate-500 font-semibold min-w-max">Deadline:</span>
-                      <span className="text-slate-600 font-mono text-[10px]">{deadline}</span>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-xs text-slate-500 font-semibold uppercase">Deadline</span>
+                      <span className="text-sm text-slate-700 font-mono">{deadline}</span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <span className="text-slate-500 font-semibold min-w-max">Completed:</span>
-                      <span className="text-slate-600 font-mono text-[10px]">{completion}</span>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-xs text-slate-500 font-semibold uppercase">Completed</span>
+                      <span className="text-sm text-slate-700 font-mono">{completion}</span>
                     </div>
                   </div>
                 </div>
