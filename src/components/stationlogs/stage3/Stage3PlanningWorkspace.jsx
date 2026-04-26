@@ -36,6 +36,12 @@ export default function Stage3PlanningWorkspace({ log, currentData, asset, onClo
     queryFn: () => base44.entities.StationLogPlanningRules.list(),
   });
 
+  // Local state for execution dates to allow immediate refresh after save
+  const [executionDates, setExecutionDates] = useState({
+    execution_date: log.stage_3_execution_date || "",
+    execution_finish: log.stage_3_execution_finish || "",
+  });
+
   // Build normalized station data for rule evaluation
   // CRITICAL: Use normalized keys that match rule base_date_key
   const stationData = {
@@ -44,16 +50,16 @@ export default function Stage3PlanningWorkspace({ log, currentData, asset, onClo
     work_start_date: currentData?.order_received_date,
     final_deadline: currentData?.order_deadline_date,
     priority_deadline: currentData?.order_priority_date,
-    // Stage 3 execution dates (normalized keys for rules)
-    execution_date: log.stage_3_execution_date,
-    execution_finish: log.stage_3_execution_finish,
-    // Keep originals for component reference
-    stage_3_execution_date: log.stage_3_execution_date,
-    stage_3_execution_finish: log.stage_3_execution_finish,
+    // Stage 3 execution dates (from local state for immediate updates)
+    execution_date: executionDates.execution_date,
+    execution_finish: executionDates.execution_finish,
+    // Keep original field names for component reference
+    stage_3_execution_date: executionDates.execution_date,
+    stage_3_execution_finish: executionDates.execution_finish,
   };
 
   // Generate suggestions when dates or rules change
-  // Dependencies on actual values, not object reference
+  // Dependencies on local state values for immediate updates
   useEffect(() => {
     const newSuggestions = generateRuleSuggestions(allRules, stationData, savedItems);
     // Filter out suggestions that are already saved
@@ -61,7 +67,7 @@ export default function Stage3PlanningWorkspace({ log, currentData, asset, onClo
       sugg => !savedItems.find(item => item.output_date_key === sugg.output_date_key)
     );
     setSuggestions(filtered);
-  }, [log.stage_3_execution_date, log.stage_3_execution_finish, allRules, savedItems]);
+  }, [executionDates.execution_date, executionDates.execution_finish, allRules, savedItems]);
 
   // Calculate Stage 2 summary
   let stage2Summary = null;
@@ -238,6 +244,12 @@ export default function Stage3PlanningWorkspace({ log, currentData, asset, onClo
                 handleRefresh();
               }}
               onAddManual={handleRefresh}
+              onDatesSaved={(execDate, execFinish) => {
+                setExecutionDates({
+                  execution_date: execDate,
+                  execution_finish: execFinish,
+                });
+              }}
             />
           </div>
         )}

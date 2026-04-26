@@ -126,39 +126,54 @@ export function evaluateAppliesWhen(rule, stationData) {
 
 /**
  * Generate rule suggestions for current session
- * Rules with base dates in stationData are calculated first
- * Rules depending on generated dates use saved items only
+ * Supports chained rules by building suggestions in passes
+ * Pass 1: rules with base dates in stationData
+ * Pass 2: rules depending on generated dates from pass 1
  */
 export function generateRuleSuggestions(rules, stationData, stage3Items) {
   const suggestions = [];
+  const generatedDateMap = {}; // Track calculated dates for chaining
   
-  // Sort rules: core dates first, then those depending on saved items
+  // Sort rules: core dates first
   const sortedRules = [...rules].sort((a, b) => {
-    const aIsCore = a.base_date_key && CORE_STAGE1_DATES[a.base_date_key] || STAGE3_DRIVER_DATES[a.base_date_key];
-    const bIsCore = b.base_date_key && CORE_STAGE1_DATES[b.base_date_key] || STAGE3_DRIVER_DATES[b.base_date_key];
+    const aIsCore = a.base_date_key && (CORE_STAGE1_DATES[a.base_date_key] || STAGE3_DRIVER_DATES[a.base_date_key]);
+    const bIsCore = b.base_date_key && (CORE_STAGE1_DATES[b.base_date_key] || STAGE3_DRIVER_DATES[b.base_date_key]);
     if (aIsCore && !bIsCore) return -1;
     if (!aIsCore && bIsCore) return 1;
     return 0;
   });
 
-  return sortedRules
-    .filter(r => r.is_active !== false)
-    .map(rule => {
+  // Process rules in order, allowing chaining
+  const processedRules = new Set();
+  let previousPassSize = -1;
+  
+  while (suggestions.length !== previousPassSize && processedRules.size < sortedRules.length) {
+    previousPassSize = suggestions.length;
+    
+    sortedRules.forEach((rule, idx) => {
+      if (processedRules.has(idx) || rule.is_active === false) return;
+      
       // Check if applies
       if (!evaluateAppliesWhen(rule, stationData)) {
-        return null;
+        processedRules.add(idx);
+        return;
       }
 
-      // Resolve base date
-      const baseDate = resolveBaseDate(rule.base_date_key, stationData, stage3Items);
+      // Resolve base date: try stationData, then generated map, then saved items
+      let baseDate = stationData && stationData[rule.base_date_key];
+      
+      if (!baseDate && generatedDateMap[rule.base_date_key]) {
+        baseDate = generatedDateMap[rule.base_date_key];
+      }
+      
+      if (!baseDate) {
+        baseDate = resolveBaseDate(rule.base_date_key, stationData, stage3Items);
+      }
 
       if (!baseDate) {
         // Cannot calculate - missing base date
-        const keyDisplay = rule.base_date_key 
-          ? rule.base_date_key.replace(/_/g, ' ').replace(/([a-z])([A-Z])/g, '$1 $2')
-          : 'unknown';
-        
-        return {
+        const keyDisplay = rule.base_date_key || 'unknown';
+        suggestions.push({
           rule_id: rule.id,
           rule_name: rule.rule_name,
           category_id: rule.category_id,
@@ -171,9 +186,11 @@ export function generateRuleSuggestions(rules, stationData, stage3Items) {
           base_date_key: rule.base_date_key,
           calculated_date: null,
           status: "Blocked",
-          missing_base_date: keyDisplay || 'base date not set on rule',
+          missing_base_date: `Missing base date: ${keyDisplay}`,
           required: rule.required,
-        };
+        });
+        processedRules.add(idx);
+        return;
       }
 
       // Calculate suggested date
@@ -184,7 +201,10 @@ export function generateRuleSuggestions(rules, stationData, stage3Items) {
         rule.use_working_days
       );
 
-      return {
+      // Store in map for chaining
+      generatedDateMap[rule.output_date_key] = calculatedDate;
+
+      suggestions.push({
         rule_id: rule.id,
         rule_name: rule.rule_name,
         category_id: rule.category_id,
@@ -198,9 +218,12 @@ export function generateRuleSuggestions(rules, stationData, stage3Items) {
         calculated_date: calculatedDate,
         status: "Not Due",
         required: rule.required,
-      };
-    })
-    .filter(Boolean);
+      });
+      processedRules.add(idx);
+    });
+  }
+
+  return suggestions;
 }
 
 /**

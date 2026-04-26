@@ -16,9 +16,10 @@ export default function Stage3RightPanel({
   onItemRemoved,
   onItemUpdated,
   onAddManual,
+  onDatesSaved,
 }) {
-  const [executionDate, setExecutionDate] = useState(stationData?.stage_3_execution_date || "");
-  const [executionFinish, setExecutionFinish] = useState(stationData?.stage_3_execution_finish || "");
+  const [executionDate, setExecutionDate] = useState(stationData?.execution_date || stationData?.stage_3_execution_date || "");
+  const [executionFinish, setExecutionFinish] = useState(stationData?.execution_finish || stationData?.stage_3_execution_finish || "");
   const [showManualForm, setShowManualForm] = useState(false);
   const [manualForm, setManualForm] = useState({
     name: "",
@@ -38,10 +39,10 @@ export default function Stage3RightPanel({
         stage_3_execution_date: executionDate || null,
         stage_3_execution_finish: executionFinish || null,
       });
-      // Trigger parent refresh to recalculate suggestions
-      setTimeout(() => {
-        window.dispatchEvent(new CustomEvent('stage3DatesSaved'));
-      }, 100);
+      // Notify parent to update local state and recalculate suggestions
+      if (onDatesSaved) {
+        onDatesSaved(executionDate, executionFinish);
+      }
     } catch (err) {
       alert(`Error saving dates: ${err.message}`);
     } finally {
