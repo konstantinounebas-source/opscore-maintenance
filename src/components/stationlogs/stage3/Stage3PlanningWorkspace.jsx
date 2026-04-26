@@ -197,7 +197,8 @@ export default function Stage3PlanningWorkspace({ log, currentData, asset, onClo
     hasSavedPlanningItems &&
     (
       planningStatus === "Ready" ||
-      planningStatus === "Draft Planned"
+      planningStatus === "Draft Planned" ||
+      planningStatus === "At Risk"
     );
 
   // Debug: Log completion eligibility
