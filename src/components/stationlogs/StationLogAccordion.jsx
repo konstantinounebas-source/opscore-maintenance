@@ -199,14 +199,14 @@ export default function StationLogAccordion({
                            </p>
                          </div>
                          <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                           <p className="text-[10px] font-semibold text-slate-500 uppercase">Active Deadline</p>
-                           <p className="text-sm font-bold text-slate-800 mt-1 font-mono">
-                             {currentData?.priority_deadline || currentData?.final_deadline || "—"}
-                           </p>
-                           <p className="text-[9px] text-slate-500 mt-1">
-                             {currentData?.priority_deadline ? "Priority Deadline" : "Final Deadline"}
-                           </p>
-                         </div>
+                             <p className="text-[10px] font-semibold text-slate-500 uppercase">Active Deadline</p>
+                             <p className="text-sm font-bold text-slate-800 mt-1 font-mono">
+                               {currentData?.order_priority_date || currentData?.order_deadline_date || "—"}
+                             </p>
+                             <p className="text-[9px] text-slate-500 mt-1">
+                               {currentData?.order_priority_date ? "Priority Deadline" : currentData?.order_deadline_date ? "Final Deadline" : "No deadline"}
+                             </p>
+                           </div>
                          <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
                            <p className="text-[10px] font-semibold text-slate-500 uppercase">Stage 3 Status</p>
                            <p className={`text-sm font-bold mt-1 ${log.stage_3_completed ? "text-green-600" : "text-slate-400"}`}>

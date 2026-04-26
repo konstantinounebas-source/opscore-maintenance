@@ -41,9 +41,9 @@ export default function Stage3DeadlinesSummary({ savedItems = [] }) {
   const dueSoon = activeItems.filter(i => i.status === "Due Soon").length;
   const completed = activeItems.filter(i => i.status === "Completed").length;
 
-  // Sort by date, hide completed/overdue unless toggled
+  // Sort by date, hide completed unless toggled (keep overdue always visible)
   const displayItems = activeItems
-    .filter(i => showCompleted || (i.status !== "Completed" && i.status !== "Overdue"))
+    .filter(i => showCompleted || (i.status !== "Completed"))
     .sort((a, b) => {
       const dateA = new Date(a.planned_date || "9999-12-31");
       const dateB = new Date(b.planned_date || "9999-12-31");
@@ -134,13 +134,13 @@ export default function Stage3DeadlinesSummary({ savedItems = [] }) {
         )}
       </div>
 
-      {/* Toggle completed/overdue */}
-      {completed + overdue > 0 && (
+      {/* Toggle completed */}
+      {completed > 0 && (
         <button
           onClick={() => setShowCompleted(!showCompleted)}
           className="text-[11px] text-blue-600 hover:text-blue-700 font-semibold mt-1"
         >
-          {showCompleted ? "Hide" : "Show"} completed & expired ({completed + overdue})
+          {showCompleted ? "Hide" : "Show"} completed ({completed})
         </button>
       )}
     </div>
