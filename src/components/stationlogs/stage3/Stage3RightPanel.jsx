@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
+import { AlertCircle } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Plus, Trash2, Check, AlertCircle, Loader2 } from "lucide-react";
+import { Plus, Trash2, Check, Loader2 } from "lucide-react";
 import { determineItemStatus } from "./stage3Utils";
 
 export default function Stage3RightPanel({
@@ -115,6 +116,9 @@ export default function Stage3RightPanel({
     onItemUpdated();
   };
 
+  // Check if execution dates are set
+  const hasExecutionDates = stationData?.execution_date && stationData?.execution_finish;
+
   // Group saved items by stage
   const groupedSaved = savedItems.reduce((acc, item) => {
     const stage = item.output_flow_stage_id;
@@ -142,6 +146,17 @@ export default function Stage3RightPanel({
 
   return (
     <div className="flex-1 bg-slate-50 overflow-y-auto p-4 space-y-4">
+      {/* Warning: Execution Dates Required */}
+      {!hasExecutionDates && suggestions.length > 0 && (
+        <div className="px-4 py-3 bg-amber-50 border border-amber-200 rounded flex gap-2">
+          <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+          <div className="text-xs text-amber-800">
+            <p className="font-semibold">Set Execution Dates First</p>
+            <p>Rules need "Start Date" and "Finish Date" to calculate planning items.</p>
+          </div>
+        </div>
+      )}
+
       {/* Execution Dates */}
       <div className="bg-white rounded border border-slate-200 p-3 space-y-2">
         <h3 className="text-xs font-bold text-slate-600 uppercase">Execution Dates</h3>

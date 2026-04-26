@@ -153,6 +153,10 @@ export function generateRuleSuggestions(rules, stationData, stage3Items) {
 
       if (!baseDate) {
         // Cannot calculate - missing base date
+        const dateLabel = rule.base_date_key 
+          ? rule.base_date_key.replace(/_/g, ' ')
+          : 'base date';
+        
         return {
           rule_id: rule.id,
           rule_name: rule.rule_name,
@@ -166,7 +170,7 @@ export function generateRuleSuggestions(rules, stationData, stage3Items) {
           base_date_key: rule.base_date_key,
           calculated_date: null,
           status: "Blocked",
-          missing_base_date: `${rule.base_date_key} (not found)`,
+          missing_base_date: `Set "${dateLabel}" first`,
           required: rule.required,
         };
       }
