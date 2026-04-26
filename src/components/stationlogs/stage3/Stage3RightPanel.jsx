@@ -60,12 +60,16 @@ export default function Stage3RightPanel({
       alert(`Cannot add: ${suggestion.validationWarning}`);
       return;
     }
+    if (!suggestion.calculated_date) {
+      alert("Error: Missing calculated date in suggestion.");
+      return;
+    }
     if (!suggestion.output_date_key) {
-      alert("Error: Missing output_date_key in suggestion. This is a system configuration issue.");
+      alert("Error: Missing output_date_key. Rule is not properly configured. Please edit the rule to add an Output Date Key.");
       return;
     }
     if (!suggestion.output_flow_stage_id) {
-      alert("Error: Missing output_flow_stage_id in suggestion. This is a system configuration issue.");
+      alert("Error: Missing output_flow_stage_id. Rule is not properly configured. Please edit the rule to set the Flow Stage.");
       return;
     }
 
@@ -418,7 +422,7 @@ export default function Stage3RightPanel({
                 <Button
                    size="sm"
                    className="w-full h-7 text-xs gap-1"
-                   disabled={addingMap[sugg.rule_id] || sugg.status !== "Suggested" || !!sugg.validationWarning}
+                   disabled={addingMap[sugg.rule_id] || sugg.status !== "Suggested" || !!sugg.validationWarning || !sugg.output_date_key || !sugg.output_flow_stage_id || !sugg.calculated_date}
                    onClick={() => handleAddSuggestion(sugg)}
                  >
                    {addingMap[sugg.rule_id] ? (
