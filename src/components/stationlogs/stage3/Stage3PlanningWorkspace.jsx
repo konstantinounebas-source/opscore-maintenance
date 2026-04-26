@@ -149,7 +149,7 @@ export default function Stage3PlanningWorkspace({ log, currentData, asset, onClo
 
   const handleRefresh = () => {
     setRefreshTrigger(t => t + 1);
-    queryClient.invalidateQueries({ queryKey: ["stage3PlanningItems"] });
+    queryClient.invalidateQueries({ queryKey: ["stage3PlanningItems", log.id] });
   };
 
   // Listen for date save events to trigger suggestion recalculation
