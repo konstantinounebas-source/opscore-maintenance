@@ -27,12 +27,15 @@ function Section({ title, icon: SectionIcon, children, defaultOpen = true }) {
 }
 
 function Field({ label, value }) {
-  if (!value && value !== false && value !== 0) return null;
-  const display = value === true ? "Yes" : value === false ? "No" : String(value);
+  const isEmpty = value === null || value === undefined || value === "";
+  const display = value === true ? "Yes" : value === false ? "No" : isEmpty ? null : String(value);
   return (
     <div className="flex gap-2">
       <span className="text-[10px] font-semibold text-slate-400 uppercase w-32 shrink-0 mt-0.5">{label}</span>
-      <span className="text-xs text-slate-800 break-words">{display}</span>
+      {isEmpty
+        ? <span className="text-xs text-slate-300 italic">—</span>
+        : <span className="text-xs text-slate-800 break-words">{display}</span>
+      }
     </div>
   );
 }
@@ -78,10 +81,19 @@ export default function Stage2LeftPanel({ log, currentData, attachments, station
   });
   const atts = attachments || fetchedAtts;
 
+  // Load asset for the overlay (OrderLocationModule needs it)
+  const { data: asset = null } = useQuery({
+    queryKey: ["asset", log?.asset_id],
+    queryFn: () => base44.entities.Assets.filter({ id: log.asset_id }).then(r => r[0] || null),
+    enabled: !!log?.asset_id,
+  });
+
   const d = currentData || {};
   const lat = d.latitude;
   const lng = d.longitude;
   const mapsUrl = lat && lng ? `https://www.google.com/maps?q=${lat},${lng}` : null;
+  // Bus stop code: use asset_code from asset if available
+  const busStopCode = asset?.asset_code || asset?.asset_id || d.asset_id;
 
   return (
     <div className="text-sm">
@@ -114,7 +126,7 @@ export default function Stage2LeftPanel({ log, currentData, attachments, station
 
       {/* 1. Basic Location */}
       <Section title="Basic Location" icon={MapPin}>
-        <Field label="Bus Stop Code" value={d.asset_id} />
+        <Field label="Bus Stop Code" value={busStopCode} />
         <Field label="Bus Stop Name" value={d.bus_stop_name} />
         <Field label="Address" value={d.location_address} />
         <Field label="Municipality" value={d.municipality} />
@@ -177,7 +189,7 @@ export default function Stage2LeftPanel({ log, currentData, attachments, station
             </Button>
           </div>
           <div className="flex-1 overflow-y-auto bg-gray-50 p-6">
-            <OrderLocationModule log={log} asset={null} />
+            <OrderLocationModule log={log} asset={asset} />
           </div>
         </div>
       )}
