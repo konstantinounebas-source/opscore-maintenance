@@ -2,10 +2,9 @@ import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   MapPin, FileText, Image, ExternalLink, AlertTriangle,
-  ChevronDown, ChevronRight, Eye, Download
+  ChevronDown, ChevronRight, Eye, Pencil
 } from "lucide-react";
 import Stage2RevisionDialog from "./Stage2RevisionDialog";
 import Stage2AttachmentPreview from "./Stage2AttachmentPreview";
@@ -90,11 +89,32 @@ export default function Stage2LeftPanel({ log, currentData, attachments, station
       <div className="px-4 py-3 bg-blue-50 border-b border-blue-200">
         <p className="text-xs font-bold text-blue-800 uppercase">Stage 1 Data Verification</p>
         <p className="text-[10px] text-blue-600 mt-0.5">Review all Stage 1 data before finalizing work allocation.</p>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-7 text-xs gap-1.5 mt-2 border-amber-300 text-amber-700 hover:bg-amber-50 w-full"
+          onClick={() => setRevisionOpen(true)}
+        >
+          <Pencil className="h-3 w-3" /> Edit / Request Revision
+        </Button>
       </div>
+
+      {/* 0. Order Info */}
+      <Section title="Order Information" icon={FileText}>
+        <Field label="Authority Ref" value={d.authority_order_reference} />
+        <Field label="Order Type" value={d.order_type} />
+        <Field label="Order Priority" value={d.order_priority} />
+        <Field label="Received Date" value={d.order_received_date} />
+        <Field label="Received From" value={d.order_received_from} />
+        <Field label="Priority Date" value={d.order_priority_date} />
+        <Field label="Deadline" value={d.order_deadline_date} />
+        <Field label="Description" value={d.order_description} />
+        <Field label="Notes" value={d.order_notes} />
+      </Section>
 
       {/* 1. Basic Location */}
       <Section title="Basic Location" icon={MapPin}>
-        <Field label="Bus Stop ID" value={d.asset_id} />
+        <Field label="Bus Stop Code" value={d.asset_id} />
         <Field label="Bus Stop Name" value={d.bus_stop_name} />
         <Field label="Address" value={d.location_address} />
         <Field label="Municipality" value={d.municipality} />
@@ -145,22 +165,6 @@ export default function Stage2LeftPanel({ log, currentData, attachments, station
             <AttachmentRow key={att.id} att={att} onPreview={setPreviewAtt} />
           ))
         }
-      </Section>
-
-      {/* 4. Stage 1 Revision */}
-      <Section title="Stage 1 Revision" defaultOpen={false}>
-        <div className="flex items-start gap-2 p-2 bg-amber-50 border border-amber-200 rounded-lg mb-2">
-          <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
-          <p className="text-xs text-amber-800">Changing Stage 1 data may change the suggested works in this workspace.</p>
-        </div>
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-7 text-xs w-full border-amber-300 text-amber-700 hover:bg-amber-50"
-          onClick={() => setRevisionOpen(true)}
-        >
-          Create Stage 1 Revision
-        </Button>
       </Section>
 
       {/* Revision Dialog */}
