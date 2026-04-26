@@ -10,9 +10,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, CheckCircle, Lock, ClipboardList, Clock } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 import OrderLocationModule from "@/components/stationlogs/stage1/OrderLocationModule.jsx";
 import Stage2Workspace from "@/components/stationlogs/stage2/Stage2Workspace.jsx";
 import Stage3PlanningWorkspace from "@/components/stationlogs/stage3/Stage3PlanningWorkspace.jsx";
+import Stage3DeadlinesSummary from "@/components/stationlogs/Stage3DeadlinesSummary.jsx";
 import { minutesToDisplay } from "@/components/stationlogs/settings/workrules/workRulesUtils";
 
 const STAGE_FIELDS = {
@@ -65,6 +68,12 @@ export default function StationLogAccordion({
   const getStageTasks = (stageId) => tasks.filter(t => t.stage === stageId);
   const getStageApprovals = (stageId) => approvals.filter(a => a.stage === stageId);
   const getStageInstructions = (stageId) => instructions.filter(i => i.related_stage === stageId);
+
+  // Fetch Stage 3 planning items for summary
+  const { data: stage3Items = [] } = useQuery({
+    queryKey: ["stage3PlanningItemsForAccordion", log.id],
+    queryFn: () => base44.entities.StationLogStage3PlanningItems.filter({ station_log_id: log.id }),
+  });
 
   return (
     <>
@@ -199,6 +208,12 @@ export default function StationLogAccordion({
                             {log.stage_3_completed ? "Completed" : "Not started"}
                           </p>
                         </div>
+                      </div>
+
+                      {/* Planning Deadlines Summary */}
+                      <div className="border-t pt-3">
+                        <p className="text-xs font-bold text-gray-700 uppercase mb-2">📅 Planning Dates / Deadlines</p>
+                        <Stage3DeadlinesSummary savedItems={stage3Items} />
                       </div>
 
                       {log.stage_2_completed ? (
