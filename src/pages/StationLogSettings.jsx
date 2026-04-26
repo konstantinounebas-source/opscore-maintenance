@@ -13,6 +13,7 @@ import Stage3PlanningRulesTab from "@/components/stationlogs/settings/Stage3Plan
 const CATEGORY_GROUPS = [
   {
     group: "Stage 1 — Order + Location",
+    stage: 1,
     categories: [
       { key: "order_priority", label: "Order Priority" },
       { key: "order_type", label: "Order Type" },
@@ -49,6 +50,7 @@ const CATEGORY_GROUPS = [
   },
   {
     group: "Stage 2 — Work & Resource Estimation",
+    stage: 2,
     isSpecial: true,
     categories: [
       { key: "stage2_work_rules", label: "Work Rules" },
@@ -58,6 +60,7 @@ const CATEGORY_GROUPS = [
   },
   {
     group: "Stage 3 — Master Planning",
+    stage: 3,
     isSpecial: true,
     categories: [
       { key: "stage3_planning_rules", label: "Planning Rules" },
@@ -65,8 +68,20 @@ const CATEGORY_GROUPS = [
   },
 ];
 
+// Sort by stage number, then others
+const SORTED_CATEGORY_GROUPS = [...CATEGORY_GROUPS].sort((a, b) => {
+  const aStage = a.stage ?? 999;
+  const bStage = b.stage ?? 999;
+  return aStage - bStage;
+});
+
 // Flat list for lookup
 const ALL_CATEGORIES = CATEGORY_GROUPS.flatMap(g => g.categories);
+
+function getStageBadge(stage) {
+  if (!stage) return null;
+  return <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">STAGE {stage}</span>;
+}
 
 function OptionRow({ opt, onEdit, onToggle, onMoveUp, onMoveDown, isFirst, isLast }) {
   return (
@@ -227,7 +242,7 @@ export default function StationLogSettings() {
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Categories</p>
           </div>
           <div className="py-1">
-            {CATEGORY_GROUPS.map(group => (
+            {SORTED_CATEGORY_GROUPS.map(group => (
               <div key={group.group}>
                 {/* Group header */}
                 <button
@@ -235,6 +250,7 @@ export default function StationLogSettings() {
                   className="w-full flex items-center gap-1.5 px-3 py-2 text-left bg-slate-50 hover:bg-slate-100 border-b border-slate-100 transition-colors"
                 >
                   <ChevronRight className={`h-3 w-3 text-slate-400 transition-transform flex-shrink-0 ${expandedGroups[group.group] ? "rotate-90" : ""}`} />
+                  {group.stage && getStageBadge(group.stage)}
                   <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide truncate">{group.group}</span>
                 </button>
                 {/* Group categories */}
