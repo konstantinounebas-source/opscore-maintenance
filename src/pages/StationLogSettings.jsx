@@ -4,31 +4,49 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Plus, Pencil, CheckCircle, XCircle, ChevronUp, ChevronDown, Settings } from "lucide-react";
+import { Plus, Pencil, CheckCircle, XCircle, ChevronUp, ChevronDown, Settings, ChevronRight } from "lucide-react";
 
-const ALL_CATEGORIES = [
-  { key: "order_priority", label: "Order Priority" },
-  { key: "installation_type", label: "Installation Type" },
-  { key: "intervention_scope", label: "Intervention Scope" },
-  { key: "road_side", label: "Road Side" },
-  { key: "traffic_direction", label: "Traffic Direction" },
-  { key: "existing_infrastructure_type", label: "Existing Infrastructure Type" },
-  { key: "pavement_type", label: "Pavement Type" },
-  { key: "utility_type", label: "Utility Type" },
-  { key: "traffic_impact_level", label: "Traffic Impact Level" },
-  { key: "permit_type", label: "Permit Type" },
-  { key: "risk_level", label: "Risk Level" },
-  { key: "revision_source", label: "Revision Source" },
-  { key: "order_type", label: "Order Type" },
-  { key: "shelter_type", label: "Shelter Type" },
-  { key: "municipality", label: "Municipality" },
-  { key: "district", label: "District" },
-  { key: "authority_instruction_status", label: "Authority Instruction Status" },
-  { key: "task_priority", label: "Task Priority" },
-  { key: "task_status", label: "Task Status" },
-  { key: "approval_status", label: "Approval Status" },
-  { key: "milestone_category", label: "Milestone Category" },
+const CATEGORY_GROUPS = [
+  {
+    group: "Stage 1 — Order + Location",
+    categories: [
+      { key: "order_priority", label: "Order Priority" },
+      { key: "order_type", label: "Order Type" },
+      { key: "revision_source", label: "Revision Source" },
+      { key: "installation_type", label: "Installation Type" },
+      { key: "intervention_scope", label: "Intervention Scope" },
+      { key: "shelter_type", label: "Shelter Type" },
+      { key: "road_side", label: "Road Side" },
+      { key: "traffic_direction", label: "Traffic Direction" },
+      { key: "existing_infrastructure_type", label: "Existing Infrastructure Type" },
+      { key: "pavement_type", label: "Pavement Type" },
+      { key: "utility_type", label: "Utility Type" },
+      { key: "traffic_impact_level", label: "Traffic Impact Level" },
+      { key: "permit_type", label: "Permit Type" },
+      { key: "risk_level", label: "Risk Level" },
+      { key: "municipality", label: "Municipality" },
+      { key: "district", label: "District" },
+    ],
+  },
+  {
+    group: "Tasks & Approvals",
+    categories: [
+      { key: "task_priority", label: "Task Priority" },
+      { key: "task_status", label: "Task Status" },
+      { key: "approval_status", label: "Approval Status" },
+      { key: "authority_instruction_status", label: "Authority Instruction Status" },
+    ],
+  },
+  {
+    group: "Milestones",
+    categories: [
+      { key: "milestone_category", label: "Milestone Category" },
+    ],
+  },
 ];
+
+// Flat list for lookup
+const ALL_CATEGORIES = CATEGORY_GROUPS.flatMap(g => g.categories);
 
 function OptionRow({ opt, onEdit, onToggle, onMoveUp, onMoveDown, isFirst, isLast }) {
   return (
@@ -117,8 +135,14 @@ function OptionForm({ categoryKey, opt, onSave, onCancel }) {
 export default function StationLogSettings() {
   const queryClient = useQueryClient();
   const [selectedCategory, setSelectedCategory] = useState(ALL_CATEGORIES[0].key);
-  const [editingOpt, setEditingOpt] = useState(null); // null = no form, false = new, object = edit
+  const [editingOpt, setEditingOpt] = useState(null);
   const [showInactive, setShowInactive] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState(() =>
+    Object.fromEntries(CATEGORY_GROUPS.map(g => [g.group, true]))
+  );
+
+  const toggleGroup = (group) =>
+    setExpandedGroups(prev => ({ ...prev, [group]: !prev[group] }));
 
   const { data: allOptions = [], isLoading } = useQuery({
     queryKey: ["stationLogDropdownOptions"],
@@ -183,17 +207,30 @@ export default function StationLogSettings() {
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Categories</p>
           </div>
           <div className="py-1">
-            {ALL_CATEGORIES.map(cat => (
-              <button
-                key={cat.key}
-                onClick={() => { setSelectedCategory(cat.key); setEditingOpt(null); }}
-                className={`w-full flex items-center justify-between px-3 py-2 text-left transition-colors ${selectedCategory === cat.key ? "bg-blue-50 text-blue-800" : "hover:bg-slate-50 text-slate-700"}`}
-              >
-                <span className="text-sm font-medium truncate">{cat.label}</span>
-                <span className={`text-[10px] rounded-full px-1.5 py-0.5 font-semibold ml-1 flex-shrink-0 ${selectedCategory === cat.key ? "bg-blue-200 text-blue-800" : "bg-slate-100 text-slate-500"}`}>
-                  {countByCategory(cat.key)}
-                </span>
-              </button>
+            {CATEGORY_GROUPS.map(group => (
+              <div key={group.group}>
+                {/* Group header */}
+                <button
+                  onClick={() => toggleGroup(group.group)}
+                  className="w-full flex items-center gap-1.5 px-3 py-2 text-left bg-slate-50 hover:bg-slate-100 border-b border-slate-100 transition-colors"
+                >
+                  <ChevronRight className={`h-3 w-3 text-slate-400 transition-transform flex-shrink-0 ${expandedGroups[group.group] ? "rotate-90" : ""}`} />
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide truncate">{group.group}</span>
+                </button>
+                {/* Group categories */}
+                {expandedGroups[group.group] && group.categories.map(cat => (
+                  <button
+                    key={cat.key}
+                    onClick={() => { setSelectedCategory(cat.key); setEditingOpt(null); }}
+                    className={`w-full flex items-center justify-between pl-6 pr-3 py-2 text-left transition-colors ${selectedCategory === cat.key ? "bg-blue-50 text-blue-800" : "hover:bg-slate-50 text-slate-700"}`}
+                  >
+                    <span className="text-sm font-medium truncate">{cat.label}</span>
+                    <span className={`text-[10px] rounded-full px-1.5 py-0.5 font-semibold ml-1 flex-shrink-0 ${selectedCategory === cat.key ? "bg-blue-200 text-blue-800" : "bg-slate-100 text-slate-500"}`}>
+                      {countByCategory(cat.key)}
+                    </span>
+                  </button>
+                ))}
+              </div>
             ))}
           </div>
         </div>
