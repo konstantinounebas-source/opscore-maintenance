@@ -21,6 +21,26 @@ export default function Stage3RightPanel({
   const [executionDate, setExecutionDate] = useState(stationData?.stage_3_execution_date || "");
   const [executionFinish, setExecutionFinish] = useState(stationData?.stage_3_execution_finish || "");
   const [showManualForm, setShowManualForm] = useState(false);
+
+  // Sync execution dates from stationData on mount
+  useEffect(() => {
+    setExecutionDate(stationData?.stage_3_execution_date || "");
+    setExecutionFinish(stationData?.stage_3_execution_finish || "");
+  }, [stationData?.stage_3_execution_date, stationData?.stage_3_execution_finish]);
+
+  // Debug: Log execution dates on mount and when stationData changes
+  useEffect(() => {
+    console.log("📝 EXECUTION DATES IN RIGHT PANEL:", {
+      stage_3_execution_date: executionDate,
+      stage_3_execution_finish: executionFinish,
+      hasExecutionDates: !!(executionDate && executionFinish),
+      stationData_dates: {
+        stage_3_execution_date: stationData?.stage_3_execution_date,
+        stage_3_execution_finish: stationData?.stage_3_execution_finish,
+      },
+    });
+  }, [executionDate, executionFinish, stationData]);
+  
   const [manualForm, setManualForm] = useState({
     name: "",
     type: "Deadline",

@@ -39,9 +39,23 @@ export default function Stage3PlanningWorkspace({ log, currentData, asset, onClo
 
   // Local state for execution dates to allow immediate refresh after save
   const [executionDates, setExecutionDates] = useState({
-    execution_date: log.stage_3_execution_date || "",
-    execution_finish: log.stage_3_execution_finish || "",
+    execution_date: log?.stage_3_execution_date || "",
+    execution_finish: log?.stage_3_execution_finish || "",
   });
+
+  // Debug: Log stationData on mount and when dates change
+  useEffect(() => {
+    console.log("📊 STAGE 3 STATION DATA:", {
+      stage_3_execution_date: stationData?.stage_3_execution_date,
+      stage_3_execution_finish: stationData?.stage_3_execution_finish,
+      execution_date: stationData?.execution_date,
+      execution_finish: stationData?.execution_finish,
+      from_log: {
+        stage_3_execution_date: log?.stage_3_execution_date,
+        stage_3_execution_finish: log?.stage_3_execution_finish,
+      },
+    });
+  }, [stationData, log]);
 
   // Build normalized station data for rule evaluation
   // CRITICAL: Use normalized keys that match rule base_date_key
@@ -51,12 +65,13 @@ export default function Stage3PlanningWorkspace({ log, currentData, asset, onClo
     work_start_date: currentData?.order_received_date,
     final_deadline: currentData?.order_deadline_date,
     priority_deadline: currentData?.order_priority_date,
-    // Stage 3 execution dates (from local state for immediate updates)
-    execution_date: executionDates.execution_date,
-    execution_finish: executionDates.execution_finish,
-    // Keep original field names for component reference
+    // Stage 3 execution dates - ALWAYS use local state (which reflects current log values)
+    // Database field names for form binding
     stage_3_execution_date: executionDates.execution_date,
     stage_3_execution_finish: executionDates.execution_finish,
+    // Normalized keys for rule engine
+    execution_date: executionDates.execution_date,
+    execution_finish: executionDates.execution_finish,
   };
 
   // Generate suggestions when dates or rules change
