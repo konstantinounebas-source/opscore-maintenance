@@ -30,12 +30,12 @@ function RuleChangeBanner({ ruleDiff, onReview, onApplyAll, onDismiss }) {
       <p className="text-xs text-slate-600 flex-1">Stage 1 data changed. Review updated rule suggestions.</p>
       <div className="flex items-center gap-1.5">
         {newCount > 0 && (
-          <span className="text-[10px] border border-slate-300 text-slate-600 rounded-full px-2 py-0.5">
+          <span className="text-[10px] border border-amber-400 text-amber-700 rounded-full px-2 py-0.5 font-medium">
             {newCount} new suggestion{newCount !== 1 ? "s" : ""}
           </span>
         )}
         {outdatedCount > 0 && (
-          <span className="text-[10px] border border-slate-300 text-slate-600 rounded-full px-2 py-0.5">
+          <span className="text-[10px] border border-amber-400 text-red-600 rounded-full px-2 py-0.5 font-medium">
             {outdatedCount} outdated saved work{outdatedCount !== 1 ? "s" : ""}
           </span>
         )}
