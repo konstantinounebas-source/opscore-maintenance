@@ -35,16 +35,9 @@ export default function Stage3RightPanel({
     // Dates are already synced via local state
   }, [executionDate, executionFinish, stationData]);
 
-  // Detect out-of-sync items when suggestions regenerate
-  useEffect(() => {
-    if (suggestions.length === 0 || savedItems.length === 0) {
-      setOutOfSyncItems([]);
-      return;
-    }
-    const outOfSync = detectOutOfSyncItems(savedItems, suggestions);
-    console.log("OUT OF SYNC:", outOfSync);
-    setOutOfSyncItems(outOfSync);
-  }, [suggestions, savedItems]);
+  // Compute out-of-sync items on every render (re-runs when suggestions or savedItems change)
+  const outOfSyncItems = detectOutOfSyncItems(savedItems, suggestions);
+  console.log("OUT OF SYNC:", outOfSyncItems);
   
   const [manualForm, setManualForm] = useState({
     name: "",
@@ -56,7 +49,6 @@ export default function Stage3RightPanel({
   });
   const [addingMap, setAddingMap] = useState({});
   const [savingDates, setSavingDates] = useState(false);
-  const [outOfSyncItems, setOutOfSyncItems] = useState([]);
 
   const handleSaveDates = async () => {
     setSavingDates(true);
@@ -269,13 +261,12 @@ export default function Stage3RightPanel({
 
       {/* Out of Sync Warning */}
       {outOfSyncItems.length > 0 && (
-        <Stage3OutOfSyncWarning 
-          items={outOfSyncItems} 
+        <Stage3OutOfSyncWarning
+          items={outOfSyncItems}
           onUpdateItem={(id, newDate) => {
             base44.entities.StationLogStage3PlanningItems.update(id, {
               planned_date: newDate
             });
-            onSuggestionAdded();
           }}
         />
       )}

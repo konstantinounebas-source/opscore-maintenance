@@ -25,9 +25,9 @@ export default function Stage3OutOfSyncWarning({ items, onUpdateItem }) {
       {expanded && (
         <div className="space-y-2 mt-2">
           {items.map(item => (
-            <div key={item.itemId} className="bg-white rounded p-2 space-y-1.5 border border-red-100">
+            <div key={item.id} className="bg-white rounded p-2 space-y-1.5 border border-red-100">
               <div>
-                <p className="font-semibold text-sm text-slate-900">{item.itemName}</p>
+                <p className="font-semibold text-sm text-slate-900">{item.name}</p>
                 <p className="text-[10px] text-slate-500">Rule: {item.ruleName}</p>
               </div>
               
@@ -38,16 +38,16 @@ export default function Stage3OutOfSyncWarning({ items, onUpdateItem }) {
                 </div>
                 <div>
                   <p className="text-slate-500 font-semibold uppercase">Recalculated Date</p>
-                  <p className="font-mono text-slate-800">{item.calculatedDate}</p>
+                  <p className="font-mono text-slate-800">{item.newDate}</p>
                 </div>
               </div>
 
               <Button
                 size="sm"
                 className="w-full h-6 text-xs bg-red-600 hover:bg-red-700 text-white"
-                onClick={() => onUpdateItem(item.itemId, item.calculatedDate)}
+                onClick={() => onUpdateItem(item.id, item.newDate)}
               >
-                Update to {item.calculatedDate}
+                Update to {item.newDate}
               </Button>
             </div>
           ))}

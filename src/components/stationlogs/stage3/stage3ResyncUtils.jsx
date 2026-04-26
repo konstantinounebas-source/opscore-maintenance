@@ -10,31 +10,31 @@
  * @returns {Array} Array of out-of-sync items with metadata
  */
 export function detectOutOfSyncItems(savedItems, suggestions) {
-  const outOfSync = [];
+  const result = [];
 
   for (const item of savedItems) {
     if (item.is_active === false) continue;
 
-    const match = suggestions.find(s =>
+    const suggestion = suggestions.find(s =>
       s.rule_id === item.planning_rule_id ||
       s.output_date_key === item.output_date_key
     );
 
-    if (!match) continue;
+    if (!suggestion) continue;
 
-    if (!item.planned_date || !match.calculated_date) continue;
+    if (!item.planned_date || !suggestion.calculated_date) continue;
 
-    if (item.planned_date !== match.calculated_date) {
-      outOfSync.push({
-        itemId: item.id,
-        itemName: item.planning_item_name_snapshot || item.planning_item_name,
-        ruleName: match.rule_name || item.planning_rule_name_snapshot,
+    if (item.planned_date !== suggestion.calculated_date) {
+      result.push({
+        id: item.id,
+        name: item.planning_item_name_snapshot || item.planning_item_name,
+        ruleName: suggestion.rule_name || item.planning_rule_name_snapshot,
         savedDate: item.planned_date,
-        calculatedDate: match.calculated_date,
-        baseDateKey: match.base_date_key
+        newDate: suggestion.calculated_date,
+        baseDate: suggestion.base_date_key
       });
     }
   }
 
-  return outOfSync;
+  return result;
 }
