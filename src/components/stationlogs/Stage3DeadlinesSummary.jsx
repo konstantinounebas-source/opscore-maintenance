@@ -99,10 +99,45 @@ export default function Stage3DeadlinesSummary({ savedItems = [] }) {
         ) : (
           <div className="bg-white border border-slate-200 rounded overflow-hidden">
             {displayItems.map((item, idx) => {
-              const planStart = item.planned_start_date || (item.planned_date && `${item.planned_date} (start)`) || "No planning start";
-              const planEnd = item.planned_end_date || (item.planned_date && `${item.planned_date} (end)`) || "No planning end";
-              const deadline = item.planned_date || "No deadline";
               const completion = item.actual_date ? `${item.actual_date}` : "Not completed";
+
+              // Helper to render date field conditionally
+              const renderDateField = (label, value) => {
+                if (!value) return null;
+                return (
+                  <div>
+                    <p className="text-xs text-slate-500 font-semibold uppercase">{label}</p>
+                    <p className="text-sm text-slate-700 font-mono">{value}</p>
+                  </div>
+                );
+              };
+
+              // Determine fields to show based on item type
+              let dateFields = [];
+              
+              if (item.planning_item_type === "Deadline") {
+                dateFields = [
+                  renderDateField("Deadline", item.planned_date),
+                  renderDateField("Completed", completion)
+                ];
+              } else if (item.planning_item_type === "Milestone") {
+                dateFields = [
+                  renderDateField("Milestone", item.planned_date),
+                  renderDateField("Completed", completion)
+                ];
+              } else if (item.planning_item_type === "Planned Date") {
+                dateFields = [
+                  renderDateField("Planned Date", item.planned_date),
+                  renderDateField("Completed", completion)
+                ];
+              } else if (item.planning_item_type === "Task") {
+                dateFields = [
+                  renderDateField("Start", item.start_date),
+                  renderDateField("End", item.end_date),
+                  renderDateField("Deadline", item.deadline),
+                  renderDateField("Completed", completion)
+                ].filter(Boolean);
+              }
 
               return (
                 <div
@@ -127,24 +162,9 @@ export default function Stage3DeadlinesSummary({ savedItems = [] }) {
                   {/* Date rows */}
                   <div className="space-y-1.5">
                     <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-xs text-slate-500 font-semibold uppercase">Start</p>
-                        <p className="text-sm text-slate-700 font-mono">{planStart}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-slate-500 font-semibold uppercase">End</p>
-                        <p className="text-sm text-slate-700 font-mono">{planEnd}</p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-xs text-slate-500 font-semibold uppercase">Deadline</p>
-                        <p className="text-sm text-slate-700 font-mono">{deadline}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-slate-500 font-semibold uppercase">Completed</p>
-                        <p className="text-sm text-slate-700 font-mono">{completion}</p>
-                      </div>
+                      {dateFields.map((field, i) => (
+                        <div key={i}>{field}</div>
+                      ))}
                     </div>
                   </div>
                 </div>
