@@ -125,22 +125,26 @@ export default function Stage3DeadlinesSummary({ savedItems = [] }) {
                   </div>
 
                   {/* Date rows */}
-                  <div className="grid grid-cols-2 gap-3 ml-0">
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-xs text-slate-500 font-semibold uppercase">Start</span>
-                      <span className="text-sm text-slate-700 font-mono">{planStart}</span>
+                  <div className="space-y-1.5">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-xs text-slate-500 font-semibold uppercase">Start</p>
+                        <p className="text-sm text-slate-700 font-mono">{planStart}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-500 font-semibold uppercase">End</p>
+                        <p className="text-sm text-slate-700 font-mono">{planEnd}</p>
+                      </div>
                     </div>
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-xs text-slate-500 font-semibold uppercase">End</span>
-                      <span className="text-sm text-slate-700 font-mono">{planEnd}</span>
-                    </div>
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-xs text-slate-500 font-semibold uppercase">Deadline</span>
-                      <span className="text-sm text-slate-700 font-mono">{deadline}</span>
-                    </div>
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-xs text-slate-500 font-semibold uppercase">Completed</span>
-                      <span className="text-sm text-slate-700 font-mono">{completion}</span>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-xs text-slate-500 font-semibold uppercase">Deadline</p>
+                        <p className="text-sm text-slate-700 font-mono">{deadline}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-500 font-semibold uppercase">Completed</p>
+                        <p className="text-sm text-slate-700 font-mono">{completion}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
