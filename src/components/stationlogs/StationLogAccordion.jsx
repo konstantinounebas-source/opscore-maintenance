@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { AlertCircle, CheckCircle, Lock, ClipboardList, Clock } from "lucide-react";
 import OrderLocationModule from "@/components/stationlogs/stage1/OrderLocationModule.jsx";
 import Stage2Workspace from "@/components/stationlogs/stage2/Stage2Workspace.jsx";
+import Stage3PlanningWorkspace from "@/components/stationlogs/stage3/Stage3PlanningWorkspace.jsx";
 import { minutesToDisplay } from "@/components/stationlogs/settings/workrules/workRulesUtils";
 
 const STAGE_FIELDS = {
@@ -47,6 +48,7 @@ export default function StationLogAccordion({
   attachments,
 }) {
   const [stage2Open, setStage2Open] = useState(false);
+  const [stage3Open, setStage3Open] = useState(false);
   const getStageTasks = (stageId) => tasks.filter(t => t.stage === stageId);
   const getStageApprovals = (stageId) => approvals.filter(a => a.stage === stageId);
   const getStageInstructions = (stageId) => instructions.filter(i => i.related_stage === stageId);
@@ -162,8 +164,49 @@ export default function StationLogAccordion({
                     </div>
                   )}
 
+                  {/* Stage 3: Master Planning */}
+                  {stage.id === 3 && (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                          <p className="text-[10px] font-semibold text-slate-500 uppercase">Planning Status</p>
+                          <p className={`text-sm font-bold mt-1 ${log.stage_3_planning_status === "Ready" || log.stage_3_planning_status === "Completed" ? "text-green-600" : log.stage_3_planning_status === "At Risk" ? "text-red-600" : "text-amber-600"}`}>
+                            {log.stage_3_planning_status || "Not Planned"}
+                          </p>
+                        </div>
+                        <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                          <p className="text-[10px] font-semibold text-slate-500 uppercase">Execution Period</p>
+                          <p className="text-sm font-bold text-slate-800 mt-1 font-mono">
+                            {log.stage_3_execution_date || "—"} to {log.stage_3_execution_finish || "—"}
+                          </p>
+                        </div>
+                        <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                          <p className="text-[10px] font-semibold text-slate-500 uppercase">Stage 3</p>
+                          <p className={`text-sm font-bold mt-1 ${log.stage_3_completed ? "text-green-600" : "text-slate-400"}`}>
+                            {log.stage_3_completed ? "Completed" : "Not started"}
+                          </p>
+                        </div>
+                      </div>
+
+                      {log.stage_2_completed ? (
+                        <Button
+                          className="w-full gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+                          onClick={() => setStage3Open(true)}
+                        >
+                          <ClipboardList className="h-4 w-4" />
+                          Open Stage 3 Planning Workspace
+                        </Button>
+                      ) : (
+                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg flex gap-2">
+                          <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                          <p className="text-xs text-amber-800">Complete Stage 2 before opening Stage 3 Planning Workspace.</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* Other stages: placeholder fields */}
-                  {stage.id !== 1 && stage.id !== 2 && stageFields.fields?.length > 0 && (
+                  {stage.id !== 1 && stage.id !== 2 && stage.id !== 3 && stageFields.fields?.length > 0 && (
                   <div>
                     <p className="text-xs font-bold text-gray-700 uppercase mb-3">Stage Fields</p>
                     <div className="grid grid-cols-2 gap-3">
@@ -284,6 +327,18 @@ export default function StationLogAccordion({
         onGoToStage1={() => {
           setStage2Open(false);
           setExpandedStage("1");
+        }}
+      />
+    )}
+
+    {stage3Open && (
+      <Stage3PlanningWorkspace
+        log={log}
+        currentData={currentData}
+        asset={asset}
+        onClose={() => setStage3Open(false)}
+        onCompleted={() => {
+          setStage3Open(false);
         }}
       />
     )}

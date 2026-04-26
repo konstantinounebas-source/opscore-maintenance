@@ -42,6 +42,83 @@
     "notes": {
       "type": "string",
       "description": "General notes for this station log"
+    },
+    "stage_2_completed": {
+      "type": "boolean",
+      "default": false
+    },
+    "stage_2_completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "stage_2_completed_by": {
+      "type": "string"
+    },
+    "stage_2_planning_status": {
+      "type": "string",
+      "enum": [
+        "Incomplete",
+        "Ready for Planning"
+      ],
+      "default": "Incomplete"
+    },
+    "stage_2_total_minutes": {
+      "type": "number",
+      "default": 0
+    },
+    "stage_2_resource_breakdown_json": {
+      "type": "string",
+      "description": "JSON string of resource breakdown array"
+    },
+    "stage_3_completed": {
+      "type": "boolean",
+      "default": false
+    },
+    "stage_3_completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "stage_3_completed_by": {
+      "type": "string"
+    },
+    "stage_3_planning_status": {
+      "type": "string",
+      "enum": [
+        "Not Planned",
+        "Draft Planned",
+        "At Risk",
+        "Ready",
+        "Completed"
+      ],
+      "default": "Not Planned"
+    },
+    "stage_3_execution_date": {
+      "type": "string",
+      "format": "date",
+      "description": "User-entered execution start date for Stage 3 planning"
+    },
+    "stage_3_execution_finish": {
+      "type": "string",
+      "format": "date",
+      "description": "User-entered execution finish date for Stage 3 planning"
+    },
+    "stage_3_planned_start": {
+      "type": "string",
+      "format": "date",
+      "description": "Earliest planned start from saved planning items"
+    },
+    "stage_3_planned_finish": {
+      "type": "string",
+      "format": "date",
+      "description": "Latest planned finish from saved planning items"
+    },
+    "stage_3_milestones_json": {
+      "type": "string",
+      "description": "JSON string of milestone planning items"
+    },
+    "stage_3_deadlines_json": {
+      "type": "string",
+      "description": "JSON string of deadline planning items"
     }
   },
   "required": [
