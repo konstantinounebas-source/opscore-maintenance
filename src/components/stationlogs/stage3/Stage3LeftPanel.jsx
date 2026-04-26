@@ -47,8 +47,8 @@ export default function Stage3LeftPanel({ stationData, asset, log, stage2Summary
         <p className="text-[10px] text-blue-600 mt-0.5">Station info and Stage 1/2 constraints for planning.</p>
       </div>
 
-      {/* Station Info — open by default */}
-      <Section title="Station Info" defaultOpen={true}>
+      {/* Station Info — closed by default */}
+      <Section title="Station Info" defaultOpen={false}>
         <Field label="Bus Stop ID" value={asset?.asset_code} />
         <Field label="Name" value={d.bus_stop_name} />
         <Field label="Municipality" value={d.municipality} />
@@ -57,8 +57,8 @@ export default function Stage3LeftPanel({ stationData, asset, log, stage2Summary
         <Field label="Risk Level" value={d.risk_level} />
       </Section>
 
-      {/* Stage 1 Constraints — open by default */}
-      <Section title="Stage 1 Constraints" defaultOpen={true}>
+      {/* Stage 1 Constraints — closed by default */}
+      <Section title="Stage 1 Constraints" defaultOpen={false}>
         <Field label="Order Received" value={d.order_received_date} />
         <Field label="Final Deadline" value={d.order_deadline_date} />
         <Field label="Priority Deadline" value={d.order_priority_date} />
@@ -107,9 +107,9 @@ export default function Stage3LeftPanel({ stationData, asset, log, stage2Summary
         </div>
       )}
 
-      {/* Stage 2 Summary — at bottom, open by default if data exists */}
+      {/* Stage 2 Summary — at bottom, closed by default if data exists */}
       {stage2Summary && (
-        <Section title="Stage 2 Summary" defaultOpen={true}>
+        <Section title="Stage 2 Summary" defaultOpen={false}>
           <Field label="Total Time" value={stage2Summary.totalTime} />
           <Field label="Selected Works" value={`${stage2Summary.worksCount} items`} />
           {stage2Summary.resourceBreakdown && stage2Summary.resourceBreakdown.length > 0 && (
