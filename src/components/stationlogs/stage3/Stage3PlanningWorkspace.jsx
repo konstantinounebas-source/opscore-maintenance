@@ -7,12 +7,13 @@ import { X, Save, CheckCircle, Loader2 } from "lucide-react";
 import Stage3LeftPanel from "./Stage3LeftPanel";
 import Stage3RightPanel from "./Stage3RightPanel";
 import {
-  generateRuleSuggestions,
   calculatePlanningStatus,
-  CORE_STAGE1_DATES,
-  STAGE3_DRIVER_DATES,
   determineItemStatus,
 } from "./stage3Utils";
+import {
+  generateRuleSuggestionsV2,
+  detectCircularDependencies,
+} from "@/lib/stage3RuleEngine";
 
 export default function Stage3PlanningWorkspace({ log, currentData, asset, onClose, onCompleted }) {
   const queryClient = useQueryClient();
@@ -61,7 +62,16 @@ export default function Stage3PlanningWorkspace({ log, currentData, asset, onClo
   // Generate suggestions when dates or rules change
   // Dependencies on local state values for immediate updates
   useEffect(() => {
-    const newSuggestions = generateRuleSuggestions(allRules, stationData, savedItems);
+    // Check for circular dependencies
+    const activeRules = allRules.filter(r => r.is_active !== false);
+    const circularCheck = detectCircularDependencies(activeRules);
+    if (circularCheck.hasCycle) {
+      console.warn("⚠️ Circular dependency in rules:", circularCheck.errorMessage);
+    }
+
+    // Generate all suggestions
+    const newSuggestions = generateRuleSuggestionsV2(activeRules, stationData, savedItems);
+    
     // Filter out suggestions that are already saved
     const filtered = newSuggestions.filter(
       sugg => !savedItems.find(item => item.output_date_key === sugg.output_date_key)

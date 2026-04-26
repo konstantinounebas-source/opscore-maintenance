@@ -376,23 +376,23 @@ export default function Stage3RightPanel({
                   </div>
                 </div>
 
-                {sugg.status === "Blocked" ? (
-                  <div className="flex items-center gap-1 p-1.5 bg-red-100 rounded text-red-700 text-[10px]">
-                    <AlertCircle className="h-3 w-3" />
-                    <span>Missing base date: {sugg.missing_base_date}</span>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-2 text-[10px]">
-                    <div>
-                      <p className="text-slate-500 font-semibold">Base</p>
-                      <p className="text-slate-800 font-mono">{sugg.base_date_key}</p>
-                    </div>
-                    <div>
-                      <p className="text-slate-500 font-semibold">Calculated</p>
-                      <p className="text-slate-800 font-mono">{sugg.calculated_date}</p>
-                    </div>
-                  </div>
-                )}
+                {sugg.validationWarning ? (
+                   <div className="flex items-start gap-2 p-1.5 bg-red-50 border border-red-200 rounded text-red-700 text-[10px]">
+                     <AlertCircle className="h-3 w-3 flex-shrink-0 mt-0.5" />
+                     <span>{sugg.validationWarning}</span>
+                   </div>
+                 ) : (
+                   <div className="grid grid-cols-2 gap-2 text-[10px]">
+                     <div>
+                       <p className="text-slate-500 font-semibold">Base</p>
+                       <p className="text-slate-800 font-mono">{sugg.base_date_key}</p>
+                     </div>
+                     <div>
+                       <p className="text-slate-500 font-semibold">Calculated</p>
+                       <p className="text-slate-800 font-mono">{sugg.calculated_date}</p>
+                     </div>
+                   </div>
+                 )}
 
                 <Button
                   size="sm"
