@@ -64,25 +64,6 @@ export default function Stage3LeftPanel({ stationData, asset, log, stage2Summary
         <Field label="Priority Deadline" value={d.order_priority_date} />
       </Section>
 
-      {/* Stage 2 Summary — open by default if data exists */}
-      {stage2Summary && (
-        <Section title="Stage 2 Summary" defaultOpen={true}>
-          <Field label="Total Time" value={stage2Summary.totalTime} />
-          <Field label="Selected Works" value={`${stage2Summary.worksCount} items`} />
-          {stage2Summary.resourceBreakdown && stage2Summary.resourceBreakdown.length > 0 && (
-            <div className="mt-2 space-y-1">
-              <span className="text-[10px] font-semibold text-slate-400 uppercase block">Resources</span>
-              {stage2Summary.resourceBreakdown.map((r, i) => (
-                <div key={i} className="flex gap-2">
-                  <span className="text-xs text-slate-600">{r.name}</span>
-                  <span className="text-xs font-mono text-slate-800">{r.display}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </Section>
-      )}
-
       {/* Installation Type / Intervention — closed by default */}
       <Section title="Station Definition" icon={FileText} defaultOpen={false}>
         <Field label="Installation Type" value={d.installation_type} />
@@ -124,6 +105,25 @@ export default function Stage3LeftPanel({ stationData, asset, log, stage2Summary
             </Button>
           </a>
         </div>
+      )}
+
+      {/* Stage 2 Summary — at bottom, open by default if data exists */}
+      {stage2Summary && (
+        <Section title="Stage 2 Summary" defaultOpen={true}>
+          <Field label="Total Time" value={stage2Summary.totalTime} />
+          <Field label="Selected Works" value={`${stage2Summary.worksCount} items`} />
+          {stage2Summary.resourceBreakdown && stage2Summary.resourceBreakdown.length > 0 && (
+            <div className="mt-2 space-y-1">
+              <span className="text-[10px] font-semibold text-slate-400 uppercase block">Resources</span>
+              {stage2Summary.resourceBreakdown.map((r, i) => (
+                <div key={i} className="flex gap-2">
+                  <span className="text-xs text-slate-600">{r.name}</span>
+                  <span className="text-xs font-mono text-slate-800">{r.display}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </Section>
       )}
     </div>
   );
