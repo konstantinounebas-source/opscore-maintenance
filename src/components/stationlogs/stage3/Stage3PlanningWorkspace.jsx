@@ -143,7 +143,9 @@ export default function Stage3PlanningWorkspace({ log, currentData, asset, onClo
     const milestones = savedItems.filter(i => i.planning_item_type === "Milestone" && i.is_active !== false);
 
     try {
-      await base44.entities.StationLog.update(log.id, {
+      console.log("Completing Stage 3 for log id:", log.id);
+
+      const updated = await base44.entities.StationLog.update(log.id, {
         stage_3_completed: true,
         stage_3_completed_at: new Date().toISOString(),
         stage_3_completed_by: (await base44.auth.me()).email,
@@ -153,11 +155,23 @@ export default function Stage3PlanningWorkspace({ log, currentData, asset, onClo
         stage_3_deadlines_json: JSON.stringify(deadlines),
         stage_3_milestones_json: JSON.stringify(milestones),
       });
+
+      console.log("Stage 3 completed update result:", updated);
+
+      // Verify completion was successful
+      if (!updated.stage_3_completed) {
+        throw new Error("Stage 3 completion failed: stage_3_completed not set to true");
+      }
+
+      // Invalidate and refetch the station log
+      await queryClient.invalidateQueries({ queryKey: ["stationLogs"] });
+      
       setCompleting(false);
       onCompleted();
     } catch (err) {
       setCompleting(false);
-      alert(`Error: ${err.message}`);
+      console.error("Stage 3 completion error:", err);
+      alert(`Error completing Stage 3: ${err.message}`);
     }
   };
 
