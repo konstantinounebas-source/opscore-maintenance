@@ -185,8 +185,10 @@ export default function Stage3PlanningWorkspace({ log, currentData, asset, onClo
     return () => window.removeEventListener('stage3DatesSaved', handleDatesSaved);
   }, [queryClient]);
 
+  const hasExecutionDates = executionDates.execution_date && executionDates.execution_finish;
+  
   const canComplete =
-    planningStatus === "Ready" || (planningStatus === "Draft Planned" && savedItems.length > 0);
+    hasExecutionDates && (planningStatus === "Ready" || (planningStatus === "Draft Planned" && savedItems.length > 0));
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
