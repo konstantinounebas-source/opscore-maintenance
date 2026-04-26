@@ -51,27 +51,42 @@ export default function Stage3RightPanel({
   };
 
   const handleAddSuggestion = async (suggestion) => {
+    // Validate required fields
+    if (!suggestion.output_date_key) {
+      alert("Error: Missing output_date_key in suggestion. This is a system configuration issue.");
+      return;
+    }
+    if (!suggestion.output_flow_stage_id) {
+      alert("Error: Missing output_flow_stage_id in suggestion. This is a system configuration issue.");
+      return;
+    }
+
     setAdding(suggestion.output_date_key);
-    const newItem = {
-      station_log_id: log.id,
-      stage1_version_id: log.active_version_id,
-      source: "Rule",
-      planning_rule_id: suggestion.rule_id,
-      planning_rule_name_snapshot: suggestion.rule_name,
-      output_date_key: suggestion.output_date_key,
-      output_flow_stage_id: suggestion.output_flow_stage_id,
-      output_flow_stage_name: suggestion.output_flow_stage_name,
-      planning_item_name_snapshot: suggestion.planning_item_name,
-      planning_item_type: suggestion.planning_item_type,
-      base_date_key: suggestion.base_date_key,
-      calculated_date: suggestion.calculated_date,
-      planned_date: suggestion.calculated_date,
-      status: determineItemStatus(suggestion.calculated_date),
-      required: suggestion.required,
-    };
-    await base44.entities.StationLogStage3PlanningItems.create(newItem);
-    setAdding(null);
-    onSuggestionAdded();
+    try {
+      const newItem = {
+        station_log_id: log.id,
+        stage1_version_id: log.active_version_id,
+        source: "Rule",
+        planning_rule_id: suggestion.rule_id,
+        planning_rule_name_snapshot: suggestion.rule_name,
+        output_date_key: suggestion.output_date_key,
+        output_flow_stage_id: suggestion.output_flow_stage_id,
+        output_flow_stage_name: suggestion.output_flow_stage_name,
+        planning_item_name_snapshot: suggestion.planning_item_name,
+        planning_item_type: suggestion.planning_item_type,
+        base_date_key: suggestion.base_date_key,
+        calculated_date: suggestion.calculated_date,
+        planned_date: suggestion.calculated_date,
+        status: determineItemStatus(suggestion.calculated_date),
+        required: suggestion.required,
+      };
+      await base44.entities.StationLogStage3PlanningItems.create(newItem);
+      onSuggestionAdded();
+    } catch (err) {
+      alert(`Error adding suggestion: ${err.message}`);
+    } finally {
+      setAdding(null);
+    }
   };
 
   const handleAddManualSubmit = async () => {
