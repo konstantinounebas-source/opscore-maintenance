@@ -111,29 +111,29 @@ export default function Stage2LeftPanel({ log, currentData, attachments, station
         </Button>
       </div>
 
-      {/* 0. Order Info */}
-      <Section title="Order Information" icon={FileText}>
-        <Field label="Authority Ref" value={d.authority_order_reference} />
+      {/* Order Info */}
+      <Section title="Order Info" icon={FileText}>
+        <Field label="Authority Order Ref" value={d.authority_order_reference} />
+        <Field label="Order Received Date" value={d.order_received_date} />
+        <Field label="Order Received From" value={d.order_received_from} />
         <Field label="Order Type" value={d.order_type} />
         <Field label="Order Priority" value={d.order_priority} />
-        <Field label="Received Date" value={d.order_received_date} />
-        <Field label="Received From" value={d.order_received_from} />
-        <Field label="Priority Date" value={d.order_priority_date} />
-        <Field label="Deadline" value={d.order_deadline_date} />
-        <Field label="Description" value={d.order_description} />
-        <Field label="Notes" value={d.order_notes} />
+        <Field label="Order Priority Date" value={d.order_priority_date} />
+        <Field label="Order Deadline Date" value={d.order_deadline_date} />
+        <Field label="Order Description" value={d.order_description} />
+        <Field label="Order Notes" value={d.order_notes} />
       </Section>
 
-      {/* 1. Basic Location */}
-      <Section title="Basic Location" icon={MapPin}>
-        <Field label="Bus Stop Code" value={busStopCode} />
+      {/* Location */}
+      <Section title="Location" icon={MapPin}>
         <Field label="Bus Stop Name" value={d.bus_stop_name} />
-        <Field label="Address" value={d.location_address} />
+        <Field label="Location Address" value={d.location_address} />
         <Field label="Municipality" value={d.municipality} />
         <Field label="District" value={d.district} />
         <Field label="Area" value={d.area} />
         <Field label="Latitude" value={lat} />
         <Field label="Longitude" value={lng} />
+        <Field label="Map Link" value={d.map_link} />
         {mapsUrl && (
           <a href={mapsUrl} target="_blank" rel="noopener noreferrer">
             <Button size="sm" variant="outline" className="h-7 text-xs gap-1 mt-1">
@@ -143,30 +143,38 @@ export default function Stage2LeftPanel({ log, currentData, attachments, station
         )}
       </Section>
 
-      {/* 2. Technical Data */}
-      <Section title="Technical Data">
+      {/* Station Definition */}
+      <Section title="Station Definition">
         <Field label="Shelter Type" value={d.shelter_type} />
         <Field label="Installation Type" value={d.installation_type} />
         <Field label="Intervention Scope" value={d.intervention_scope} />
-        <Field label="Pavement Type" value={d.pavement_type} />
-        <Field label="Pavement Width" value={d.pavement_width} />
-        <Field label="Existing Infrastructure" value={d.existing_infrastructure_type} />
         <Field label="Road Side" value={d.road_side} />
         <Field label="Traffic Direction" value={d.traffic_direction} />
+      </Section>
+
+      {/* Existing Conditions */}
+      <Section title="Existing Conditions">
+        <Field label="Existing Infrastructure Type" value={d.existing_infrastructure_type} />
+        <Field label="Pavement Type" value={d.pavement_type} />
+        <Field label="Pavement Width" value={d.pavement_width} />
         <Field label="Has Tactile Paving" value={d.has_tactile_paving} />
         <Field label="Has Bus Bay" value={d.has_bus_bay} />
         <Field label="Has Road Marking" value={d.has_road_marking} />
         <Field label="Requires Footway" value={d.requires_footway} />
-        <Field label="Traffic Impact" value={d.traffic_impact_level} />
-        <Field label="Requires Traffic Mgmt" value={d.requires_traffic_management} />
+        <Field label="Access Notes" value={d.access_notes} />
+      </Section>
+
+      {/* Constraints / Risks */}
+      <Section title="Constraints / Risks">
+        <Field label="Has Underground Utilities" value={d.has_underground_utilities} />
+        <Field label="Utility Type" value={d.utility_type} />
+        <Field label="Traffic Impact Level" value={d.traffic_impact_level} />
+        <Field label="Requires Traffic Management" value={d.requires_traffic_management} />
         <Field label="Requires Permits" value={d.requires_permits} />
         <Field label="Permit Type" value={d.permit_type} />
+        <Field label="Site Constraints Notes" value={d.site_constraints_notes} />
         <Field label="Risk Level" value={d.risk_level} />
-        <Field label="Has Underground Utils" value={d.has_underground_utilities} />
-        <Field label="Utility Type" value={d.utility_type} />
-        {d.access_notes && <Field label="Access Notes" value={d.access_notes} />}
-        {d.site_constraints_notes && <Field label="Site Constraints" value={d.site_constraints_notes} />}
-        {d.risk_description && <Field label="Risk Notes" value={d.risk_description} />}
+        <Field label="Risk Description" value={d.risk_description} />
       </Section>
 
       {/* 3. Attachments */}
