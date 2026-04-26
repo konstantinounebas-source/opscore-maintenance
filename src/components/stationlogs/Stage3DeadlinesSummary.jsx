@@ -64,7 +64,7 @@ export default function Stage3DeadlinesSummary({ savedItems = [] }) {
       <div className="grid grid-cols-4 gap-2">
         <div className="p-3 bg-slate-50 rounded border border-slate-100">
           <p className="text-[10px] font-semibold text-slate-500 uppercase">Total</p>
-          <p className="text-lg font-bold text-slate-800 mt-1">{savedItems.length}</p>
+          <p className="text-lg font-bold text-slate-800 mt-1">{activeItems.length}</p>
         </div>
         <div className={`p-3 rounded border ${overdue > 0 ? "bg-red-50 border-red-200" : "bg-slate-50 border-slate-100"}`}>
           <p className="text-[10px] font-semibold uppercase" style={{ color: overdue > 0 ? "#991b1b" : "#64748b" }}>
