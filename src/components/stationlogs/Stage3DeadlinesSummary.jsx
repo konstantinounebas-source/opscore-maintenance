@@ -92,49 +92,45 @@ export default function Stage3DeadlinesSummary({ savedItems = [] }) {
         </div>
       </div>
 
-      {/* Planning Items List */}
-      <div className="space-y-1.5">
+      {/* Planning Items List - Table Style */}
+      <div className="space-y-1">
         {displayItems.length === 0 ? (
           <p className="text-xs text-slate-500 py-2">No active planning items to display.</p>
         ) : (
-          displayItems.map(item => (
-            <div key={item.id} className="flex items-start justify-between gap-2 p-2.5 bg-slate-50 rounded border border-slate-100 text-xs">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <p className="font-semibold text-slate-800 truncate">
-                    {item.planning_item_name_snapshot || item.planning_item_name}
-                  </p>
-                  {item.status === "Completed" && (
-                    <CheckCircle className="h-3.5 w-3.5 text-green-600 flex-shrink-0" />
-                  )}
+          <div className="bg-white border border-slate-200 rounded overflow-hidden">
+            {displayItems.map((item, idx) => (
+              <div
+                key={item.id}
+                className={`flex items-center justify-between gap-2 px-2.5 py-2 text-xs ${
+                  idx % 2 === 0 ? "bg-white" : "bg-slate-50"
+                } ${idx !== displayItems.length - 1 ? "border-b border-slate-100" : ""}`}
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-semibold text-slate-800">Stage {item.output_flow_stage_id}</span>
+                    <span className="text-slate-600 truncate">
+                      {item.planning_item_name_snapshot || item.planning_item_name}
+                    </span>
+                    {item.status === "Completed" && (
+                      <CheckCircle className="h-3.5 w-3.5 text-green-600 flex-shrink-0" />
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <Calendar className="h-3 w-3 text-slate-400" />
+                    <span className="text-slate-500 font-mono">{item.planned_date || "—"}</span>
+                    {item.planning_item_type === "Deadline" && (
+                      <Clock className="h-3 w-3 text-slate-400" />
+                    )}
+                  </div>
                 </div>
-                <p className="text-[10px] text-slate-500 mb-1">Stage {item.output_flow_stage_id}</p>
-                <div className="flex flex-wrap gap-1">
-                  {item.planned_date && (
-                    <Badge variant="outline" className="text-[9px] gap-1 py-0">
-                      <Calendar className="h-2.5 w-2.5" />
-                      {item.planned_date}
-                    </Badge>
-                  )}
-                  {item.planning_item_type === "Deadline" && (
-                    <Badge variant="outline" className="text-[9px] gap-1 py-0">
-                      <Clock className="h-2.5 w-2.5" />
-                      Deadline
-                    </Badge>
-                  )}
-                  {item.planning_item_type === "Planned Date" && (
-                    <Badge variant="outline" className="text-[9px] gap-1 py-0">
-                      <Calendar className="h-2.5 w-2.5" />
-                      Scheduled
-                    </Badge>
-                  )}
-                </div>
+                {item.status !== "Completed" && (
+                  <Badge className={`text-[9px] flex-shrink-0 whitespace-nowrap ${getStatusBadgeColor(item.status)}`}>
+                    {item.status}
+                  </Badge>
+                )}
               </div>
-              <Badge className={`text-[9px] flex-shrink-0 whitespace-nowrap ${getStatusBadgeColor(item.status)}`}>
-                {item.status}
-              </Badge>
-            </div>
-          ))
+            ))}
+          </div>
         )}
       </div>
 
