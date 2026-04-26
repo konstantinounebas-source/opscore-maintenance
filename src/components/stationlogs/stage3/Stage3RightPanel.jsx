@@ -18,8 +18,8 @@ export default function Stage3RightPanel({
   onAddManual,
   onDatesSaved,
 }) {
-  const [executionDate, setExecutionDate] = useState(stationData?.execution_date || stationData?.stage_3_execution_date || "");
-  const [executionFinish, setExecutionFinish] = useState(stationData?.execution_finish || stationData?.stage_3_execution_finish || "");
+  const [executionDate, setExecutionDate] = useState(stationData?.stage_3_execution_date || "");
+  const [executionFinish, setExecutionFinish] = useState(stationData?.stage_3_execution_finish || "");
   const [showManualForm, setShowManualForm] = useState(false);
   const [manualForm, setManualForm] = useState({
     name: "",
@@ -177,7 +177,7 @@ export default function Stage3RightPanel({
   };
 
   // Check if execution dates are set
-  const hasExecutionDates = stationData?.execution_date && stationData?.execution_finish;
+  const hasExecutionDates = executionDate && executionFinish;
 
   // Group saved items by stage
   const groupedSaved = savedItems.reduce((acc, item) => {
