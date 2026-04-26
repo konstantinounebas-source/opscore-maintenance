@@ -15,6 +15,7 @@ import OrderLocationModule from "@/components/stationlogs/stage1/OrderLocationMo
 import Stage2Workspace from "@/components/stationlogs/stage2/Stage2Workspace.jsx";
 import Stage3PlanningWorkspace from "@/components/stationlogs/stage3/Stage3PlanningWorkspace.jsx";
 import Stage3DeadlinesSummary from "@/components/stationlogs/Stage3DeadlinesSummary.jsx";
+import Stage3CoreDates from "@/components/stationlogs/Stage3CoreDates.jsx";
 import { minutesToDisplay } from "@/components/stationlogs/settings/workrules/workRulesUtils";
 
 const STAGE_FIELDS = {
@@ -187,34 +188,41 @@ export default function StationLogAccordion({
                   )}
 
                   {/* Stage 3: Master Planning */}
-                  {stage.id === 3 && (
-                    <div className="space-y-3">
-                      <div className="grid grid-cols-3 gap-3">
-                        <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                          <p className="text-[10px] font-semibold text-slate-500 uppercase">Planning Status</p>
-                          <p className={`text-sm font-bold mt-1 ${log.stage_3_planning_status === "Ready" || log.stage_3_planning_status === "Completed" ? "text-green-600" : log.stage_3_planning_status === "At Risk" ? "text-red-600" : "text-amber-600"}`}>
-                            {log.stage_3_planning_status || "Not Planned"}
-                          </p>
-                        </div>
-                        <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                          <p className="text-[10px] font-semibold text-slate-500 uppercase">Execution Period</p>
-                          <p className="text-sm font-bold text-slate-800 mt-1 font-mono">
-                            {log.stage_3_execution_date || "—"} to {log.stage_3_execution_finish || "—"}
-                          </p>
-                        </div>
-                        <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                          <p className="text-[10px] font-semibold text-slate-500 uppercase">Stage 3</p>
-                          <p className={`text-sm font-bold mt-1 ${log.stage_3_completed ? "text-green-600" : "text-slate-400"}`}>
-                            {log.stage_3_completed ? "Completed" : "Not started"}
-                          </p>
-                        </div>
-                      </div>
+                   {stage.id === 3 && (
+                     <div className="space-y-3">
+                       {/* Top Summary Boxes */}
+                       <div className="grid grid-cols-3 gap-3">
+                         <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                           <p className="text-[10px] font-semibold text-slate-500 uppercase">Planning Status</p>
+                           <p className={`text-sm font-bold mt-1 ${log.stage_3_planning_status === "Ready" || log.stage_3_planning_status === "Completed" ? "text-green-600" : log.stage_3_planning_status === "At Risk" ? "text-red-600" : "text-amber-600"}`}>
+                             {log.stage_3_planning_status || "Not Planned"}
+                           </p>
+                         </div>
+                         <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                           <p className="text-[10px] font-semibold text-slate-500 uppercase">Active Deadline</p>
+                           <p className="text-sm font-bold text-slate-800 mt-1 font-mono">
+                             {currentData?.priority_deadline || currentData?.final_deadline || "—"}
+                           </p>
+                           <p className="text-[9px] text-slate-500 mt-1">
+                             {currentData?.priority_deadline ? "Priority Deadline" : "Final Deadline"}
+                           </p>
+                         </div>
+                         <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                           <p className="text-[10px] font-semibold text-slate-500 uppercase">Stage 3 Status</p>
+                           <p className={`text-sm font-bold mt-1 ${log.stage_3_completed ? "text-green-600" : "text-slate-400"}`}>
+                             {log.stage_3_completed ? "Completed" : "Not started"}
+                           </p>
+                         </div>
+                       </div>
 
-                      {/* Planning Deadlines Summary */}
-                      <div className="border-t pt-3">
-                        <p className="text-xs font-bold text-gray-700 uppercase mb-2">📅 Planning Dates / Deadlines</p>
-                        <Stage3DeadlinesSummary savedItems={stage3Items} />
-                      </div>
+                       {/* Core Dates Section */}
+                       <Stage3CoreDates currentData={currentData} />
+
+                       {/* Planning Deadlines Summary */}
+                       <div className="border-t pt-3">
+                         <p className="text-xs font-bold text-gray-700 uppercase mb-2">📋 Planning Dates / Deadlines</p>
+                         <Stage3DeadlinesSummary savedItems={stage3Items} />
+                       </div>
 
                       {log.stage_2_completed ? (
                         <Button
