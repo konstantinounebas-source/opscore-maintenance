@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Plus, Trash2, Check, Loader2 } from "lucide-react";
 import { determineItemStatus } from "./stage3Utils";
+import { detectOutOfSyncItems } from "./stage3ResyncUtils";
+import Stage3OutOfSyncWarning from "./Stage3OutOfSyncWarning";
 
 export default function Stage3RightPanel({
   log,
@@ -40,6 +42,21 @@ export default function Stage3RightPanel({
       },
     });
   }, [executionDate, executionFinish, stationData]);
+
+  // Detect out-of-sync items when suggestions regenerate
+  useEffect(() => {
+    if (suggestions.length === 0 || savedItems.length === 0) {
+      setOutOfSyncItems([]);
+      return;
+    }
+    
+    const outOfSync = detectOutOfSyncItems(savedItems, suggestions);
+    console.log("🔄 OUT OF SYNC DETECTION:", {
+      outOfSyncCount: outOfSync.length,
+      items: outOfSync,
+    });
+    setOutOfSyncItems(outOfSync);
+  }, [suggestions, savedItems]);
   
   const [manualForm, setManualForm] = useState({
     name: "",
@@ -51,6 +68,7 @@ export default function Stage3RightPanel({
   });
   const [addingMap, setAddingMap] = useState({});
   const [savingDates, setSavingDates] = useState(false);
+  const [outOfSyncItems, setOutOfSyncItems] = useState([]);
 
   const handleSaveDates = async () => {
     setSavingDates(true);
@@ -283,6 +301,14 @@ export default function Stage3RightPanel({
           </Button>
         </div>
       </div>
+
+      {/* Out of Sync Warning */}
+      {outOfSyncItems.length > 0 && (
+        <Stage3OutOfSyncWarning 
+          outOfSyncItems={outOfSyncItems} 
+          onResync={onSuggestionAdded}
+        />
+      )}
 
       {/* Saved Planning Items */}
       <div className="bg-white rounded border border-slate-200 p-3 space-y-2">

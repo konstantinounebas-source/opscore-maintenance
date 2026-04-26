@@ -112,6 +112,40 @@
       "type": "boolean",
       "default": true,
       "description": "False = soft-deleted or removed"
+    },
+    "original_calculated_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Original calculated date when the item was first created from a rule"
+    },
+    "last_calculated_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Most recent recalculated date from the rule"
+    },
+    "last_rule_id": {
+      "type": "string",
+      "description": "Last rule ID that was used to calculate this item"
+    },
+    "was_manually_edited": {
+      "type": "boolean",
+      "default": false,
+      "description": "True if user has manually changed the planned_date from the calculated_date"
+    },
+    "sync_status": {
+      "type": "string",
+      "enum": [
+        "In Sync",
+        "Out of Sync",
+        "Manually Edited"
+      ],
+      "default": "In Sync",
+      "description": "Synchronization status with recalculated rule date"
+    },
+    "last_synced_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last time this item was checked for sync"
     }
   },
   "required": [
