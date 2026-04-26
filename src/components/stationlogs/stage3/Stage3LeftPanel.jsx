@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { MapPin, FileText, ChevronDown, ChevronRight } from "lucide-react";
+import { MapPin, FileText, ChevronDown, ChevronRight, Pencil, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import OrderLocationModule from "@/components/stationlogs/stage1/OrderLocationModule";
 
 function Section({ title, icon: SectionIcon, children, defaultOpen = true }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -34,6 +35,7 @@ function Field({ label, value }) {
 }
 
 export default function Stage3LeftPanel({ stationData, asset, log, stage2Summary }) {
+  const [editOpen, setEditOpen] = useState(false);
   const d = stationData || {};
   const lat = d.latitude;
   const lng = d.longitude;
@@ -43,29 +45,46 @@ export default function Stage3LeftPanel({ stationData, asset, log, stage2Summary
     <div className="text-sm">
       {/* Top header */}
       <div className="px-4 py-3 bg-blue-50 border-b border-blue-200">
-        <p className="text-xs font-bold text-blue-800 uppercase">Stage 3 Planning Context</p>
-        <p className="text-[10px] text-blue-600 mt-0.5">Station info and Stage 1/2 constraints for planning.</p>
+        <p className="text-xs font-bold text-blue-800 uppercase">Stage 1 Data Verification</p>
+        <p className="text-[10px] text-blue-600 mt-0.5">Review all Stage 1 data before finalizing work allocation.</p>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-7 text-xs gap-1.5 mt-2 border-amber-300 text-amber-700 hover:bg-amber-50 w-full"
+          onClick={() => setEditOpen(true)}
+        >
+          <Pencil className="h-3 w-3" /> Edit / Request Revision
+        </Button>
       </div>
 
-      {/* Station Info — closed by default */}
-      <Section title="Station Info" defaultOpen={false}>
-        <Field label="Bus Stop ID" value={asset?.asset_code} />
-        <Field label="Name" value={d.bus_stop_name} />
-        <Field label="Municipality" value={d.municipality} />
+      {/* Order Info — closed by default */}
+      <Section title="Order Info" icon={FileText} defaultOpen={false}>
+        <Field label="Authority Order Ref" value={d.authority_order_reference} />
+        <Field label="Order Received Date" value={d.order_received_date} />
+        <Field label="Order Received From" value={d.order_received_from} />
+        <Field label="Order Type" value={d.order_type} />
+        <Field label="Order Priority" value={d.order_priority} />
+        <Field label="Order Priority Date" value={d.order_priority_date} />
+        <Field label="Order Deadline Date" value={d.order_deadline_date} />
+        <Field label="Order Description" value={d.order_description} />
+        <Field label="Order Notes" value={d.order_notes} />
+      </Section>
+
+      {/* Location — closed by default */}
+      <Section title="Location" icon={MapPin} defaultOpen={false}>
+        <Field label="Bus Stop Name" value={d.bus_stop_name} />
         <Field label="Location Address" value={d.location_address} />
+        <Field label="Municipality" value={d.municipality} />
+        <Field label="District" value={d.district} />
+        <Field label="Area" value={d.area} />
+        <Field label="Latitude" value={lat} />
+        <Field label="Longitude" value={lng} />
+        <Field label="Map Link" value={d.map_link} />
+      </Section>
+
+      {/* Station Definition — closed by default */}
+      <Section title="Station Definition" defaultOpen={false}>
         <Field label="Shelter Type" value={d.shelter_type} />
-        <Field label="Risk Level" value={d.risk_level} />
-      </Section>
-
-      {/* Stage 1 Constraints — closed by default */}
-      <Section title="Stage 1 Constraints" defaultOpen={false}>
-        <Field label="Order Received" value={d.order_received_date} />
-        <Field label="Final Deadline" value={d.order_deadline_date} />
-        <Field label="Priority Deadline" value={d.order_priority_date} />
-      </Section>
-
-      {/* Installation Type / Intervention — closed by default */}
-      <Section title="Station Definition" icon={FileText} defaultOpen={false}>
         <Field label="Installation Type" value={d.installation_type} />
         <Field label="Intervention Scope" value={d.intervention_scope} />
         <Field label="Road Side" value={d.road_side} />
@@ -124,6 +143,21 @@ export default function Stage3LeftPanel({ stationData, asset, log, stage2Summary
             </div>
           )}
         </Section>
+      )}
+
+      {/* Edit / Revision Overlay */}
+      {editOpen && (
+        <div className="fixed inset-0 z-[70] bg-black/60 flex flex-col">
+          <div className="flex items-center justify-between bg-white border-b border-slate-200 px-6 py-3 shrink-0">
+            <p className="font-bold text-slate-800">Stage 1 — Order + Location (Edit / Revision)</p>
+            <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => setEditOpen(false)}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="flex-1 overflow-y-auto bg-gray-50 p-6">
+            <OrderLocationModule log={log} asset={asset} />
+          </div>
+        </div>
       )}
     </div>
   );
