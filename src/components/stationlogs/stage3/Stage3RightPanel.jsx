@@ -51,6 +51,17 @@ export default function Stage3RightPanel({
   };
 
   const handleAddSuggestion = async (suggestion) => {
+    console.log("✅ ADDING SUGGESTION:", {
+      rule_id: suggestion.rule_id,
+      rule_name: suggestion.rule_name,
+      output_date_key: suggestion.output_date_key,
+      calculated_date: suggestion.calculated_date,
+      base_date_key: suggestion.base_date_key,
+      output_flow_stage_id: suggestion.output_flow_stage_id,
+      status: suggestion.status,
+      validationWarning: suggestion.validationWarning
+    });
+
     // Validate rule can be added
     if (suggestion.status !== "Suggested") {
       alert("This rule cannot be added. Please check the status.");

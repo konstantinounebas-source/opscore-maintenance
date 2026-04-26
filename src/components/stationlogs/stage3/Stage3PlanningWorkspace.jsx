@@ -64,6 +64,13 @@ export default function Stage3PlanningWorkspace({ log, currentData, asset, onClo
   useEffect(() => {
     // Check for circular dependencies
     const activeRules = allRules.filter(r => r.is_active !== false);
+    console.log("🔍 ACTIVE RULES BEFORE GENERATION:", activeRules.map(r => ({
+      rule_name: r.rule_name,
+      base_date_key: r.base_date_key,
+      output_date_key: r.output_date_key,
+      output_flow_stage_id: r.output_flow_stage_id
+    })));
+    
     const circularCheck = detectCircularDependencies(activeRules);
     if (circularCheck.hasCycle) {
       console.warn("⚠️ Circular dependency in rules:", circularCheck.errorMessage);
