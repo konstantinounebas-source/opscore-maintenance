@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -27,11 +27,85 @@ function buildResourceBreakdown(rows) {
   return Object.values(map).map(g => ({ ...g, display: minutesToDisplay(g.total_minutes) }));
 }
 
+/**
+ * Runs the rule engine against currentData and returns all matching rule rows.
+ * Returns array of { ruleId, categoryId, categoryName, triggerValueId, triggerValueSnapshot,
+ *   workItemId, workName, resourceTypeId, resourceName, baseMinutes, defaultSelected }
+ */
+function computeCurrentRuleMatches(categories, triggerValues, rules, currentData) {
+  if (!currentData) return [];
+  const matches = [];
+  for (const cat of [...categories].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))) {
+    const fieldValue = currentData[cat.linked_stage1_field];
+    if (fieldValue == null || fieldValue === "") continue;
+    const matchingTVs = triggerValues.filter(
+      tv => tv.category_id === cat.id && tv.trigger_value === String(fieldValue)
+    );
+    for (const tv of matchingTVs) {
+      const matchingRules = rules.filter(r => r.trigger_value_id === tv.id);
+      for (const rule of [...matchingRules].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))) {
+        matches.push({
+          ruleId: rule.id,
+          categoryId: cat.id,
+          categoryName: cat.category_name,
+          triggerValueId: tv.id,
+          triggerValueSnapshot: tv.display_label || tv.trigger_value,
+          workItemId: rule.work_item_id,
+          workName: rule.work_item_name_snapshot || "",
+          resourceTypeId: rule.resource_type_id || "",
+          resourceName: rule.resource_type_name_snapshot || "",
+          baseMinutes: rule.estimated_time_minutes || 0,
+          defaultSelected: rule.default_selected !== false,
+        });
+      }
+    }
+  }
+  return matches;
+}
+
+/**
+ * Compares saved rows against current rule matches.
+ * Returns { newSuggestions, noLongerMatching, stillMatchingRuleIds }
+ */
+function computeRuleDiff(savedRows, currentMatches) {
+  const savedAutoByRuleTV = new Map();
+  for (const row of savedRows) {
+    if (row.source === "Auto" && row.trigger_value_id) {
+      // key by trigger_value_id + work_item_id (a row is "the same rule" if both match)
+      const k = `${row.trigger_value_id}|||${row.work_item_id}`;
+      savedAutoByRuleTV.set(k, row);
+    }
+  }
+
+  const currentMatchKeys = new Set(
+    currentMatches.map(m => `${m.triggerValueId}|||${m.workItemId}`)
+  );
+
+  // New: in current matches but NOT in saved auto rows
+  const newSuggestions = currentMatches.filter(
+    m => !savedAutoByRuleTV.has(`${m.triggerValueId}|||${m.workItemId}`)
+  );
+
+  // No longer matching: saved Auto rows whose rule key is not in current matches
+  const noLongerMatching = savedRows.filter(r => {
+    if (r.source !== "Auto") return false;
+    const k = `${r.trigger_value_id}|||${r.work_item_id}`;
+    return !currentMatchKeys.has(k);
+  });
+
+  const stillMatchingRuleIds = new Set(
+    currentMatches
+      .filter(m => savedAutoByRuleTV.has(`${m.triggerValueId}|||${m.workItemId}`))
+      .map(m => `${m.triggerValueId}|||${m.workItemId}`)
+  );
+
+  return { newSuggestions, noLongerMatching, stillMatchingRuleIds };
+}
+
 export default function Stage2Workspace({ log, currentData, attachments, onClose, onCompleted, onGoToStage1 }) {
   const queryClient = useQueryClient();
   const stationLogId = log.id;
 
-  // Load all rule reference data
   const { data: categories = [] } = useQuery({
     queryKey: ["wrc_cats"],
     queryFn: () => base44.entities.StationLogWorkRuleCategories.list(),
@@ -58,7 +132,6 @@ export default function Stage2Workspace({ log, currentData, attachments, onClose
     select: d => d.filter(r => r.is_active !== false),
   });
 
-  // Existing saved allocations for this station log
   const { data: savedAllocations = [], isLoading: allocLoading } = useQuery({
     queryKey: ["stage2alloc", stationLogId],
     queryFn: () => base44.entities.StationLogStage2WorkAllocations.filter({ station_log_id: stationLogId }),
@@ -67,13 +140,13 @@ export default function Stage2Workspace({ log, currentData, attachments, onClose
   const [rows, setRows] = useState([]);
   const [initialized, setInitialized] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
 
-  // Build auto-suggested rows from rules when data is ready
+  // Build rows on first load
   useEffect(() => {
     if (allocLoading || !categories.length) return;
 
     if (savedAllocations.length > 0) {
-      // Load from saved
       setRows(savedAllocations.map(a => ({ ...a, _key: a.id })));
       setInitialized(true);
       return;
@@ -83,7 +156,7 @@ export default function Stage2Workspace({ log, currentData, attachments, onClose
 
     const autoRows = [];
     let sortIdx = 0;
-    for (const cat of categories.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))) {
+    for (const cat of [...categories].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))) {
       const fieldValue = currentData[cat.linked_stage1_field];
       if (!fieldValue) continue;
       const matchingTVs = triggerValues.filter(
@@ -91,7 +164,7 @@ export default function Stage2Workspace({ log, currentData, attachments, onClose
       );
       for (const tv of matchingTVs) {
         const matchingRules = rules.filter(r => r.trigger_value_id === tv.id);
-        for (const rule of matchingRules.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))) {
+        for (const rule of [...matchingRules].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))) {
           autoRows.push({
             _key: `auto_${rule.id}`,
             station_log_id: stationLogId,
@@ -119,6 +192,33 @@ export default function Stage2Workspace({ log, currentData, attachments, onClose
     setRows(autoRows);
     setInitialized(true);
   }, [allocLoading, savedAllocations, categories, triggerValues, rules, currentData]);
+
+  // Compute rule diff (only meaningful when there are saved allocations)
+  const currentMatches = useMemo(
+    () => computeCurrentRuleMatches(categories, triggerValues, rules, currentData),
+    [categories, triggerValues, rules, currentData]
+  );
+
+  const ruleDiff = useMemo(() => {
+    if (!initialized || savedAllocations.length === 0) return null;
+    return computeRuleDiff(rows, currentMatches);
+  }, [initialized, savedAllocations.length, rows, currentMatches]);
+
+  const hasDiff = ruleDiff && (ruleDiff.newSuggestions.length > 0 || ruleDiff.noLongerMatching.length > 0);
+
+  // Enrich rows with rule_match_status (derived, not stored)
+  const enrichedRows = useMemo(() => {
+    if (!ruleDiff) return rows.map(r => ({ ...r, rule_match_status: r.source === "Auto" ? "current_match" : r.source === "Template" ? "template" : "manual" }));
+    return rows.map(r => {
+      if (r.source === "Template") return { ...r, rule_match_status: "template" };
+      if (r.source === "Manual") return { ...r, rule_match_status: "manual" };
+      // Auto
+      const k = `${r.trigger_value_id}|||${r.work_item_id}`;
+      const noLonger = ruleDiff.noLongerMatching.some(nl => nl._key === r._key);
+      if (noLonger) return { ...r, rule_match_status: "no_longer_matches" };
+      return { ...r, rule_match_status: "current_match" };
+    });
+  }, [rows, ruleDiff]);
 
   const updateRow = useCallback((key, changes) => {
     setRows(prev => prev.map(r => {
@@ -183,31 +283,80 @@ export default function Stage2Workspace({ log, currentData, attachments, onClose
     }]);
   }, [stationLogId, currentData]);
 
+  // Add a single new suggestion to rows
+  const addNewSuggestion = useCallback((suggestion) => {
+    const key = `auto_new_${Date.now()}`;
+    setRows(prev => [...prev, {
+      _key: key,
+      station_log_id: stationLogId,
+      stage1_version_id: currentData?.active_version_id || null,
+      category_id: suggestion.categoryId,
+      category_name_snapshot: suggestion.categoryName,
+      trigger_value_id: suggestion.triggerValueId,
+      trigger_value_snapshot: suggestion.triggerValueSnapshot,
+      source: "Auto",
+      work_item_id: suggestion.workItemId,
+      work_name_snapshot: suggestion.workName,
+      resource_type_id: suggestion.resourceTypeId,
+      resource_type_name_snapshot: suggestion.resourceName,
+      base_minutes: suggestion.baseMinutes,
+      extra_minutes: 0,
+      total_minutes: suggestion.baseMinutes,
+      selected: suggestion.defaultSelected,
+      notes: "",
+      sort_order: 9999,
+      is_active: true,
+    }]);
+  }, [stationLogId, currentData]);
+
+  // Apply all new suggestions at once
+  const applyAllNewSuggestions = useCallback(() => {
+    if (!ruleDiff) return;
+    const newRows = ruleDiff.newSuggestions.map((suggestion, i) => ({
+      _key: `auto_new_${Date.now()}_${i}`,
+      station_log_id: stationLogId,
+      stage1_version_id: currentData?.active_version_id || null,
+      category_id: suggestion.categoryId,
+      category_name_snapshot: suggestion.categoryName,
+      trigger_value_id: suggestion.triggerValueId,
+      trigger_value_snapshot: suggestion.triggerValueSnapshot,
+      source: "Auto",
+      work_item_id: suggestion.workItemId,
+      work_name_snapshot: suggestion.workName,
+      resource_type_id: suggestion.resourceTypeId,
+      resource_type_name_snapshot: suggestion.resourceName,
+      base_minutes: suggestion.baseMinutes,
+      extra_minutes: 0,
+      total_minutes: suggestion.baseMinutes,
+      selected: suggestion.defaultSelected,
+      notes: "",
+      sort_order: 9999,
+      is_active: true,
+    }));
+    setRows(prev => [...prev, ...newRows]);
+    setBannerDismissed(true);
+  }, [ruleDiff, stationLogId, currentData]);
+
   const planningStatus = calcPlanningStatus(rows);
   const totalMinutes = rows.filter(r => r.selected).reduce((s, r) => s + (r.total_minutes || 0), 0);
   const resourceBreakdown = buildResourceBreakdown(rows);
 
   const handleSave = async () => {
     setSaving(true);
-    // Delete existing and re-insert
     const existing = await base44.entities.StationLogStage2WorkAllocations.filter({ station_log_id: stationLogId });
     await Promise.all(existing.map(e => base44.entities.StationLogStage2WorkAllocations.delete(e.id)));
-
-    const toCreate = rows.map(({ _key, ...r }) => ({
+    const toCreate = rows.map(({ _key, rule_match_status, ...r }) => ({
       ...r,
       total_minutes: (Number(r.base_minutes) || 0) + (Number(r.extra_minutes) || 0),
     }));
     if (toCreate.length > 0) {
       await base44.entities.StationLogStage2WorkAllocations.bulkCreate(toCreate);
     }
-
-    // Update StationLog summary (non-completing save)
     await base44.entities.StationLog.update(stationLogId, {
       stage_2_planning_status: planningStatus,
       stage_2_total_minutes: totalMinutes,
       stage_2_resource_breakdown_json: JSON.stringify(resourceBreakdown),
     });
-
     queryClient.invalidateQueries({ queryKey: ["stage2alloc", stationLogId] });
     queryClient.invalidateQueries({ queryKey: ["stationLogs"] });
     setSaving(false);
@@ -217,19 +366,15 @@ export default function Stage2Workspace({ log, currentData, attachments, onClose
     if (planningStatus !== "Ready for Planning") return;
     setSaving(true);
     const user = await base44.auth.me();
-
-    // Save allocations
     const existing = await base44.entities.StationLogStage2WorkAllocations.filter({ station_log_id: stationLogId });
     await Promise.all(existing.map(e => base44.entities.StationLogStage2WorkAllocations.delete(e.id)));
-    const toCreate = rows.map(({ _key, ...r }) => ({
+    const toCreate = rows.map(({ _key, rule_match_status, ...r }) => ({
       ...r,
       total_minutes: (Number(r.base_minutes) || 0) + (Number(r.extra_minutes) || 0),
     }));
     if (toCreate.length > 0) {
       await base44.entities.StationLogStage2WorkAllocations.bulkCreate(toCreate);
     }
-
-    // Update StationLog — complete Stage 2 and advance to Stage 3
     await base44.entities.StationLog.update(stationLogId, {
       stage_2_completed: true,
       stage_2_completed_at: new Date().toISOString(),
@@ -240,7 +385,6 @@ export default function Stage2Workspace({ log, currentData, attachments, onClose
       current_stage: log.current_stage <= 2 ? 3 : log.current_stage,
       current_status: "In Progress",
     });
-
     queryClient.invalidateQueries({ queryKey: ["stage2alloc", stationLogId] });
     queryClient.invalidateQueries({ queryKey: ["stationLogs"] });
     setSaving(false);
@@ -270,18 +414,12 @@ export default function Stage2Workspace({ log, currentData, attachments, onClose
           </div>
         </div>
         <div className="flex items-center gap-3">
-          {/* Planning status badge */}
           <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${
-            planningStatus === "Ready for Planning"
-              ? "bg-green-100 text-green-800"
-              : "bg-amber-100 text-amber-800"
+            planningStatus === "Ready for Planning" ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-800"
           }`}>
-            {planningStatus === "Ready for Planning"
-              ? <CheckCircle className="h-3.5 w-3.5" />
-              : <AlertCircle className="h-3.5 w-3.5" />}
+            {planningStatus === "Ready for Planning" ? <CheckCircle className="h-3.5 w-3.5" /> : <AlertCircle className="h-3.5 w-3.5" />}
             {planningStatus}
           </div>
-          {/* Total time */}
           <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 rounded-full text-xs font-mono text-slate-700">
             <Clock className="h-3.5 w-3.5" />
             {minutesToDisplay(totalMinutes)} total
@@ -320,7 +458,7 @@ export default function Stage2Workspace({ log, currentData, attachments, onClose
         {/* Right: Work Allocation */}
         <div className="flex-1 overflow-y-auto bg-white">
           <Stage2RightPanel
-            rows={rows}
+            rows={enrichedRows}
             resources={resources}
             workItems={workItems}
             rules={rules}
@@ -329,10 +467,16 @@ export default function Stage2Workspace({ log, currentData, attachments, onClose
             resourceBreakdown={resourceBreakdown}
             totalMinutes={totalMinutes}
             planningStatus={planningStatus}
+            ruleDiff={ruleDiff}
+            bannerDismissed={bannerDismissed}
+            hasDiff={hasDiff}
             onUpdateRow={updateRow}
             onRemoveRow={removeRow}
             onAddTemplate={addTemplateRow}
             onAddManual={addManualRow}
+            onAddNewSuggestion={addNewSuggestion}
+            onApplyAllNewSuggestions={applyAllNewSuggestions}
+            onDismissBanner={() => setBannerDismissed(true)}
           />
         </div>
       </div>
