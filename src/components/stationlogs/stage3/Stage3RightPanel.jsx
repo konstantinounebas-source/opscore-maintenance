@@ -381,7 +381,10 @@ export default function Stage3RightPanel({
           </div>
         ) : (
           <div className="space-y-2">
-            {suggestions.map(sugg => (
+            {suggestions.map(sugg => {
+              // Debug: log suggestion object
+              console.log("Suggestion:", sugg);
+              return (
               <div
                 key={sugg.output_date_key}
                 className={`p-2 rounded border ${
@@ -422,7 +425,11 @@ export default function Stage3RightPanel({
                 <Button
                    size="sm"
                    className="w-full h-7 text-xs gap-1"
-                   disabled={addingMap[sugg.rule_id] || sugg.status !== "Suggested" || !!sugg.validationWarning || !sugg.output_date_key || !sugg.output_flow_stage_id || !sugg.calculated_date}
+                   disabled={
+                     addingMap[sugg.rule_id] ||
+                     sugg.status !== "Suggested" ||
+                     !!sugg.validationWarning
+                   }
                    onClick={() => handleAddSuggestion(sugg)}
                  >
                    {addingMap[sugg.rule_id] ? (
@@ -438,7 +445,8 @@ export default function Stage3RightPanel({
                    )}
                  </Button>
               </div>
-            ))}
+            );
+            })}
           </div>
         )}
       </div>
