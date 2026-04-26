@@ -76,6 +76,24 @@ export default function Stage3RightPanel({
     setAddingMap(prev => ({ ...prev, [suggestion.rule_id]: true }));
 
     try {
+      // Map calculated_date to the appropriate date field based on item type
+      let dateFields = {
+        calculated_date: suggestion.calculated_date,
+        planned_date: suggestion.calculated_date,
+      };
+      
+      if (suggestion.planning_item_type === "Deadline") {
+        dateFields.deadline = suggestion.calculated_date;
+      } else if (suggestion.planning_item_type === "Planned Date") {
+        dateFields.start_date = suggestion.calculated_date;
+      } else if (suggestion.planning_item_type === "Start") {
+        dateFields.start_date = suggestion.calculated_date;
+      } else if (suggestion.planning_item_type === "End") {
+        dateFields.end_date = suggestion.calculated_date;
+      } else if (suggestion.planning_item_type === "Milestone") {
+        dateFields.deadline = suggestion.calculated_date;
+      }
+      
       const newItem = {
         station_log_id: log.id,
         stage1_version_id: log.active_version_id,
@@ -88,10 +106,9 @@ export default function Stage3RightPanel({
         planning_item_name_snapshot: suggestion.planning_item_name,
         planning_item_type: suggestion.planning_item_type,
         base_date_key: suggestion.base_date_key,
-        calculated_date: suggestion.calculated_date,
-        planned_date: suggestion.calculated_date,
         status: determineItemStatus(suggestion.calculated_date),
         required: suggestion.required,
+        ...dateFields,
       };
       await base44.entities.StationLogStage3PlanningItems.create(newItem);
       onSuggestionAdded();
@@ -107,6 +124,24 @@ export default function Stage3RightPanel({
       alert("Name and date are required");
       return;
     }
+    
+    // Map date to appropriate field based on type
+    let dateFields = {
+      planned_date: manualForm.date,
+    };
+    
+    if (manualForm.type === "Deadline") {
+      dateFields.deadline = manualForm.date;
+    } else if (manualForm.type === "Planned Date") {
+      dateFields.start_date = manualForm.date;
+    } else if (manualForm.type === "Start") {
+      dateFields.start_date = manualForm.date;
+    } else if (manualForm.type === "End") {
+      dateFields.end_date = manualForm.date;
+    } else if (manualForm.type === "Milestone") {
+      dateFields.deadline = manualForm.date;
+    }
+    
     const newItem = {
       station_log_id: log.id,
       stage1_version_id: log.active_version_id,
@@ -116,10 +151,10 @@ export default function Stage3RightPanel({
       output_flow_stage_name: `Stage ${Number(manualForm.stage)}`,
       planning_item_name_snapshot: manualForm.name,
       planning_item_type: manualForm.type,
-      planned_date: manualForm.date,
       status: determineItemStatus(manualForm.date),
       required: manualForm.required,
       notes: manualForm.notes,
+      ...dateFields,
     };
     await base44.entities.StationLogStage3PlanningItems.create(newItem);
     setManualForm({ name: "", type: "Deadline", stage: "", date: "", required: true, notes: "" });
