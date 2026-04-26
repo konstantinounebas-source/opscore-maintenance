@@ -45,7 +45,7 @@ function RuleChangeBanner({ ruleDiff, onReview, onApplyAll, onDismiss }) {
           <Eye className="h-3 w-3 mr-1" /> Review
         </Button>
         {newCount > 0 && (
-          <Button size="sm" variant="outline" className="h-6 text-[11px] px-2" onClick={onApplyAll}>
+          <Button size="sm" variant="outline" className="h-6 text-[11px] px-2 border-amber-400 text-red-600 hover:bg-amber-50" onClick={onApplyAll}>
             <Plus className="h-3 w-3 mr-1" /> Apply New
           </Button>
         )}
