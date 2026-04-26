@@ -179,6 +179,26 @@ export default function StationLogSettings() {
     queryFn: () => base44.entities.StationLogDropdownOptions.list(),
   });
 
+  const { data: workRules = [] } = useQuery({
+    queryKey: ["stationLogWorkRules"],
+    queryFn: () => base44.entities.StationLogWorkRules.list(),
+  });
+
+  const { data: workItems = [] } = useQuery({
+    queryKey: ["stationLogWorkItems"],
+    queryFn: () => base44.entities.StationLogWorkItems.list(),
+  });
+
+  const { data: resourceTypes = [] } = useQuery({
+    queryKey: ["stationLogResourceTypes"],
+    queryFn: () => base44.entities.StationLogResourceTypes.list(),
+  });
+
+  const { data: planningRules = [] } = useQuery({
+    queryKey: ["stationLogPlanningRules"],
+    queryFn: () => base44.entities.StationLogPlanningRules.list(),
+  });
+
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: ["stationLogDropdownOptions"] });
     setEditingOpt(null);
@@ -188,7 +208,13 @@ export default function StationLogSettings() {
     .filter(o => o.category === selectedCategory && (showInactive || o.is_active !== false))
     .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || (a.label ?? "").localeCompare(b.label ?? ""));
 
-  const countByCategory = (cat) => allOptions.filter(o => o.category === cat && o.is_active !== false).length;
+  const countByCategory = (cat) => {
+    if (cat === "stage2_work_rules") return workRules.filter(r => r.is_active !== false).length;
+    if (cat === "stage2_work_items") return workItems.filter(i => i.is_active !== false).length;
+    if (cat === "stage2_resource_types") return resourceTypes.filter(r => r.is_active !== false).length;
+    if (cat === "stage3_planning_rules") return planningRules.filter(r => r.is_active !== false).length;
+    return allOptions.filter(o => o.category === cat && o.is_active !== false).length;
+  };
 
   const handleToggle = async (opt) => {
     await base44.entities.StationLogDropdownOptions.update(opt.id, { is_active: opt.is_active === false ? true : false });
