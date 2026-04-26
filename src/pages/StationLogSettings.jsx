@@ -256,11 +256,9 @@ export default function StationLogSettings() {
                     className={`w-full flex items-center justify-between pl-6 pr-3 py-2 text-left transition-colors ${selectedCategory === cat.key ? "bg-blue-50 text-blue-800" : "hover:bg-slate-50 text-slate-700"}`}
                   >
                     <span className="text-sm font-medium truncate">{cat.label}</span>
-                    {!group.isSpecial && (
-                      <span className={`text-[10px] rounded-full px-1.5 py-0.5 font-semibold ml-1 flex-shrink-0 ${selectedCategory === cat.key ? "bg-blue-200 text-blue-800" : "bg-slate-100 text-slate-500"}`}>
-                        {countByCategory(cat.key)}
-                      </span>
-                    )}
+                    <span className={`text-[10px] rounded-full px-1.5 py-0.5 font-semibold ml-1 flex-shrink-0 ${selectedCategory === cat.key ? "bg-blue-200 text-blue-800" : "bg-slate-100 text-slate-500"}`}>
+                      {countByCategory(cat.key)}
+                    </span>
                   </button>
                 ))}
               </div>
