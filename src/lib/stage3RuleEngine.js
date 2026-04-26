@@ -230,62 +230,39 @@ export function evaluateAppliesWhen(rule, stationData) {
  * }
  */
 export function generateRuleSuggestionsV2(activeRules, stationData, stage3Items) {
-  const suggestions = [];
   const generatedDateMap = {}; // Track calculated dates for chaining
-  const visited = new Set();
-  const blockedRules = new Set(); // Rules that are permanently blocked
-  
-  // Detect circular dependencies first
+  const processedRules = new Set(); // Rules successfully processed
+  const suggestionMap = new Map(); // Map rule.id → suggestion object
+  const circularRuleIds = new Set(); // Rules in circular dependencies
+
+  // Detect circular dependencies upfront
   const circularCheck = detectCircularDependencies(activeRules);
-  const circularRuleIds = new Set();
   if (circularCheck.hasCycle) {
     console.warn("⚠️", circularCheck.errorMessage);
-    // Mark all rules in the cycle as blocked
     circularCheck.cycle.forEach(id => circularRuleIds.add(id));
   }
 
-  // Process rules in dependency order with multiple passes
-  let lastPassCount = -1;
+  // Dependency-aware multi-pass evaluation
   let passCount = 0;
-  const maxPasses = activeRules.length + 2; // Prevent infinite loops
+  const maxPasses = activeRules.length + 2;
 
-  while (suggestions.length !== lastPassCount && visited.size < activeRules.length && passCount < maxPasses) {
-    lastPassCount = suggestions.length;
+  while (passCount < maxPasses) {
     passCount++;
+    let processedInThisPass = 0;
 
     for (const rule of activeRules) {
-      if (visited.has(rule.id)) continue;
-
-      // Skip rules in circular dependency
-      if (circularRuleIds.has(rule.id)) {
-        suggestions.push({
-          rule_id: rule.id,
-          rule_name: rule.rule_name,
-          planning_item_name: rule.planning_item_name,
-          planning_item_type: rule.planning_item_type,
-          output_date_key: rule.output_date_key,
-          output_flow_stage_id: rule.output_flow_stage_id,
-          output_flow_stage_name: rule.output_flow_stage_name,
-          base_date_key: rule.base_date_key,
-          calculated_date: null,
-          required: rule.required,
-          status: "Blocked",
-          applies: true,
-          validationWarning: circularCheck.errorMessage,
-          missing_base_date: null,
-        });
-        visited.add(rule.id);
+      // Skip already processed or circular rules
+      if (processedRules.has(rule.id) || circularRuleIds.has(rule.id)) {
         continue;
       }
 
       // Check if rule applies
-      const applies = evaluateAppliesWhen(rule, stationData);
-      if (!applies) {
-        visited.add(rule.id);
+      if (!evaluateAppliesWhen(rule, stationData)) {
+        processedRules.add(rule.id);
         continue;
       }
 
-      // Resolve base date (now includes generatedDateMap)
+      // Resolve base date: stationData → generatedDateMap → saved items
       const baseResolution = resolveBaseDateWithTracking(
         rule.base_date_key,
         stationData,
@@ -294,28 +271,11 @@ export function generateRuleSuggestionsV2(activeRules, stationData, stage3Items)
       );
 
       if (!baseResolution.found) {
-        // Missing base date - don't mark visited yet, may become available next pass
-        suggestions.push({
-          rule_id: rule.id,
-          rule_name: rule.rule_name,
-          planning_item_name: rule.planning_item_name,
-          planning_item_type: rule.planning_item_type,
-          output_date_key: rule.output_date_key,
-          output_flow_stage_id: rule.output_flow_stage_id,
-          output_flow_stage_name: rule.output_flow_stage_name,
-          base_date_key: rule.base_date_key,
-          calculated_date: null,
-          required: rule.required,
-          status: "Blocked",
-          applies: true,
-          validationWarning: baseResolution.warning,
-          missing_base_date: baseResolution.source,
-        });
-        // Don't mark visited - may resolve in next pass if dependency generates
+        // Base date missing - skip this rule for now, may resolve in next pass
         continue;
       }
 
-      // Calculate date
+      // Calculate date with offset
       const calcResult = calculateDateWithOffset(
         baseResolution.date,
         rule.offset_direction,
@@ -324,7 +284,8 @@ export function generateRuleSuggestionsV2(activeRules, stationData, stage3Items)
       );
 
       if (calcResult.error) {
-        suggestions.push({
+        // Calculation failed - mark as error and move on
+        suggestionMap.set(rule.id, {
           rule_id: rule.id,
           rule_name: rule.rule_name,
           planning_item_name: rule.planning_item_name,
@@ -340,14 +301,15 @@ export function generateRuleSuggestionsV2(activeRules, stationData, stage3Items)
           validationWarning: calcResult.error,
           missing_base_date: null,
         });
-        visited.add(rule.id);
+        processedRules.add(rule.id);
         continue;
       }
 
-      // Success: store generated date for chaining
+      // Success: store generated date for downstream rules and mark processed
       generatedDateMap[rule.output_date_key] = calcResult.date;
+      processedInThisPass++;
 
-      suggestions.push({
+      suggestionMap.set(rule.id, {
         rule_id: rule.id,
         rule_name: rule.rule_name,
         planning_item_name: rule.planning_item_name,
@@ -363,9 +325,75 @@ export function generateRuleSuggestionsV2(activeRules, stationData, stage3Items)
         validationWarning: null,
         missing_base_date: null,
       });
-      visited.add(rule.id);
+      processedRules.add(rule.id);
+    }
+
+    // Exit if no progress made (prevents infinite loops, indicates circular/unresolved deps)
+    if (processedInThisPass === 0) {
+      break;
     }
   }
 
-  return suggestions;
+  // Handle circular dependency rules
+  for (const ruleId of circularRuleIds) {
+    const rule = activeRules.find(r => r.id === ruleId);
+    if (rule && evaluateAppliesWhen(rule, stationData)) {
+      suggestionMap.set(ruleId, {
+        rule_id: ruleId,
+        rule_name: rule.rule_name,
+        planning_item_name: rule.planning_item_name,
+        planning_item_type: rule.planning_item_type,
+        output_date_key: rule.output_date_key,
+        output_flow_stage_id: rule.output_flow_stage_id,
+        output_flow_stage_name: rule.output_flow_stage_name,
+        base_date_key: rule.base_date_key,
+        calculated_date: null,
+        required: rule.required,
+        status: "Blocked",
+        applies: true,
+        validationWarning: circularCheck.errorMessage,
+        missing_base_date: null,
+      });
+    }
+  }
+
+  // Mark remaining unprocessed rules as Blocked (missing base date)
+  for (const rule of activeRules) {
+    if (!suggestionMap.has(rule.id)) {
+      // Only block if the rule applies
+      if (!evaluateAppliesWhen(rule, stationData)) {
+        continue;
+      }
+
+      // Check if base date is resolvable
+      const baseResolution = resolveBaseDateWithTracking(
+        rule.base_date_key,
+        stationData,
+        stage3Items,
+        generatedDateMap
+      );
+
+      suggestionMap.set(rule.id, {
+        rule_id: rule.id,
+        rule_name: rule.rule_name,
+        planning_item_name: rule.planning_item_name,
+        planning_item_type: rule.planning_item_type,
+        output_date_key: rule.output_date_key,
+        output_flow_stage_id: rule.output_flow_stage_id,
+        output_flow_stage_name: rule.output_flow_stage_name,
+        base_date_key: rule.base_date_key,
+        calculated_date: null,
+        required: rule.required,
+        status: "Blocked",
+        applies: true,
+        validationWarning: baseResolution.warning,
+        missing_base_date: baseResolution.source,
+      });
+    }
+  }
+
+  // Return sorted suggestions (maintain order)
+  return activeRules
+    .map(r => suggestionMap.get(r.id))
+    .filter(s => s !== undefined);
 }
