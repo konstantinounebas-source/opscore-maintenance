@@ -294,6 +294,9 @@ export default function Stage3RightPanel({
                         </button>
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
+                        <div className="flex-1 text-[10px] text-slate-500 font-semibold uppercase mb-1">
+                          {item.planning_item_type === "Deadline" || item.planning_item_type === "Milestone" ? "Deadline" : item.planning_item_type === "Planned Date" ? "Start" : "Date"}
+                        </div>
                         <Input
                           type="date"
                           value={item.planned_date || ""}
