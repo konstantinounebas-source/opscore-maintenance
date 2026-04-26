@@ -101,42 +101,21 @@ export default function Stage3DeadlinesSummary({ savedItems = [] }) {
             {displayItems.map((item, idx) => {
               const completion = item.actual_date ? `${item.actual_date}` : "Not completed";
 
-              // Helper to render date field conditionally
-              const renderDateField = (label, value) => {
-                if (!value) return null;
-                return (
-                  <div>
-                    <p className="text-xs text-slate-500 font-semibold uppercase">{label}</p>
-                    <p className="text-sm text-slate-700 font-mono">{value}</p>
-                  </div>
-                );
-              };
+              // Determine field values based on item type
+              let startValue = "-";
+              let endValue = "-";
+              let deadlineValue = "-";
 
-              // Determine fields to show based on item type
-              let dateFields = [];
-              
               if (item.planning_item_type === "Deadline") {
-                dateFields = [
-                  renderDateField("Deadline", item.planned_date),
-                  renderDateField("Completed", completion)
-                ];
+                deadlineValue = item.planned_date || "-";
               } else if (item.planning_item_type === "Milestone") {
-                dateFields = [
-                  renderDateField("Milestone", item.planned_date),
-                  renderDateField("Completed", completion)
-                ];
+                deadlineValue = item.planned_date || "-";
               } else if (item.planning_item_type === "Planned Date") {
-                dateFields = [
-                  renderDateField("Planned Date", item.planned_date),
-                  renderDateField("Completed", completion)
-                ];
+                deadlineValue = item.planned_date || "-";
               } else if (item.planning_item_type === "Task") {
-                dateFields = [
-                  renderDateField("Start", item.start_date),
-                  renderDateField("End", item.end_date),
-                  renderDateField("Deadline", item.deadline),
-                  renderDateField("Completed", completion)
-                ].filter(Boolean);
+                startValue = item.start_date || "-";
+                endValue = item.end_date || "-";
+                deadlineValue = item.deadline || item.planned_date || "-";
               }
 
               return (
@@ -159,12 +138,27 @@ export default function Stage3DeadlinesSummary({ savedItems = [] }) {
                     </Badge>
                   </div>
 
-                  {/* Date rows */}
+                  {/* Date rows - always 2x2 grid */}
                   <div className="space-y-1.5">
                     <div className="grid grid-cols-2 gap-4">
-                      {dateFields.map((field, i) => (
-                        <div key={i}>{field}</div>
-                      ))}
+                      <div>
+                        <p className="text-xs text-slate-500 font-semibold uppercase">Start</p>
+                        <p className="text-sm text-slate-700 font-mono">{startValue}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-500 font-semibold uppercase">End</p>
+                        <p className="text-sm text-slate-700 font-mono">{endValue}</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-xs text-slate-500 font-semibold uppercase">Deadline</p>
+                        <p className="text-sm text-slate-700 font-mono">{deadlineValue}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-500 font-semibold uppercase">Completed</p>
+                        <p className="text-sm text-slate-700 font-mono">{completion}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
