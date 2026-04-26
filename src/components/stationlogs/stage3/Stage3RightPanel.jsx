@@ -55,15 +55,28 @@ export default function Stage3RightPanel({
   const handleSaveDates = async () => {
     setSavingDates(true);
     try {
-      await base44.entities.StationLog.update(log.id, {
+      console.log("💾 Saving execution dates", {
         stage_3_execution_date: executionDate || null,
         stage_3_execution_finish: executionFinish || null,
       });
+      
+      const updatedRecord = await base44.entities.StationLog.update(log.id, {
+        stage_3_execution_date: executionDate || null,
+        stage_3_execution_finish: executionFinish || null,
+      });
+      
+      console.log("✅ Saved station record", {
+        id: updatedRecord.id,
+        stage_3_execution_date: updatedRecord.stage_3_execution_date,
+        stage_3_execution_finish: updatedRecord.stage_3_execution_finish,
+      });
+      
       // Notify parent to update local state and recalculate suggestions
       if (onDatesSaved) {
         onDatesSaved(executionDate, executionFinish);
       }
     } catch (err) {
+      console.error("❌ Error saving dates:", err);
       alert(`Error saving dates: ${err.message}`);
     } finally {
       setSavingDates(false);

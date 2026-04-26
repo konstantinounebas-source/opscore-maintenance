@@ -277,6 +277,10 @@ export default function Stage3PlanningWorkspace({ log, currentData, asset, onClo
               }}
               onAddManual={handleRefresh}
               onDatesSaved={(execDate, execFinish) => {
+                console.log("📥 onDatesSaved callback received", {
+                  execution_date: execDate,
+                  execution_finish: execFinish,
+                });
                 setExecutionDates({
                   execution_date: execDate,
                   execution_finish: execFinish,
