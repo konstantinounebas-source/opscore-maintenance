@@ -20,9 +20,10 @@ export const STAGE3_DRIVER_DATES = {
 /**
  * Resolve a base_date_key to an actual date value
  * Checks: stationData (Stage 1 + Stage 3 dates), saved planning items
- * CRITICAL: Does NOT check suggestions to avoid circular logic
  */
 export function resolveBaseDate(baseKey, stationData, stage3Items) {
+  if (!baseKey) return null;
+
   // Priority 1: Check direct stationData (Stage 1 core dates + Stage 3 execution dates)
   if (stationData && stationData[baseKey]) {
     return stationData[baseKey];
@@ -153,9 +154,9 @@ export function generateRuleSuggestions(rules, stationData, stage3Items) {
 
       if (!baseDate) {
         // Cannot calculate - missing base date
-        const dateLabel = rule.base_date_key 
-          ? rule.base_date_key.replace(/_/g, ' ')
-          : 'base date';
+        const keyDisplay = rule.base_date_key 
+          ? rule.base_date_key.replace(/_/g, ' ').replace(/([a-z])([A-Z])/g, '$1 $2')
+          : 'unknown';
         
         return {
           rule_id: rule.id,
@@ -170,7 +171,7 @@ export function generateRuleSuggestions(rules, stationData, stage3Items) {
           base_date_key: rule.base_date_key,
           calculated_date: null,
           status: "Blocked",
-          missing_base_date: `Set "${dateLabel}" first`,
+          missing_base_date: keyDisplay || 'base date not set on rule',
           required: rule.required,
         };
       }
