@@ -193,7 +193,7 @@ function GroupBlock({ group, resources, onUpdate, onRemove }) {
 }
 
 export default function Stage2RightPanel({
-  rows, resources, workItems,
+  rows, resources, workItems, rules = [], categories = [], triggerValues = [],
   resourceBreakdown, totalMinutes, planningStatus,
   onUpdateRow, onRemoveRow, onAddTemplate, onAddManual,
 }) {
@@ -266,6 +266,9 @@ export default function Stage2RightPanel({
         <AddTemplateWorkDialog
           workItems={workItems}
           resources={resources}
+          rules={rules}
+          categories={categories}
+          triggerValues={triggerValues}
           onAdd={onAddTemplate}
           onClose={() => setShowTemplate(false)}
         />

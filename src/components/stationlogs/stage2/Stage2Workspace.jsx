@@ -321,6 +321,9 @@ export default function Stage2Workspace({ log, currentData, attachments, onClose
             rows={rows}
             resources={resources}
             workItems={workItems}
+            rules={rules}
+            categories={categories}
+            triggerValues={triggerValues}
             resourceBreakdown={resourceBreakdown}
             totalMinutes={totalMinutes}
             planningStatus={planningStatus}
