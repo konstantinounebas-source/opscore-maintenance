@@ -92,7 +92,7 @@ export default function Stage3LeftPanel({ stationData, asset, log, stage2Summary
       </Section>
 
       {/* Existing Conditions — closed by default */}
-      <Section title="Existing Conditions" icon={FileText} defaultOpen={false}>
+      <Section title="Existing Conditions" defaultOpen={false}>
         <Field label="Existing Infrastructure Type" value={d.existing_infrastructure_type} />
         <Field label="Pavement Type" value={d.pavement_type} />
         <Field label="Pavement Width" value={d.pavement_width} />
@@ -104,7 +104,7 @@ export default function Stage3LeftPanel({ stationData, asset, log, stage2Summary
       </Section>
 
       {/* Constraints / Risks — closed by default */}
-      <Section title="Constraints / Risks" icon={FileText} defaultOpen={false}>
+      <Section title="Constraints / Risks" defaultOpen={false}>
         <Field label="Has Underground Utilities" value={d.has_underground_utilities} />
         <Field label="Utility Type" value={d.utility_type} />
         <Field label="Traffic Impact Level" value={d.traffic_impact_level} />
