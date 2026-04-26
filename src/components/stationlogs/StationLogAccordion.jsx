@@ -51,15 +51,17 @@ export default function StationLogAccordion({
   const [stage2Open, setStage2Open] = useState(false);
   const [stage3Open, setStage3Open] = useState(false);
 
-  // Auto-collapse completed stages
-  useEffect(() => {
-    if (expandedStage) {
-      const stageNum = Number(expandedStage);
-      if (stageNum < log.current_stage) {
-        setExpandedStage(null);
-      }
+  // Handle stage toggle with auto-collapse of other completed stages
+  const handleStageToggle = (stageId) => {
+    if (expandedStage === stageId) {
+      // Closing current stage
+      setExpandedStage(null);
+    } else {
+      // Opening new stage - collapse other completed stages
+      const stageNum = Number(stageId);
+      setExpandedStage(stageId);
     }
-  }, [log.current_stage, expandedStage, setExpandedStage]);
+  };
   const getStageTasks = (stageId) => tasks.filter(t => t.stage === stageId);
   const getStageApprovals = (stageId) => approvals.filter(a => a.stage === stageId);
   const getStageInstructions = (stageId) => instructions.filter(i => i.related_stage === stageId);
@@ -71,7 +73,7 @@ export default function StationLogAccordion({
         <CardTitle className="text-base">18-Stage Workflow</CardTitle>
       </CardHeader>
       <CardContent className="pt-0">
-        <Accordion value={expandedStage} onValueChange={setExpandedStage} className="w-full">
+        <Accordion value={expandedStage} onValueChange={handleStageToggle} className="w-full">
           {stages.map(stage => {
             const isCompleted = stage.id < log.current_stage;
             const isCurrent = stage.id === log.current_stage;
