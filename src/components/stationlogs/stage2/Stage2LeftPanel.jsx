@@ -92,8 +92,6 @@ export default function Stage2LeftPanel({ log, currentData, attachments, station
   const lat = d.latitude;
   const lng = d.longitude;
   const mapsUrl = lat && lng ? `https://www.google.com/maps?q=${lat},${lng}` : null;
-  // Bus stop code: use asset_code from asset if available
-  const busStopCode = asset?.asset_code || asset?.asset_id || d.asset_id;
 
   return (
     <div className="text-sm">
@@ -111,8 +109,8 @@ export default function Stage2LeftPanel({ log, currentData, attachments, station
         </Button>
       </div>
 
-      {/* Order Info */}
-      <Section title="Order Info" icon={FileText}>
+      {/* Order Info — closed by default */}
+      <Section title="Order Info" icon={FileText} defaultOpen={false}>
         <Field label="Authority Order Ref" value={d.authority_order_reference} />
         <Field label="Order Received Date" value={d.order_received_date} />
         <Field label="Order Received From" value={d.order_received_from} />
@@ -124,8 +122,8 @@ export default function Stage2LeftPanel({ log, currentData, attachments, station
         <Field label="Order Notes" value={d.order_notes} />
       </Section>
 
-      {/* Location */}
-      <Section title="Location" icon={MapPin}>
+      {/* Location — closed by default */}
+      <Section title="Location" icon={MapPin} defaultOpen={false}>
         <Field label="Bus Stop Name" value={d.bus_stop_name} />
         <Field label="Location Address" value={d.location_address} />
         <Field label="Municipality" value={d.municipality} />
@@ -134,17 +132,10 @@ export default function Stage2LeftPanel({ log, currentData, attachments, station
         <Field label="Latitude" value={lat} />
         <Field label="Longitude" value={lng} />
         <Field label="Map Link" value={d.map_link} />
-        {mapsUrl && (
-          <a href={mapsUrl} target="_blank" rel="noopener noreferrer">
-            <Button size="sm" variant="outline" className="h-7 text-xs gap-1 mt-1">
-              <MapPin className="h-3.5 w-3.5" /> Open in Google Maps
-            </Button>
-          </a>
-        )}
       </Section>
 
-      {/* Station Definition */}
-      <Section title="Station Definition">
+      {/* Station Definition — open by default */}
+      <Section title="Station Definition" defaultOpen={true}>
         <Field label="Shelter Type" value={d.shelter_type} />
         <Field label="Installation Type" value={d.installation_type} />
         <Field label="Intervention Scope" value={d.intervention_scope} />
@@ -152,8 +143,8 @@ export default function Stage2LeftPanel({ log, currentData, attachments, station
         <Field label="Traffic Direction" value={d.traffic_direction} />
       </Section>
 
-      {/* Existing Conditions */}
-      <Section title="Existing Conditions">
+      {/* Existing Conditions — open by default */}
+      <Section title="Existing Conditions" defaultOpen={true}>
         <Field label="Existing Infrastructure Type" value={d.existing_infrastructure_type} />
         <Field label="Pavement Type" value={d.pavement_type} />
         <Field label="Pavement Width" value={d.pavement_width} />
@@ -164,8 +155,8 @@ export default function Stage2LeftPanel({ log, currentData, attachments, station
         <Field label="Access Notes" value={d.access_notes} />
       </Section>
 
-      {/* Constraints / Risks */}
-      <Section title="Constraints / Risks">
+      {/* Constraints / Risks — closed by default */}
+      <Section title="Constraints / Risks" defaultOpen={false}>
         <Field label="Has Underground Utilities" value={d.has_underground_utilities} />
         <Field label="Utility Type" value={d.utility_type} />
         <Field label="Traffic Impact Level" value={d.traffic_impact_level} />
@@ -177,8 +168,8 @@ export default function Stage2LeftPanel({ log, currentData, attachments, station
         <Field label="Risk Description" value={d.risk_description} />
       </Section>
 
-      {/* 3. Attachments */}
-      <Section title={`Attachments (${atts.length})`} icon={FileText}>
+      {/* Attachments — closed by default */}
+      <Section title={`Attachments (${atts.length})`} icon={FileText} defaultOpen={false}>
         {atts.length === 0
           ? <p className="text-xs text-slate-400">No attachments found.</p>
           : atts.map(att => (
@@ -186,6 +177,17 @@ export default function Stage2LeftPanel({ log, currentData, attachments, station
           ))
         }
       </Section>
+
+      {/* Open in Google Maps — below attachments */}
+      {mapsUrl && (
+        <div className="px-4 py-3 border-b border-slate-200">
+          <a href={mapsUrl} target="_blank" rel="noopener noreferrer">
+            <Button size="sm" variant="outline" className="h-7 text-xs gap-1 w-full">
+              <MapPin className="h-3.5 w-3.5" /> Open in Google Maps
+            </Button>
+          </a>
+        </div>
+      )}
 
       {/* Edit / Revision Overlay */}
       {editOpen && (
