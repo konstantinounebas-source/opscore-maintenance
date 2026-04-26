@@ -185,10 +185,30 @@ export default function Stage3PlanningWorkspace({ log, currentData, asset, onClo
     return () => window.removeEventListener('stage3DatesSaved', handleDatesSaved);
   }, [queryClient]);
 
-  const hasExecutionDates = executionDates.execution_date && executionDates.execution_finish;
-  
+  const hasExecutionDates =
+    !!executionDates.execution_date &&
+    !!executionDates.execution_finish;
+
+  const hasSavedPlanningItems =
+    savedItems.some(i => i.is_active !== false && i.planned_date);
+
   const canComplete =
-    hasExecutionDates && (planningStatus === "Ready" || (planningStatus === "Draft Planned" && savedItems.length > 0));
+    hasExecutionDates &&
+    hasSavedPlanningItems &&
+    (
+      planningStatus === "Ready" ||
+      planningStatus === "Draft Planned"
+    );
+
+  // Debug: Log completion eligibility
+  console.log("canComplete debug", {
+    executionDates,
+    hasExecutionDates,
+    savedItemsCount: savedItems.length,
+    hasSavedPlanningItems,
+    planningStatus,
+    canComplete
+  });
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
@@ -227,7 +247,7 @@ export default function Stage3PlanningWorkspace({ log, currentData, asset, onClo
             <Button
               size="sm"
               className="gap-1 h-8"
-              disabled={completing || !canComplete}
+              disabled={!canComplete || completing}
               onClick={handleCompleteStage3}
             >
               {completing ? (
