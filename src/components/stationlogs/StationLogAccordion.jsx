@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useEffect } from "react";
 import {
   Accordion,
   AccordionContent,
@@ -49,6 +50,16 @@ export default function StationLogAccordion({
 }) {
   const [stage2Open, setStage2Open] = useState(false);
   const [stage3Open, setStage3Open] = useState(false);
+
+  // Auto-collapse completed stages
+  useEffect(() => {
+    if (expandedStage) {
+      const stageNum = Number(expandedStage);
+      if (stageNum < log.current_stage) {
+        setExpandedStage(null);
+      }
+    }
+  }, [log.current_stage, expandedStage, setExpandedStage]);
   const getStageTasks = (stageId) => tasks.filter(t => t.stage === stageId);
   const getStageApprovals = (stageId) => approvals.filter(a => a.stage === stageId);
   const getStageInstructions = (stageId) => instructions.filter(i => i.related_stage === stageId);
