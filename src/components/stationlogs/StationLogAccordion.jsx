@@ -216,7 +216,7 @@ export default function StationLogAccordion({
                        </div>
 
                        {/* Core Dates Section */}
-                       <Stage3CoreDates currentData={currentData} />
+                       <Stage3CoreDates currentData={currentData} log={log} />
 
                        {/* Planning Deadlines Summary */}
                        <div className="border-t pt-3">
