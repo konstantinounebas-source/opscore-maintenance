@@ -29,7 +29,7 @@ export default function Stage3RightPanel({
     required: true,
     notes: "",
   });
-  const [adding, setAdding] = useState(null);
+  const [addingMap, setAddingMap] = useState({});
   const [savingDates, setSavingDates] = useState(false);
 
   const handleSaveDates = async () => {
@@ -51,7 +51,15 @@ export default function Stage3RightPanel({
   };
 
   const handleAddSuggestion = async (suggestion) => {
-    // Validate required fields
+    // Validate rule can be added
+    if (suggestion.status !== "Suggested") {
+      alert("This rule cannot be added. Please check the status.");
+      return;
+    }
+    if (suggestion.validationWarning) {
+      alert(`Cannot add: ${suggestion.validationWarning}`);
+      return;
+    }
     if (!suggestion.output_date_key) {
       alert("Error: Missing output_date_key in suggestion. This is a system configuration issue.");
       return;
@@ -61,7 +69,9 @@ export default function Stage3RightPanel({
       return;
     }
 
-    setAdding(suggestion.output_date_key);
+    // Set loading state for this specific rule
+    setAddingMap(prev => ({ ...prev, [suggestion.rule_id]: true }));
+
     try {
       const newItem = {
         station_log_id: log.id,
@@ -85,7 +95,7 @@ export default function Stage3RightPanel({
     } catch (err) {
       alert(`Error adding suggestion: ${err.message}`);
     } finally {
-      setAdding(null);
+      setAddingMap(prev => ({ ...prev, [suggestion.rule_id]: false }));
     }
   };
 
@@ -406,23 +416,23 @@ export default function Stage3RightPanel({
                  )}
 
                 <Button
-                  size="sm"
-                  className="w-full h-7 text-xs gap-1"
-                  disabled={adding === sugg.output_date_key || sugg.status === "Blocked"}
-                  onClick={() => handleAddSuggestion(sugg)}
-                >
-                  {adding === sugg.output_date_key ? (
-                    <>
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      Adding...
-                    </>
-                  ) : (
-                    <>
-                      <Plus className="h-3 w-3" />
-                      Add
-                    </>
-                  )}
-                </Button>
+                   size="sm"
+                   className="w-full h-7 text-xs gap-1"
+                   disabled={addingMap[sugg.rule_id] || sugg.status !== "Suggested" || !!sugg.validationWarning}
+                   onClick={() => handleAddSuggestion(sugg)}
+                 >
+                   {addingMap[sugg.rule_id] ? (
+                     <>
+                       <Loader2 className="h-3 w-3 animate-spin" />
+                       Adding...
+                     </>
+                   ) : (
+                     <>
+                       <Plus className="h-3 w-3" />
+                       Add
+                     </>
+                   )}
+                 </Button>
               </div>
             ))}
           </div>
