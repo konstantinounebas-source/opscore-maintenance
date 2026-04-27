@@ -13,7 +13,44 @@ const getStatusColor = (status) => {
   return colors[status] || "bg-gray-100 text-gray-800";
 };
 
-export default function StationLogHeader({ log, asset }) {
+const STAGE_NEXT_ACTIONS = {
+  1: "Complete Order + Location",
+  2: "Complete Work Categorization",
+  3: "Complete Master Planning",
+  4: "Schedule Inspection",
+  5: "Execute Inspection",
+  6: "Submit for Inspection Approval",
+  7: "Issue Work Instruction",
+  8: "Draft Weekly Schedule",
+  9: "Complete RCA",
+  10: "Submit RCA for Approval",
+  11: "Verify Schedule",
+  12: "Execute Work",
+  13: "File Station Log",
+  14: "Complete QA Check",
+  15: "Deliver & Accept",
+  16: "Complete Snagging / Rework",
+  17: "Complete Final Acceptance",
+  18: "Submit Invoice",
+};
+
+export default function StationLogHeader({ log, asset, currentData, stage3Items = [] }) {
+  // Compute NEXT ACTION
+  const nextAction = STAGE_NEXT_ACTIONS[log.current_stage] || "—";
+
+  // Compute NEXT DEADLINE from stage3 planning items (earliest upcoming planned_date)
+  const today = new Date().toISOString().split("T")[0];
+  const upcomingDeadlines = stage3Items
+    .filter(i => i.planned_date && i.planned_date >= today && i.status !== "Completed")
+    .sort((a, b) => a.planned_date.localeCompare(b.planned_date));
+  const nextDeadlineItem = upcomingDeadlines[0];
+  const nextDeadline = nextDeadlineItem
+    ? `${nextDeadlineItem.planned_date} — ${nextDeadlineItem.planning_item_name_snapshot || ""}`
+    : (currentData?.order_priority_date || currentData?.order_deadline_date || "—");
+
+  // Compute PLANNING STATUS
+  const planningStatus = log.stage_3_planning_status || log.planning_status || "Not Scheduled";
+
   if (!asset) {
     return (
       <Card className="bg-gradient-to-r from-slate-50 to-slate-100 border-slate-200">
@@ -67,15 +104,20 @@ export default function StationLogHeader({ log, asset }) {
           <div className="grid grid-cols-4 gap-4">
             <div>
               <p className="text-xs text-gray-600 font-semibold">NEXT ACTION</p>
-              <p className="text-sm font-medium text-gray-900 mt-1">{log.next_action || "—"}</p>
+              <p className="text-sm font-medium text-gray-900 mt-1">{nextAction}</p>
             </div>
             <div>
               <p className="text-xs text-gray-600 font-semibold">NEXT DEADLINE</p>
-              <p className="text-sm font-medium text-gray-900 mt-1">{log.next_deadline || "—"}</p>
+              <p className="text-sm font-medium text-gray-900 mt-1">{nextDeadline}</p>
             </div>
             <div>
               <p className="text-xs text-gray-600 font-semibold">PLANNING STATUS</p>
-              <p className="text-sm font-medium text-blue-700 mt-1">{log.planning_status || "Not Scheduled"}</p>
+              <p className={`text-sm font-medium mt-1 ${
+                planningStatus === "Ready" || planningStatus === "Completed" ? "text-green-700" :
+                planningStatus === "At Risk" ? "text-red-700" :
+                planningStatus === "Not Scheduled" ? "text-gray-500" :
+                "text-blue-700"
+              }`}>{planningStatus}</p>
             </div>
             <div>
               <p className="text-xs text-gray-600 font-semibold">NOTES</p>

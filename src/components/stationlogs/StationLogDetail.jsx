@@ -50,6 +50,11 @@ export default function StationLogDetail({ log, onBack, stages, assets }) {
     queryFn: () => base44.entities.StationLogOrderAttachments.filter({ station_log_id: log.id }),
   });
 
+  const { data: stage3Items = [] } = useQuery({
+    queryKey: ["stage3PlanningItemsHeader", log.id],
+    queryFn: () => base44.entities.StationLogStage3PlanningItems.filter({ station_log_id: log.id, is_active: true }),
+  });
+
   // Compute blocking & pending items
   const blockingItems = [
     ...tasks.filter(t => t.is_blocking && t.status !== "Completed").map(t => ({ type: "Task", text: t.description, id: t.id })),
@@ -69,7 +74,7 @@ export default function StationLogDetail({ log, onBack, stages, assets }) {
         <ArrowLeft className="mr-2 h-4 w-4" />Back to Logs
       </Button>
 
-      <StationLogHeader log={log} asset={asset} />
+      <StationLogHeader log={log} asset={asset} currentData={currentData} stage3Items={stage3Items} />
 
       <WorkflowProgressBar stages={stages} currentStage={log.current_stage} />
 
