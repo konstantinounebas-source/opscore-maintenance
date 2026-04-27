@@ -43,7 +43,8 @@ export default function MapWorkspaceCard({
   onRemoveFromLayer,
   zoomToAsset,
   onZoomCompleted,
-  onTriggerZoom
+  onTriggerZoom,
+  onSelectAssetForPanel,
 }) {
   // ── Per-map isolated state ─────────────────────────────────────────────────
   const [filters, setFilters] = useState({ ...EMPTY_MAP_FILTERS });
@@ -295,6 +296,7 @@ export default function MapWorkspaceCard({
              onSelectAsset={(asset) => {
                setSelectedAsset(asset);
                setPopupPos({ x: 50, y: 50 });
+               onSelectAssetForPanel?.(asset);
              }}
              colorMode={colorMode}
              layers={layers}

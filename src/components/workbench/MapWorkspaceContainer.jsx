@@ -39,6 +39,7 @@ export default function MapWorkspaceContainer({
   zoomToAsset,
   onZoomCompleted,
   onTriggerZoom,
+  onSelectAssetForPanel,
 }) {
   const count = mapWorkspaces.length;
   const canAdd = count < 4;
@@ -95,7 +96,8 @@ export default function MapWorkspaceContainer({
                 zoomToAsset={zoomToAsset}
                 onZoomCompleted={onZoomCompleted}
                 onTriggerZoom={onTriggerZoom}
-              />
+                onSelectAssetForPanel={onSelectAssetForPanel}
+                />
           );
         })}
       </div>

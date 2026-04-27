@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui/use-toast";
 import MapWorkspaceContainer from "@/components/workbench/MapWorkspaceContainer";
 import PlanningReviewPanel from "@/components/workbench/PlanningReviewPanel";
 import AssetPopup from "@/components/workbench/AssetPopup";
+import StationLogSidePanel from "@/components/workbench/StationLogSidePanel";
 import { computePinColor, computePriorityBucket } from "@/components/planning/planningUtils";
 import PlanningWeekModal from "@/components/planning/PlanningWeekModal";
 
@@ -44,6 +45,7 @@ export default function PlanningWorkbench() {
   const [assigningAsset, setAssigningAsset] = useState(null);
   const [photoViewerAsset, setPhotoViewerAsset] = useState(null);
   const [zoomToAsset, setZoomToAsset] = useState(null);
+  const [stationPanelAsset, setStationPanelAsset] = useState(null);
 
   // ── Shared lookups (read-only from map perspective) ─────────────────────────
   const assetsMap = useMemo(() => Object.fromEntries(assets.map(a => [a.id, a])), [assets]);
@@ -304,7 +306,8 @@ export default function PlanningWorkbench() {
            zoomToAsset={zoomToAsset}
            onZoomCompleted={() => setZoomToAsset(null)}
            onTriggerZoom={(asset) => setZoomToAsset(asset)}
-          />
+           onSelectAssetForPanel={(asset) => setStationPanelAsset(asset)}
+           />
         </div>
 
         {/* Resize handle + toggle button */}
@@ -350,6 +353,16 @@ export default function PlanningWorkbench() {
             />
           )}
         </div>
+
+        {/* FAR RIGHT: Station Log side panel — opens when asset clicked on map */}
+        {stationPanelAsset && (
+          <div className="shrink-0 w-72 overflow-hidden border-l border-slate-200">
+            <StationLogSidePanel
+              asset={stationPanelAsset}
+              onClose={() => setStationPanelAsset(null)}
+            />
+          </div>
+        )}
       </div>
 
       {/* Asset Popup */}
