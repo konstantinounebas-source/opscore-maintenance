@@ -120,8 +120,7 @@ export default function Stage3LeftPanel({ stationData, asset, log, stage2Summary
 
       {/* Attachments section */}
       {attachments.length > 0 && (
-        <div className="px-4 py-3 border-b border-slate-200 space-y-2">
-          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Attachments</p>
+        <Section title={`Attachments (${attachments.length})`} defaultOpen={false}>
           <div className="space-y-1.5">
             {attachments.map(att => {
               const isImage = att.file_type === "photo" || att.file_name?.match(/\.(jpg|jpeg|png|gif)$/i);
@@ -136,9 +135,11 @@ export default function Stage3LeftPanel({ stationData, asset, log, stage2Summary
                   <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                     <a
                       href={att.file_url}
-                      download
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="p-1 text-slate-400 hover:text-slate-600 rounded hover:bg-white"
                       title="Download"
+                      download
                     >
                       <Download className="h-3 w-3" />
                     </a>
@@ -154,7 +155,7 @@ export default function Stage3LeftPanel({ stationData, asset, log, stage2Summary
               );
             })}
           </div>
-        </div>
+        </Section>
       )}
 
       {/* Open in Google Maps */}
