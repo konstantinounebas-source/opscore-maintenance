@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -37,6 +37,19 @@ const AVAILABLE_FILTER_FIELDS = {
 export default function MapFilterBar({ filters, onChange, assets, weeks = [] }) {
   const [expanded, setExpanded] = useState(false);
   const [customFields, setCustomFields] = useState(new Set());
+  const containerRef = React.useRef(null);
+
+  React.useEffect(() => {
+    if (!expanded) return;
+    const handleClickOutside = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setExpanded(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [expanded]);
+
   const set = (k, v) => {
     // Handle multi-select arrays — convert to JSON string for storage
     const value = Array.isArray(v) && v.length > 0 ? JSON.stringify(v) : "";
@@ -83,7 +96,7 @@ export default function MapFilterBar({ filters, onChange, assets, weeks = [] }) 
   };
 
   return (
-    <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+    <div ref={containerRef} className="bg-white border border-slate-200 rounded-lg overflow-hidden">
       {/* Search row always visible */}
       <div className="flex items-center gap-1.5 px-2 py-1.5">
         <Search className="h-3.5 w-3.5 text-slate-400 shrink-0" />
