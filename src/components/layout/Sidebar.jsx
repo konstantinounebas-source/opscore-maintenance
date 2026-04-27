@@ -15,7 +15,9 @@ const navItems = [
   { path: "/BusStopLogs", label: "Bus Stop Logs", icon: Clipboard, submenu: [
     { path: "/StationLogSettings", label: "Station Log Settings", icon: Settings }
   ]},
-  { path: "/Planning", label: "Planning Workbench", icon: MapPin },
+  { path: "/Planning", label: "Planning Workbench", icon: MapPin, submenu: [
+    { path: "/PlanningWorkbenchSettings", label: "Workbench Settings", icon: Settings }
+  ]},
   { path: "/Forms", label: "Forms", icon: FileText },
   { path: "/Configuration", label: "Configuration", icon: Settings },
 ];

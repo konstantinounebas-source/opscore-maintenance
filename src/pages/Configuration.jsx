@@ -234,18 +234,6 @@ export default function Configuration() {
         </div>
 
         <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <h2 className="text-sm font-semibold text-slate-900 mb-1">Planning Types</h2>
-          <p className="text-xs text-slate-500 mb-6">Define different planning types (Inspection, Work Order, Installation) and their specific statuses and fields. Each planning week will use one of these types.</p>
-          <PlanningTypesConfig />
-        </div>
-
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <h2 className="text-sm font-semibold text-slate-900 mb-1">Planning Configuration</h2>
-          <p className="text-xs text-slate-500 mb-6">Configure assignment types, statuses, and other planning dropdown values. These drive all Planning module dropdowns.</p>
-          <ListManager listTypes={PLANNING_LIST_TYPES} allItems={allItems} queryClient={queryClient} />
-        </div>
-
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
           <h2 className="text-sm font-semibold text-slate-900 mb-1">Forms Configuration</h2>
           <p className="text-xs text-slate-500 mb-6">Configure dropdown and field options for all electronic forms (OMPI, FMPI, Make Safe Checklist, Work Order Invoice).</p>
           <FormsConfig />
