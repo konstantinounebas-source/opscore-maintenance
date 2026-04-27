@@ -50,6 +50,7 @@ export default function StationLogHeader({ log, asset, currentData, stage3Items 
 
   // Compute PLANNING STATUS
   const planningStatus = log.stage_3_planning_status || log.planning_status || "Not Scheduled";
+  const outOfSyncCount = stage3Items.filter(i => i.is_active !== false && i.sync_status === "Out of Sync").length;
 
   if (!asset) {
     return (
@@ -112,12 +113,16 @@ export default function StationLogHeader({ log, asset, currentData, stage3Items 
             </div>
             <div>
               <p className="text-xs text-gray-600 font-semibold">PLANNING STATUS</p>
-              <p className={`text-sm font-medium mt-1 ${
-                planningStatus === "Ready" || planningStatus === "Completed" ? "text-green-700" :
-                planningStatus === "At Risk" ? "text-red-700" :
-                planningStatus === "Not Scheduled" ? "text-gray-500" :
-                "text-blue-700"
-              }`}>{planningStatus}</p>
+              {outOfSyncCount > 0 ? (
+                <p className="text-sm font-medium mt-1 text-amber-700">⚠ Needs Update ({outOfSyncCount})</p>
+              ) : (
+                <p className={`text-sm font-medium mt-1 ${
+                  planningStatus === "Ready" || planningStatus === "Completed" ? "text-green-700" :
+                  planningStatus === "At Risk" ? "text-red-700" :
+                  planningStatus === "Not Scheduled" ? "text-gray-500" :
+                  "text-blue-700"
+                }`}>{planningStatus}</p>
+              )}
             </div>
             <div>
               <p className="text-xs text-gray-600 font-semibold">NOTES</p>
