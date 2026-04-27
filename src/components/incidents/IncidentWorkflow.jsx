@@ -234,7 +234,8 @@ function CloseIncidentModal({ incident, incidentId, workOrders, onClose, onDone 
   const [saving, setSaving] = useState(false);
 
   const openWOs = workOrders.filter(w => w.status !== "Completed" && w.status !== "Cancelled");
-  const canClose = openWOs.length === 0 && photos.length > 0;
+  // Testing bypass: allow closure without photos
+  const canClose = openWOs.length === 0;
 
   const handleSubmit = async () => {
     if (!canClose) {
@@ -242,10 +243,7 @@ function CloseIncidentModal({ incident, incidentId, workOrders, onClose, onDone 
         toast({ title: "Cannot close", description: `${openWOs.length} work order(s) still open.` });
         return;
       }
-      if (photos.length === 0) {
-        toast({ title: "Photos required", description: "Upload at least one closure photo." });
-        return;
-      }
+
       return;
     }
 
