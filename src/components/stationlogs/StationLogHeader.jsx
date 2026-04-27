@@ -120,15 +120,14 @@ export default function StationLogHeader({ log, asset, currentData, stage3Items 
             </div>
             <div>
               <p className="text-xs text-gray-600 font-semibold">PLANNING STATUS</p>
-              {outOfSyncCount > 0 ? (
-                <p className="text-sm font-medium mt-1 text-amber-700">⚠ Needs Update ({outOfSyncCount})</p>
-              ) : (
-                <p className={`text-sm font-medium mt-1 ${
-                  planningStatus === "Ready" || planningStatus === "Completed" ? "text-green-700" :
-                  planningStatus === "At Risk" ? "text-red-700" :
-                  planningStatus === "Not Scheduled" ? "text-gray-500" :
-                  "text-blue-700"
-                }`}>{planningStatus}</p>
+              <p className={`text-sm font-medium mt-1 ${
+                planningStatus === "Ready" || planningStatus === "Completed" ? "text-green-700" :
+                planningStatus === "At Risk" ? "text-red-700" :
+                planningStatus === "Not Scheduled" ? "text-gray-500" :
+                "text-blue-700"
+              }`}>{planningStatus}</p>
+              {outOfSyncCount > 0 && (
+                <p className="text-[11px] font-bold text-amber-700 mt-0.5">⚠ Needs Update ({outOfSyncCount})</p>
               )}
             </div>
             <div>
