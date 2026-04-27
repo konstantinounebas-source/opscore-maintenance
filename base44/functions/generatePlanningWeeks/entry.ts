@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
         const startDate = new Date(year, m, 1);
         const endDate = new Date(year, m + 1, 0);
         const zz = String(m + 1).padStart(2, '0');
-        const periodCode = `${prefix}-${periodLetter}-${zz}-${yy}`;
+        const periodCode = `${prefix}-${periodLetter}${zz}-${yy}`;
         const periodName = `${monthNames[m]} ${year}`;
         periodsToCreate.push({
           week_code: periodCode,
@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
         weekEnd.setDate(weekEnd.getDate() + 6);
 
         const zz = String(weekNum).padStart(2, '0');
-        const periodCode = `${prefix}-${periodLetter}-${zz}-${yy}`;
+        const periodCode = `${prefix}-${periodLetter}${zz}-${yy}`;
         const monthName = weekStart.toLocaleString('en-US', { month: 'short' });
         const periodName = `Week ${weekNum} - ${monthName} ${year}`;
 

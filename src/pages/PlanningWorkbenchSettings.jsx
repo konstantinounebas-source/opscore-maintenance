@@ -184,8 +184,13 @@ export default function PlanningWorkbenchSettings() {
     queryFn: () => base44.entities.ConfigLists.list(),
   });
 
+  const { data: planningTypesData = [] } = useQuery({
+    queryKey: ["planningTypes"],
+    queryFn: () => base44.entities.PlanningTypes.list(),
+  });
+
   const countByCategory = (key) => {
-    if (key === "planning_types") return null; // handled by PlanningTypesConfig internally
+    if (key === "planning_types") return planningTypesData.length;
     return allItems.filter(i => i.list_type === key && i.is_active !== false).length;
   };
 

@@ -45,31 +45,33 @@ function PlanningTypeRow({ pt, allWeeks, editingId, editData, setEditData, onSav
         {/* Name / edit form */}
         <div className="flex-1 min-w-0">
           {editingId === pt.id ? (
-            <div className="flex gap-2 flex-wrap">
-              <Input
-                value={editData.name || ""}
-                onChange={e => setEditData({ ...editData, name: e.target.value })}
-                placeholder="Name"
-                className="text-sm h-7 min-w-32 flex-1"
-                autoFocus
-              />
-              <Input
-                value={editData.description || ""}
-                onChange={e => setEditData({ ...editData, description: e.target.value })}
-                placeholder="Description"
-                className="text-sm h-7 min-w-32 flex-1"
-              />
-              <div className="flex items-center gap-1">
+            <div className="space-y-1.5">
+              <div className="flex gap-2">
+                <Input
+                  value={editData.name || ""}
+                  onChange={e => setEditData({ ...editData, name: e.target.value })}
+                  placeholder="Name"
+                  className="text-sm h-7 flex-1"
+                  autoFocus
+                />
+                <Input
+                  value={editData.description || ""}
+                  onChange={e => setEditData({ ...editData, description: e.target.value })}
+                  placeholder="Description"
+                  className="text-sm h-7 flex-1"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-[10px] font-semibold text-slate-500 uppercase whitespace-nowrap">Prefix (2 letters)</label>
                 <Input
                   value={editData.prefix !== undefined ? editData.prefix : derivePrefix(editData.name)}
-                  onChange={e => setEditData({ ...editData, prefix: e.target.value.toUpperCase().slice(0, 2) })}
+                  onChange={e => setEditData({ ...editData, prefix: e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2) })}
                   placeholder="XX"
                   maxLength={2}
-                  className="text-sm h-7 w-14 text-center font-mono uppercase"
-                  title="2-letter prefix for period codes"
+                  className="text-sm h-7 w-14 text-center font-mono uppercase font-bold"
                 />
-                <span className="text-[10px] text-slate-400 whitespace-nowrap">
-                  → {(editData.prefix || derivePrefix(editData.name)).padEnd(2,'X')}-W-01-{String(new Date().getFullYear()).slice(-2)}
+                <span className="text-[10px] text-slate-400 font-mono">
+                  → {((editData.prefix !== undefined ? editData.prefix : derivePrefix(editData.name)) || 'XX').padEnd(2,'X')}-W01-{String(new Date().getFullYear()).slice(-2)}
                 </span>
               </div>
             </div>
@@ -221,6 +223,7 @@ export default function PlanningTypesConfig() {
       code: newName.toLowerCase().replace(/\s+/g, "_"),
       name: newName.trim(),
       description: newDescription.trim(),
+      prefix: derivePrefix(newName.trim()),
       is_active: true,
       sort_order: planningTypes.length,
     });
