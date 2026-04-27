@@ -270,10 +270,13 @@ export default function Stage3RightPanel({
       {outOfSyncItems.length > 0 && (
         <Stage3OutOfSyncWarning
           items={outOfSyncItems}
-          onUpdateItem={(id, newDate) => {
-            base44.entities.StationLogStage3PlanningItems.update(id, {
-              planned_date: newDate
+          onUpdateItem={async (id, newDate) => {
+            await base44.entities.StationLogStage3PlanningItems.update(id, {
+              planned_date: newDate,
+              sync_status: "In Sync",
+              last_synced_at: new Date().toISOString(),
             });
+            onItemUpdated();
           }}
         />
       )}

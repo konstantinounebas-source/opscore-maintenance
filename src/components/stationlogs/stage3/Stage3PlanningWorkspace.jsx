@@ -49,9 +49,10 @@ export default function Stage3PlanningWorkspace({ log, currentData, asset, onClo
   const stationData = {
     ...currentData,
     // Stage 1 core dates (normalized keys)
-    work_start_date: currentData?.order_received_date,
-    final_deadline: currentData?.order_deadline_date,
-    priority_deadline: currentData?.order_priority_date,
+    // work_start_date maps to order_received_date from Stage 1
+    work_start_date: currentData?.order_received_date || null,
+    final_deadline: currentData?.order_deadline_date || null,
+    priority_deadline: currentData?.order_priority_date || null,
     // Stage 3 execution dates - ALWAYS use local state (which reflects current log values)
     // Database field names for form binding
     stage_3_execution_date: executionDates.execution_date,
@@ -68,6 +69,9 @@ export default function Stage3PlanningWorkspace({ log, currentData, asset, onClo
       stage_3_execution_finish: stationData.stage_3_execution_finish,
       execution_date: stationData.execution_date,
       execution_finish: stationData.execution_finish,
+      work_start_date: stationData.work_start_date,
+      order_received_date: currentData?.order_received_date,
+      currentData_keys: currentData ? Object.keys(currentData) : null,
       from_log: {
         stage_3_execution_date: log?.stage_3_execution_date,
         stage_3_execution_finish: log?.stage_3_execution_finish,
