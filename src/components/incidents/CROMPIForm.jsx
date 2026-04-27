@@ -190,12 +190,17 @@ export default function CROMPIForm({ incident, incidentId, onClose, onDone }) {
 
       await base44.entities.Incidents.update(incidentId, incidentUpdates);
 
-      // Create FormSubmissions record
-      const allFiles = attachments.filter(f => f?.url);
-      await base44.entities.FormSubmissions.create({
-        form_type: "cr_ompi",
-        form_name: "Confirmation of Receipt + OMPI",
-        incident_id: incidentId,
+      // Check for existing CR+OMPI submission — update instead of creating duplicate
+       const existingCROMPI = await base44.entities.FormSubmissions.filter({
+         incident_id: incidentId,
+         form_type: "cr_ompi"
+       });
+
+       const allFiles = attachments.filter(f => f?.url);
+       const formData = {
+         form_type: "cr_ompi",
+         form_name: "Confirmation of Receipt + OMPI",
+         incident_id: incidentId,
         asset_id: incident?.related_asset_id || "",
         status: "Submitted",
         ektos_eggyhshs: warrantyStatus === "OWR" ? "Yes" : "No",
@@ -203,18 +208,25 @@ export default function CROMPIForm({ incident, incidentId, onClose, onDone }) {
         submitted_at: now,
         submitted_by: user?.email,
         form_data: {
-          operational_priority: operationalPriority,
-          warranty_status: warrantyStatus,
-          make_safe_required: makeSafeRequired,
-          inspection_required: inspectionRequired,
-          ompi_notes: ompiNotes,
-          attachments,
-          sla_cr_ompi_deadline: crOmpiSLA?.sla_deadline_at,
-          sla_fmpi_deadline: newFmpiSLA?.sla_deadline_at,
-        },
-      });
+           operational_priority: operationalPriority,
+           warranty_status: warrantyStatus,
+           make_safe_required: makeSafeRequired,
+           inspection_required: inspectionRequired,
+           ompi_notes: ompiNotes,
+           attachments,
+           sla_cr_ompi_deadline: crOmpiSLA?.sla_deadline_at,
+           sla_fmpi_deadline: newFmpiSLA?.sla_deadline_at,
+         },
+        };
 
-      // Mirror attachments
+        // Create or update FormSubmissions — prevent duplicates
+        if (existingCROMPI.length > 0) {
+         await base44.entities.FormSubmissions.update(existingCROMPI[0].id, formData);
+        } else {
+         await base44.entities.FormSubmissions.create(formData);
+        }
+
+        // Mirror attachments
       if (allFiles.length > 0) {
         await Promise.all(allFiles.map(f =>
           base44.entities.IncidentAttachments.create({

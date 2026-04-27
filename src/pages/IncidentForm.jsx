@@ -14,6 +14,12 @@ export default function IncidentForm() {
 
   const createMutation = useMutation({
     mutationFn: async ({ data, pendingFiles }) => {
+      // Validate incident_id uniqueness before creation to prevent duplicates
+      const existing = await base44.entities.Incidents.filter({ incident_id: data.incident_id });
+      if (existing.length > 0) {
+        throw new Error(`Incident ID ${data.incident_id} already exists. Please try again.`);
+      }
+      
       const inc = await base44.entities.Incidents.create(data);
       const user = await base44.auth.me();
       await base44.entities.IncidentAuditTrail.create({ incident_id: inc.id, action: "Incident Created", details: `Incident ${data.incident_id} created`, user: user?.email });
