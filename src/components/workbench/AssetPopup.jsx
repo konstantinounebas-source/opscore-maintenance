@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { X, Loader2, AlertCircle, Wrench, MapPin, Camera, Eye } from "lucide-react";
+import { X, Loader2, AlertCircle, Wrench, MapPin, Camera, Eye, Plus } from "lucide-react";
 import MapillaryViewer from "./MapillaryViewer";
 
 export default function AssetPopup({
@@ -116,18 +116,24 @@ export default function AssetPopup({
         </div>
         <div className="flex items-center justify-between text-xs">
           <span className="text-slate-500">Assigned Week:</span>
-          <button 
-            onClick={() => {
-              if (assignment?.planning_week_id && window.__planningReviewAddWeek) {
-                window.__planningReviewAddWeek(assignment.planning_week_id);
-              }
-            }}
-            disabled={!assignment}
-            className={`font-medium ${assignment ? "text-indigo-600 hover:text-indigo-700 cursor-pointer underline" : "text-amber-600"}`}
-            title={assignment ? "Add this week to Planning Review" : "No assignment"}
-          >
-            {assignment ? `${assignedWeek?.week_code || "—"} - ${assignedWeek?.week_name || ""}` : "Unassigned"}
-          </button>
+          {assignment ? (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-6 text-xs gap-1 px-2"
+              onClick={() => {
+                if (assignment.planning_week_id && window.__planningReviewAddWeek) {
+                  window.__planningReviewAddWeek(assignment.planning_week_id);
+                }
+              }}
+              title="Add this week to Planning Review"
+            >
+              <Plus className="h-3 w-3" />
+              {assignedWeek?.week_code || "—"}
+            </Button>
+          ) : (
+            <span className="text-amber-600 font-medium">Unassigned</span>
+          )}
         </div>
         <div className="flex items-center justify-between text-xs">
           <span className="text-slate-500">Shelter Type:</span>
