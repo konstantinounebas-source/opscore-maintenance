@@ -608,6 +608,10 @@ export default function WorkOrderFormF({ submission, incidents, assets, workOrde
               className="bg-indigo-600 hover:bg-indigo-700 gap-1.5">
               <Send className="w-4 h-4" /> Υποβολή Φόρμας
             </Button>
+            <Button onClick={() => { handleSave("Submitted"); onClose(); }} disabled={saveMutation.isPending}
+              className="bg-red-600 hover:bg-red-700 gap-1.5">
+              <Send className="w-4 h-4" /> Υποβολή & Κλείσιμο Incident
+            </Button>
           </div>
         </div>
       </div>
