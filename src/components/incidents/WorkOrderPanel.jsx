@@ -14,10 +14,12 @@ import { useAuth } from "@/lib/AuthContext";
 import MakeSafeChecklistForm from "@/components/forms/MakeSafeChecklistForm";
 import WorkOrderFormF from "@/components/forms/WorkOrderFormF";
 import WorkOrderDownloadButton from "@/components/shared/WorkOrderDownloadButton";
+import EmbeddedFormWrapper from "@/components/incidents/EmbeddedFormWrapper";
 import {
   Plus, ChevronDown, ChevronUp, CheckCircle2, Clock,
   Loader2, Paperclip, StickyNote, XCircle, Lock, FileText
 } from "lucide-react";
+import { nanoid } from 'nanoid';
 
 const WO_TYPE_CONFIG = {
   make_safe:   { label: "Make Safe WO",   prefix: "MSAFE", priority: "Critical", color: "text-red-700 bg-red-50 border-red-200" },
@@ -94,7 +96,7 @@ function CreateWOModal({ woType, incident, incidentId, onClose, onDone }) {
       let woCreated = false;
 
       if (true) {
-        const woId = `${config.prefix}-${Date.now()}`;
+        const woId = `${config.prefix}-${nanoid(6)}`;
         await base44.entities.WorkOrders.create({
           work_order_id: woId,
           incident_id: incidentId,
@@ -251,6 +253,14 @@ function CloseWOModal({ wo, incidentId, onClose, onDone }) {
     if (!person.trim()) { toast({ title: "Person required" }); return; }
     setSaving(true);
     try {
+      // Check if incident is already closed — block WO close
+      const incident = await base44.entities.Incidents.filter({ id: incidentId });
+      if (incident.length > 0 && incident[0].workflow_state === "Closed") {
+        toast({ title: "Error", description: "Cannot close WO: incident is already closed." });
+        setSaving(false);
+        return;
+      }
+
       await base44.entities.WorkOrders.update(wo.id, { status: "Completed" });
       await base44.entities.IncidentAuditTrail.create({
         incident_id: incidentId,
@@ -544,34 +554,7 @@ export default function WorkOrderPanel({ woType, incident, incidentId, lockedRea
           onDone={() => setChecklistWO(null)}
         />
       )}
-      {showEmbeddedForm && (
-        <Dialog open onOpenChange={() => setShowEmbeddedForm(false)}>
-          <DialogContent className="max-w-5xl w-full max-h-[95vh] overflow-y-auto p-0">
-            {woType === "make_safe" && (
-              <MakeSafeChecklistForm
-                submission={null}
-                incidents={allIncidents}
-                assets={allAssets}
-                workOrders={allWorkOrders}
-                onClose={() => setShowEmbeddedForm(false)}
-                defaultIncidentId={incidentId}
-              />
-            )}
-            {woType === "corrective" && (
-              <WorkOrderFormF
-                submission={null}
-                incidents={allIncidents}
-                assets={allAssets}
-                workOrders={allWorkOrders}
-                childAssets={allChildAssets}
-                crews={[]}
-                onClose={() => setShowEmbeddedForm(false)}
-                defaultIncidentId={incidentId}
-              />
-            )}
-          </DialogContent>
-        </Dialog>
-      )}
+      {showEmbeddedForm && <EmbeddedFormWrapper woType={woType} incidentId={incidentId} allIncidents={allIncidents} allAssets={allAssets} allWorkOrders={allWorkOrders} allChildAssets={allChildAssets} onClose={() => setShowEmbeddedForm(false)} />}
     </div>
   );
 }
