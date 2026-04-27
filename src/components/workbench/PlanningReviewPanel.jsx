@@ -308,25 +308,17 @@ export default function PlanningReviewPanel({
              </Popover>
              </div>
 
-             {/* Active weeks list */}
+             {/* Active weeks list (compact) */}
              {activeWeekIds.size > 0 && (
-             <div className="px-3 py-2 border-b border-slate-200 space-y-1.5 shrink-0">
-             <label className="text-[10px] font-semibold text-slate-600 uppercase tracking-wide">Active Weeks</label>
-             <div className="space-y-1">
-             {activeWeeks.map(week => (
-              <div key={week.id} className="flex items-center justify-between bg-indigo-50 px-2 py-1.5 rounded border border-indigo-200 text-xs">
-                <span className="font-medium text-indigo-900">{week.week_code}</span>
-                <button
-                  onClick={() => handleRemoveWeek(week.id)}
-                  className="text-indigo-600 hover:text-indigo-800 font-bold"
-                  title="Remove"
-                >
-                  ✕
-                </button>
-              </div>
-             ))}
-             </div>
-             </div>
+               <div className="px-3 py-1.5 border-b border-slate-200 shrink-0">
+                 <div className="flex flex-wrap gap-1">
+                   {activeWeeks.map(week => (
+                     <span key={week.id} className="bg-indigo-100 text-indigo-900 text-xs font-medium px-2 py-1 rounded">
+                       {week.week_code}
+                     </span>
+                   ))}
+                 </div>
+               </div>
              )}
 
              {/* Asset search field */}
@@ -365,40 +357,48 @@ export default function PlanningReviewPanel({
 
             return (
               <div key={week.id}>
-                <button
-                  onClick={() => {
-                    const newSet = new Set(expandedWeekIds);
-                    if (newSet.has(week.id)) {
-                      newSet.delete(week.id);
-                    } else {
-                      newSet.add(week.id);
-                    }
-                    setExpandedWeekIds(newSet);
-                  }}
-                  className="w-full px-4 py-3 border-b border-slate-100 bg-indigo-50 border-l-2 border-l-indigo-400 hover:bg-indigo-100 transition-colors text-left"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <ChevronRight className={`h-3.5 w-3.5 text-indigo-500 shrink-0 transition-transform ${isExpanded ? "rotate-90" : ""}`} />
-                        <span className="text-xs font-bold text-slate-700">{week.week_code}</span>
-                        {week.is_active && <span className="text-[9px] bg-emerald-500 text-white px-1.5 py-0.5 rounded-full font-bold">ACTIVE</span>}
+                <div className="flex items-start justify-between gap-2 px-4 py-3 border-b border-slate-100 bg-indigo-50 border-l-2 border-l-indigo-400 hover:bg-indigo-100 transition-colors">
+                  <button
+                    onClick={() => {
+                      const newSet = new Set(expandedWeekIds);
+                      if (newSet.has(week.id)) {
+                        newSet.delete(week.id);
+                      } else {
+                        newSet.add(week.id);
+                      }
+                      setExpandedWeekIds(newSet);
+                    }}
+                    className="flex-1 text-left min-w-0"
+                  >
+                    <div className="flex items-start gap-2 min-w-0 flex-1">
+                      <ChevronRight className={`h-3.5 w-3.5 text-indigo-500 shrink-0 transition-transform mt-0.5 ${isExpanded ? "rotate-90" : ""}`} />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-slate-700">{week.week_code}</span>
+                          {week.is_active && <span className="text-[9px] bg-emerald-500 text-white px-1.5 py-0.5 rounded-full font-bold">ACTIVE</span>}
+                        </div>
+                        <p className="text-xs text-slate-500 truncate">{week.week_name}</p>
+                        <p className="text-[10px] text-slate-400">
+                          {week.start_date && (() => { try { return format(new Date(week.start_date), "MMM d"); } catch { return ""; } })()}
+                          {" – "}
+                          {week.end_date && (() => { try { return format(new Date(week.end_date), "MMM d, yyyy"); } catch { return ""; } })()}
+                        </p>
                       </div>
-                      <p className="text-xs text-slate-500 ml-5 truncate">{week.week_name}</p>
-                      <p className="text-[10px] text-slate-400 ml-5">
-                        {week.start_date && (() => { try { return format(new Date(week.start_date), "MMM d"); } catch { return ""; } })()}
-                        {" – "}
-                        {week.end_date && (() => { try { return format(new Date(week.end_date), "MMM d, yyyy"); } catch { return ""; } })()}
-                      </p>
                     </div>
-                    <div className="flex flex-col items-end gap-1 shrink-0">
-                      <span className={`text-[9px] px-1.5 py-0.5 rounded-full border font-medium ${WEEK_STATUS_COLORS[week.status] || WEEK_STATUS_COLORS.Draft}`}>
-                        {week.status}
-                      </span>
-                      <span className="text-[10px] text-slate-400">{weekCount} assigned</span>
-                    </div>
+                  </button>
+                  <div className="flex flex-col items-end gap-1 shrink-0">
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded-full border font-medium ${WEEK_STATUS_COLORS[week.status] || WEEK_STATUS_COLORS.Draft}`}>
+                      {week.status}
+                    </span>
+                    <button
+                      onClick={() => handleRemoveWeek(week.id)}
+                      className="text-red-500 hover:text-red-700 font-bold text-lg leading-none"
+                      title="Remove week"
+                    >
+                      ✕
+                    </button>
                   </div>
-                </button>
+                </div>
 
                 {/* Summary row - always visible */}
                 <div className="px-4 py-2 bg-indigo-50/50 border-b border-slate-100">
