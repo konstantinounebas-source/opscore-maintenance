@@ -20,6 +20,7 @@ export default function Stage3PlanningWorkspace({ log, currentData, asset, onClo
   const [saving, setSaving] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
+  const [allSuggestions, setAllSuggestions] = useState([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Fetch stage 3 planning items
@@ -91,10 +92,13 @@ export default function Stage3PlanningWorkspace({ log, currentData, asset, onClo
       console.warn("⚠️ Circular dependency in rules:", circularCheck.errorMessage);
     }
 
-    // Generate all suggestions
+    // Generate all suggestions (unfiltered - used for resync detection)
     const newSuggestions = generateRuleSuggestionsV2(activeRules, stationData, savedItems);
     
-    // Filter out suggestions that are already saved
+    // Store all suggestions for resync detection (pass via ref/state)
+    setAllSuggestions(newSuggestions);
+
+    // Filter out suggestions that are already saved (for display in "Rule Suggestions")
     const filtered = newSuggestions.filter(
       sugg => !savedItems.find(item => item.output_date_key === sugg.output_date_key)
     );
@@ -327,6 +331,7 @@ export default function Stage3PlanningWorkspace({ log, currentData, asset, onClo
               stationData={stationData}
               savedItems={savedItems}
               suggestions={suggestions}
+              allSuggestions={allSuggestions}
               onSuggestionAdded={handleRefresh}
               onItemRemoved={handleRefresh}
               onItemUpdated={(itemId, updates) => {
