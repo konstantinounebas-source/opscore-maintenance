@@ -117,20 +117,20 @@ export default function AssetPopup({
         <div className="flex items-center justify-between text-xs">
           <span className="text-slate-500">Assigned Week:</span>
           {assignment ? (
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-6 text-xs gap-1 px-2"
-              onClick={() => {
-                if (assignment.planning_week_id && window.__planningReviewAddWeek) {
-                  window.__planningReviewAddWeek(assignment.planning_week_id);
-                }
-              }}
-              title="Add this week to Planning Review"
-            >
-              <Plus className="h-3 w-3" />
-              {assignedWeek?.week_code || "—"}
-            </Button>
+            <div className="flex items-center gap-1">
+              <span className="font-medium text-slate-700">{assignedWeek?.week_code || "—"}</span>
+              <button
+                onClick={() => {
+                  if (assignment.planning_week_id && window.__planningReviewAddWeek) {
+                    window.__planningReviewAddWeek(assignment.planning_week_id);
+                  }
+                }}
+                className="p-0.5 text-slate-400 hover:text-indigo-600 rounded hover:bg-indigo-50"
+                title="Add to Planning Review"
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </button>
+            </div>
           ) : (
             <span className="text-amber-600 font-medium">Unassigned</span>
           )}
