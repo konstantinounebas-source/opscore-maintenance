@@ -24,14 +24,12 @@ import OutlineManagementForm from "@/components/forms/OutlineManagementForm";
 import CombinedFMPIandInvoiceForm from "@/components/forms/CombinedFMPIandInvoiceForm";
 import ManualFMPIModal from "@/components/incidents/ManualFMPIModal";
 import { getAthensTimestamp } from "@/lib/timeSync";
-import { mergeRules, formatDeadline, deriveWorkflowStateFromLegacy } from "@/lib/slaEngine";
 import {
   CheckCircle2, Circle, Loader2, ChevronRight,
   AlertTriangle, FileCheck, FileText, PenLine,
-  Lock, ChevronDown, Trash2, XCircle, Upload, Calendar
+  Lock, ChevronDown, Trash2, XCircle, Upload
 } from "lucide-react";
-import { computeRepairSLA, getPriorityLabel, computeOWRRestorationDeadline } from "@/lib/slaEngine";
-import { addDays, format } from "date-fns";
+import { format } from "date-fns";
 
 // ── Work Order panel types ───────────────────────────────────────────────────
 const WO_PANELS = [
@@ -59,15 +57,13 @@ const STATE_META = {
 
 // ── CA Approval Modal ────────────────────────────────────────────────────────
 function CAApprovalModal({ incident, incidentId, onClose, onDone }) {
-  const { toast } = useToast();
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
-  const [decision, setDecision] = useState("");
-  const [comment, setComment] = useState("");
-  const [files, setFiles] = useState([]);
-  const [saving, setSaving] = useState(false);
-
-  const { data: slaRulesData = [] } = useQuery({ queryKey: ["slaRules"], queryFn: () => base44.entities.SLARules.list() });
+   const { toast } = useToast();
+   const { user } = useAuth();
+   const queryClient = useQueryClient();
+   const [decision, setDecision] = useState("");
+   const [comment, setComment] = useState("");
+   const [files, setFiles] = useState([]);
+   const [saving, setSaving] = useState(false);
   const { data: fmpiSubmissions = [] } = useQuery({
     queryKey: ["caFmpiSubmissions", incidentId],
     queryFn: () => base44.entities.FormSubmissions.filter({ incident_id: incidentId, form_type: "combined_fmpi_invoice" }),
@@ -82,25 +78,8 @@ function CAApprovalModal({ incident, incidentId, onClose, onDone }) {
       let nextState, corrective_allowed, newSLAUpdates = {};
 
       if (decision === "Approved") {
-        nextState = "Approved_For_Corrective";
-        corrective_allowed = true;
-        // Repair SLA: OWR = exactly 21 calendar days from CA approval date
-        const repairSLA = computeRepairSLA(now, incident.warranty_status || "OWR", slaRulesData);
-        if (repairSLA) {
-          newSLAUpdates = {
-            active_sla_code: repairSLA.active_sla_code,
-            active_sla_name: repairSLA.active_sla_name,
-            sla_started_at: now,
-            sla_deadline_at: repairSLA.sla_deadline_at,
-            sla_status: repairSLA.sla_status,
-            previous_sla_code: incident.active_sla_code,
-            previous_sla_completed_at: now,
-            // Store repair deadline separately for display clarity
-            repair_deadline_at: repairSLA.sla_deadline_at,
-            // Update restoration_deadline for OWR incidents (CA approval date + 21 days)
-            restoration_deadline: computeOWRRestorationDeadline(now),
-          };
-        }
+         nextState = "Approved_For_Corrective";
+         corrective_allowed = true;
       } else {
         nextState = "CA_Rejected";
         corrective_allowed = false;
@@ -114,7 +93,6 @@ function CAApprovalModal({ incident, incidentId, onClose, onDone }) {
         corrective_allowed,
         // Legacy compat
         ca_status: decision === "Approved" ? "Approved" : "Not Approved",
-        ...newSLAUpdates,
       });
 
       // Upload CA files
@@ -150,12 +128,7 @@ function CAApprovalModal({ incident, incidentId, onClose, onDone }) {
     }
   };
 
-  // Repair deadline preview: approval date + 21 calendar days (OWR rule)
-  const previewRepairDeadline = useMemo(() => {
-    if (decision !== "Approved") return null;
-    const approvalDate = new Date();
-    return addDays(approvalDate, 21);
-  }, [decision]);
+
 
   return (
     <Dialog open onOpenChange={onClose}>
@@ -209,21 +182,7 @@ function CAApprovalModal({ incident, incidentId, onClose, onDone }) {
             )}
           </div>
 
-          {/* Repair Deadline — shown on Approval, calculated as approval date + 21 days (OWR rule) */}
-          {decision === "Approved" && previewRepairDeadline && (
-            <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 space-y-1">
-              <p className="text-xs font-bold text-emerald-800 flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5" /> Repair Deadline Clock Starts on Approval
-              </p>
-              <p className="text-sm font-bold text-emerald-900">
-                {format(previewRepairDeadline, "dd/MM/yyyy")}
-              </p>
-              <p className="text-[10px] text-emerald-700">
-                = Approval Date + 21 calendar days (OWR contractual SLA).
-                This deadline will be written to the incident and becomes the active repair clock.
-              </p>
-            </div>
-          )}
+
 
           <div className="space-y-1.5">
             <Label className="text-xs">Decision Comment (optional)</Label>
@@ -304,17 +263,15 @@ function CloseIncidentModal({ incident, incidentId, workOrders, onClose, onDone 
       }
 
       await base44.entities.Incidents.update(incidentId, {
-        status: "Closed",
-        workflow_state: "Closed",
-        closed_at: now,
-        closure_notes: notes || null,
-        closure_evidence_uploaded: true,
-        sla_completed_at: now,
-        sla_status: "Completed",
-        // Legacy compat
-        photos_after_fixing_done: true,
-        finalise_done: true,
-      });
+         status: "Closed",
+         workflow_state: "Closed",
+         closed_at: now,
+         closure_notes: notes || null,
+         closure_evidence_uploaded: true,
+         // Legacy compat
+         photos_after_fixing_done: true,
+         finalise_done: true,
+       });
 
       await base44.entities.IncidentAuditTrail.create({
         incident_id: incidentId,
@@ -405,14 +362,12 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
     queryFn: () => base44.entities.FormSubmissions.filter({ incident_id: incidentId, form_type: "combined_fmpi_invoice" }),
   });
 
-  // Derive effective workflow state (supports legacy incidents)
-  const workflowState = deriveWorkflowStateFromLegacy(incident);
-  const warrantyStatus = incident.warranty_status
-    || (incident.is_owr === true ? "OWR" : incident.is_owr === false ? "In Warranty" : null);
-  const fmpiApprovalRequired = incident.fmpi_approval_required ?? (warrantyStatus === "OWR");
-  const corrective_allowed = incident.corrective_allowed
-    ?? (!fmpiApprovalRequired && workflowState === "FMPI_Submitted")
-    ?? (incident.ca_decision === "Approved");
+  // Derive operational workflow state
+   const workflowState = incident.workflow_state || "Awaiting_CR_OMPI";
+   const warrantyStatus = incident.warranty_status
+     || (incident.is_owr === true ? "OWR" : incident.is_owr === false ? "In Warranty" : null);
+   const fmpiApprovalRequired = incident.fmpi_approval_required ?? (warrantyStatus === "OWR");
+   const corrective_allowed = incident.corrective_allowed ?? (incident.ca_decision === "Approved");
 
   const stateMeta = STATE_META[workflowState] || { label: workflowState, color: "bg-slate-100 text-slate-600 border-slate-200" };
 
@@ -465,7 +420,7 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
           {workflowState !== "Closed" && workflowState !== "Cancelled" && (
             <span className="text-xs text-slate-400">
               Priority: <span className="font-semibold text-slate-700">
-                {getPriorityLabel(incident.operational_priority || incident.initial_priority)}
+                {incident.operational_priority || incident.initial_priority}
               </span>
             </span>
           )}
@@ -490,7 +445,7 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
                 Confirmation of Receipt + OMPI
               </p>
               {incident.cr_ompi_submitted_at && (
-                <p className="text-xs text-slate-400">Submitted: {formatDeadline(incident.cr_ompi_submitted_at)}</p>
+                <p className="text-xs text-slate-400">Submitted: {format(new Date(incident.cr_ompi_submitted_at), "dd/MM/yyyy HH:mm")}</p>
               )}
             </div>
           </div>
@@ -523,7 +478,7 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
                   {incident.fmpi_submission_method ? ` · ${incident.fmpi_submission_method} submission` : ""}
                 </p>
                 {incident.fmpi_submitted_at && (
-                  <p className="text-xs text-slate-400">Submitted: {formatDeadline(incident.fmpi_submitted_at)}</p>
+                  <p className="text-xs text-slate-400">Submitted: {format(new Date(incident.fmpi_submitted_at), "dd/MM/yyyy HH:mm")}</p>
                 )}
               </div>
             </div>
@@ -591,7 +546,7 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
                 {incident.ca_decision && (
                   <p className={`text-xs font-semibold ${incident.ca_decision === "Approved" ? "text-green-700" : "text-red-700"}`}>
                     {incident.ca_decision === "Approved" ? "✓ Approved" : "✗ Rejected"}
-                    {incident.ca_decision_at ? ` — ${formatDeadline(incident.ca_decision_at)}` : ""}
+                    {incident.ca_decision_at ? ` — ${format(new Date(incident.ca_decision_at), "dd/MM/yyyy HH:mm")}` : ""}
                   </p>
                 )}
                 {!hasFMPISubmitted && !incident.ca_decision && (
@@ -638,12 +593,12 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
         )}
 
         {workflowState === "Closed" && (
-          <div className="rounded-lg border border-green-200 bg-green-50 p-3 flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-green-500" />
-            <p className="text-sm font-medium text-green-800">
-              Incident Closed — {incident.closed_at ? formatDeadline(incident.closed_at) : ""}
-            </p>
-          </div>
+        <div className="rounded-lg border border-green-200 bg-green-50 p-3 flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-green-500" />
+          <p className="text-sm font-medium text-green-800">
+            Incident Closed — {incident.closed_at ? format(new Date(incident.closed_at), "dd/MM/yyyy HH:mm") : ""}
+          </p>
+        </div>
         )}
       </div>
 

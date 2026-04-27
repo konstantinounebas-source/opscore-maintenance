@@ -7,7 +7,6 @@ import StatusBadge from "@/components/shared/StatusBadge";
 import AuditLog from "@/components/shared/AuditLog";
 import IncidentFormDialog from "@/components/incidents/IncidentFormDialog";
 import IncidentWorkflow from "@/components/incidents/IncidentWorkflow.jsx";
-import SLAStatusCard from "@/components/incidents/SLAStatusCard";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -19,8 +18,6 @@ import IncidentDocuments from "@/components/incidents/IncidentDocuments";
 import ResetIncidentDialog from "@/components/incidents/ResetIncidentDialog";
 import IncidentFormSubmissions from "@/components/incidents/IncidentFormSubmissions";
 import IncidentAttachmentsPreview from "@/components/incidents/IncidentAttachmentsPreview";
-import SLAResponseClock from "@/components/incidents/SLAResponseClock";
-import SLADeadlinePanel from "@/components/incidents/SLADeadlinePanel";
 
 export default function IncidentDetail() {
   const params = new URLSearchParams(window.location.search);
@@ -138,9 +135,6 @@ export default function IncidentDetail() {
         }
       />
       <div className="p-6 space-y-6">
-        {/* SLA Response Clock — shows countdown while awaiting CR+OMPI */}
-        <SLAResponseClock incident={incident} />
-
         {/* Overview */}
         <div className="bg-white rounded-xl border border-slate-200 p-6">
           {/* Always-visible fields */}
@@ -203,12 +197,6 @@ export default function IncidentDetail() {
             {showMore ? <><ChevronUp className="w-3.5 h-3.5" /> Show Less</> : <><ChevronDown className="w-3.5 h-3.5" /> Show More Info</>}
           </button>
         </div>
-
-        {/* SLA Deadlines Panel — acknowledgement, make safe, restoration */}
-        <SLADeadlinePanel incident={incident} />
-
-        {/* SLA Status Card */}
-        <SLAStatusCard incident={incident} />
 
         {/* Workflow */}
         <IncidentWorkflow incident={incident} incidentId={incidentId} onRefresh={invalidateAll} />

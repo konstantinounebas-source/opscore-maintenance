@@ -44,7 +44,6 @@
       "enum": [
         "Awaiting_CR_OMPI",
         "CR_OMPI_Submitted",
-        "Awaiting_Make_Safe",
         "Awaiting_Inspection",
         "FMPI_Draft",
         "FMPI_Submitted",
@@ -57,42 +56,7 @@
         "Cancelled"
       ],
       "default": "Awaiting_CR_OMPI",
-      "description": "State-machine driven workflow state"
-    },
-    "active_sla_code": {
-      "type": "string"
-    },
-    "active_sla_name": {
-      "type": "string"
-    },
-    "sla_started_at": {
-      "type": "string",
-      "format": "date-time"
-    },
-    "sla_deadline_at": {
-      "type": "string",
-      "format": "date-time"
-    },
-    "sla_status": {
-      "type": "string",
-      "enum": [
-        "On Track",
-        "At Risk",
-        "Breached",
-        "Completed",
-        "Paused"
-      ]
-    },
-    "sla_completed_at": {
-      "type": "string",
-      "format": "date-time"
-    },
-    "previous_sla_code": {
-      "type": "string"
-    },
-    "previous_sla_completed_at": {
-      "type": "string",
-      "format": "date-time"
+      "description": "Operational workflow state"
     },
     "operational_priority": {
       "type": "string",
@@ -100,125 +64,104 @@
         "P1",
         "P2"
       ],
-      "description": "P1 = Low, P2 = High/Urgent"
+      "description": "Operational priority \u2014 P1: Low, P2: High/Urgent"
     },
     "warranty_status": {
       "type": "string",
       "enum": [
         "In Warranty",
         "OWR"
-      ]
+      ],
+      "description": "Warranty status"
     },
     "make_safe_required": {
       "type": "boolean",
-      "default": false
+      "default": false,
+      "description": "Whether Make-Safe action is required (P2 safety incidents)"
     },
     "inspection_required": {
       "type": "boolean",
-      "default": false
+      "default": false,
+      "description": "Whether inspection is required"
     },
     "fmpi_required": {
       "type": "boolean",
-      "default": true
+      "default": true,
+      "description": "Full Management Plan required"
     },
     "fmpi_approval_required": {
       "type": "boolean",
-      "default": false
+      "default": false,
+      "description": "CA Approval required (OWR incidents)"
     },
     "fmpi_submission_method": {
       "type": "string",
       "enum": [
         "Digital",
         "Manual"
-      ]
+      ],
+      "description": "Method used to submit FMPI"
     },
     "corrective_allowed": {
       "type": "boolean",
-      "default": false
-    },
-    "acknowledgement_deadline": {
-      "type": "string",
-      "format": "date-time",
-      "description": "SLA deadline for CR+OMPI acknowledgement (auto-calculated)"
-    },
-    "make_safe_deadline": {
-      "type": "string",
-      "format": "date-time",
-      "description": "P2 only: Make Safe must be completed within 24h of creation"
-    },
-    "restoration_deadline": {
-      "type": "string",
-      "format": "date-time",
-      "description": "Final repair/restoration deadline (28 days from creation, or 21 days from CA approval for OWR)"
-    },
-    "acknowledgement_breach": {
-      "type": "boolean",
-      "default": false
-    },
-    "make_safe_breach": {
-      "type": "boolean",
-      "default": false
-    },
-    "restoration_breach": {
-      "type": "boolean",
-      "default": false
-    },
-    "incident_created_at": {
-      "type": "string",
-      "format": "date-time"
+      "default": false,
+      "description": "Whether corrective work can proceed"
     },
     "cr_ompi_submitted_at": {
       "type": "string",
-      "format": "date-time"
-    },
-    "make_safe_completed_at": {
-      "type": "string",
-      "format": "date-time"
+      "format": "date-time",
+      "description": "Timestamp of CR+OMPI submission"
     },
     "inspection_completed_at": {
       "type": "string",
-      "format": "date-time"
+      "format": "date-time",
+      "description": "Timestamp of inspection completion"
     },
     "fmpi_submitted_at": {
       "type": "string",
-      "format": "date-time"
+      "format": "date-time",
+      "description": "Timestamp of FMPI submission"
     },
     "ca_decision_at": {
       "type": "string",
-      "format": "date-time"
+      "format": "date-time",
+      "description": "Timestamp of CA decision"
     },
     "ca_decision": {
       "type": "string",
       "enum": [
         "Approved",
         "Rejected"
-      ]
+      ],
+      "description": "CA approval decision"
     },
     "ca_decision_comment": {
-      "type": "string"
-    },
-    "repair_deadline_at": {
       "type": "string",
-      "format": "date-time"
+      "description": "CA decision comment"
     },
     "corrective_started_at": {
       "type": "string",
-      "format": "date-time"
+      "format": "date-time",
+      "description": "Timestamp of corrective work start"
     },
     "corrective_completed_at": {
       "type": "string",
-      "format": "date-time"
+      "format": "date-time",
+      "description": "Timestamp of corrective work completion"
     },
     "closed_at": {
       "type": "string",
-      "format": "date-time"
+      "format": "date-time",
+      "description": "Timestamp of incident closure"
     },
     "closure_notes": {
-      "type": "string"
+      "type": "string",
+      "description": "Notes provided at closure"
     },
     "closure_evidence_uploaded": {
       "type": "boolean",
-      "default": false
+      "default": false,
+      "description": "Whether closure photos were uploaded"
     },
     "ca_status": {
       "type": "string",
@@ -228,156 +171,194 @@
         "Not Approved"
       ],
       "default": "Pending",
-      "description": "Legacy CA Approval Status"
+      "description": "Legacy CA approval status"
     },
-    "out_of_warranty": {
+    "incident_created_at": {
       "type": "string",
-      "enum": [
-        "Yes",
-        "No"
-      ]
+      "format": "date-time",
+      "description": "Timestamp of incident creation"
     },
     "category": {
-      "type": "string"
+      "type": "string",
+      "description": "Incident category"
     },
     "reported_date": {
       "type": "string",
-      "format": "date"
+      "format": "date",
+      "description": "Date reported"
     },
     "assigned_to": {
-      "type": "string"
+      "type": "string",
+      "description": "Person assigned to incident"
     },
     "description": {
-      "type": "string"
+      "type": "string",
+      "description": "Incident description"
     },
     "issue_date": {
       "type": "string",
-      "format": "date"
+      "format": "date",
+      "description": "Date of issue"
     },
     "created_time": {
-      "type": "string"
+      "type": "string",
+      "description": "Time of creation"
     },
     "reported_by_org": {
-      "type": "string"
+      "type": "string",
+      "description": "Organization reporting incident"
     },
     "reported_by_name": {
-      "type": "string"
+      "type": "string",
+      "description": "Name of person reporting"
     },
     "phone_available": {
-      "type": "boolean"
+      "type": "boolean",
+      "description": "Whether phone contact available"
     },
     "reported_by_phone": {
-      "type": "string"
+      "type": "string",
+      "description": "Reporter phone"
     },
     "email_available": {
-      "type": "boolean"
+      "type": "boolean",
+      "description": "Whether email contact available"
     },
     "reported_by_email": {
-      "type": "string"
+      "type": "string",
+      "description": "Reporter email"
     },
     "incident_reporting_method": {
-      "type": "string"
+      "type": "string",
+      "description": "Method of reporting"
     },
     "reporting_contact_info": {
-      "type": "string"
+      "type": "string",
+      "description": "Reporter contact details"
     },
     "province": {
-      "type": "string"
+      "type": "string",
+      "description": "Province"
     },
     "municipality": {
-      "type": "string"
+      "type": "string",
+      "description": "Municipality"
     },
     "shelter_type": {
-      "type": "string"
+      "type": "string",
+      "description": "Shelter type"
     },
     "active_shelter_id": {
-      "type": "string"
+      "type": "string",
+      "description": "Shelter ID"
     },
     "location_address": {
-      "type": "string"
+      "type": "string",
+      "description": "Location address"
     },
     "first_report_date": {
       "type": "string",
-      "format": "date"
+      "format": "date",
+      "description": "First report date"
     },
     "detection_time": {
-      "type": "string"
+      "type": "string",
+      "description": "Detection time"
     },
     "incident_source": {
-      "type": "string"
+      "type": "string",
+      "description": "Source of incident report"
     },
     "work_order_reference": {
-      "type": "string"
+      "type": "string",
+      "description": "Reference to work order"
     },
     "incident_source_other": {
-      "type": "string"
+      "type": "string",
+      "description": "Other incident source"
     },
     "subsystem_structural_selected": {
-      "type": "boolean"
+      "type": "boolean",
+      "description": "Structural subsystem affected"
     },
     "subsystem_structural_issue": {
-      "type": "string"
+      "type": "string",
+      "description": "Structural issue description"
     },
     "subsystem_electrical_selected": {
-      "type": "boolean"
+      "type": "boolean",
+      "description": "Electrical subsystem affected"
     },
     "subsystem_electrical_issue": {
-      "type": "string"
+      "type": "string",
+      "description": "Electrical issue description"
     },
     "subsystem_electronic_selected": {
-      "type": "boolean"
+      "type": "boolean",
+      "description": "Electronic subsystem affected"
     },
     "subsystem_electronic_issue": {
-      "type": "string"
+      "type": "string",
+      "description": "Electronic issue description"
     },
     "subsystem_other_selected": {
-      "type": "boolean"
+      "type": "boolean",
+      "description": "Other subsystem affected"
     },
     "subsystem_other_issue": {
-      "type": "string"
+      "type": "string",
+      "description": "Other subsystem issue"
     },
     "damage_description": {
-      "type": "string"
+      "type": "string",
+      "description": "Damage description"
     },
     "probable_cause": {
-      "type": "string"
+      "type": "string",
+      "description": "Probable cause"
     },
     "probable_cause_other": {
-      "type": "string"
+      "type": "string",
+      "description": "Other probable cause"
     },
     "evidence_type": {
       "type": "array",
       "items": {
         "type": "string"
-      }
+      },
+      "description": "Types of evidence"
     },
     "evidence_files": {
       "type": "array",
       "items": {
         "type": "string"
-      }
+      },
+      "description": "Evidence file URLs"
     },
     "initial_priority": {
       "type": "string",
       "enum": [
         "P1",
         "P2"
-      ]
+      ],
+      "description": "Initial priority at creation"
     },
     "is_owr": {
       "type": "boolean",
-      "description": "Legacy OWR boolean"
+      "description": "Out of warranty (legacy)"
     },
     "requires_make_safe": {
       "type": "boolean",
-      "description": "Legacy"
+      "description": "Requires make-safe (legacy)"
     },
     "approval_date": {
       "type": "string",
-      "format": "date"
+      "format": "date",
+      "description": "Approval date"
     },
     "authority_representative": {
-      "type": "string"
+      "type": "string",
+      "description": "Authority representative"
     },
     "confirmation_done": {
       "type": "boolean",
