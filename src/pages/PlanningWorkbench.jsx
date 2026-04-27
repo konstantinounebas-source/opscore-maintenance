@@ -33,6 +33,16 @@ export default function PlanningWorkbench() {
   const [mapWorkspaces, setMapWorkspaces] = useState([{ id: newMapId() }]);
   const addMap    = () => { if (mapWorkspaces.length < 4) setMapWorkspaces(prev => [...prev, { id: newMapId() }]); };
   const removeMap = (id) => { if (mapWorkspaces.length > 1) setMapWorkspaces(prev => prev.filter(m => m.id !== id)); };
+  const setLayout = (count) => {
+    setMapWorkspaces(prev => {
+      if (count === prev.length) return prev;
+      if (count > prev.length) {
+        const extras = Array.from({ length: count - prev.length }, () => ({ id: newMapId() }));
+        return [...prev, ...extras];
+      }
+      return prev.slice(0, count);
+    });
+  };
 
   // ── Week modal ──────────────────────────────────────────────────────────────
   const [weekModalOpen, setWeekModalOpen] = useState(false);
@@ -281,6 +291,7 @@ export default function PlanningWorkbench() {
             mapWorkspaces={mapWorkspaces}
             onAddMap={addMap}
             onRemoveMap={removeMap}
+            onSetLayout={setLayout}
             allAssets={assets}
             allAssignments={allAssignments}
             globalLayers={layers}
