@@ -380,8 +380,41 @@ export default function StationLogSidePanel({ asset, onClose, incidents = [], wo
             attachments={attachments}
           />
         ) : (
-          <div className="space-y-0">
-            <Stage2Summary logId={log.id} />
+          <div className="space-y-0 flex flex-col h-full">
+            <div className="flex-1 overflow-y-auto">
+              <Stage2Summary logId={log.id} />
+            </div>
+            {/* Attachments section for Stage 2 */}
+            {attachments.length > 0 && (
+              <div className="px-4 py-3 border-t border-slate-200 space-y-2 shrink-0 bg-white">
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Attachments ({attachments.length})</p>
+                <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                  {attachments.map(att => {
+                    const isImage = att.file_type === "photo" || att.file_name?.match(/\.(jpg|jpeg|png|gif)$/i);
+                    return (
+                      <div key={att.id} className="flex items-center gap-2 p-2 rounded border border-slate-200 hover:bg-slate-50 transition-colors group">
+                        {isImage ? (
+                          <ImageIcon className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                        ) : (
+                          <FileText className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                        )}
+                        <span className="text-xs text-slate-700 truncate flex-1">{att.file_name}</span>
+                        <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <a
+                            href={att.file_url}
+                            download
+                            className="p-1 text-slate-400 hover:text-slate-600 rounded hover:bg-white"
+                            title="Download"
+                          >
+                            <Download className="h-3 w-3" />
+                          </a>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
