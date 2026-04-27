@@ -117,22 +117,22 @@ export default function AssetPopup({
         <div className="flex items-center justify-between text-xs">
           <span className="text-slate-500">Assigned Week:</span>
           {assignment ? (
-            <div className="flex items-center gap-1">
-              <span className="font-medium text-slate-700">{assignedWeek?.week_code || "—"}</span>
-              <button
-                onClick={() => {
-                  if (assignment.planning_week_id && window.__planningReviewAddWeek) {
-                    window.__planningReviewAddWeek(assignment.planning_week_id);
-                  }
-                }}
-                className="p-0.5 text-slate-400 hover:text-indigo-600 rounded hover:bg-indigo-50"
-                title="Add to Planning Review"
-              >
-                <Plus className="h-3.5 w-3.5" />
-              </button>
-            </div>
+           <div className="flex items-center gap-2">
+             <span className="font-medium text-slate-700">{assignedWeek?.week_code || "—"}</span>
+             <button
+               onClick={() => {
+                 if (assignment.planning_week_id && window.__planningReviewAddWeek) {
+                   window.__planningReviewAddWeek(assignment.planning_week_id);
+                 }
+               }}
+               className="p-1 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 hover:text-indigo-700 rounded transition-colors"
+               title="Add to Planning Review"
+             >
+               <Plus className="h-4 w-4" />
+             </button>
+           </div>
           ) : (
-            <span className="text-amber-600 font-medium">Unassigned</span>
+           <span className="text-amber-600 font-medium">Unassigned</span>
           )}
         </div>
         <div className="flex items-center justify-between text-xs">
