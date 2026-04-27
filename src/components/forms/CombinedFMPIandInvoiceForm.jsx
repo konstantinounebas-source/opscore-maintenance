@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { getAthensTimestamp } from "@/lib/timeSync";
+import { logFormSubmission, buildAttachmentMetadata } from "@/lib/auditTrailHelper";
 import TopHeader from "@/components/layout/TopHeader";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -346,31 +347,24 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
          }
        }
 
-      // Build attachment_metadata for audit trail
-      const auditAttachments = [
-        ...(data.status === "Submitted" && result?.id ? [{
-          url: `form:${result.id}:${data.form_type}`,
-          name: `${data.form_name} (Submitted)`,
-          author: user?.email,
-          author_name: user?.full_name,
-          created_at: timestamp,
-        }] : []),
-        ...allFiles.map(f => ({
-          url: f.url,
-          name: f.name || f.url.split("/").pop(),
-          author: user?.email,
-          author_name: user?.full_name,
-          created_at: timestamp,
-        })),
-      ];
-
-      await base44.entities.IncidentAuditTrail.create({
-        incident_id: incId,
-        action: data.status === "Submitted" ? "Form Submitted" : "Form Saved",
-        details: `${data.form_name} – ${data.status}`,
-        user: user?.email,
-        ...(auditAttachments.length > 0 ? { attachment_metadata: auditAttachments } : {}),
-      });
+      // Log via audit trail helper for atomic grouping
+      if (data.status === "Submitted") {
+        await logFormSubmission(
+          incId,
+          data.form_type,
+          data.form_name,
+          buildAttachmentMetadata(allFiles),
+          data.work_order_id
+        );
+      } else {
+        // Draft save: use generic audit entry
+        await base44.entities.IncidentAuditTrail.create({
+          incident_id: incId,
+          action: "Form Saved",
+          details: `${data.form_name} – Draft`,
+          user: user?.email,
+        });
+      }
 
       // Update incident workflow state when FMPI is submitted
       if (data.status === "Submitted" && incId) {

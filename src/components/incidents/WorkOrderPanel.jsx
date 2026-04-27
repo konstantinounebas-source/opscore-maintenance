@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { getAthensTimestamp } from "@/lib/timeSync";
+import { logFormSubmission, buildAttachmentMetadata } from "@/lib/auditTrailHelper";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
