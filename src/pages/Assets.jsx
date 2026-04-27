@@ -164,9 +164,6 @@ export default function Assets() {
         title="Assets"
         actions={
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="gap-1.5" onClick={handleSetAllActive} disabled={settingActive}>
-              {settingActive ? "Setting..." : "Set All Active"}
-            </Button>
             <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setImportOpen(true)}>
               <Upload className="w-3.5 h-3.5" /> Import
             </Button>
