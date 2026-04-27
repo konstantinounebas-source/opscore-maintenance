@@ -6,7 +6,7 @@ import { Loader2, Plus, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import MapWorkspaceContainer from "@/components/workbench/MapWorkspaceContainer";
 import PlanningReviewPanel from "@/components/workbench/PlanningReviewPanel";
-import AssetPopup from "@/components/workbench/AssetPopup";
+
 import StationLogSidePanel from "@/components/workbench/StationLogSidePanel";
 import { computePinColor, computePriorityBucket } from "@/components/planning/planningUtils";
 import PlanningWeekModal from "@/components/planning/PlanningWeekModal";
@@ -48,11 +48,7 @@ export default function PlanningWorkbench() {
   const [weekModalOpen, setWeekModalOpen] = useState(false);
   const [editingWeek, setEditingWeek] = useState(null);
 
-  // ── Asset popup and assignment modal ────────────────────────────────────────
-  const [selectedAsset, setSelectedAsset] = useState(null);
-  const [popupPos, setPopupPos] = useState(null);
-  const [assignmentModalOpen, setAssignmentModalOpen] = useState(false);
-  const [assigningAsset, setAssigningAsset] = useState(null);
+  // ── Photo viewer modal ────────────────────────────────────────
   const [photoViewerAsset, setPhotoViewerAsset] = useState(null);
   const [zoomToAsset, setZoomToAsset] = useState(null);
   const [stationPanelAsset, setStationPanelAsset] = useState(null);
@@ -317,7 +313,6 @@ export default function PlanningWorkbench() {
            zoomToAsset={zoomToAsset}
            onZoomCompleted={() => setZoomToAsset(null)}
            onTriggerZoom={(asset) => setZoomToAsset(asset)}
-           onSelectAssetForPanel={(asset) => setStationPanelAsset(asset)}
            />
         </div>
 
@@ -357,10 +352,7 @@ export default function PlanningWorkbench() {
               onZoomToAsset={(asset) => {
                 setZoomToAsset(asset);
               }}
-              onSelectAssetForPopup={(asset) => {
-                setSelectedAsset(asset);
-                setPopupPos({ x: 50, y: 50 });
-              }}
+
             />
           )}
         </div>
@@ -371,34 +363,21 @@ export default function PlanningWorkbench() {
             <StationLogSidePanel
               asset={stationPanelAsset}
               onClose={() => setStationPanelAsset(null)}
+              incidents={incidents}
+              workOrders={workOrders}
+              weeks={weeks}
+              planningTypes={planningTypes}
+              allAssignments={allAssignments}
+              onSaveAssignment={handleSaveAssignment}
+              onZoomToAsset={(asset) => {
+                setZoomToAsset(asset);
+              }}
             />
           </div>
         )}
       </div>
 
-      {/* Asset Popup */}
-      {selectedAsset && popupPos && (
-        <AssetPopup
-          asset={selectedAsset}
-          popupPos={popupPos}
-          assignment={allAssignments.find(a => a.asset_id === selectedAsset.id) || null}
-          incidents={incidents || []}
-          workOrders={workOrders || []}
-          weeks={weeks || []}
-          planningTypes={planningTypes || []}
-          onClose={() => {
-            setSelectedAsset(null);
-            setPopupPos(null);
-          }}
-          onSaveAssignment={handleSaveAssignment}
-          onZoomToAsset={(asset) => {
-            setZoomToAsset(asset);
-          }}
-          onShowPhotos={(asset) => {
-            setPhotoViewerAsset(asset);
-          }}
-        />
-      )}
+
 
       {/* Photo Viewer Modal */}
       {photoViewerAsset && (
