@@ -116,9 +116,18 @@ export default function AssetPopup({
         </div>
         <div className="flex items-center justify-between text-xs">
           <span className="text-slate-500">Assigned Week:</span>
-          <span className={`font-medium ${assignment ? "text-slate-700" : "text-amber-600"}`}>
+          <button 
+            onClick={() => {
+              if (assignment?.planning_week_id && window.__planningReviewAddWeek) {
+                window.__planningReviewAddWeek(assignment.planning_week_id);
+              }
+            }}
+            disabled={!assignment}
+            className={`font-medium ${assignment ? "text-indigo-600 hover:text-indigo-700 cursor-pointer underline" : "text-amber-600"}`}
+            title={assignment ? "Add this week to Planning Review" : "No assignment"}
+          >
             {assignment ? `${assignedWeek?.week_code || "—"} - ${assignedWeek?.week_name || ""}` : "Unassigned"}
-          </span>
+          </button>
         </div>
         <div className="flex items-center justify-between text-xs">
           <span className="text-slate-500">Shelter Type:</span>
