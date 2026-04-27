@@ -47,16 +47,15 @@ export default function PlanningReviewPanel({
   onSelectAssetForPopup
 }) {
   // ── Panel-local state — NEVER shared with maps ─────────────────────────────
-  const [weekSearch, setWeekSearch] = useState("");
   const [selectedPlanningTypeIds, setSelectedPlanningTypeIds] = useState(new Set());
-  const [selectedWeekIds, setSelectedWeekIds] = useState(new Set());
+  const [candidateWeekIds, setCandidateWeekIds] = useState(new Set()); // Selected in dropdown, not yet added
+  const [activeWeekIds, setActiveWeekIds] = useState(new Set()); // Added to active list
   const [assignmentSearch, setAssignmentSearch] = useState("");
   const [assetSearch, setAssetSearch] = useState("");
   const [assignmentStatusFilter, setAssignmentStatusFilter] = useState("__all__");
   const [weeksDropdownOpen, setWeeksDropdownOpen] = useState(false);
   const [weekFilterSearch, setWeekFilterSearch] = useState("");
   const [expandedWeekIds, setExpandedWeekIds] = useState(new Set());
-  const [expandedAssignmentIds, setExpandedAssignmentIds] = useState(new Set());
 
   const filteredWeeks = useMemo(() => {
     let list = weeks;
@@ -66,11 +65,11 @@ export default function PlanningReviewPanel({
     return list;
   }, [weeks, selectedPlanningTypeIds]);
 
-  const selectedWeeks = useMemo(() => weeks.filter(w => selectedWeekIds.has(w.id)), [weeks, selectedWeekIds]);
+  const activeWeeks = useMemo(() => weeks.filter(w => activeWeekIds.has(w.id)), [weeks, activeWeekIds]);
 
   const weekAssignments = useMemo(() => {
-    if (selectedWeekIds.size === 0) return [];
-    let list = allAssignments.filter(a => selectedWeekIds.has(a.planning_week_id));
+    if (activeWeekIds.size === 0) return [];
+    let list = allAssignments.filter(a => activeWeekIds.has(a.planning_week_id));
     if (assignmentSearch) {
       const q = assignmentSearch.toLowerCase();
       list = list.filter(a => {
@@ -98,12 +97,12 @@ export default function PlanningReviewPanel({
       list = list.filter(a => a.assignment_status === assignmentStatusFilter);
     }
     return list;
-  }, [selectedWeekIds, allAssignments, assignmentSearch, assetSearch, assignmentStatusFilter, assetsMap]);
+  }, [activeWeekIds, allAssignments, assignmentSearch, assetSearch, assignmentStatusFilter, assetsMap]);
 
-  // KPIs for selected weeks
+  // KPIs for active weeks
   const kpis = useMemo(() => {
-    if (selectedWeekIds.size === 0) return null;
-    const wa = allAssignments.filter(a => selectedWeekIds.has(a.planning_week_id));
+    if (activeWeekIds.size === 0) return null;
+    const wa = allAssignments.filter(a => activeWeekIds.has(a.planning_week_id));
     return {
       total:       wa.length,
       planned:     wa.filter(a => a.assignment_status === "Planned").length,
@@ -113,10 +112,24 @@ export default function PlanningReviewPanel({
       withIncident:wa.filter(a => incidentsByAsset[a.asset_id]?.length > 0).length,
       withWO:      wa.filter(a => workOrdersByAsset[a.asset_id]?.length > 0).length,
     };
-  }, [selectedWeekIds, allAssignments, incidentsByAsset, workOrdersByAsset]);
+  }, [activeWeekIds, allAssignments, incidentsByAsset, workOrdersByAsset]);
+
+  const handleAddWeeks = () => {
+    const newSet = new Set(activeWeekIds);
+    candidateWeekIds.forEach(id => newSet.add(id));
+    setActiveWeekIds(newSet);
+    setCandidateWeekIds(new Set());
+    setWeeksDropdownOpen(false);
+  };
+
+  const handleRemoveWeek = (weekId) => {
+    const newSet = new Set(activeWeekIds);
+    newSet.delete(weekId);
+    setActiveWeekIds(newSet);
+  };
 
   const handleExportCSV = () => {
-    if (selectedWeeks.length === 0 || weekAssignments.length === 0) return;
+    if (activeWeeks.length === 0 || weekAssignments.length === 0) return;
     const rows = [["Asset ID", "City", "Type", "Status", "Priority", "Team", "Assigned To"]];
     weekAssignments.forEach(a => {
       const asset = assetsMap[a.asset_id] || {};
@@ -127,7 +140,7 @@ export default function PlanningReviewPanel({
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `weeks_${Array.from(selectedWeekIds).join("_")}_assignments.csv`;
+    link.download = `weeks_${Array.from(activeWeekIds).join("_")}_assignments.csv`;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -192,7 +205,7 @@ export default function PlanningReviewPanel({
                             newSet.add(pt.id);
                           }
                           setSelectedPlanningTypeIds(newSet);
-                          setSelectedWeekIds(new Set());
+                          setCandidateWeekIds(new Set());
                         }}
                         className="w-3 h-3"
                       />
@@ -206,27 +219,27 @@ export default function PlanningReviewPanel({
         </div>
 
        {/* Week selector dropdown */}
-       <div className="px-3 py-2 border-b border-slate-200 space-y-1.5 shrink-0">
-         <div className="flex items-center justify-between">
-           <label className="text-[10px] font-semibold text-slate-600 uppercase tracking-wide">Weeks ({selectedWeekIds.size})</label>
-           {selectedWeekIds.size > 0 && (
-             <button
-               onClick={() => setSelectedWeekIds(new Set())}
-               className="text-[10px] text-slate-400 hover:text-slate-600"
-             >
-               Clear
-             </button>
-           )}
-         </div>
+       <div className="px-3 py-2 border-b border-slate-200 space-y-2 shrink-0">
+          <div className="flex items-center justify-between">
+            <label className="text-[10px] font-semibold text-slate-600 uppercase tracking-wide">Select Weeks</label>
+            {candidateWeekIds.size > 0 && (
+              <button
+                onClick={() => setCandidateWeekIds(new Set())}
+                className="text-[10px] text-slate-400 hover:text-slate-600"
+              >
+                Clear
+              </button>
+            )}
+          </div>
 
          <Popover open={weeksDropdownOpen} onOpenChange={setWeeksDropdownOpen}>
            <PopoverTrigger asChild>
              <button className="w-full h-7 px-3 py-1 text-xs border border-input rounded-md bg-white text-slate-600 hover:bg-slate-50 flex items-center justify-between">
-               <span>{selectedWeekIds.size > 0 ? `${selectedWeekIds.size} selected` : "All statuses"}</span>
+               <span>{candidateWeekIds.size > 0 ? `${candidateWeekIds.size} selected` : "Choose weeks..."}</span>
                <ChevronDown className="h-3 w-3 text-slate-400" />
              </button>
            </PopoverTrigger>
-           <PopoverContent className="w-56 p-0" align="start">
+           <PopoverContent className="w-64 p-0" align="start">
              <div className="p-2 space-y-2">
                <input
                  type="text"
@@ -257,15 +270,15 @@ export default function PlanningReviewPanel({
                    >
                      <input
                        type="checkbox"
-                       checked={selectedWeekIds.has(week.id)}
+                       checked={candidateWeekIds.has(week.id)}
                        onChange={() => {
-                         const newSet = new Set(selectedWeekIds);
+                         const newSet = new Set(candidateWeekIds);
                          if (newSet.has(week.id)) {
                            newSet.delete(week.id);
                          } else {
                            newSet.add(week.id);
                          }
-                         setSelectedWeekIds(newSet);
+                         setCandidateWeekIds(newSet);
                        }}
                        className="w-3 h-3 shrink-0"
                      />
@@ -282,12 +295,42 @@ export default function PlanningReviewPanel({
                    )}
              </div>
              </div>
+             <div className="p-2 border-t border-slate-200">
+               <button
+                 onClick={handleAddWeeks}
+                 disabled={candidateWeekIds.size === 0}
+                 className="w-full h-7 text-xs font-medium bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-200 disabled:cursor-not-allowed text-white rounded transition-colors"
+               >
+                 Add {candidateWeekIds.size > 0 ? `(${candidateWeekIds.size})` : ""}
+               </button>
+             </div>
              </PopoverContent>
-         </Popover>
-       </div>
+             </Popover>
+             </div>
 
-      {/* Asset search field */}
-      {selectedWeekIds.size > 0 && (
+             {/* Active weeks list */}
+             {activeWeekIds.size > 0 && (
+             <div className="px-3 py-2 border-b border-slate-200 space-y-1.5 shrink-0">
+             <label className="text-[10px] font-semibold text-slate-600 uppercase tracking-wide">Active Weeks</label>
+             <div className="space-y-1">
+             {activeWeeks.map(week => (
+              <div key={week.id} className="flex items-center justify-between bg-indigo-50 px-2 py-1.5 rounded border border-indigo-200 text-xs">
+                <span className="font-medium text-indigo-900">{week.week_code}</span>
+                <button
+                  onClick={() => handleRemoveWeek(week.id)}
+                  className="text-indigo-600 hover:text-indigo-800 font-bold"
+                  title="Remove"
+                >
+                  ✕
+                </button>
+              </div>
+             ))}
+             </div>
+             </div>
+             )}
+
+             {/* Asset search field */}
+             {activeWeekIds.size > 0 && (
         <div className="px-3 py-2 border-b border-slate-200 shrink-0">
           <div className="flex items-center gap-1 px-2 py-1.5 border border-input rounded-md bg-white">
             <Search className="h-3.5 w-3.5 text-slate-400" />
@@ -304,13 +347,13 @@ export default function PlanningReviewPanel({
 
       {/* Week details view (when weeks selected) */}
       <div className="flex-1 overflow-y-auto">
-        {selectedWeekIds.size === 0 ? (
+        {activeWeekIds.size === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 text-slate-400">
             <CalendarDays className="h-8 w-8 mb-2 opacity-30" />
-            <p className="text-xs">Select weeks from dropdown above</p>
+            <p className="text-xs">Add weeks to view details</p>
           </div>
         ) : (
-          selectedWeekIds.size > 0 && weeks.filter(w => selectedWeekIds.has(w.id)).map(week => {
+          activeWeeks.map(week => {
             const weekCount = allAssignments.filter(a => a.planning_week_id === week.id).length;
             const isExpanded = expandedWeekIds.has(week.id);
             const wa = allAssignments.filter(a => a.planning_week_id === week.id);
