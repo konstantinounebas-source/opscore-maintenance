@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { MapPin, FileText, ChevronDown, ChevronRight, Pencil, X, Download, Eye, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import OrderLocationModule from "@/components/stationlogs/stage1/OrderLocationModule";
+import AttachmentPreviewModal from "@/components/stationlogs/AttachmentPreviewModal";
 
 function Section({ title, icon: SectionIcon, children, defaultOpen = true }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -205,38 +206,10 @@ export default function Stage3LeftPanel({ stationData, asset, log, stage2Summary
 
       {/* Attachment Preview Modal */}
       {previewAttachment && (
-        <div className="fixed inset-0 z-[80] bg-black/80 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl max-h-[80vh] overflow-auto flex flex-col">
-            <div className="flex items-center justify-between p-4 border-b border-slate-200 shrink-0">
-              <p className="font-semibold text-slate-800 truncate">{previewAttachment.file_name}</p>
-              <button
-                onClick={() => setPreviewAttachmentId(null)}
-                className="p-1 text-slate-400 hover:text-slate-600 rounded hover:bg-slate-100"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="flex-1 overflow-auto p-4 flex items-center justify-center">
-              {previewAttachment.file_type === "photo" || previewAttachment.file_name?.match(/\.(jpg|jpeg|png|gif)$/i) ? (
-                <img
-                  src={previewAttachment.file_url}
-                  alt={previewAttachment.file_name}
-                  className="max-w-full max-h-full object-contain"
-                />
-              ) : (
-                <a
-                  href={previewAttachment.file_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex flex-col items-center gap-4 text-center"
-                >
-                  <FileText className="h-16 w-16 text-slate-300" />
-                  <p className="text-sm text-slate-600">Click to open {previewAttachment.file_name}</p>
-                </a>
-              )}
-            </div>
-          </div>
-        </div>
+        <AttachmentPreviewModal
+          attachment={previewAttachment}
+          onClose={() => setPreviewAttachmentId(null)}
+        />
       )}
     </div>
   );
