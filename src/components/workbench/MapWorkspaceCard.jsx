@@ -294,8 +294,7 @@ export default function MapWorkspaceCard({
              allAssignments={allAssignments}
              selectedAssetId={selectedAsset?.id}
              onSelectAsset={(asset) => {
-               setSelectedAsset(asset);
-               setPopupPos({ x: 50, y: 50 });
+               onSelectAssetForPanel?.(asset);
              }}
              colorMode={colorMode}
              layers={layers}
