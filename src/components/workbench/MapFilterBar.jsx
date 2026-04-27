@@ -46,8 +46,8 @@ export default function MapFilterBar({ filters, onChange, assets, weeks = [] }) 
       if (containerRef.current && containerRef.current.contains(e.target)) {
         return; // Click inside filter, don't close
       }
-      // Don't close if clicking on any Radix UI portal (Select, Dropdown, etc)
-      const isInPortal = e.target.closest('[role="menu"], [role="listbox"], [role="dialog"], [data-radix-select-content], [data-radix-dropdown-menu-content]');
+      // Don't close if clicking on any portal (MultiSelectFilter, Radix UI, etc)
+      const isInPortal = e.target.closest('[role="menu"], [role="listbox"], [role="dialog"], [data-radix-select-content], [data-radix-dropdown-menu-content], [data-multiselectfilter]');
       if (isInPortal) {
         return; // Click in portal, don't close
       }

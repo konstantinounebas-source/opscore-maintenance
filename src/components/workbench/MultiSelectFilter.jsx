@@ -100,7 +100,14 @@ export default function MultiSelectFilter({
             left: `${position.left}px`,
             width: `${position.width}px`
           }}
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            // Prevent the MapFilterBar click-outside handler from firing
+            if (e.nativeEvent) {
+              e.nativeEvent.stopImmediatePropagation();
+            }
+          }}
+          data-multiselectfilter="true"
         >
           <div className="p-2 border-b border-slate-100">
             <Input
