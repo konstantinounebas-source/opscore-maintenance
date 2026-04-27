@@ -340,13 +340,22 @@ function ChecklistModal({ wo, incidentId, onClose, onDone }) {
     setSaving(true);
     try {
       if (files.length > 0) {
-        await Promise.all(
-          files.map(f =>
-            base44.entities.IncidentAttachments.create({
-              ...f, incident_id: incidentId, uploaded_by: user?.email
-            })
-          )
-        );
+        // Check for duplicates before creating attachments
+        const existingAttachments = await base44.entities.IncidentAttachments.filter({
+          incident_id: incidentId,
+        });
+        const existingUrls = new Set(existingAttachments.map(a => a.file_url));
+
+        const newFiles = files.filter(f => !existingUrls.has(f.file_url));
+        if (newFiles.length > 0) {
+          await Promise.all(
+            newFiles.map(f =>
+              base44.entities.IncidentAttachments.create({
+                ...f, incident_id: incidentId, uploaded_by: user?.email
+              })
+            )
+          );
+        }
       }
       await base44.entities.IncidentAuditTrail.create({
         incident_id: incidentId,

@@ -319,22 +319,32 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
       const timestamp = getAthensTimestamp();
 
       const allFiles = [
-        ...(data.form_data?.photos_before || []),
-        ...(data.form_data?.sig_upload ? [data.form_data.sig_upload] : []),
-      ].filter(f => f?.url);
+         ...(data.form_data?.photos_before || []),
+         ...(data.form_data?.sig_upload ? [data.form_data.sig_upload] : []),
+       ].filter(f => f?.url);
 
-      // Mirror attachments to IncidentAttachments
-      if (incId && allFiles.length > 0) {
-        await Promise.all(allFiles.map(f =>
-          base44.entities.IncidentAttachments.create({
-            incident_id: incId,
-            file_url: f.url,
-            file_name: f.name || f.url.split("/").pop(),
-            file_type: /\.(jpg|jpeg|png|gif|webp)$/i.test(f.name || "") ? "Photo" : "Document",
-            uploaded_by: user?.email,
-          })
-        ));
-      }
+       // Mirror attachments to IncidentAttachments — only if FormSubmissions create succeeds
+       // Only mirror if this is a create operation (not an update)
+       if (!isEditing && incId && allFiles.length > 0) {
+         // Check for duplicates before mirroring
+         const existingAttachments = await base44.entities.IncidentAttachments.filter({
+           incident_id: incId,
+         });
+         const existingUrls = new Set(existingAttachments.map(a => a.file_url));
+
+         const newFiles = allFiles.filter(f => !existingUrls.has(f.url));
+         if (newFiles.length > 0) {
+           await Promise.all(newFiles.map(f =>
+             base44.entities.IncidentAttachments.create({
+               incident_id: incId,
+               file_url: f.url,
+               file_name: f.name || f.url.split("/").pop(),
+               file_type: /\.(jpg|jpeg|png|gif|webp)$/i.test(f.name || "") ? "Photo" : "Document",
+               uploaded_by: user?.email,
+             })
+           ));
+         }
+       }
 
       // Build attachment_metadata for audit trail
       const auditAttachments = [

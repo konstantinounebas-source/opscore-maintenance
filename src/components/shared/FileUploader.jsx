@@ -3,25 +3,30 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Upload, Loader2 } from "lucide-react";
 
-export default function FileUploader({ onUpload, label = "Upload File" }) {
-  const fileRef = useRef(null);
-  const [uploading, setUploading] = useState(false);
-  const [dragOver, setDragOver] = useState(false);
+export default function FileUploader({ onUpload, label = "Upload File", existingUrls = [] }) {
+   const fileRef = useRef(null);
+   const [uploading, setUploading] = useState(false);
+   const [dragOver, setDragOver] = useState(false);
+   const existingUrlSet = new Set(existingUrls);
 
-  const handleFiles = async (files) => {
-    if (!files || files.length === 0) return;
-    setUploading(true);
-    
-    try {
-      for (const file of files) {
-        const { file_url } = await base44.integrations.Core.UploadFile({ file });
-        onUpload({ file_url, file_name: file.name, file_size: `${(file.size / 1024).toFixed(1)} KB`, file_type: file.type.startsWith("image/") ? "Photo" : "Document" });
-      }
-    } finally {
-      setUploading(false);
-      if (fileRef.current) fileRef.current.value = "";
-    }
-  };
+   const handleFiles = async (files) => {
+     if (!files || files.length === 0) return;
+     setUploading(true);
+
+     try {
+       for (const file of files) {
+         const { file_url } = await base44.integrations.Core.UploadFile({ file });
+         // Check for duplicates before calling onUpload
+         if (!existingUrlSet.has(file_url)) {
+           existingUrlSet.add(file_url);
+           onUpload({ file_url, file_name: file.name, file_size: `${(file.size / 1024).toFixed(1)} KB`, file_type: file.type.startsWith("image/") ? "Photo" : "Document" });
+         }
+       }
+     } finally {
+       setUploading(false);
+       if (fileRef.current) fileRef.current.value = "";
+     }
+   };
 
   const handleFile = (e) => {
     handleFiles(e.target.files);
