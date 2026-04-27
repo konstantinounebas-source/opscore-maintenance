@@ -831,16 +831,20 @@ export default function MakeSafeChecklistForm({ submission, incidents, assets, w
           </Section>
 
           {/* Bottom actions */}
-          <div className="flex justify-end gap-3 pt-2 pb-8">
-            <Button variant="outline" onClick={onClose}>Άκυρο</Button>
-            <Button variant="outline" onClick={() => handleSave("Draft")} disabled={saveMutation.isPending} className="gap-1.5">
-              <Save className="w-4 h-4" /> Αποθήκευση Draft
-            </Button>
-            <Button onClick={() => handleSave("Submitted")} disabled={saveMutation.isPending}
-              className="bg-indigo-600 hover:bg-indigo-700 gap-1.5">
-              <Send className="w-4 h-4" /> Υποβολή Φόρμας
-            </Button>
-          </div>
+           <div className="flex justify-end gap-3 pt-2 pb-8">
+             <Button variant="outline" onClick={onClose}>Άκυρο</Button>
+             <Button variant="outline" onClick={() => handleSave("Draft")} disabled={saveMutation.isPending} className="gap-1.5">
+               <Save className="w-4 h-4" /> Αποθήκευση Draft
+             </Button>
+             <Button onClick={() => handleSave("Submitted")} disabled={saveMutation.isPending}
+               className="bg-indigo-600 hover:bg-indigo-700 gap-1.5">
+               <Send className="w-4 h-4" /> Υποβολή Φόρμας
+             </Button>
+             <Button onClick={() => { handleSave("Submitted"); onClose(); }} disabled={saveMutation.isPending}
+               className="bg-red-600 hover:bg-red-700 gap-1.5">
+               <Send className="w-4 h-4" /> Υποβολή & Κλείσιμο Incident
+             </Button>
+           </div>
 
         </div>
       </div>
