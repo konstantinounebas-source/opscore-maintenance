@@ -7,8 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import {
   Plus, Trash2, Pencil, Check, X,
   ToggleLeft, ToggleRight, Loader2,
-  ChevronRight, Calendar, Lock, CheckCircle2
+  ChevronRight
 } from "lucide-react";
+
+function derivePrefix(name = '') {
+  return name.replace(/[^a-zA-Z]/g, '').slice(0, 2).toUpperCase() || 'XX';
+}
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -41,20 +45,33 @@ function PlanningTypeRow({ pt, allWeeks, editingId, editData, setEditData, onSav
         {/* Name / edit form */}
         <div className="flex-1 min-w-0">
           {editingId === pt.id ? (
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Input
                 value={editData.name || ""}
                 onChange={e => setEditData({ ...editData, name: e.target.value })}
                 placeholder="Name"
-                className="text-sm h-7"
+                className="text-sm h-7 min-w-32 flex-1"
                 autoFocus
               />
               <Input
                 value={editData.description || ""}
                 onChange={e => setEditData({ ...editData, description: e.target.value })}
                 placeholder="Description"
-                className="text-sm h-7"
+                className="text-sm h-7 min-w-32 flex-1"
               />
+              <div className="flex items-center gap-1">
+                <Input
+                  value={editData.prefix !== undefined ? editData.prefix : derivePrefix(editData.name)}
+                  onChange={e => setEditData({ ...editData, prefix: e.target.value.toUpperCase().slice(0, 2) })}
+                  placeholder="XX"
+                  maxLength={2}
+                  className="text-sm h-7 w-14 text-center font-mono uppercase"
+                  title="2-letter prefix for period codes"
+                />
+                <span className="text-[10px] text-slate-400 whitespace-nowrap">
+                  → {(editData.prefix || derivePrefix(editData.name)).padEnd(2,'X')}-W-01-{String(new Date().getFullYear()).slice(-2)}
+                </span>
+              </div>
             </div>
           ) : (
             <div className="flex items-center gap-2 min-w-0">
@@ -64,7 +81,10 @@ function PlanningTypeRow({ pt, allWeeks, editingId, editData, setEditData, onSav
               {pt.description && (
                 <span className="text-xs text-slate-400 truncate hidden sm:inline">{pt.description}</span>
               )}
-              <span className="text-[10px] text-slate-400 flex-shrink-0 ml-1">
+              <span className="text-[10px] font-mono bg-slate-100 text-slate-500 px-1 rounded flex-shrink-0">
+                {(pt.prefix || derivePrefix(pt.name)).toUpperCase().padEnd(2,'X')}
+              </span>
+              <span className="text-[10px] text-slate-400 flex-shrink-0">
                 {weeks.length > 0 ? `${weeks.length} period${weeks.length !== 1 ? "s" : ""}` : "no periods"}
               </span>
             </div>
@@ -209,7 +229,8 @@ export default function PlanningTypesConfig() {
   const startEdit = (pt) => { setEditingId(pt.id); setEditData({ ...pt }); };
   const saveEdit = () => {
     if (editData.name?.trim()) {
-      updateMutation.mutate({ id: editingId, data: { name: editData.name, description: editData.description } });
+      const prefix = (editData.prefix || derivePrefix(editData.name)).toUpperCase().slice(0, 2);
+      updateMutation.mutate({ id: editingId, data: { name: editData.name, description: editData.description, prefix } });
       setEditingId(null);
     }
   };
