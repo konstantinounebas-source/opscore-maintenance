@@ -333,7 +333,12 @@ export default function MapWorkspaceCard({
                setPopupPos(null);
              }}
              onSaveAssignment={onSaveAssignment}
-             onZoomToAsset={onTriggerZoom} />
+             onZoomToAsset={onTriggerZoom}
+             onOpenSidePanel={() => {
+               setSelectedAsset(null);
+               setPopupPos(null);
+               onSelectAssetForPanel?.(selectedAsset);
+             }} />
 
           }
          </div>

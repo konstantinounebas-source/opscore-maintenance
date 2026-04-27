@@ -16,6 +16,7 @@ export default function AssetPopup({
   onSaveAssignment,
   onZoomToAsset,
   onShowPhotos,
+  onOpenSidePanel,
 }) {
   const [planningTypeId, setPlanningTypeId] = useState(assignment?.planning_type_id || "");
   const [weekId, setWeekId] = useState(assignment?.planning_week_id || "");
@@ -170,24 +171,33 @@ export default function AssetPopup({
           </Select>
         </div>
 
-        <div className="flex gap-2">
-          <Button
-            className="flex-1 bg-indigo-600 hover:bg-indigo-700 h-7 text-xs"
-            onClick={handleAssign}
-            disabled={saving || !weekId || !planningTypeId || filteredWeeks.length === 0}
-          >
-            {saving ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
-            {saving ? "Saving..." : assignment ? "Update" : "Assign"}
-          </Button>
-          {assignment && (
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
             <Button
-              className="bg-red-500 hover:bg-red-600 h-7 text-xs"
-              onClick={handleClearAssignment}
-              disabled={saving}
+              className="flex-1 bg-indigo-600 hover:bg-indigo-700 h-7 text-xs"
+              onClick={handleAssign}
+              disabled={saving || !weekId || !planningTypeId || filteredWeeks.length === 0}
             >
-              Unassign
+              {saving ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+              {saving ? "Saving..." : assignment ? "Update" : "Assign"}
             </Button>
-          )}
+            {assignment && (
+              <Button
+                className="bg-red-500 hover:bg-red-600 h-7 text-xs"
+                onClick={handleClearAssignment}
+                disabled={saving}
+              >
+                Unassign
+              </Button>
+            )}
+          </div>
+          <Button
+            variant="outline"
+            className="w-full h-7 text-xs"
+            onClick={(e) => { e.stopPropagation(); onOpenSidePanel?.(); }}
+          >
+            Open Side Panel
+          </Button>
         </div>
       </div>
 
