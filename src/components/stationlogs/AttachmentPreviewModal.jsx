@@ -13,8 +13,8 @@ export default function AttachmentPreviewModal({ attachment, onClose }) {
   const handleRotate = () => setRotation(prev => (prev + 90) % 360);
 
   return (
-    <div className="fixed inset-0 z-[80] bg-black/80 flex items-center justify-center p-2">
-      <div className="bg-white rounded-lg shadow-xl w-full h-full max-w-full max-h-full overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-[80] bg-black/80 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg shadow-xl w-1/2 h-4/5 overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-slate-50 shrink-0">
           <p className="font-semibold text-slate-800 truncate text-sm">{attachment.file_name}</p>
