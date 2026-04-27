@@ -20,7 +20,7 @@ export default function PlanningWorkbench() {
 
   // ── Global data via React Query ─────────────────────────────────────────────
   const { data: weeks = [] }                                          = useQuery({ queryKey: ["planningWeeks"],        queryFn: () => base44.entities.PlanningWeeks.list("-created_date"), initialData: [], staleTime: Infinity, gcTime: 1000 * 60 * 60 });
-  const { data: allAssignments = [] }                                 = useQuery({ queryKey: ["planningAssignments"],  queryFn: () => base44.entities.PlanningAssignments.list(), initialData: [], staleTime: Infinity, gcTime: 1000 * 60 * 60 });
+  const { data: allAssignments = [] }                                 = useQuery({ queryKey: ["planningAssignments"],  queryFn: () => base44.entities.PlanningAssignments.list(), initialData: [], staleTime: 0 });
   const { data: assets = [] }                                         = useQuery({ queryKey: ["assets"],               queryFn: () => base44.entities.Assets.list(), initialData: [], staleTime: Infinity, gcTime: 1000 * 60 * 60 });
   const { data: incidents = [] }                                      = useQuery({ queryKey: ["incidents"],            queryFn: () => base44.entities.Incidents.list(), initialData: [], staleTime: Infinity, gcTime: 1000 * 60 * 60 });
   const { data: workOrders = [] }                                     = useQuery({ queryKey: ["workOrders"],           queryFn: () => base44.entities.WorkOrders.list(), initialData: [], staleTime: Infinity, gcTime: 1000 * 60 * 60 });
