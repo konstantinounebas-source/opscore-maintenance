@@ -42,11 +42,17 @@ export default function MapFilterBar({ filters, onChange, assets, weeks = [] }) 
   React.useEffect(() => {
     if (!expanded) return;
     const handleClickOutside = (e) => {
-      // Don't close if clicking on dropdown menu or within the container
-      const isDropdownMenu = e.target.closest('[role="menu"], [role="listbox"], [role="dialog"]');
-      if (containerRef.current && !containerRef.current.contains(e.target) && !isDropdownMenu) {
-        setExpanded(false);
+      // Check if click is within the filter container
+      if (containerRef.current && containerRef.current.contains(e.target)) {
+        return; // Click inside filter, don't close
       }
+      // Don't close if clicking on any Radix UI portal (Select, Dropdown, etc)
+      const isInPortal = e.target.closest('[role="menu"], [role="listbox"], [role="dialog"], [data-radix-select-content], [data-radix-dropdown-menu-content]');
+      if (isInPortal) {
+        return; // Click in portal, don't close
+      }
+      // Only close if click is truly outside
+      setExpanded(false);
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
