@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Plus, Trash2, Check, Loader2 } from "lucide-react";
 import { determineItemStatus } from "./stage3Utils";
-import { detectOutOfSyncItems } from "./stage3ResyncUtils";
+import { detectOutOfSyncItems, persistSyncStatus } from "./stage3ResyncUtils";
 import Stage3OutOfSyncWarning from "./Stage3OutOfSyncWarning";
 
 export default function Stage3RightPanel({
@@ -38,7 +38,16 @@ export default function Stage3RightPanel({
 
   // Compute out-of-sync items using ALL suggestions (not just the unsaved ones)
   const outOfSyncItems = detectOutOfSyncItems(savedItems, allSuggestions);
-  console.log("OUT OF SYNC:", outOfSyncItems);
+
+  // Persist sync_status to DB whenever savedItems or allSuggestions change
+  useEffect(() => {
+    if (!savedItems.length || !allSuggestions.length) return;
+    persistSyncStatus(
+      savedItems,
+      allSuggestions,
+      (id, updates) => base44.entities.StationLogStage3PlanningItems.update(id, updates)
+    ).catch(err => console.warn("persistSyncStatus error:", err));
+  }, [savedItems, allSuggestions]);
   
   const [manualForm, setManualForm] = useState({
     name: "",

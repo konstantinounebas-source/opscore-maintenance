@@ -25,7 +25,7 @@ export default function Stage3OutOfSyncWarning({ items, onUpdateItem }) {
       {expanded && (
         <div className="space-y-2 mt-2">
           {items.map(item => (
-            <div key={item.id} className="bg-white rounded p-2 space-y-1.5 border border-red-100">
+            <div key={item.itemId} className="bg-white rounded p-2 space-y-1.5 border border-red-100">
               <div>
                 <p className="font-semibold text-sm text-slate-900">{item.name}</p>
                 <p className="text-[10px] text-slate-500">Rule: {item.ruleName}</p>
@@ -38,38 +38,30 @@ export default function Stage3OutOfSyncWarning({ items, onUpdateItem }) {
                 </div>
                 <div>
                   <p className="text-slate-500 font-semibold uppercase">Recalculated Date</p>
-                  <p className="font-mono text-slate-800">{item.newDate}</p>
+                  <p className="font-mono text-slate-800">{item.calculatedDate}</p>
                 </div>
               </div>
 
-              {item.oldBaseDateValue && (
-                <div className="grid grid-cols-2 gap-2 text-[10px] bg-slate-50 p-1.5 rounded">
-                  <div>
-                    <p className="text-slate-500 font-semibold uppercase">Old Base Date</p>
-                    <p className="text-slate-700">{item.oldBaseDateValue}</p>
-                  </div>
-                  <div>
-                    <p className="text-slate-500 font-semibold uppercase">New Base Date</p>
-                    <p className="text-slate-700">{item.newBaseDateValue}</p>
-                  </div>
+              {item.baseDateValue && (
+                <div className="text-[10px] bg-slate-50 p-1.5 rounded">
+                  <p className="text-slate-500 font-semibold uppercase">Base Date ({item.baseDateKey})</p>
+                  <p className="text-slate-700">{item.baseDateValue}</p>
                 </div>
               )}
 
-              {item.oldRuleLogicText && (
+              {item.ruleLogicText && (
                 <div className="text-[10px] space-y-0.5">
-                  <p className="text-slate-500 font-semibold uppercase">Old Logic</p>
-                  <p className="text-slate-700">{item.oldRuleLogicText}</p>
-                  <p className="text-slate-500 font-semibold uppercase mt-1">New Logic</p>
-                  <p className="text-slate-700">{item.newRuleLogicText}</p>
+                  <p className="text-slate-500 font-semibold uppercase">Logic</p>
+                  <p className="text-slate-700">{item.ruleLogicText}</p>
                 </div>
               )}
 
               <Button
                 size="sm"
                 className="w-full h-6 text-xs bg-red-600 hover:bg-red-700 text-white"
-                onClick={() => onUpdateItem(item.id, item.newDate)}
+                onClick={() => onUpdateItem(item.itemId, item.calculatedDate)}
               >
-                Update to {item.newDate}
+                Update to {item.calculatedDate}
               </Button>
             </div>
           ))}
