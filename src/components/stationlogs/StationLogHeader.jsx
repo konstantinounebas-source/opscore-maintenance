@@ -38,12 +38,13 @@ export default function StationLogHeader({ log, asset, currentData, stage3Items 
   // Compute NEXT ACTION
   const nextAction = STAGE_NEXT_ACTIONS[log.current_stage] || "—";
 
-  // Compute NEXT DEADLINE from stage3 planning items (earliest upcoming planned_date)
+  // Compute NEXT DEADLINE: earliest non-completed item (including overdue)
   const today = new Date().toISOString().split("T")[0];
-  const upcomingDeadlines = stage3Items
-    .filter(i => i.planned_date && i.planned_date >= today && i.status !== "Completed")
+  const activeDeadlines = stage3Items
+    .filter(i => i.is_active !== false && i.planned_date && i.status !== "Completed")
     .sort((a, b) => a.planned_date.localeCompare(b.planned_date));
-  const nextDeadlineItem = upcomingDeadlines[0];
+  const nextDeadlineItem = activeDeadlines[0];
+  const nextDeadlineIsOverdue = nextDeadlineItem && nextDeadlineItem.planned_date < today;
   const nextDeadline = nextDeadlineItem
     ? `${nextDeadlineItem.planned_date} — ${nextDeadlineItem.planning_item_name_snapshot || ""}`
     : (currentData?.order_priority_date || currentData?.order_deadline_date || "—");
@@ -109,7 +110,13 @@ export default function StationLogHeader({ log, asset, currentData, stage3Items 
             </div>
             <div>
               <p className="text-xs text-gray-600 font-semibold">NEXT DEADLINE</p>
-              <p className="text-sm font-medium text-gray-900 mt-1">{nextDeadline}</p>
+              <p className={`text-sm font-medium mt-1 ${nextDeadlineIsOverdue ? "text-red-600 font-bold" : "text-gray-900"}`}>
+                {nextDeadlineIsOverdue && "⚠ "}
+                {nextDeadline}
+              </p>
+              {nextDeadlineIsOverdue && (
+                <p className="text-[10px] text-red-500 font-semibold mt-0.5">OVERDUE</p>
+              )}
             </div>
             <div>
               <p className="text-xs text-gray-600 font-semibold">PLANNING STATUS</p>
