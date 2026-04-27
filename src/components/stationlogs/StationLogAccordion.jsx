@@ -17,6 +17,7 @@ import Stage3PlanningWorkspace from "@/components/stationlogs/stage3/Stage3Plann
 import Stage3DeadlinesSummary from "@/components/stationlogs/Stage3DeadlinesSummary.jsx";
 import Stage3CoreDates from "@/components/stationlogs/Stage3CoreDates.jsx";
 import { minutesToDisplay } from "@/components/stationlogs/settings/workrules/workRulesUtils";
+import { useStage3SyncStatus } from "@/hooks/useStage3SyncStatus";
 
 const STAGE_FIELDS = {
   1: { title: "Order + Location", fields: ["Asset Code", "Location Address", "Municipality", "Latitude", "Longitude"] },
@@ -71,9 +72,18 @@ export default function StationLogAccordion({
   const getStageInstructions = (stageId) => instructions.filter(i => i.related_stage === stageId);
 
   // Fetch Stage 3 planning items for summary
-  const { data: stage3Items = [] } = useQuery({
+  const { data: stage3Items = [], refetch: refetchStage3Items } = useQuery({
     queryKey: ["stage3PlanningItemsForAccordion", log.id],
     queryFn: () => base44.entities.StationLogStage3PlanningItems.filter({ station_log_id: log.id }),
+  });
+
+  // Run out-of-sync detection at the main view level (no workspace needed)
+  useStage3SyncStatus({
+    log,
+    currentData,
+    savedItems: stage3Items,
+    enabled: (stage3Items || []).some(i => i.source === "Rule"),
+    onPersisted: refetchStage3Items,
   });
 
   return (
