@@ -279,10 +279,10 @@ export default function StationLogSidePanel({ asset, onClose, incidents = [], wo
                       window.__planningReviewAddWeek(assignment.planning_week_id);
                     }
                   }}
-                  className="p-1.5 text-white bg-indigo-600 hover:bg-indigo-700 rounded-md transition-colors flex-shrink-0"
+                  className="p-0.5 text-white bg-indigo-600 hover:bg-indigo-700 rounded transition-colors flex-shrink-0"
                   title="Add to Planning Review"
                 >
-                  <Plus className="h-5 w-5" />
+                  <Plus className="h-3.5 w-3.5" />
                 </button>
               </div>
             ) : (
