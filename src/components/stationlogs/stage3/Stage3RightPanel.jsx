@@ -188,7 +188,7 @@ export default function Stage3RightPanel({
       status: item.status === "Completed" ? "Planned" : "Completed",
       actual_date: item.status === "Completed" ? null : new Date().toISOString().split("T")[0],
     });
-    onItemUpdated();
+    onItemRemoved(); // triggers refresh without passing args
   };
 
   // Check if execution dates are set
@@ -276,7 +276,7 @@ export default function Stage3RightPanel({
               sync_status: "In Sync",
               last_synced_at: new Date().toISOString(),
             });
-            onItemUpdated();
+            onItemRemoved(); // triggers refresh without passing args
           }}
         />
       )}
