@@ -19,15 +19,15 @@ export default function PlanningWorkbench() {
   const { toast } = useToast();
 
   // ── Global data via React Query ─────────────────────────────────────────────
-  const { data: weeks = [] }                                          = useQuery({ queryKey: ["planningWeeks"],        queryFn: () => base44.entities.PlanningWeeks.list("-created_date"), initialData: [] });
-  const { data: allAssignments = [] }                                 = useQuery({ queryKey: ["planningAssignments"],  queryFn: () => base44.entities.PlanningAssignments.list(), initialData: [] });
-  const { data: assets = [] }                                         = useQuery({ queryKey: ["assets"],               queryFn: () => base44.entities.Assets.list(), initialData: [] });
-  const { data: incidents = [] }                                      = useQuery({ queryKey: ["incidents"],            queryFn: () => base44.entities.Incidents.list(), initialData: [] });
-  const { data: workOrders = [] }                                     = useQuery({ queryKey: ["workOrders"],           queryFn: () => base44.entities.WorkOrders.list(), initialData: [] });
-  const { data: planningTypes = [] }                                  = useQuery({ queryKey: ["planningTypes"],        queryFn: () => base44.entities.PlanningTypes.list(), initialData: [] });
-  const { data: layers = [] }                                         = useQuery({ queryKey: ["planningLayers"],       queryFn: () => base44.entities.PlanningLayers.list(), initialData: [] });
-  const { data: layerAssets = [] }                                    = useQuery({ queryKey: ["planningLayerAssets"],  queryFn: () => base44.entities.PlanningLayerAssets.list(), initialData: [] });
-  const { data: mapLayerLinks = [] }                                  = useQuery({ queryKey: ["workbenchMapLayers"],   queryFn: () => base44.entities.WorkbenchMapLayers.list(), initialData: [] });
+  const { data: weeks = [] }                                          = useQuery({ queryKey: ["planningWeeks"],        queryFn: () => base44.entities.PlanningWeeks.list("-created_date"), initialData: [], staleTime: 1000 * 60 * 5 });
+  const { data: allAssignments = [] }                                 = useQuery({ queryKey: ["planningAssignments"],  queryFn: () => base44.entities.PlanningAssignments.list(), initialData: [], staleTime: 1000 * 60 * 5 });
+  const { data: assets = [] }                                         = useQuery({ queryKey: ["assets"],               queryFn: () => base44.entities.Assets.list(), initialData: [], staleTime: 1000 * 60 * 10 });
+  const { data: incidents = [] }                                      = useQuery({ queryKey: ["incidents"],            queryFn: () => base44.entities.Incidents.list(), initialData: [], staleTime: 1000 * 60 * 5 });
+  const { data: workOrders = [] }                                     = useQuery({ queryKey: ["workOrders"],           queryFn: () => base44.entities.WorkOrders.list(), initialData: [], staleTime: 1000 * 60 * 5 });
+  const { data: planningTypes = [] }                                  = useQuery({ queryKey: ["planningTypes"],        queryFn: () => base44.entities.PlanningTypes.list(), initialData: [], staleTime: 1000 * 60 * 30 });
+  const { data: layers = [] }                                         = useQuery({ queryKey: ["planningLayers"],       queryFn: () => base44.entities.PlanningLayers.list(), initialData: [], staleTime: 1000 * 60 * 10 });
+  const { data: layerAssets = [] }                                    = useQuery({ queryKey: ["planningLayerAssets"],  queryFn: () => base44.entities.PlanningLayerAssets.list(), initialData: [], staleTime: 1000 * 60 * 10 });
+  const { data: mapLayerLinks = [] }                                  = useQuery({ queryKey: ["workbenchMapLayers"],   queryFn: () => base44.entities.WorkbenchMapLayers.list(), initialData: [], staleTime: 1000 * 60 * 10 });
 
   // ── Map workspace collection ────────────────────────────────────────────────
   const [mapWorkspaces, setMapWorkspaces] = useState([{ id: newMapId() }]);
