@@ -21,7 +21,7 @@ export default function WorkflowStepper({ incident, hasFMPISubmitted, fmpiApprov
       completed: hasFMPISubmitted,
       timestamp: incident.fmpi_submitted_at,
       optional: false,
-      locked: workflowState === "Awaiting_CR_OMPI",
+      locked: false,
     },
     {
       id: "ca_approval",
@@ -30,7 +30,7 @@ export default function WorkflowStepper({ incident, hasFMPISubmitted, fmpiApprov
       completed: !fmpiApprovalRequired || incident.ca_decision === "Approved",
       timestamp: incident.ca_decision_at,
       optional: !fmpiApprovalRequired,
-      locked: fmpiApprovalRequired && !hasFMPISubmitted,
+      locked: false,
       rejected: incident.ca_decision === "Rejected",
     },
     {
@@ -39,7 +39,7 @@ export default function WorkflowStepper({ incident, hasFMPISubmitted, fmpiApprov
       description: "Make Safe, Inspection, Corrective",
       completed: incidentWorkOrders.length > 0 && incidentWorkOrders.every(w => w.status === "Completed" || w.status === "Cancelled"),
       optional: false,
-      locked: workflowState === "Awaiting_CR_OMPI",
+      locked: false,
     },
     {
       id: "closure",
@@ -48,7 +48,7 @@ export default function WorkflowStepper({ incident, hasFMPISubmitted, fmpiApprov
       completed: workflowState === "Closed",
       timestamp: incident.closed_at,
       optional: false,
-      locked: workflowState === "Awaiting_CR_OMPI" || !hasFMPISubmitted || (fmpiApprovalRequired && incident.ca_decision !== "Approved"),
+      locked: false,
     },
   ];
 

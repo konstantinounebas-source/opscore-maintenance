@@ -435,10 +435,8 @@ function ChecklistModal({ wo, incidentId, onClose, onDone }) {
 
 export default function WorkOrderPanel({ woType, incident, incidentId, lockedReason }) {
   const config = WO_TYPE_CONFIG[woType];
-  // New state-machine lock: use lockedReason prop if provided, else fall back to legacy logic
-  const isCorrectiveLocked = lockedReason
-    ? true
-    : woType === "corrective" && incident?.out_of_warranty === "Yes" && incident?.ca_status !== "Approved";
+  // Permission bypass for testing — all flows open
+  const isCorrectiveLocked = false;
   const [expanded, setExpanded] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [closingWO, setClosingWO] = useState(null);
