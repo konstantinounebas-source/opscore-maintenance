@@ -560,8 +560,9 @@ export function applyMapFilters(assets, filters, assignmentByAssetId, incidentsB
       }
 
       const assetIdValues = parseMultiSelect(f.asset_id);
+      // If asset_id filter is active, it acts as a direct lookup — skip all other filters
       if (assetIdValues.length > 0) {
-        if (!assetIdValues.includes(a.asset_id)) return false;
+        return assetIdValues.includes(a.asset_id);
       }
 
       // Single-value filters (kept for backward compat)
@@ -574,6 +575,8 @@ export function applyMapFilters(assets, filters, assignmentByAssetId, incidentsB
       if (f.existing_condition && a.existing_condition !== f.existing_condition) return false;
       if (f.has_bay && a.has_bay !== f.has_bay) return false;
       if (f.phase && a.phase !== f.phase) return false;
+      if (f.is_ordered && !a.order_year) return false;
+      if (f.is_implementation_phase && a.phase?.toLowerCase() !== "implementation") return false;
 
      const asgn = assignmentByAssetId[a.id];
      if (f.show_unassigned_only && asgn) return false;
