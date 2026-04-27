@@ -23,6 +23,7 @@ import CROMPIForm from "@/components/incidents/CROMPIForm";
 import OutlineManagementForm from "@/components/forms/OutlineManagementForm";
 import CombinedFMPIandInvoiceForm from "@/components/forms/CombinedFMPIandInvoiceForm";
 import ManualFMPIModal from "@/components/incidents/ManualFMPIModal";
+import WorkflowStepper from "@/components/incidents/WorkflowStepper";
 import { getAthensTimestamp } from "@/lib/timeSync";
 import {
   CheckCircle2, Circle, Loader2, ChevronRight,
@@ -408,6 +409,14 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
 
   return (
     <div className="space-y-4">
+      {/* ── Workflow Stepper ── */}
+      <WorkflowStepper
+        incident={incident}
+        hasFMPISubmitted={hasFMPISubmitted}
+        fmpiApprovalRequired={fmpiApprovalRequired}
+        incidentWorkOrders={incidentWorkOrders}
+      />
+
       {/* ── State Banner ── */}
       <div className="bg-white rounded-xl border border-slate-200 p-4">
         <div className="flex items-center justify-between">
