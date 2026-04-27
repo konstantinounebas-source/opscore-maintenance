@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { MapPin, FileText, ChevronDown, ChevronRight, Pencil, X } from "lucide-react";
+import { MapPin, FileText, ChevronDown, ChevronRight, Pencil, X, Download, Eye, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import OrderLocationModule from "@/components/stationlogs/stage1/OrderLocationModule";
 
@@ -34,12 +34,15 @@ function Field({ label, value }) {
   );
 }
 
-export default function Stage3LeftPanel({ stationData, asset, log, stage2Summary }) {
+export default function Stage3LeftPanel({ stationData, asset, log, stage2Summary, attachments = [] }) {
   const [editOpen, setEditOpen] = useState(false);
+  const [previewAttachmentId, setPreviewAttachmentId] = useState(null);
   const d = stationData || {};
   const lat = d.latitude;
   const lng = d.longitude;
   const mapsUrl = lat && lng ? `https://www.google.com/maps?q=${lat},${lng}` : null;
+  
+  const previewAttachment = attachments.find(a => a.id === previewAttachmentId);
 
   return (
     <div className="text-sm">
@@ -115,6 +118,45 @@ export default function Stage3LeftPanel({ stationData, asset, log, stage2Summary
         <Field label="Risk Description" value={d.risk_description} />
       </Section>
 
+      {/* Attachments section */}
+      {attachments.length > 0 && (
+        <div className="px-4 py-3 border-b border-slate-200 space-y-2">
+          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Attachments</p>
+          <div className="space-y-1.5">
+            {attachments.map(att => {
+              const isImage = att.file_type === "photo" || att.file_name?.match(/\.(jpg|jpeg|png|gif)$/i);
+              return (
+                <div key={att.id} className="flex items-center gap-2 p-2 rounded border border-slate-200 hover:bg-slate-50 transition-colors group">
+                  {isImage ? (
+                    <ImageIcon className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                  ) : (
+                    <FileText className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                  )}
+                  <span className="text-xs text-slate-700 truncate flex-1">{att.file_name}</span>
+                  <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <a
+                      href={att.file_url}
+                      download
+                      className="p-1 text-slate-400 hover:text-slate-600 rounded hover:bg-white"
+                      title="Download"
+                    >
+                      <Download className="h-3 w-3" />
+                    </a>
+                    <button
+                      onClick={() => setPreviewAttachmentId(att.id)}
+                      className="p-1 text-slate-400 hover:text-slate-600 rounded hover:bg-white"
+                      title="View"
+                    >
+                      <Eye className="h-3 w-3" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Open in Google Maps */}
       {mapsUrl && (
         <div className="px-4 py-3 border-b border-slate-200">
@@ -156,6 +198,42 @@ export default function Stage3LeftPanel({ stationData, asset, log, stage2Summary
           </div>
           <div className="flex-1 overflow-y-auto bg-gray-50 p-6">
             <OrderLocationModule log={log} asset={asset} />
+          </div>
+        </div>
+      )}
+
+      {/* Attachment Preview Modal */}
+      {previewAttachment && (
+        <div className="fixed inset-0 z-[80] bg-black/80 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl max-h-[80vh] overflow-auto flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b border-slate-200 shrink-0">
+              <p className="font-semibold text-slate-800 truncate">{previewAttachment.file_name}</p>
+              <button
+                onClick={() => setPreviewAttachmentId(null)}
+                className="p-1 text-slate-400 hover:text-slate-600 rounded hover:bg-slate-100"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-auto p-4 flex items-center justify-center">
+              {previewAttachment.file_type === "photo" || previewAttachment.file_name?.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                <img
+                  src={previewAttachment.file_url}
+                  alt={previewAttachment.file_name}
+                  className="max-w-full max-h-full object-contain"
+                />
+              ) : (
+                <a
+                  href={previewAttachment.file_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col items-center gap-4 text-center"
+                >
+                  <FileText className="h-16 w-16 text-slate-300" />
+                  <p className="text-sm text-slate-600">Click to open {previewAttachment.file_name}</p>
+                </a>
+              )}
+            </div>
           </div>
         </div>
       )}
