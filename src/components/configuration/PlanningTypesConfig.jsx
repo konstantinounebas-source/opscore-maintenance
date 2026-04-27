@@ -17,6 +17,7 @@ export default function PlanningTypesConfig() {
   const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
   const [selectedTypeId, setSelectedTypeId] = useState(null);
   const [generateYear, setGenerateYear] = useState(new Date().getFullYear());
+  const [generateMode, setGenerateMode] = useState("weeks");
 
   const { data: planningTypes = [] } = useQuery({
     queryKey: ["planningTypes"],
@@ -44,12 +45,13 @@ export default function PlanningTypesConfig() {
 
   const generateWeeksMutation = useMutation({
     mutationFn: (data) => base44.functions.invoke('generatePlanningWeeks', data),
-    onSuccess: () => {
+    onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ["planningWeeks"] });
-      toast({ title: "52 weeks generated successfully" });
+      const label = generateMode === "months" ? "12 months" : "52 weeks";
+      toast({ title: `${label} generated successfully (${res.data?.total_created || 0} periods)` });
       setGenerateDialogOpen(false);
     },
-    onError: (err) => toast({ title: "Failed to generate weeks", description: err.message, variant: "destructive" }),
+    onError: (err) => toast({ title: "Failed to generate periods", description: err.message, variant: "destructive" }),
   });
 
   const handleAdd = () => {
@@ -93,6 +95,7 @@ export default function PlanningTypesConfig() {
     generateWeeksMutation.mutate({
       planning_type_id: selectedTypeId,
       year: generateYear,
+      mode: generateMode,
     });
   };
 
@@ -180,11 +183,11 @@ export default function PlanningTypesConfig() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => { setSelectedTypeId(pt.id); setGenerateDialogOpen(true); }}
-                    title="Generate 52 weeks"
+                    onClick={() => { setSelectedTypeId(pt.id); setGenerateMode("weeks"); setGenerateDialogOpen(true); }}
+                    title="Generate planning periods"
                     className="h-7 px-2 text-xs text-indigo-600 hover:bg-indigo-50"
                   >
-                    +52w
+                    + Periods
                   </Button>
                   <Button
                     variant="ghost"
@@ -222,13 +225,30 @@ export default function PlanningTypesConfig() {
         ))}
         </div>
 
-        {/* Generate 52 Weeks Dialog */}
+        {/* Generate Periods Dialog */}
         <Dialog open={generateDialogOpen} onOpenChange={setGenerateDialogOpen}>
          <DialogContent className="sm:max-w-sm">
            <DialogHeader>
-             <DialogTitle>Generate 52 Planning Weeks</DialogTitle>
+             <DialogTitle>Generate Planning Periods</DialogTitle>
            </DialogHeader>
            <div className="space-y-4 py-4">
+             <div>
+               <label className="text-xs font-semibold text-slate-700 block mb-1.5">Period Type</label>
+               <div className="grid grid-cols-2 gap-2">
+                 <button
+                   onClick={() => setGenerateMode("weeks")}
+                   className={`px-3 py-2.5 rounded-lg border text-sm font-medium transition-colors ${generateMode === "weeks" ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-slate-700 border-slate-200 hover:border-indigo-300"}`}
+                 >
+                   52 Weeks
+                 </button>
+                 <button
+                   onClick={() => setGenerateMode("months")}
+                   className={`px-3 py-2.5 rounded-lg border text-sm font-medium transition-colors ${generateMode === "months" ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-slate-700 border-slate-200 hover:border-indigo-300"}`}
+                 >
+                   12 Months
+                 </button>
+               </div>
+             </div>
              <div>
                <label className="text-xs font-semibold text-slate-700 block mb-1.5">Year</label>
                <Input
@@ -239,7 +259,9 @@ export default function PlanningTypesConfig() {
                  max={2050}
                  className="text-sm"
                />
-               <p className="text-xs text-slate-400 mt-1">52 weeks will be created for {generateYear}</p>
+               <p className="text-xs text-slate-400 mt-1">
+                 {generateMode === "months" ? `12 monthly periods will be created for ${generateYear}` : `52 weekly periods will be created for ${generateYear}`}
+               </p>
              </div>
              <div className="flex gap-2 justify-end pt-2">
                <Button variant="outline" onClick={() => setGenerateDialogOpen(false)}>Cancel</Button>
