@@ -237,12 +237,19 @@ export default function StationLogAccordion({
                      return (
                      <div className="space-y-3">
                        {/* Top Summary Boxes */}
-                       <div className="grid grid-cols-3 gap-3">
-                         <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                        {(() => {
+                          const outOfSyncCount = stage3Items.filter(i => i.is_active !== false && i.sync_status === "Out of Sync").length;
+                          const ps = log.stage_3_planning_status;
+                          return (
+                        <div className="grid grid-cols-3 gap-3">
+                         <div className={`p-3 rounded-lg border ${outOfSyncCount > 0 ? "bg-amber-50 border-amber-300" : "bg-slate-50 border-slate-200"}`}>
                            <p className="text-[10px] font-semibold text-slate-500 uppercase">Planning Status</p>
-                           <p className={`text-sm font-bold mt-1 ${log.stage_3_planning_status === "Ready" || log.stage_3_planning_status === "Completed" ? "text-green-600" : log.stage_3_planning_status === "At Risk" ? "text-red-600" : "text-amber-600"}`}>
-                             {log.stage_3_planning_status || "Not Planned"}
+                           <p className={`text-sm font-bold mt-1 ${ps === "Ready" || ps === "Completed" ? "text-green-600" : ps === "At Risk" ? "text-red-600" : "text-amber-600"}`}>
+                             {ps || "Not Planned"}
                            </p>
+                           {outOfSyncCount > 0 && (
+                             <p className="text-[10px] font-bold text-amber-700 mt-0.5">⚠ Needs Update ({outOfSyncCount})</p>
+                           )}
                          </div>
                          <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
                              <p className="text-[10px] font-semibold text-slate-500 uppercase">Active Deadline</p>
@@ -260,6 +267,9 @@ export default function StationLogAccordion({
                            </p>
                          </div>
                        </div>
+
+                       );
+                       })()}
 
                        {/* Core Dates Section */}
                        <Stage3CoreDates currentData={currentData} log={log} />

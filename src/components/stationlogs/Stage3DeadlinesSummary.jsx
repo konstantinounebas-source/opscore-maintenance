@@ -127,11 +127,16 @@ export default function Stage3DeadlinesSummary({ savedItems = [] }) {
                 >
                   {/* Header row */}
                   <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-baseline gap-2 flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-1 min-w-0 flex-wrap">
                       <span className="font-bold text-slate-800 text-sm">Stage {item.output_flow_stage_id}</span>
-                      <span className="text-slate-700 truncate font-medium text-sm">
+                      <span className="text-slate-700 font-medium text-sm">
                         {item.planning_item_name_snapshot || item.planning_item_name}
                       </span>
+                      {item.sync_status === "Out of Sync" && (
+                        <span className="text-[10px] font-bold text-amber-700 bg-amber-100 border border-amber-300 rounded px-1.5 py-0.5 whitespace-nowrap">
+                          ⚠ Need Update
+                        </span>
+                      )}
                     </div>
                     <Badge className={`text-[10px] flex-shrink-0 whitespace-nowrap ${getStatusBadgeColor(item.status)}`}>
                       {item.status}
