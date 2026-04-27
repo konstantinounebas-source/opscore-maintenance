@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import Stage3LeftPanel from "@/components/stationlogs/stage3/Stage3LeftPanel";
 import MapillaryViewer from "./MapillaryViewer";
 import { minutesToDisplay } from "@/components/stationlogs/settings/workrules/workRulesUtils";
+import { FileText, Image as ImageIcon } from "lucide-react";
 
 function Stage2Summary({ logId }) {
   const { data: allocations = [], isLoading } = useQuery({
@@ -151,8 +152,14 @@ export default function StationLogSidePanel({ asset, onClose, incidents = [], wo
     enabled: !!log?.id,
   });
 
+  const { data: attachments = [], isLoading: loadingAttachments } = useQuery({
+    queryKey: ["stationLogOrderAttachments", log?.id],
+    queryFn: () => base44.entities.StationLogOrderAttachments.filter({ station_log_id: log.id }),
+    enabled: !!log?.id,
+  });
+
   const stationData = currentDataList[0] || null;
-  const isLoading = loadingLogs || (log && loadingData);
+  const isLoading = loadingLogs || (log && loadingData) || loadingAttachments;
 
   // Asset assignment logic
   const assignment = allAssignments.find(a => a.asset_id === asset?.id);
@@ -354,14 +361,66 @@ export default function StationLogSidePanel({ asset, onClose, incidents = [], wo
             <p className="text-xs text-slate-300 mt-1">{asset?.asset_id}</p>
           </div>
         ) : activeTab === "stage1" ? (
-          <Stage3LeftPanel
-            stationData={stationData}
-            asset={asset}
-            log={log}
-            stage2Summary={null}
-          />
+          <div className="space-y-0">
+            <Stage3LeftPanel
+              stationData={stationData}
+              asset={asset}
+              log={log}
+              stage2Summary={null}
+            />
+            {/* Attachments section */}
+            {attachments.length > 0 && (
+              <div className="p-3 border-t border-slate-200">
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-2">Attachments</p>
+                <div className="space-y-1.5">
+                  {attachments.map(att => (
+                    <a
+                      key={att.id}
+                      href={att.file_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 p-2 rounded border border-slate-200 hover:bg-slate-50 transition-colors"
+                    >
+                      {att.file_type === "photo" || att.file_name?.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                        <ImageIcon className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                      ) : (
+                        <FileText className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                      )}
+                      <span className="text-xs text-slate-700 truncate flex-1">{att.file_name}</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         ) : (
-          <Stage2Summary logId={log.id} />
+          <div className="space-y-0">
+            <Stage2Summary logId={log.id} />
+            {/* Attachments section */}
+            {attachments.length > 0 && (
+              <div className="p-3 border-t border-slate-200">
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-2">Attachments</p>
+                <div className="space-y-1.5">
+                  {attachments.map(att => (
+                    <a
+                      key={att.id}
+                      href={att.file_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 p-2 rounded border border-slate-200 hover:bg-slate-50 transition-colors"
+                    >
+                      {att.file_type === "photo" || att.file_name?.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                        <ImageIcon className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                      ) : (
+                        <FileText className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                      )}
+                      <span className="text-xs text-slate-700 truncate flex-1">{att.file_name}</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         )}
       </div>
 
