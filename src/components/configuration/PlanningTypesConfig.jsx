@@ -172,6 +172,7 @@ export default function PlanningTypesConfig() {
   const [editData, setEditData] = useState({});
   const [newName, setNewName] = useState("");
   const [newDescription, setNewDescription] = useState("");
+  const [newPrefix, setNewPrefix] = useState("");
   const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
   const [selectedTypeId, setSelectedTypeId] = useState(null);
   const [generateYear, setGenerateYear] = useState(new Date().getFullYear());
@@ -219,14 +220,16 @@ export default function PlanningTypesConfig() {
 
   const handleAdd = () => {
     if (!newName.trim()) return;
+    const prefix = newPrefix.trim() || derivePrefix(newName.trim());
     createMutation.mutate({
       code: newName.toLowerCase().replace(/\s+/g, "_"),
       name: newName.trim(),
       description: newDescription.trim(),
-      prefix: derivePrefix(newName.trim()),
+      prefix: prefix.toUpperCase().slice(0, 2),
       is_active: true,
       sort_order: planningTypes.length,
     });
+    setNewPrefix("");
   };
 
   const startEdit = (pt) => { setEditingId(pt.id); setEditData({ ...pt }); };
@@ -249,8 +252,23 @@ export default function PlanningTypesConfig() {
       {/* Add new type */}
       <div className="space-y-2 p-4 border border-slate-200 rounded-lg bg-slate-50">
         <div className="space-y-1.5">
-          <Input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Planning type name..." className="text-sm" onKeyDown={e => e.key === "Enter" && handleAdd()} />
-          <Input value={newDescription} onChange={e => setNewDescription(e.target.value)} placeholder="Description (optional)..." className="text-sm" onKeyDown={e => e.key === "Enter" && handleAdd()} />
+          <div className="flex gap-2">
+            <Input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Planning type name..." className="text-sm flex-1" onKeyDown={e => e.key === "Enter" && handleAdd()} />
+            <Input value={newDescription} onChange={e => setNewDescription(e.target.value)} placeholder="Description (optional)..." className="text-sm flex-1" onKeyDown={e => e.key === "Enter" && handleAdd()} />
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-[10px] font-semibold text-slate-500 uppercase whitespace-nowrap">Prefix (2 letters)</label>
+            <Input
+              value={newPrefix || (newName ? derivePrefix(newName) : "")}
+              onChange={e => setNewPrefix(e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2))}
+              placeholder="XX"
+              maxLength={2}
+              className="text-sm h-7 w-14 text-center font-mono uppercase font-bold"
+            />
+            <span className="text-[10px] text-slate-400 font-mono">
+              → {(newPrefix || (newName ? derivePrefix(newName) : 'XX') || 'XX').padEnd(2, 'X')}-W01-{String(new Date().getFullYear()).slice(-2)}
+            </span>
+          </div>
         </div>
         <Button onClick={handleAdd} className="bg-indigo-600 hover:bg-indigo-700 gap-1.5 w-full">
           <Plus className="w-3.5 h-3.5" /> Add Planning Type
