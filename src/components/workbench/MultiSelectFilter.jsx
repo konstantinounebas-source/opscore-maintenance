@@ -52,8 +52,16 @@ export default function MultiSelectFilter({
   useEffect(() => {
     if (open && triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
+      const dropdownHeight = 300; // approximate max height
+      const spaceBelow = window.innerHeight - rect.bottom;
+      
+      // Position below by default, but flip to above if not enough space
+      const top = spaceBelow > dropdownHeight 
+        ? rect.bottom + window.scrollY + 4
+        : rect.top + window.scrollY - dropdownHeight - 4;
+      
       setPosition({
-        top: rect.bottom + window.scrollY + 4,
+        top,
         left: rect.left + window.scrollX,
         width: rect.width
       });
@@ -65,9 +73,16 @@ export default function MultiSelectFilter({
     const handleResize = () => {
       if (triggerRef.current) {
         const rect = triggerRef.current.getBoundingClientRect();
+        const dropdownHeight = 300;
+        const spaceBelow = window.innerHeight - rect.bottom;
+        
+        const top = spaceBelow > dropdownHeight 
+          ? rect.bottom + window.scrollY + 4
+          : rect.top + window.scrollY - dropdownHeight - 4;
+        
         setPosition(prev => ({
           ...prev,
-          top: rect.bottom + window.scrollY + 4,
+          top,
           left: rect.left + window.scrollX,
           width: rect.width
         }));
