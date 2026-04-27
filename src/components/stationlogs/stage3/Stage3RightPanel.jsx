@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, FileText, Image as ImageIcon, Download, Eye } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -8,6 +9,7 @@ import { Plus, Trash2, Check, Loader2 } from "lucide-react";
 import { determineItemStatus } from "./stage3Utils";
 import { detectOutOfSyncItems, persistSyncStatus } from "./stage3ResyncUtils";
 import Stage3OutOfSyncWarning from "./Stage3OutOfSyncWarning";
+import AttachmentPreviewModal from "@/components/stationlogs/AttachmentPreviewModal";
 
 export default function Stage3RightPanel({
   log,
@@ -24,6 +26,16 @@ export default function Stage3RightPanel({
   const [executionDate, setExecutionDate] = useState(stationData?.stage_3_execution_date || "");
   const [executionFinish, setExecutionFinish] = useState(stationData?.stage_3_execution_finish || "");
   const [showManualForm, setShowManualForm] = useState(false);
+  const [previewAttachmentId, setPreviewAttachmentId] = useState(null);
+
+  // Fetch stage 2 attachments
+  const { data: attachments = [] } = useQuery({
+    queryKey: ["stationLogOrderAttachments", log?.id],
+    queryFn: () => base44.entities.StationLogOrderAttachments.filter({ station_log_id: log.id }),
+    enabled: !!log?.id,
+  });
+
+  const previewAttachment = attachments.find(a => a.id === previewAttachmentId);
 
   // Sync execution dates from stationData on mount
   useEffect(() => {
@@ -473,6 +485,50 @@ export default function Stage3RightPanel({
         )}
       </div>
 
+      {/* Attachments from Stage 2 */}
+      {attachments.length > 0 && (
+        <div className="bg-white rounded border border-slate-200 p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-bold text-slate-600 uppercase">Attachments</h3>
+            <Badge variant="outline" className="text-[10px]">{attachments.length}</Badge>
+          </div>
+          <div className="space-y-1.5">
+            {attachments.map(att => {
+              const isImage = att.file_type === "photo" || att.file_name?.match(/\.(jpg|jpeg|png|gif)$/i);
+              return (
+                <div key={att.id} className="flex items-center gap-2 p-2 rounded border border-slate-200 hover:bg-slate-50 transition-colors group">
+                  {isImage ? (
+                    <ImageIcon className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                  ) : (
+                    <FileText className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                  )}
+                  <span className="text-xs text-slate-700 truncate flex-1">{att.file_name}</span>
+                  <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <a
+                      href={att.file_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1 text-slate-400 hover:text-slate-600 rounded hover:bg-white"
+                      title="Download"
+                      download
+                    >
+                      <Download className="h-3 w-3" />
+                    </a>
+                    <button
+                      onClick={() => setPreviewAttachmentId(att.id)}
+                      className="p-1 text-slate-400 hover:text-slate-600 rounded hover:bg-white"
+                      title="View"
+                    >
+                      <Eye className="h-3 w-3" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Rule Suggestions */}
       <div className="bg-white rounded border border-slate-200 p-3 space-y-2">
         <div className="flex items-center justify-between">
@@ -560,6 +616,14 @@ export default function Stage3RightPanel({
                  </div>
         )}
       </div>
-    </div>
-  );
-}
+
+      {/* Attachment Preview Modal */}
+      {previewAttachment && (
+       <AttachmentPreviewModal
+         attachment={previewAttachment}
+         onClose={() => setPreviewAttachmentId(null)}
+       />
+      )}
+      </div>
+      );
+      }
