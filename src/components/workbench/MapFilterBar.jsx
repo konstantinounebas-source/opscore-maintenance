@@ -42,7 +42,9 @@ export default function MapFilterBar({ filters, onChange, assets, weeks = [] }) 
   React.useEffect(() => {
     if (!expanded) return;
     const handleClickOutside = (e) => {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
+      // Don't close if clicking on dropdown menu or within the container
+      const isDropdownMenu = e.target.closest('[role="menu"], [role="listbox"], [role="dialog"]');
+      if (containerRef.current && !containerRef.current.contains(e.target) && !isDropdownMenu) {
         setExpanded(false);
       }
     };
