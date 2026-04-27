@@ -44,7 +44,7 @@ export default function PlanningReviewPanel({
   workOrdersByAsset,
   planningTypes = [],
   onZoomToAsset,
-  onSelectAssetForPopup
+  onSelectAssetForPanel
 }) {
   // ── Panel-local state — NEVER shared with maps ─────────────────────────────
   const [selectedPlanningTypeIds, setSelectedPlanningTypeIds] = useState(new Set());
@@ -387,23 +387,27 @@ export default function PlanningReviewPanel({
                     </div>
                   </button>
                   <div className="flex flex-col items-end gap-1 shrink-0">
-                    <span className={`text-[9px] px-1.5 py-0.5 rounded-full border font-medium ${WEEK_STATUS_COLORS[week.status] || WEEK_STATUS_COLORS.Draft}`}>
-                      {week.status}
-                    </span>
-                    <button
-                      onClick={() => handleRemoveWeek(week.id)}
-                      className="text-red-500 hover:text-red-700 font-bold text-lg leading-none"
-                      title="Remove week"
-                    >
-                      ✕
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded-full border font-medium ${WEEK_STATUS_COLORS[week.status] || WEEK_STATUS_COLORS.Draft}`}>
+                        {week.status}
+                      </span>
+                      <button
+                        onClick={() => handleRemoveWeek(week.id)}
+                        className="text-red-500 hover:text-red-700 font-bold text-lg leading-none"
+                        title="Remove week"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    <span className="text-[10px] text-slate-500 font-medium">{wa.length} assigned</span>
                   </div>
                 </div>
 
                 {/* Summary row - always visible */}
-                <div className="px-4 py-2 bg-indigo-50/50 border-b border-slate-100">
+                <div className="px-4 py-2 bg-indigo-50/50 border-b border-slate-100 space-y-1.5">
                    {/* Ordered shelter types row */}
-                   <div className="text-[9px] text-slate-500 pt-1 border-t border-indigo-100">
+                   <div className="text-[9px] text-slate-500">
+                     <div className="font-semibold text-slate-600 mb-1">SHELTER TYPES</div>
                      {(() => {
                        const shelterCounts = {};
                        wa.forEach(a => {
@@ -413,11 +417,11 @@ export default function PlanningReviewPanel({
                          }
                        });
                        return Object.entries(shelterCounts).length > 0 ? (
-                         <div className="flex flex-wrap gap-2">
+                         <div className="space-y-0.5">
                            {Object.entries(shelterCounts).map(([shelter, count]) => (
-                             <span key={shelter} className="text-slate-600">
+                             <div key={shelter} className="text-slate-600">
                                {shelter}: <strong>{count}</strong>
-                             </span>
+                             </div>
                            ))}
                          </div>
                        ) : (
@@ -435,7 +439,7 @@ export default function PlanningReviewPanel({
                       return (
                         <button
                           key={a.id}
-                          onClick={() => onSelectAssetForPopup?.(asset)}
+                          onClick={() => onSelectAssetForPanel?.(asset)}
                           className="w-full p-2 rounded border border-slate-100 hover:bg-indigo-50 hover:border-indigo-200 transition-colors text-left text-xs"
                         >
                           <div className="flex items-center justify-between gap-2">

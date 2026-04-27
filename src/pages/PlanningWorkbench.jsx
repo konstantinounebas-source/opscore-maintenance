@@ -354,6 +354,7 @@ export default function PlanningWorkbench() {
               onZoomToAsset={(asset) => {
                 setZoomToAsset(asset);
               }}
+              onSelectAssetForPanel={(asset) => setStationPanelAsset(asset)}
             />
           )}
         </div>
