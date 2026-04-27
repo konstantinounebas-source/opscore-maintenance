@@ -319,20 +319,26 @@ export default function Stage3RightPanel({
                           <Check className={`h-4 w-4 ${item.status === "Completed" ? "text-green-600" : "text-slate-300"}`} />
                         </button>
                       </div>
-                      {item.source === "Rule" && item.rule_logic_text && (
+                      {item.source === "Rule" && (item.rule_logic_text || item.base_date_key) && (
                         <div className="space-y-1 text-[10px] bg-slate-100 p-1.5 rounded">
-                          <div>
-                            <p className="text-slate-500 font-semibold uppercase">Base Field</p>
-                            <p className="text-slate-800">{item.base_date_key}</p>
-                          </div>
-                          <div>
-                            <p className="text-slate-500 font-semibold uppercase">Base Date</p>
-                            <p className="text-slate-800">{item.base_date_value}</p>
-                          </div>
-                          <div>
-                            <p className="text-slate-500 font-semibold uppercase">Logic</p>
-                            <p className="text-slate-800">{item.rule_logic_text}</p>
-                          </div>
+                          {item.base_date_key && (
+                            <div>
+                              <p className="text-slate-500 font-semibold uppercase">Base Field</p>
+                              <p className="text-slate-800">{item.base_date_key}</p>
+                            </div>
+                          )}
+                          {item.base_date_value && (
+                            <div>
+                              <p className="text-slate-500 font-semibold uppercase">Base Date</p>
+                              <p className="text-slate-800">{item.base_date_value}</p>
+                            </div>
+                          )}
+                          {item.rule_logic_text && (
+                            <div>
+                              <p className="text-slate-500 font-semibold uppercase">Logic</p>
+                              <p className="text-slate-800">{item.rule_logic_text}</p>
+                            </div>
+                          )}
                         </div>
                       )}
                       <div className="flex items-center gap-2 flex-wrap">
