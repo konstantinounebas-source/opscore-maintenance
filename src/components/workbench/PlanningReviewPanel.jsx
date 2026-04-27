@@ -42,6 +42,7 @@ export default function PlanningReviewPanel({
   assetsMap, 
   incidentsByAsset, 
   workOrdersByAsset,
+  planningTypes = [],
   onZoomToAsset,
   onSelectAssetForPopup
 }) {
@@ -56,12 +57,6 @@ export default function PlanningReviewPanel({
   const [weekFilterSearch, setWeekFilterSearch] = useState("");
   const [expandedWeekIds, setExpandedWeekIds] = useState(new Set());
   const [expandedAssignmentIds, setExpandedAssignmentIds] = useState(new Set());
-
-  // Fetch planning types from API
-  const { data: planningTypes = [] } = useQuery({
-    queryKey: ["planningTypes"],
-    queryFn: () => base44.entities.PlanningTypes.list(),
-  });
 
   const filteredWeeks = useMemo(() => {
     let list = weeks;

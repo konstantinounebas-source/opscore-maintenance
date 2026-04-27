@@ -19,15 +19,15 @@ export default function PlanningWorkbench() {
   const { toast } = useToast();
 
   // ── Global data via React Query ─────────────────────────────────────────────
-  const { data: weeks = [] }                                          = useQuery({ queryKey: ["planningWeeks"],        queryFn: () => base44.entities.PlanningWeeks.list("-created_date"), initialData: [], staleTime: 1000 * 60 * 5 });
-  const { data: allAssignments = [] }                                 = useQuery({ queryKey: ["planningAssignments"],  queryFn: () => base44.entities.PlanningAssignments.list(), initialData: [], staleTime: 1000 * 60 * 5 });
-  const { data: assets = [] }                                         = useQuery({ queryKey: ["assets"],               queryFn: () => base44.entities.Assets.list(), initialData: [], staleTime: 1000 * 60 * 10 });
-  const { data: incidents = [] }                                      = useQuery({ queryKey: ["incidents"],            queryFn: () => base44.entities.Incidents.list(), initialData: [], staleTime: 1000 * 60 * 5 });
-  const { data: workOrders = [] }                                     = useQuery({ queryKey: ["workOrders"],           queryFn: () => base44.entities.WorkOrders.list(), initialData: [], staleTime: 1000 * 60 * 5 });
-  const { data: planningTypes = [] }                                  = useQuery({ queryKey: ["planningTypes"],        queryFn: () => base44.entities.PlanningTypes.list(), initialData: [], staleTime: 1000 * 60 * 30 });
-  const { data: layers = [] }                                         = useQuery({ queryKey: ["planningLayers"],       queryFn: () => base44.entities.PlanningLayers.list(), initialData: [], staleTime: 1000 * 60 * 10 });
-  const { data: layerAssets = [] }                                    = useQuery({ queryKey: ["planningLayerAssets"],  queryFn: () => base44.entities.PlanningLayerAssets.list(), initialData: [], staleTime: 1000 * 60 * 10 });
-  const { data: mapLayerLinks = [] }                                  = useQuery({ queryKey: ["workbenchMapLayers"],   queryFn: () => base44.entities.WorkbenchMapLayers.list(), initialData: [], staleTime: 1000 * 60 * 10 });
+  const { data: weeks = [] }                                          = useQuery({ queryKey: ["planningWeeks"],        queryFn: () => base44.entities.PlanningWeeks.list("-created_date"), initialData: [], staleTime: Infinity, gcTime: 1000 * 60 * 60 });
+  const { data: allAssignments = [] }                                 = useQuery({ queryKey: ["planningAssignments"],  queryFn: () => base44.entities.PlanningAssignments.list(), initialData: [], staleTime: Infinity, gcTime: 1000 * 60 * 60 });
+  const { data: assets = [] }                                         = useQuery({ queryKey: ["assets"],               queryFn: () => base44.entities.Assets.list(), initialData: [], staleTime: Infinity, gcTime: 1000 * 60 * 60 });
+  const { data: incidents = [] }                                      = useQuery({ queryKey: ["incidents"],            queryFn: () => base44.entities.Incidents.list(), initialData: [], staleTime: Infinity, gcTime: 1000 * 60 * 60 });
+  const { data: workOrders = [] }                                     = useQuery({ queryKey: ["workOrders"],           queryFn: () => base44.entities.WorkOrders.list(), initialData: [], staleTime: Infinity, gcTime: 1000 * 60 * 60 });
+  const { data: planningTypes = [] }                                  = useQuery({ queryKey: ["planningTypes"],        queryFn: () => base44.entities.PlanningTypes.list(), initialData: [], staleTime: Infinity, gcTime: 1000 * 60 * 60 });
+  const { data: layers = [] }                                         = useQuery({ queryKey: ["planningLayers"],       queryFn: () => base44.entities.PlanningLayers.list(), initialData: [], staleTime: Infinity, gcTime: 1000 * 60 * 60 });
+  const { data: layerAssets = [] }                                    = useQuery({ queryKey: ["planningLayerAssets"],  queryFn: () => base44.entities.PlanningLayerAssets.list(), initialData: [], staleTime: Infinity, gcTime: 1000 * 60 * 60 });
+  const { data: mapLayerLinks = [] }                                  = useQuery({ queryKey: ["workbenchMapLayers"],   queryFn: () => base44.entities.WorkbenchMapLayers.list(), initialData: [], staleTime: Infinity, gcTime: 1000 * 60 * 60 });
 
   // ── Map workspace collection ────────────────────────────────────────────────
   const [mapWorkspaces, setMapWorkspaces] = useState([{ id: newMapId() }]);
@@ -349,10 +349,10 @@ export default function PlanningWorkbench() {
               assetsMap={assetsMap}
               incidentsByAsset={incidentsByAsset}
               workOrdersByAsset={workOrdersByAsset}
+              planningTypes={planningTypes}
               onZoomToAsset={(asset) => {
                 setZoomToAsset(asset);
               }}
-
             />
           )}
         </div>

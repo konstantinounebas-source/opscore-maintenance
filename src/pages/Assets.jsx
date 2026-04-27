@@ -23,10 +23,10 @@ export default function Assets() {
   const [exportOpen, setExportOpen] = useState(false);
   const [settingActive, setSettingActive] = useState(false);
 
-  const { data: assets = [] } = useQuery({ queryKey: ["assets"], queryFn: () => base44.entities.Assets.list() });
-  const { data: childAssets = [] } = useQuery({ queryKey: ["childAssets"], queryFn: () => base44.entities.ChildAssets.list() });
-  const { data: incidents = [] } = useQuery({ queryKey: ["incidents"], queryFn: () => base44.entities.Incidents.list() });
-  const { data: workOrders = [] } = useQuery({ queryKey: ["workOrders"], queryFn: () => base44.entities.WorkOrders.list() });
+  const { data: assets = [] } = useQuery({ queryKey: ["assets"], queryFn: () => base44.entities.Assets.list(), staleTime: Infinity, gcTime: 1000 * 60 * 60 });
+  const { data: childAssets = [] } = useQuery({ queryKey: ["childAssets"], queryFn: () => base44.entities.ChildAssets.list(), staleTime: Infinity, gcTime: 1000 * 60 * 60 });
+  const { data: incidents = [] } = useQuery({ queryKey: ["incidents"], queryFn: () => base44.entities.Incidents.list(), staleTime: Infinity, gcTime: 1000 * 60 * 60 });
+  const { data: workOrders = [] } = useQuery({ queryKey: ["workOrders"], queryFn: () => base44.entities.WorkOrders.list(), staleTime: Infinity, gcTime: 1000 * 60 * 60 });
 
   const getChildCount = (assetId) => childAssets.filter(c => c.parent_asset_id === assetId).length;
   const getOpenIncidents = (assetId) => incidents.filter(i => i.related_asset_id === assetId && i.status !== "Closed" && i.status !== "Cancelled").length;
