@@ -52,16 +52,8 @@ export default function MultiSelectFilter({
   useEffect(() => {
     if (open && triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
-      const dropdownHeight = 300; // approximate max height
-      const spaceBelow = window.innerHeight - rect.bottom;
-      
-      // Position below by default, but flip to above if not enough space
-      const top = spaceBelow > dropdownHeight 
-        ? rect.bottom + window.scrollY + 4
-        : rect.top + window.scrollY - dropdownHeight - 4;
-      
       setPosition({
-        top,
+        top: rect.bottom + window.scrollY + 4,
         left: rect.left + window.scrollX,
         width: rect.width
       });
@@ -73,16 +65,9 @@ export default function MultiSelectFilter({
     const handleResize = () => {
       if (triggerRef.current) {
         const rect = triggerRef.current.getBoundingClientRect();
-        const dropdownHeight = 300;
-        const spaceBelow = window.innerHeight - rect.bottom;
-        
-        const top = spaceBelow > dropdownHeight 
-          ? rect.bottom + window.scrollY + 4
-          : rect.top + window.scrollY - dropdownHeight - 4;
-        
         setPosition(prev => ({
           ...prev,
-          top,
+          top: rect.bottom + window.scrollY + 4,
           left: rect.left + window.scrollX,
           width: rect.width
         }));
@@ -109,18 +94,18 @@ export default function MultiSelectFilter({
 
       {open && createPortal(
         <div 
-          className="fixed bg-white border border-input rounded-md shadow-lg z-[9999]"
+          className="fixed bg-white border border-input rounded-md shadow-lg z-[9999] pointer-events-auto"
           style={{ 
             top: `${position.top}px`, 
             left: `${position.left}px`,
             width: `${position.width}px`
           }}
+          onMouseDown={(e) => {
+            e.stopPropagation();
+          }}
           onClick={(e) => {
             e.stopPropagation();
-            // Prevent the MapFilterBar click-outside handler from firing
-            if (e.nativeEvent) {
-              e.nativeEvent.stopImmediatePropagation();
-            }
+            e.nativeEvent?.stopImmediatePropagation?.();
           }}
           data-multiselectfilter="true"
         >
