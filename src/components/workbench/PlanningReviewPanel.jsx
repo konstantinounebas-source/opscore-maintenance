@@ -122,6 +122,14 @@ export default function PlanningReviewPanel({
     setWeeksDropdownOpen(false);
   };
 
+  // Expose method globally for external components to add weeks
+  React.useEffect(() => {
+    window.__planningReviewAddWeek = (weekId) => {
+      setActiveWeekIds(prev => new Set([...prev, weekId]));
+    };
+    return () => delete window.__planningReviewAddWeek;
+  }, []);
+
   const handleRemoveWeek = (weekId) => {
     const newSet = new Set(activeWeekIds);
     newSet.delete(weekId);

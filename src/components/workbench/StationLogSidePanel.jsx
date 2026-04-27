@@ -199,6 +199,12 @@ export default function StationLogSidePanel({ asset, onClose, incidents = [], wo
         asset_id: asset.id,
       };
       await onSaveAssignment?.(formData, assignment?.id);
+      
+      // Auto-add week to Planning Review
+      const selectedWeek = weeks.find(w => w.id === weekId);
+      if (selectedWeek && window.__planningReviewAddWeek) {
+        window.__planningReviewAddWeek(selectedWeek.id);
+      }
     } catch (err) {
       console.error("Error saving assignment:", err);
     }
