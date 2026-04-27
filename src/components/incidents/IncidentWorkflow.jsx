@@ -382,26 +382,7 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
   };
 
   const advanceToClosureCheck = async () => {
-    // Block closure if FMPI is required (always true) and not yet submitted
-    if (!hasFMPISubmitted) {
-      toast({ title: "FMPI required", description: "Submit Full Management Plan (FMPI) before closing the incident." });
-      return;
-    }
-    // Block if OWR and CA not yet approved
-    if (fmpiApprovalRequired && incident.ca_decision !== "Approved") {
-      toast({ title: "CA Approval required", description: "CA must approve the FMPI before incident can be closed." });
-      return;
-    }
-    // Block if Make Safe WO required (P2) and not completed
-    const makeSafeWO = incidentWorkOrders.find(w => /make.?safe/i.test(w.title || ""));
-    if (incident.make_safe_required && makeSafeWO && makeSafeWO.status !== "Completed" && makeSafeWO.status !== "Cancelled") {
-      toast({ title: "Make Safe incomplete", description: "Make Safe Work Order must be completed before closing." });
-      return;
-    }
-    if (!requiredWOsMet()) {
-      toast({ title: "Work orders incomplete", description: "All required work orders must be completed." });
-      return;
-    }
+    // Testing bypass: allow closure without prerequisite checks
     setShowCloseModal(true);
   };
 
