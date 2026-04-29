@@ -142,7 +142,7 @@ function PhotoUploadArea({ label, files, onChange, required }) {
 // ── Empty work row ────────────────────────────────────────────────────────────
 const emptyRow = () => ({
   _id: Math.random().toString(36).slice(2),
-  child_id: "",
+  catalog_id: "",
   qty: 1,
   unit_price: "",
   confirmed: false,
@@ -153,6 +153,13 @@ const emptyRow = () => ({
 export default function WorkOrderFormF({ submission, incidents, assets, workOrders, crews, childAssets, onClose, defaultIncidentId }) {
   const { toast } = useToast();
   const isEditing = !!submission;
+
+  // ── Child Catalog from Configuration ──
+  const { data: childCatalog = [] } = useQuery({
+    queryKey: ["childCatalog"],
+    queryFn: () => base44.entities.ChildCatalog.list(),
+  });
+  const activeCatalog = useMemo(() => childCatalog.filter(c => c.active !== false), [childCatalog]);
 
   // ── Linked records ──
   const [linkedWOId,    setLinkedWOId]    = useState(submission?.work_order_id || "");
@@ -187,22 +194,17 @@ export default function WorkOrderFormF({ submission, incidents, assets, workOrde
     if (workOrder?.related_asset_id && !linkedAssetId) setLinkedAssetId(workOrder.related_asset_id);
   }, [workOrder]);
 
-  // Only show children belonging to the linked asset
-  const filteredChildAssets = useMemo(() =>
-    linkedAssetId ? childAssets.filter(c => c.parent_asset_id === linkedAssetId) : childAssets,
-    [childAssets, linkedAssetId]
-  );
-  const childMap = useMemo(() => Object.fromEntries(childAssets.map(c => [c.id, c])), [childAssets]);
+  const catalogMap = useMemo(() => Object.fromEntries(activeCatalog.map(c => [c.id, c])), [activeCatalog]);
 
   // ── Row helpers ──
   const updateRow = (idx, patch) => {
     setRows(prev => prev.map((r, i) => {
       if (i !== idx) return r;
       const updated = { ...r, ...patch };
-      // auto-fill price on child select
-      if (patch.child_id !== undefined) {
-        const child = childMap[patch.child_id];
-        updated.unit_price = child?.unit_price ?? "";
+      // auto-fill price on catalog item select
+      if (patch.catalog_id !== undefined) {
+        const item = catalogMap[patch.catalog_id];
+        updated.unit_price = (item?.pricing_type === "Bundle" ? item?.bundle_price : item?.unit_price) ?? "";
       }
       return updated;
     }));
@@ -326,7 +328,7 @@ export default function WorkOrderFormF({ submission, incidents, assets, workOrde
   const handleSave = (status = "Draft") => {
     if (!linkedWOId)    { toast({ title: "Επιλέξτε Work Order",     variant: "destructive" }); return; }
     if (!linkedAssetId) { toast({ title: "Επιλέξτε Στάση / Asset",  variant: "destructive" }); return; }
-    const hasEmptyChild = rows.some(r => !r.child_id);
+    const hasEmptyChild = rows.some(r => !r.catalog_id);
     if (hasEmptyChild)  { toast({ title: "Επιλέξτε Child για κάθε γραμμή εργασίας", variant: "destructive" }); return; }
     const hasZeroQty = rows.some(r => !r.qty || Number(r.qty) <= 0);
     if (hasZeroQty)     { toast({ title: "Η ποσότητα πρέπει να είναι > 0",  variant: "destructive" }); return; }
@@ -461,31 +463,31 @@ export default function WorkOrderFormF({ submission, incidents, assets, workOrde
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {rows.map((row, idx) => {
-                    const child = childMap[row.child_id];
+                    const catalogItem = catalogMap[row.catalog_id];
                     const amount = (parseFloat(row.unit_price) || 0) * (parseFloat(row.qty) || 0);
                     return (
                       <tr
                         key={row._id}
                         className={`text-sm transition-colors ${row.confirmed ? "bg-emerald-50/40" : "bg-white hover:bg-slate-50/60"}`}
                       >
-                        {/* Child select */}
+                        {/* Catalog item select */}
                         <td className="px-2 py-1.5">
-                          <Select value={row.child_id || "_none"} onValueChange={v => updateRow(idx, { child_id: v === "_none" ? "" : v })}>
-                            <SelectTrigger className={`text-xs h-8 ${!row.child_id ? "border-amber-300" : ""}`}>
+                          <Select value={row.catalog_id || "_none"} onValueChange={v => updateRow(idx, { catalog_id: v === "_none" ? "" : v })}>
+                            <SelectTrigger className={`text-xs h-8 ${!row.catalog_id ? "border-amber-300" : ""}`}>
                               <SelectValue placeholder="Επιλογή..." />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="_none">— Επιλογή —</SelectItem>
-                              {filteredChildAssets.map(c => (
+                              {activeCatalog.map(c => (
                                 <SelectItem key={c.id} value={c.id}>
-                                  <span className="font-mono text-xs mr-1">{c.child_id}</span>
-                                  {c.description || c.child_type || c.category || c.serial_number}
+                                  <span className="font-mono text-xs mr-1">{c.child_code}</span>
+                                  {c.display_name || c.child_name}
                                 </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
-                          {child?.description && (
-                            <p className="text-xs text-slate-400 mt-0.5 pl-1 truncate">{child.description}</p>
+                          {catalogItem?.child_category && (
+                            <p className="text-xs text-slate-400 mt-0.5 pl-1 truncate">{catalogItem.child_category}</p>
                           )}
                         </td>
                         {/* Quantity */}
