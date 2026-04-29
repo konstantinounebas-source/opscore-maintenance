@@ -381,41 +381,43 @@ export default function WorkOrderFormF({ submission, incidents, assets, workOrde
         <div className="max-w-5xl mx-auto p-6 space-y-5">
 
           {/* ── Linked records ── */}
-          <div className="bg-white rounded-xl border border-indigo-100 p-5 space-y-4">
-            <h3 className="text-sm font-semibold text-indigo-800 flex items-center gap-2">
-              <Info className="w-4 h-4" /> Σύνδεση Εγγραφών
-            </h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="text-xs font-medium text-slate-600">Work Order *</Label>
-                <Select value={linkedWOId || "_none"} onValueChange={v => setLinkedWOId(v === "_none" ? "" : v)}>
-                  <SelectTrigger className="mt-1 text-sm"><SelectValue placeholder="Επιλογή Work Order..." /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="_none">— Επιλογή —</SelectItem>
-                    {workOrders.map(w => (
-                      <SelectItem key={w.id} value={w.id}>
-                        <span className="font-mono text-xs mr-1">{w.work_order_id}</span>{w.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-xs font-medium text-slate-600">Στάση / Asset *</Label>
-                <Select value={linkedAssetId || "_none"} onValueChange={v => setLinkedAssetId(v === "_none" ? "" : v)}>
-                  <SelectTrigger className="mt-1 text-sm"><SelectValue placeholder="Επιλογή Στάσης..." /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="_none">— Επιλογή —</SelectItem>
-                    {assets.map(a => (
-                      <SelectItem key={a.id} value={a.id}>
-                        <span className="font-mono text-xs mr-1">{a.asset_id}</span>{a.active_shelter_id || a.location_address || ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+          {!defaultIncidentId && (
+            <div className="bg-white rounded-xl border border-indigo-100 p-5 space-y-4">
+              <h3 className="text-sm font-semibold text-indigo-800 flex items-center gap-2">
+                <Info className="w-4 h-4" /> Σύνδεση Εγγραφών
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs font-medium text-slate-600">Work Order *</Label>
+                  <Select value={linkedWOId || "_none"} onValueChange={v => setLinkedWOId(v === "_none" ? "" : v)}>
+                    <SelectTrigger className="mt-1 text-sm"><SelectValue placeholder="Επιλογή Work Order..." /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_none">— Επιλογή —</SelectItem>
+                      {workOrders.map(w => (
+                        <SelectItem key={w.id} value={w.id}>
+                          <span className="font-mono text-xs mr-1">{w.work_order_id}</span>{w.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs font-medium text-slate-600">Στάση / Asset *</Label>
+                  <Select value={linkedAssetId || "_none"} onValueChange={v => setLinkedAssetId(v === "_none" ? "" : v)}>
+                    <SelectTrigger className="mt-1 text-sm"><SelectValue placeholder="Επιλογή Στάσης..." /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_none">— Επιλογή —</SelectItem>
+                      {assets.map(a => (
+                        <SelectItem key={a.id} value={a.id}>
+                          <span className="font-mono text-xs mr-1">{a.asset_id}</span>{a.active_shelter_id || a.location_address || ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* ── SECTION 1: Πληροφορίες Εντολής Εργασίας ── */}
           <Section title="1. Πληροφορίες Εντολής Εργασίας">
