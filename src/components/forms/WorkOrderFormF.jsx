@@ -300,6 +300,25 @@ export default function WorkOrderFormF({ submission, incidents, assets, workOrde
         ].filter(f => f?.url);
 
         const user = await base44.auth.me();
+        const timestamp = new Date().toISOString();
+
+        const auditAttachments = [
+          ...(variables.status === "Submitted" && result?.id ? [{
+            url: `form:${result.id}:${variables.form_type}`,
+            name: `${variables.form_name} (Submitted)`,
+            author: user?.email,
+            author_name: user?.full_name,
+            created_at: timestamp,
+          }] : []),
+          ...allFiles.map(f => ({
+            url: f.url,
+            name: f.name || f.url.split("/").pop(),
+            author: user?.email,
+            author_name: user?.full_name,
+            created_at: timestamp,
+          })),
+        ];
+
         await base44.entities.IncidentAuditTrail.create({
           incident_id: incId,
           action: variables.status === "Submitted" ? "Corrective WO Created" : "Form Saved",
@@ -307,10 +326,7 @@ export default function WorkOrderFormF({ submission, incidents, assets, workOrde
             ? `Work Order Invoice submitted & Corrective WO created${variables.form_data?.sig_name ? ` — ${variables.form_data.sig_name}` : ""}`
             : `${variables.form_name} – ${variables.status}`,
           user: user?.email,
-          ...(allFiles.length > 0 ? {
-            attachments: allFiles.map(f => f.url),
-            attachment_names: allFiles.map(f => f.name || f.url.split("/").pop()),
-          } : {}),
+          ...(auditAttachments.length > 0 ? { attachment_metadata: auditAttachments } : {}),
         });
 
         queryClient.invalidateQueries({ queryKey: ["workOrders", incId] });
