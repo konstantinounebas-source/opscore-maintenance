@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import TopHeader from "@/components/layout/TopHeader";
 import { Button } from "@/components/ui/button";
@@ -229,6 +229,7 @@ export default function WorkOrderFormF({ submission, incidents, assets, workOrde
   };
 
   // ── Save ──
+  const queryClient = useQueryClient();
   const saveMutation = useMutation({
     mutationFn: async (data) => {
       if (isEditing) return base44.entities.FormSubmissions.update(submission.id, data);
@@ -262,6 +263,34 @@ export default function WorkOrderFormF({ submission, incidents, assets, workOrde
           });
         }
 
+        // On Submission: create Corrective WO + update incident workflow flag
+        if (variables.status === "Submitted") {
+          const existingWOs = await base44.entities.WorkOrders.filter({ incident_id: incId });
+          const hasCorrectiveWO = existingWOs.some(w => w.title?.includes("Corrective WO"));
+          if (!hasCorrectiveWO) {
+            const incidentList = await base44.entities.Incidents.filter({ id: incId });
+            const inc = incidentList[0];
+            const { nanoid } = await import('nanoid');
+            await base44.entities.WorkOrders.create({
+              work_order_id: `CORR-${nanoid(6)}`,
+              incident_id: incId,
+              title: `Corrective WO - ${inc?.incident_id || incId}`,
+              related_asset_id: inc?.related_asset_id || variables.asset_id,
+              related_asset_name: inc?.related_asset_name || "",
+              status: "Open",
+              priority: "Medium",
+              description: `Created via Work Order Invoice form`,
+              assigned_to: variables.form_data?.sig_name || "",
+              due_date: variables.form_data?.sig_date || "",
+            });
+          }
+          // Mark corrective_done on incident
+          const incidentList2 = await base44.entities.Incidents.filter({ id: incId });
+          if (incidentList2.length > 0) {
+            await base44.entities.Incidents.update(incidentList2[0].id, { corrective_done: true });
+          }
+        }
+
         // Build full list of all uploaded files for audit trail
         const allFiles = [
           ...allPhotos,
@@ -271,14 +300,22 @@ export default function WorkOrderFormF({ submission, incidents, assets, workOrde
         const user = await base44.auth.me();
         await base44.entities.IncidentAuditTrail.create({
           incident_id: incId,
-          action: "Form Saved",
-          details: `${variables.form_name} – ${variables.status}`,
+          action: variables.status === "Submitted" ? "Corrective WO Created" : "Form Saved",
+          details: variables.status === "Submitted"
+            ? `Work Order Invoice submitted & Corrective WO created${variables.form_data?.sig_name ? ` — ${variables.form_data.sig_name}` : ""}`
+            : `${variables.form_name} – ${variables.status}`,
           user: user?.email,
           ...(allFiles.length > 0 ? {
             attachments: allFiles.map(f => f.url),
             attachment_names: allFiles.map(f => f.name || f.url.split("/").pop()),
           } : {}),
         });
+
+        queryClient.invalidateQueries({ queryKey: ["workOrders", incId] });
+        queryClient.invalidateQueries({ queryKey: ["incidentAudit", incId] });
+        queryClient.invalidateQueries({ queryKey: ["incidentAttachments", incId] });
+        queryClient.invalidateQueries({ queryKey: ["incident", incId] });
+        queryClient.invalidateQueries({ queryKey: ["incidents"] });
       }
       toast({ title: isEditing ? "Φόρμα ενημερώθηκε" : "Φόρμα αποθηκεύτηκε" });
       onClose();

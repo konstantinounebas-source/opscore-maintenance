@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { getAthensTimestamp } from "@/lib/timeSync";
 import TopHeader from "@/components/layout/TopHeader";
@@ -186,6 +186,7 @@ export default function MakeSafeChecklistForm({ submission, incidents, assets, w
   const photosAfterMissing = fd.doc_photo_after && fd.photos_after.length === 0;
 
   // ── Save ───────────────────────────────────────────────────────────────────
+  const queryClient = useQueryClient();
   const saveMutation = useMutation({
     mutationFn: async (data) => {
       const result = isEditing
@@ -215,6 +216,34 @@ export default function MakeSafeChecklistForm({ submission, incidents, assets, w
         ));
       }
 
+      // On Submission: create WO + update incident workflow flag
+      if (data.status === "Submitted" && incId) {
+        // Create Make Safe WO if none exists yet for this incident
+        const existingWOs = await base44.entities.WorkOrders.filter({ incident_id: incId });
+        const hasMakeSafeWO = existingWOs.some(w => w.title?.includes("Make Safe WO"));
+        if (!hasMakeSafeWO) {
+          const incidentList = await base44.entities.Incidents.filter({ id: incId });
+          const inc = incidentList[0];
+          const { nanoid } = await import('nanoid');
+          await base44.entities.WorkOrders.create({
+            work_order_id: `MSAFE-${nanoid(6)}`,
+            incident_id: incId,
+            title: `Make Safe WO - ${inc?.incident_id || incId}`,
+            related_asset_id: inc?.related_asset_id || data.asset_id,
+            related_asset_name: inc?.related_asset_name || "",
+            status: "Open",
+            priority: "Critical",
+            description: `Created via Make Safe Checklist form`,
+            assigned_to: data.form_data?.technician || "",
+          });
+        }
+        // Mark make_safe_done on incident
+        const incidentList2 = await base44.entities.Incidents.filter({ id: incId });
+        if (incidentList2.length > 0) {
+          await base44.entities.Incidents.update(incidentList2[0].id, { make_safe_done: true });
+        }
+      }
+
       const auditAttachments = [
         ...(data.status === "Submitted" && result?.id ? [{
           url: `form:${result.id}:${data.form_type}`,
@@ -234,15 +263,24 @@ export default function MakeSafeChecklistForm({ submission, incidents, assets, w
 
       await base44.entities.IncidentAuditTrail.create({
         incident_id: incId,
-        action: data.status === "Submitted" ? "Form Submitted" : "Form Saved",
-        details: `${data.form_name} – ${data.status}`,
+        action: data.status === "Submitted" ? "Make Safe WO Created" : "Form Saved",
+        details: data.status === "Submitted"
+          ? `Make Safe Checklist submitted & WO created${data.form_data?.technician ? ` — Technician: ${data.form_data.technician}` : ""}`
+          : `${data.form_name} – ${data.status}`,
         user: user?.email,
         ...(auditAttachments.length > 0 ? { attachment_metadata: auditAttachments } : {}),
       });
       
       return result;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
+      if (variables.incident_id) {
+        queryClient.invalidateQueries({ queryKey: ["workOrders", variables.incident_id] });
+        queryClient.invalidateQueries({ queryKey: ["incidentAudit", variables.incident_id] });
+        queryClient.invalidateQueries({ queryKey: ["incidentAttachments", variables.incident_id] });
+        queryClient.invalidateQueries({ queryKey: ["incident", variables.incident_id] });
+        queryClient.invalidateQueries({ queryKey: ["incidents"] });
+      }
       toast({ title: isEditing ? "Φόρμα ενημερώθηκε" : "Φόρμα αποθηκεύτηκε" });
       onClose();
     },
