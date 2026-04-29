@@ -154,23 +154,83 @@ Deno.serve(async (req) => {
 
     if (sub.form_data && typeof sub.form_data === 'object') {
       const formDataEntries = [];
+      let rowsHtml = '';
+
       const flatten = (obj, prefix = '') => {
         Object.entries(obj).forEach(([k, v]) => {
           const key = prefix ? `${prefix} › ${k}` : k;
+
+          // Special handling for "rows" array — render as a table
+          if (k === 'rows' && Array.isArray(v) && v.length > 0 && typeof v[0] === 'object') {
+            rowsHtml = `
+              <div class="section">
+                <h2>Work Items</h2>
+                <table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:8px;">
+                  <thead>
+                    <tr style="background:#284fa0;color:white;">
+                      <th style="padding:6px 8px;text-align:left;border:1px solid #ccc;">Item</th>
+                      <th style="padding:6px 8px;text-align:center;border:1px solid #ccc;">Qty</th>
+                      <th style="padding:6px 8px;text-align:right;border:1px solid #ccc;">Unit Price (€)</th>
+                      <th style="padding:6px 8px;text-align:right;border:1px solid #ccc;">Total (€)</th>
+                      <th style="padding:6px 8px;text-align:left;border:1px solid #ccc;">Comments</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${v.map((row, i) => {
+                      const qty = Number(row.qty || row.quantity || 0);
+                      const unitPrice = Number(row.unit_price || 0);
+                      const total = (qty * unitPrice).toFixed(2);
+                      const itemName = row.description || row.name || row.catalog_id || `Item ${i + 1}`;
+                      const comments = row.comments || '';
+                      const bg = i % 2 === 0 ? '#f9f9f9' : '#fff';
+                      return `<tr style="background:${bg};">
+                        <td style="padding:6px 8px;border:1px solid #ccc;">${escapeHtml(String(itemName))}</td>
+                        <td style="padding:6px 8px;text-align:center;border:1px solid #ccc;">${qty}</td>
+                        <td style="padding:6px 8px;text-align:right;border:1px solid #ccc;">${unitPrice.toFixed(2)}</td>
+                        <td style="padding:6px 8px;text-align:right;border:1px solid #ccc;">${total}</td>
+                        <td style="padding:6px 8px;border:1px solid #ccc;">${escapeHtml(comments)}</td>
+                      </tr>`;
+                    }).join('')}
+                  </tbody>
+                </table>
+              </div>`;
+            return;
+          }
+
           if (v !== null && v !== undefined && typeof v === 'object' && !Array.isArray(v)) {
             flatten(v, key);
-          } else if (v !== null && v !== undefined && v !== '') {
-            const label = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) + ':';
-            const val = Array.isArray(v) ? v.map(item => typeof item === 'object' ? JSON.stringify(item) : item).join(', ') : v;
-            formDataEntries.push([label, val]);
+          } else if (v !== null && v !== undefined && v !== '' && v !== false && v !== 'false') {
+            // Skip boolean false values and arrays that are "rows" (handled above)
+            if (Array.isArray(v)) {
+              // For arrays of objects (photos etc), render nicely
+              const formatted = v.map(item => {
+                if (typeof item === 'object' && item !== null) {
+                  return item.name || item.url || JSON.stringify(item);
+                }
+                return String(item);
+              }).join('\n');
+              if (formatted.trim()) {
+                const label = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) + ':';
+                formDataEntries.push([label, formatted]);
+              }
+            } else {
+              const label = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) + ':';
+              formDataEntries.push([label, v]);
+            }
           }
         });
       };
       flatten(sub.form_data);
+
+      // Insert rows table first if present
+      if (rowsHtml) {
+        html += rowsHtml;
+      }
+
       if (formDataEntries.length > 0) {
         html += '<div class="section"><h2>Additional Form Data</h2>';
         formDataEntries.forEach(([label, val]) => {
-          html += `<div class="field"><div class="label">${escapeHtml(label)}</div><div class="value">${escapeHtml(String(val))}</div></div>`;
+          html += `<div class="field"><div class="label">${escapeHtml(label)}</div><div class="value" style="white-space:pre-wrap;">${escapeHtml(String(val))}</div></div>`;
         });
         html += '</div>';
       }
