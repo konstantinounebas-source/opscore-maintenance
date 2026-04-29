@@ -364,7 +364,6 @@ export default function MakeSafeChecklistForm({ submission, incidents, assets, w
           </div>
 
           {/* ── Linked records ── */}
-          {!defaultIncidentId && (
           <div className="bg-white rounded-xl border border-indigo-100 p-5 space-y-4">
             <h3 className="text-sm font-semibold text-indigo-800 flex items-center gap-2">
               <Info className="w-4 h-4" /> Σύνδεση Εγγραφών
@@ -408,7 +407,6 @@ export default function MakeSafeChecklistForm({ submission, incidents, assets, w
               </div>
             </div>
           </div>
-          )}
 
           {/* ══════════════════════════════════════════════════════════════════
               A. ΣΤΟΙΧΕΙΑ
