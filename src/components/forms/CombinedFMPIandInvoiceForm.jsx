@@ -140,7 +140,7 @@ const emptyRow = () => ({
 });
 
 // ── Main Component ────────────────────────────────────────────────────────────
-export default function CombinedFMPIandInvoiceForm({ submission, incidents, assets, workOrders, crews, childAssets, onClose, defaultIncidentId }) {
+export default function CombinedFMPIandInvoiceForm({ submission, incidents, assets, workOrders, crews, onClose, defaultIncidentId }) {
   const { toast } = useToast();
   const { user } = useAuth();
   const isEditing = !!submission;
@@ -195,7 +195,12 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
   const { data: ompiSubmissions = [] } = useQuery({
     queryKey: ["ompiSubmissions", linkedIncidentId],
     queryFn: () => linkedIncidentId
-      ? base44.entities.FormSubmissions.filter({ incident_id: linkedIncidentId, form_type: "outline_management_incident_plan" })
+      // Query both form_type values — CROMPIForm uses "cr_ompi"; OutlineManagementForm uses "outline_management_incident_plan"
+      ? base44.entities.FormSubmissions.filter({ incident_id: linkedIncidentId, form_type: "cr_ompi" })
+          .then(async rows => {
+            if (rows.length > 0) return rows;
+            return base44.entities.FormSubmissions.filter({ incident_id: linkedIncidentId, form_type: "outline_management_incident_plan" });
+          })
       : Promise.resolve([]),
     enabled: !!linkedIncidentId,
   });
@@ -240,7 +245,9 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
   // Auto-fill OWR from OMPI form if not already set
   useEffect(() => {
     if (ompiForm && !owrValue && !submission) {
-      const ompiOwr = ompiForm.ektos_eggyhshs;
+      // Support values from CROMPIForm (ektos_eggyhshs: "Yes"/"No") and
+      // OutlineManagementForm (ektos_eggyhshs: "YES"/"NO") and raw incident warranty_status
+      const ompiOwr = ompiForm.ektos_eggyhshs || (ompiForm.form_data?.warranty_status === "OWR" ? "Yes" : null);
       if (ompiOwr === "YES" || ompiOwr === "Yes") setOwrValue("ΝΑΙ");
       else if (ompiOwr === "NO" || ompiOwr === "No") setOwrValue("ΟΧΙ");
     }
@@ -371,7 +378,9 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
       // Update incident workflow state when FMPI is submitted
       if (data.status === "Submitted" && incId) {
         const nowTs = getAthensTimestamp();
-        const fmpiApprovalNeeded = data.apaiteitai_eggkrisi_ca === "Yes" || data.ektos_eggyhshs === "Yes";
+        // Normalise both fields — handleSave converts ΝΑΙ→Yes, but guard against raw Greek values too
+        const normalise = v => (v === "ΝΑΙ" || v === "YES" || v === "Yes") ? "Yes" : v;
+        const fmpiApprovalNeeded = normalise(data.apaiteitai_eggkrisi_ca) === "Yes" || normalise(data.ektos_eggyhshs) === "Yes";
         const nextWorkflowState = fmpiApprovalNeeded ? "Awaiting_CA_Approval" : "FMPI_Submitted";
         await base44.entities.Incidents.update(incId, {
           workflow_state: nextWorkflowState,

@@ -234,8 +234,7 @@ function CloseIncidentModal({ incident, incidentId, workOrders, onClose, onDone 
   const [saving, setSaving] = useState(false);
 
   const openWOs = workOrders.filter(w => w.status !== "Completed" && w.status !== "Cancelled");
-  // Testing bypass: always allow closure
-  const canClose = true;
+  const canClose = openWOs.length === 0;
 
   const handleSubmit = async () => {
     setSaving(true);
@@ -340,7 +339,7 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
   const { data: allIncidents = [] } = useQuery({ queryKey: ["incidents"], queryFn: () => base44.entities.Incidents.list(), enabled: showFMPIForm });
   const { data: allAssets = [] } = useQuery({ queryKey: ["assets"], queryFn: () => base44.entities.Assets.list(), enabled: showFMPIForm });
   const { data: allWorkOrders = [] } = useQuery({ queryKey: ["allWorkOrders"], queryFn: () => base44.entities.WorkOrders.list(), enabled: showFMPIForm });
-  const { data: allChildAssets = [] } = useQuery({ queryKey: ["allChildAssets"], queryFn: () => base44.entities.ChildAssets.list(), enabled: showFMPIForm });
+
   const { data: incidentWorkOrders = [] } = useQuery({
     queryKey: ["workOrders", incidentId],
     queryFn: () => base44.entities.WorkOrders.filter({ incident_id: incidentId }),
@@ -372,8 +371,7 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
     return true;
   };
 
-  const advanceToClosureCheck = async () => {
-    // Testing bypass: allow closure without prerequisite checks
+  const advanceToClosureCheck = () => {
     setShowCloseModal(true);
   };
 
@@ -591,7 +589,10 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
             if (workflowState === "Awaiting_CR_OMPI") {
               lockedReason = "Submit CR+OMPI first";
             } else if (panel.woType === "corrective") {
-              if (fmpiApprovalRequired && incident.ca_decision !== "Approved") {
+              const crOmpiDone = workflowState !== "Awaiting_CR_OMPI";
+              if (!crOmpiDone) {
+                lockedReason = "Submit CR+OMPI first";
+              } else if (fmpiApprovalRequired && incident.ca_decision !== "Approved") {
                 lockedReason = "CA Approval required before corrective work";
               } else if (!fmpiApprovalRequired && !hasFMPISubmitted) {
                 lockedReason = "Submit FMPI before corrective work";
@@ -633,7 +634,6 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
               assets={allAssets}
               workOrders={allWorkOrders}
               crews={[]}
-              childAssets={allChildAssets}
               onClose={() => setShowFMPIForm(false)}
               defaultIncidentId={incidentId}
             />
