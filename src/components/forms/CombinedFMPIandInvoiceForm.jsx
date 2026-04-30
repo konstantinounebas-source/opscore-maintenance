@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { getAthensTimestamp } from "@/lib/timeSync";
 import { logFormSubmission, buildAttachmentMetadata } from "@/lib/auditTrailHelper";
@@ -132,7 +132,7 @@ function deriveSubcategory(incident) {
 // ── Empty work row ────────────────────────────────────────────────────────────
 const emptyRow = () => ({
   _id: Math.random().toString(36).slice(2),
-  child_id: "",
+  catalog_id: "",
   qty: 1,
   unit_price: "",
   confirmed: false,
@@ -144,6 +144,14 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
   const { toast } = useToast();
   const { user } = useAuth();
   const isEditing = !!submission;
+
+  // ── Child Catalog from Configuration ──
+  const { data: childCatalog = [] } = useQuery({
+    queryKey: ["childCatalog"],
+    queryFn: () => base44.entities.ChildCatalog.list(),
+  });
+  const activeCatalog = useMemo(() => childCatalog.filter(c => c.active !== false), [childCatalog]);
+  const catalogMap = useMemo(() => Object.fromEntries(activeCatalog.map(c => [c.id, c])), [activeCatalog]);
 
   // ── Tab state ──
   const [activeTab, setActiveTab] = useState("fmpi");
@@ -271,12 +279,6 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
   }, [incident, priority]);
 
   // ── Invoice calcs ──
-  // Only show children belonging to the linked asset
-  const filteredChildAssets = useMemo(() =>
-    linkedAssetId ? childAssets.filter(c => c.parent_asset_id === linkedAssetId) : childAssets,
-    [childAssets, linkedAssetId]
-  );
-  const childMap = useMemo(() => Object.fromEntries(childAssets.map(c => [c.id, c])), [childAssets]);
   const rowAmounts = rows.map(r => {
     const up = parseFloat(r.unit_price) || 0;
     const qty = parseFloat(r.qty) || 0;
@@ -289,9 +291,9 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
     setRows(prev => prev.map((r, i) => {
       if (i !== idx) return r;
       const updated = { ...r, ...patch };
-      if (patch.child_id !== undefined) {
-        const child = childMap[patch.child_id];
-        updated.unit_price = child?.unit_price ?? "";
+      if (patch.catalog_id !== undefined) {
+        const item = catalogMap[patch.catalog_id];
+        updated.unit_price = (item?.pricing_type === "Bundle" ? item?.bundle_price : item?.unit_price) ?? "";
       }
       return updated;
     }));
@@ -397,7 +399,7 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
 
       if (!outlineDate) { toast({ title: "Συμπληρώστε: Ημερομηνία Outline management plan", variant: "destructive" }); return; }
       if (!owrValue) { toast({ title: "Επιλέξτε: Εκτός Εγγύησης (OWR)", variant: "destructive" }); return; }
-      const hasEmptyChild = rows.some(r => !r.child_id);
+      const hasEmptyChild = rows.some(r => !r.catalog_id);
       if (hasEmptyChild) { toast({ title: "Επιλέξτε Child για κάθε γραμμή εργασίας", variant: "destructive" }); return; }
       const hasZeroQty = rows.some(r => !r.qty || Number(r.qty) <= 0);
       if (hasZeroQty) { toast({ title: "Η ποσότητα πρέπει να είναι > 0", variant: "destructive" }); return; }
@@ -692,30 +694,30 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {rows.map((row, idx) => {
-                        const child = childMap[row.child_id];
-                        const amount = (parseFloat(row.unit_price) || 0) * (parseFloat(row.qty) || 0);
+                       const catalogItem = catalogMap[row.catalog_id];
+                       const amount = (parseFloat(row.unit_price) || 0) * (parseFloat(row.qty) || 0);
                         return (
                           <tr
                             key={row._id}
                             className={`text-sm transition-colors ${row.confirmed ? "bg-emerald-50/40" : "bg-white hover:bg-slate-50/60"}`}
                           >
                             <td className="px-2 py-1.5">
-                              <Select value={row.child_id || "_none"} onValueChange={v => updateRow(idx, { child_id: v === "_none" ? "" : v })}>
-                                <SelectTrigger className={`text-xs h-8 ${!row.child_id ? "border-amber-300" : ""}`}>
+                              <Select value={row.catalog_id || "_none"} onValueChange={v => updateRow(idx, { catalog_id: v === "_none" ? "" : v })}>
+                                <SelectTrigger className={`text-xs h-8 ${!row.catalog_id ? "border-amber-300" : ""}`}>
                                   <SelectValue placeholder="Επιλογή..." />
                                 </SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value="_none">— Επιλογή —</SelectItem>
-                                  {filteredChildAssets.map(c => (
+                                  {activeCatalog.map(c => (
                                     <SelectItem key={c.id} value={c.id}>
-                                      <span className="font-mono text-xs mr-1">{c.child_id}</span>
-                                      {c.description || c.child_type || c.category}
+                                      <span className="font-mono text-xs mr-1">{c.child_code}</span>
+                                      {c.display_name || c.child_name}
                                     </SelectItem>
                                   ))}
                                 </SelectContent>
                               </Select>
-                              {child?.description && (
-                                <p className="text-xs text-slate-400 mt-0.5 pl-1 truncate">{child.description}</p>
+                              {catalogItem?.child_category && (
+                                <p className="text-xs text-slate-400 mt-0.5 pl-1 truncate">{catalogItem.child_category}</p>
                               )}
                             </td>
                             <td className="px-2 py-1.5">
