@@ -31,6 +31,7 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/AuthContext";
 import FileUploadArea from "@/components/shared/FileUploadArea";
+import OfficialWordingBlock from "@/components/sla/OfficialWordingBlock";
 
 function ReadOnlyField({ label, value, children }) {
   return (
@@ -322,8 +323,11 @@ export default function CROMPIForm({ incident, incidentId, onClose, onDone }) {
             </div>
           )}
 
+          {/* ── Official Wording Template (CR+OMPI) ── */}
+          <OfficialWordingBlock formType="cr_ompi" />
+
           {/* ── Section 1: Incident Details (read-only) ── */}
-          <Section title="1. Incident Details" icon={AlertTriangle}>
+          <Section title="1. Incident Details (Στοιχεία Περιστατικού)" icon={AlertTriangle}>
             <div className="grid grid-cols-2 gap-4">
               <ReadOnlyField label="Incident Number" value={incident?.incident_id} />
               <ReadOnlyField label="Reported Date" value={incident?.reported_date || incident?.issue_date} />
@@ -342,9 +346,9 @@ export default function CROMPIForm({ incident, incidentId, onClose, onDone }) {
             </div>
           </Section>
 
-          {/* ── Section 2: Confirmation of Receipt (restored wording block) ── */}
+          {/* ── Section 2: Confirmation of Receipt ── */}
           <Section
-            title="2. Confirmation of Receipt (CR)"
+            title="2. Επιβεβαίωση Παραλαβής (Confirmation of Receipt – CR)"
             icon={ClipboardCheck}
             accent="border-indigo-200"
             subtitle="Επιβεβαίωση λήψης και καταχώρησης του συμβάντος"
@@ -418,9 +422,9 @@ export default function CROMPIForm({ incident, incidentId, onClose, onDone }) {
             )}
           </Section>
 
-          {/* ── Section 3: OMPI — Outline Management Plan of Incident ── */}
+          {/* ── Section 3: OMPI ── */}
           <Section
-            title="3. OMPI – Outline Management Plan of Incident"
+            title="3. OMPI – Σχέδιο Διαχείρισης Περιστατικού (Outline Management Plan)"
             icon={FileText}
             accent="border-amber-200"
             subtitle="Αρχικό Σχέδιο Διαχείρισης Περιστατικού"
@@ -558,7 +562,7 @@ export default function CROMPIForm({ incident, incidentId, onClose, onDone }) {
           </Section>
 
           {/* ── Section 4: Attachments ── */}
-          <Section title="4. Attachments / Επισυναπτόμενα" icon={Paperclip}>
+          <Section title="4. Επισυναπτόμενα (Attachments)" icon={Paperclip}>
             <p className="text-xs text-slate-500">
               Επισυνάψτε φωτογραφικό υλικό, αναφορές ή οποιαδήποτε έγγραφα σχετικά με την αρχική επιθεώρηση.
             </p>

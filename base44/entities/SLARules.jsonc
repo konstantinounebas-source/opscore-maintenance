@@ -1,0 +1,80 @@
+{
+  "name": "SLARules",
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "string",
+      "description": "Unique rule code (e.g. SLA_1_CR_OMPI_P1) \u2014 matches default codes in slaEngine.js"
+    },
+    "name": {
+      "type": "string",
+      "description": "Display name of the rule"
+    },
+    "phase": {
+      "type": "string",
+      "enum": [
+        "CR_OMPI",
+        "FMPI",
+        "Repair"
+      ],
+      "description": "Workflow phase this rule applies to"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "P1",
+        "P2",
+        "Any"
+      ],
+      "default": "Any",
+      "description": "Incident priority (P1=Low, P2=High, Any=both)"
+    },
+    "warranty_status": {
+      "type": "string",
+      "enum": [
+        "In Warranty",
+        "OWR",
+        "Any"
+      ],
+      "default": "Any",
+      "description": "Warranty status this rule applies to"
+    },
+    "duration_value": {
+      "type": "number",
+      "description": "Duration amount (e.g. 24, 7, 28)"
+    },
+    "duration_unit": {
+      "type": "string",
+      "enum": [
+        "hours",
+        "calendar_days",
+        "business_days"
+      ],
+      "default": "calendar_days",
+      "description": "Unit of duration"
+    },
+    "warning_threshold_hours": {
+      "type": "number",
+      "default": 24,
+      "description": "Hours before deadline to show At Risk warning"
+    },
+    "breach_threshold_hours": {
+      "type": "number",
+      "default": 0,
+      "description": "Hours grace after deadline before marking Breached"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional notes / contractual reference"
+    }
+  },
+  "required": [
+    "code",
+    "name",
+    "phase"
+  ]
+}

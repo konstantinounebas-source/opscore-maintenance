@@ -306,30 +306,30 @@ export function computeOWRRestorationDeadline(caApprovalDate) {
   return addDays(new Date(caApprovalDate), 21).toISOString();
 }
 
-// ── Human-readable priority label ────────────────────────────────────────────
+// ── Human-readable priority label (bilingual) ────────────────────────────────
 // P1 = Low, P2 = High (contractual definition)
 export function getPriorityLabel(priority) {
-  if (priority === "P1") return "P1 – Low";
-  if (priority === "P2") return "P2 – High";
+  if (priority === "P1") return "P1 – Χαμηλή (Low)";
+  if (priority === "P2") return "P2 – Υψηλή (High)";
   return priority || "—";
 }
 
-// ── Determine what action the user should take next ──────────────────────────
+// ── Determine what action the user should take next (bilingual) ──────────────
 export function getNextActionLabel(workflowState) {
   const map = {
-    Awaiting_CR_OMPI:        "Submit Confirmation of Receipt + OMPI",
-    CR_OMPI_Submitted:       "Submit FMPI",
-    Awaiting_Make_Safe:      "Create Make Safe Work Order",
-    Awaiting_Inspection:     "Create Inspection Work Order",
-    FMPI_Draft:              "Submit FMPI",
-    FMPI_Submitted:          "Awaiting CA Approval or proceed to Corrective",
-    Awaiting_CA_Approval:    "Awaiting CA Approval",
-    CA_Rejected:             "Revise and Resubmit FMPI",
-    Approved_For_Corrective: "Create Corrective Work Order",
-    Corrective_In_Progress:  "Complete Corrective Work Order",
-    Awaiting_Closure:        "Submit Closure Evidence",
-    Closed:                  "Incident Closed",
-    Cancelled:               "Incident Cancelled",
+    Awaiting_CR_OMPI:        "Υποβολή Επιβεβαίωσης Παραλαβής + OMPI (Submit CR+OMPI)",
+    CR_OMPI_Submitted:       "Υποβολή FMPI (Submit FMPI)",
+    Awaiting_Make_Safe:      "Δημιουργία Εντολής Make Safe (Create Make Safe Work Order)",
+    Awaiting_Inspection:     "Δημιουργία Εντολής Επιθεώρησης (Create Inspection Work Order)",
+    FMPI_Draft:              "Υποβολή FMPI (Submit FMPI)",
+    FMPI_Submitted:          "Αναμονή Έγκρισης ΑΑ ή Διορθωτικές Εργασίες (Awaiting CA Approval)",
+    Awaiting_CA_Approval:    "Αναμονή Έγκρισης ΑΑ (Awaiting CA Approval)",
+    CA_Rejected:             "Αναθεώρηση και Επανυποβολή FMPI (Revise & Resubmit FMPI)",
+    Approved_For_Corrective: "Δημιουργία Εντολής Διορθωτικών Εργασιών (Create Corrective WO)",
+    Corrective_In_Progress:  "Ολοκλήρωση Διορθωτικών Εργασιών (Complete Corrective Work)",
+    Awaiting_Closure:        "Υποβολή Αποδεικτικών Κλεισίματος (Submit Closure Evidence)",
+    Closed:                  "Περιστατικό Κλειστό (Incident Closed)",
+    Cancelled:               "Περιστατικό Ακυρωμένο (Incident Cancelled)",
   };
-  return map[workflowState] || "Unknown State";
+  return map[workflowState] || "Άγνωστη Κατάσταση (Unknown State)";
 }

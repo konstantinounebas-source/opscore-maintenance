@@ -20,6 +20,7 @@ import { computeFMPISLA, computeCROMPISLA, formatDeadline } from "@/lib/slaEngin
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/AuthContext";
 import FileUploadArea from "@/components/shared/FileUploadArea";
+import OfficialWordingBlock from "@/components/sla/OfficialWordingBlock";
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 function fmtDate(d) {
@@ -518,8 +519,11 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
 
             {/* ── TAB 1: FMPI DETAILS ── */}
             <TabsContent value="fmpi" className="space-y-5">
+              {/* Official Wording Template (FMPI) */}
+              <OfficialWordingBlock formType="fmpi" />
+
               {/* SECTION 1: General / Incident / Work Order */}
-              <Section title="1. General / Incident / Work Order Details" icon={AlertTriangle}>
+              <Section title="1. Γενικά Στοιχεία / Περιστατικό / Εντολή Εργασίας (General / Incident / Work Order)" icon={AlertTriangle}>
                 <div className="grid grid-cols-2 gap-4">
                   <ReadOnlyField label="Incident Number" value={incident?.incident_id} />
                   <ReadOnlyField label="Ημερομηνία Αναφοράς απο Α.Α.:" value={fmtDate(reportDate)} />
@@ -538,7 +542,7 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
                   <ReadOnlyField label="Ημερομηνία Έκδοσης:" value={fmtDate(new Date().toISOString())} />
                   <ReadOnlyField label="Κωδικός Στάσης:" value={asset?.active_shelter_id || asset?.asset_id} />
                   <div className="space-y-1">
-                    <Label className="text-xs font-medium text-slate-500">Προτεραιότητα:</Label>
+                    <Label className="text-xs font-medium text-slate-500">Προτεραιότητα (Priority):</Label>
                     <div className="flex items-center gap-2 min-h-[36px] px-3 py-2 rounded-md bg-slate-50 border border-slate-200">
                       <Lock className="w-3 h-3 text-slate-300 flex-shrink-0" />
                       <span className="text-sm text-slate-700 flex-1">{priority || <span className="text-slate-300 italic">—</span>}</span>
@@ -574,7 +578,7 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
               </Section>
 
               {/* SECTION 2: Operational Details */}
-              <Section title="2. Operational Details" icon={Wrench}>
+              <Section title="2. Επιχειρησιακά Στοιχεία (Operational Details)" icon={Wrench}>
                 <div className="grid grid-cols-2 gap-4">
                   <ReadOnlyField label="Επαρχία:" value={asset?.city} />
                   <ReadOnlyField label="Δήμος:" value={asset?.municipality} />
@@ -588,7 +592,7 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
               </Section>
 
               {/* SECTION 3: Decision Logic */}
-              <Section title="3. Decision Logic" accent="border-amber-200">
+              <Section title="3. Λογική Απόφασης (Decision Logic)" accent="border-amber-200">
                 <div className="space-y-4">
                   <div className={`rounded-lg p-4 border transition-colors ${owrValue === "ΝΑΙ" ? "bg-amber-50 border-amber-200" : owrValue === "ΟΧΙ" ? "bg-emerald-50 border-emerald-200" : "bg-slate-50 border-slate-200"}`}>
                     <div className="flex items-center gap-2 mb-2">

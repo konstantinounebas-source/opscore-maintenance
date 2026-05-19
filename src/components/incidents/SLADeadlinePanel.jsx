@@ -98,29 +98,29 @@ export default function SLADeadlinePanel({ incident }) {
     <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-3">
       <div className="flex items-center gap-2 mb-1">
         <Shield className="w-4 h-4 text-indigo-500" />
-        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">SLA Deadlines</p>
+        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Προθεσμίες SLA (SLA Deadlines)</p>
         {priority && (
           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isP2 ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"}`}>
-            {isP2 ? "P2 – Υψηλή" : "P1 – Χαμηλή"}
+            {isP2 ? "P2 – Υψηλή (High)" : "P1 – Χαμηλή (Low)"}
           </span>
         )}
       </div>
 
       <DeadlineRow
-        label="Acknowledgement (CR+OMPI)"
+        label="Επιβεβαίωση Παραλαβής (CR+OMPI Acknowledgement)"
         deadline={incident.acknowledgement_deadline}
         completedAt={incident.cr_ompi_submitted_at}
       />
 
       <DeadlineRow
-        label="Make Safe Completion"
+        label="Άμεση Ασφάλιση (Make Safe Completion)"
         deadline={incident.make_safe_deadline}
         completedAt={incident.make_safe_completed_at}
         hide={!isP2 && !incident.make_safe_deadline}
       />
 
       <DeadlineRow
-        label="Restoration / Repair"
+        label="Αποκατάσταση (Restoration / Repair)"
         deadline={incident.restoration_deadline || incident.repair_deadline_at}
         completedAt={isClosed ? incident.closed_at : null}
       />
