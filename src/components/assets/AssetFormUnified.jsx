@@ -258,8 +258,8 @@ export default function AssetFormUnified({ open, onOpenChange, onSave, asset }) 
           <SectionHeader title="Asset Identity" color="indigo" />
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-xs">Shelter ID</Label>
-              <Input value={form.asset_id || ""} readOnly className="bg-slate-100 text-slate-600" />
+              <Label className="text-xs">Αριθμός Στάσης (Shelter ID)</Label>
+              <Input value={form.asset_id || ""} onChange={e => set("asset_id", e.target.value)} placeholder="π.χ. SH-001" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Status</Label>
