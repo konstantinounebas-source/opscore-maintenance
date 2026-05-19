@@ -26,6 +26,7 @@ export default function IncidentForm() {
       if (assetId) {
         await base44.entities.AssetTransactions.create({ asset_id: assetId, action: "Incident Opened", details: `Incident ${data.incident_id}: ${data.title}`, user: user?.email });
       }
+      // #6 — Mirror initial evidence uploads to IncidentAttachments with is_initial_upload flag
       if (pendingFiles?.length > 0) {
         for (const file of pendingFiles) {
           await base44.entities.IncidentAttachments.create({
@@ -34,6 +35,7 @@ export default function IncidentForm() {
             file_url: file.url,
             file_type: file.type,
             uploaded_by: user?.email,
+            is_initial_upload: true,
           });
         }
       }

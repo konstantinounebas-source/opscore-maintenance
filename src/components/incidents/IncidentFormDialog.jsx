@@ -179,10 +179,17 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
     }));
   };
 
+  // #3 — Validate that selected asset has minimum required data
+  const selectedAsset = assets.find(a => a.id === form.related_asset_id);
+  const assetValidationError = form.related_asset_id && selectedAsset && (
+    !selectedAsset.city || !selectedAsset.shelter_type
+  ) ? "Η επιλεγμένη στάση δεν διαθέτει επαρκή δεδομένα (απαιτείται Πόλη & Τύπος Στεγάστρου). Παρακαλώ ενημερώστε πρώτα το asset." : null;
+
   const validate = () => {
     const e = {};
     if (!form.issue_date) e.issue_date = true;
     if (!form.reported_by_name) e.reported_by_name = true;
+    if (assetValidationError) e.asset_validation = true;
     if (form.phone_available && !form.reported_by_phone) e.reported_by_phone = true;
     if (form.email_available && !form.reported_by_email) e.reported_by_email = true;
     if (form.incident_source === "Work Order" && !form.work_order_reference) e.work_order_reference = true;
@@ -227,6 +234,12 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
 
+          {assetValidationError && (
+            <div className="bg-amber-50 border border-amber-300 rounded-md px-3 py-2 text-xs text-amber-800 flex items-start gap-2">
+              <span className="font-bold shrink-0">⚠</span>
+              <span>{assetValidationError}</span>
+            </div>
+          )}
           {Object.keys(errors).length > 0 && (
             <div className="bg-red-50 border border-red-200 rounded-md px-3 py-2 text-xs text-red-600">
               Παρακαλώ συμπληρώστε όλα τα υποχρεωτικά πεδία που σημειώνονται με <span className="font-bold">*</span>
@@ -274,7 +287,11 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
             <Field label="Αρχική Προτεραιότητα" required>
               <Select value={form.initial_priority} onValueChange={v => set("initial_priority", v)}>
                 <SelectTrigger className={err("initial_priority")}><SelectValue placeholder="P1 / P2" /></SelectTrigger>
-                <SelectContent>{initialPriorities.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+                <SelectContent>
+                  <SelectItem value="P1">P1 – Χαμηλή (Low / 48h)</SelectItem>
+                  <SelectItem value="P2">P2 – Υψηλή / Επείγον (High / 24h)</SelectItem>
+                  {initialPriorities.filter(p => p !== "P1" && p !== "P2").map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                </SelectContent>
               </Select>
             </Field>
             <div />

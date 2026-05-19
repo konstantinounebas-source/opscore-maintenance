@@ -190,6 +190,31 @@ export default function CROMPIForm({ incident, incidentId, onClose, onDone }) {
 
       await base44.entities.Incidents.update(incidentId, incidentUpdates);
 
+      // #10 — Auto-create Make Safe WO when make_safe_required is set
+      if (makeSafeRequired) {
+        const existingWOs = await base44.entities.WorkOrders.filter({ incident_id: incidentId });
+        const hasMakeSafe = existingWOs.some(w => w.title?.includes("Make Safe"));
+        if (!hasMakeSafe) {
+          const woId = `MSAFE-${Date.now().toString(36).toUpperCase()}`;
+          await base44.entities.WorkOrders.create({
+            work_order_id: woId,
+            incident_id: incidentId,
+            title: `Make Safe WO - ${incident?.incident_id || incidentId}`,
+            related_asset_id: incident?.related_asset_id || "",
+            related_asset_name: incident?.related_asset_name || "",
+            status: "Open",
+            priority: "Critical",
+            description: "Auto-created: Make Safe required (P2 safety incident)",
+          });
+          await base44.entities.IncidentAuditTrail.create({
+            incident_id: incidentId,
+            action: "Make Safe WO Auto-Created",
+            details: `Make Safe Work Order ${woId} automatically created because Make Safe Required was set to Yes.`,
+            user: user?.email,
+          });
+        }
+      }
+
       // Check for existing CR+OMPI submission — update instead of creating duplicate
        const existingCROMPI = await base44.entities.FormSubmissions.filter({
          incident_id: incidentId,
