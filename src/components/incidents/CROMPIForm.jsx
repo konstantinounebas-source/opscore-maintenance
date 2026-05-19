@@ -412,7 +412,7 @@ export default function CROMPIForm({ incident, incidentId, onClose, onDone }) {
                 Οι αποφάσεις που λαμβάνονται εδώ:
               </p>
               <ul className="list-disc list-inside space-y-0.5 ml-1">
-                <li>Καθορίζουν το SLA για την υποβολή FMPI (7 ημέρες για OWR · 14 ημέρες για Εντός Εγγύησης)</li>
+                <li>Για περιστατικά Out of Warranty (OWR) που απαιτούν έγκριση από την Αναθέτουσα Αρχή (ΑΑ), το FMPI υποβάλλεται εντός επτά (7) ημερών από την επιβεβαίωση λήψης της αναφοράς (Confirmation of Receipt). Για περιστατικά εντός εγγύησης δεν απαιτείται FMPI, εκτός εάν ζητηθεί ειδικά από την ΑΑ ή τον υπεύθυνο διαχείρισης.</li>
                 <li>Καθορίζουν εάν απαιτείται έγκριση CA (μόνο για OWR)</li>
                 <li>Ενεργοποιούν τυχόν Make Safe Work Order εάν επιλεγεί</li>
                 <li>Ενεργοποιούν τυχόν Inspection Work Order εάν επιλεγεί</li>
@@ -445,14 +445,14 @@ export default function CROMPIForm({ incident, incidentId, onClose, onDone }) {
                   ))}
                 </div>
                 {warrantyStatus === "OWR" && (
-                  <p className="text-xs text-amber-600 flex items-center gap-1 mt-1">
-                    <AlertTriangle className="w-3 h-3" /> OWR: CA Approval will be required before corrective work. FMPI deadline: 7 calendar days.
-                  </p>
+                 <p className="text-xs text-amber-600 flex items-center gap-1 mt-1">
+                   <AlertTriangle className="w-3 h-3" /> OWR: Απαιτείται έγκριση CA πριν τις διορθωτικές εργασίες. Προθεσμία FMPI: 7 ημερολογιακές ημέρες από CoR.
+                 </p>
                 )}
                 {warrantyStatus === "In Warranty" && (
-                  <p className="text-xs text-emerald-600 flex items-center gap-1 mt-1">
-                    <CheckCircle2 className="w-3 h-3" /> In Warranty: No CA Approval required. FMPI deadline: 14 calendar days.
-                  </p>
+                 <p className="text-xs text-emerald-600 flex items-center gap-1 mt-1">
+                   <CheckCircle2 className="w-3 h-3" /> Εντός Εγγύησης: Δεν απαιτείται CA Approval. FMPI δεν απαιτείται εκτός εάν ζητηθεί ειδικά.
+                 </p>
                 )}
               </div>
 
@@ -513,7 +513,7 @@ export default function CROMPIForm({ incident, incidentId, onClose, onDone }) {
                   <span className="font-semibold text-amber-800">FMPI Deadline (after submission): </span>
                   <span className="text-amber-700 font-bold">{formatDeadline(fmpiSLA.sla_deadline_at)}</span>
                   <span className="text-amber-400 ml-2">
-                    ({warrantyStatus === "OWR" ? "7 calendar days (OWR)" : "14 calendar days (In Warranty)"})
+                    ({warrantyStatus === "OWR" ? "7 ημερολογιακές ημέρες (OWR)" : "Μόνο εάν ζητηθεί (Εντός Εγγύησης)"})
                   </span>
                 </div>
               </div>

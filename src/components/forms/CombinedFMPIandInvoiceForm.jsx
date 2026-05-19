@@ -426,6 +426,7 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
       ektos_eggyhshs: owrValue === "ΝΑΙ" ? "Yes" : owrValue === "ΟΧΙ" ? "No" : owrValue,
       apaiteitai_eggkrisi_ca: caValue === "ΝΑΙ" ? "Yes" : caValue === "ΟΧΙ" ? "No" : caValue,
       submitted_at: status === "Submitted" ? getAthensTimestamp() : submission?.submitted_at,
+      submitted_by: user?.email || user?.id || "unknown",
       form_data: {
          rows,
          total_cost: totalCost,
