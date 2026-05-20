@@ -37,7 +37,7 @@ export default function WorkflowStepper({ incident, hasFMPISubmitted, fmpiApprov
       id: "work_orders",
       label: "Work Orders",
       description: "Make Safe, Inspection, Corrective",
-      completed: incidentWorkOrders.length > 0 && incidentWorkOrders.every(w => w.status === "Completed" || w.status === "Cancelled"),
+      completed: incidentWorkOrders.length === 0 || incidentWorkOrders.every(w => w.status === "Completed" || w.status === "Cancelled"),
       optional: false,
       locked: false,
     },
