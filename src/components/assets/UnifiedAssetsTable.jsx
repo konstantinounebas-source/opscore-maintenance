@@ -239,7 +239,7 @@ export default function UnifiedAssetsTable({
                      onClick={() => navigate(`/AssetDetail?id=${a.id}`)}
                    >
                     <td className="px-3 py-2.5 font-medium text-slate-800 whitespace-nowrap">
-                      {a.active_shelter_id || a.asset_code || "—"}
+                      {a.active_shelter_id || a.asset_code || a.asset_id || "—"}
                     </td>
                     <td className="px-3 py-2.5 text-slate-600 max-w-[200px] truncate">{a.location_address || "—"}</td>
                     <td className="px-3 py-2.5 text-slate-600 whitespace-nowrap">{a.city || "—"}</td>
