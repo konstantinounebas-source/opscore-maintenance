@@ -27,7 +27,6 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/AuthContext";
 import FileUploadArea from "@/components/shared/FileUploadArea";
-import OfficialWordingBlock from "@/components/sla/OfficialWordingBlock";
 
 function ReadOnlyField({ label, value, children }) {
   return (
@@ -278,9 +277,6 @@ export default function CROMPIForm({ incident, incidentId, onClose, onDone }) {
             </div>
           )}
 
-          {/* ── Official Wording Template (CR+OMPI) ── */}
-          <OfficialWordingBlock formType="cr_ompi" />
-
           {/* ── Section 1: Incident Details (read-only) ── */}
           <Section title="1. Incident Details (Στοιχεία Περιστατικού)" icon={AlertTriangle}>
             <div className="grid grid-cols-2 gap-4">
@@ -308,24 +304,20 @@ export default function CROMPIForm({ incident, incidentId, onClose, onDone }) {
             accent="border-indigo-200"
             subtitle="Επιβεβαίωση λήψης και καταχώρησης του συμβάντος"
           >
-            {/* Original CR guidance wording */}
-            <GuidanceBlock label="Επιβεβαίωση Λήψης Αναφοράς">
+            {/* Official CR wording */}
+            <GuidanceBlock label="Επιβεβαίωση Παραλαβής">
               <p>
-                Η παρούσα ενότητα αφορά την επιβεβαίωση λήψης (Confirmation of Receipt) της αναφοράς συμβάντος.
-                Ο αρμόδιος επιβεβαιώνει ότι η αναφορά ελήφθη, καταχωρήθηκε στο σύστημα και αξιολογήθηκε
-                αρχικά ώς προς την προτεραιότητα και τη φύση της βλάβης.
+                Αγαπητοί/ες,
               </p>
               <p>
-                Σε αυτό το στάδιο καθορίζεται:
+                Επιβεβαιώνουμε τη λήψη της ειδοποίησής σας για το περιστατικό με Κωδικό Αναφοράς (Incident Number): <strong>{incident?.incident_id || "—"}</strong>.
               </p>
-              <ul className="list-disc list-inside space-y-0.5 ml-1">
-                <li>Επιχειρησιακή Προτεραιότητα (P1 = Χαμηλή, P2 = Υψηλή/Επείγον)</li>
-
-                <li>Κατάσταση Εγγύησης (Εντός / Εκτός Εγγύησης)</li>
-                <li>Απαίτηση Make Safe (Άμεση ασφάλιση) εάν απαιτείται</li>
-                <li>Απαίτηση Επιθεώρησης εάν απαιτείται</li>
-              </ul>
-
+              <p>
+                Το περιστατικό έχει καταγραφεί και έχουν ενεργοποιηθεί οι διαδικασίες διερεύνησης. Παρακαλώ όπως βρείτε επισυναπτόμενο το Outline Management Plan.
+              </p>
+              <p>
+                Παραμένουμε στην διάθεσή σας.
+              </p>
             </GuidanceBlock>
 
             {/* Priority selection — CORRECTED: P1 = Low, P2 = High */}
@@ -365,25 +357,18 @@ export default function CROMPIForm({ incident, incidentId, onClose, onDone }) {
             title="3. OMPI – Σχέδιο Διαχείρισης Περιστατικού (Outline Management Plan)"
             icon={FileText}
             accent="border-amber-200"
-            subtitle="Αρχικό Σχέδιο Διαχείρισης Περιστατικού"
+            subtitle="Διαδικασία Διαχείρισης Περιστατικού"
           >
-            {/* Original OMPI guidance wording */}
-            <GuidanceBlock label="Outline Management Plan of Incident (OMPI)">
-              <p>
-                Το OMPI (Outline Management Plan of Incident) αποτελεί το αρχικό σχέδιο αντιμετώπισης
-                του συμβάντος. Καταγράφει τις αρχικές αποφάσεις για τη διαχείριση της βλάβης,
-                συμπεριλαμβανομένης της κατάστασης εγγύησης, των απαιτούμενων ενεργειών ασφάλισης
-                και επιθεώρησης, καθώς και το αρχικό πλάνο διορθωτικής εργασίας.
-              </p>
-              <p>
-                Οι αποφάσεις που λαμβάνονται εδώ:
-              </p>
-              <ul className="list-disc list-inside space-y-0.5 ml-1">
-                <li>Για περιστατικά Out of Warranty (OWR) που απαιτούν έγκριση από την Αναθέτουσα Αρχή (ΑΑ), το FMPI υποβάλλεται μετά την επιβεβαίωση λήψης. Για περιστατικά εντός εγγύησης δεν απαιτείται FMPI, εκτός εάν ζητηθεί ειδικά από την ΑΑ ή τον υπεύθυνο διαχείρισης.</li>
-                <li>Καθορίζουν εάν απαιτείται έγκριση CA (μόνο για OWR)</li>
-                <li>Ενεργοποιούν τυχόν Make Safe Work Order εάν επιλεγεί</li>
-                <li>Ενεργοποιούν τυχόν Inspection Work Order εάν επιλεγεί</li>
-              </ul>
+            {/* New OMPI procedure wording */}
+            <GuidanceBlock label="Σχέδιο Διαχείρισης Περιστατικού (OMPI)">
+              <ol className="list-decimal list-inside space-y-1.5 ml-0">
+                <li>Καταχώρηση περιστατικού στο Help Desk και έκδοση κωδικού αναφοράς (Incident No.).</li>
+                <li>Επιβεβαίωση λήψης περιστατικού και αποστολή σχετικής ενημέρωσης προς την ΑΑ (CA).</li>
+                <li>Άμεση τεχνική διερεύνηση και εκτίμηση απαιτούμενων εργασιών. Αξιολόγηση του προβλήματος βάσει των στοιχείων που υποβλήθηκαν (φωτογραφίες, βίντεο, αναφορές).</li>
+                <li>Εφόσον απαιτείται, επίσκεψη στον χώρο για περαιτέρω διερεύνηση και τεκμηρίωση.</li>
+                <li>Επισκευή / επιδιόρθωση των προβλημάτων εντός των χρονικών ορίων του SLA, όπου αυτό είναι άμεσα εφικτό.</li>
+                <li>Αποστολή τελικής φόρμας αναφοράς με φωτογραφίες μετά την επισκευή / επιδιόρθωση, για ενημέρωση της ΑΑ.</li>
+              </ol>
             </GuidanceBlock>
 
             <div className="grid grid-cols-2 gap-4">
