@@ -19,7 +19,7 @@ export default function Incidents() {
   const { toast } = useToast();
   const [formOpen, setFormOpen] = useState(false);
 
-  const [filterStatus, setFilterStatus] = useState("not_closed");
+  const [filterStatus, setFilterStatus] = useState("all");
   const [filterPriority, setFilterPriority] = useState("all");
   const [filterWO, setFilterWO] = useState("all");
   const [filterProvince, setFilterProvince] = useState("all");
@@ -136,12 +136,12 @@ export default function Incidents() {
     });
   }, [incidents, workOrders, filterStatus, filterPriority, filterWO, filterProvince, filterShelterType, filterReportingMethod, filterSource]);
 
-  const hasActiveFilters = filterStatus !== "not_closed" || filterPriority !== "all" || filterWO !== "all" ||
+  const hasActiveFilters = filterStatus !== "all" || filterPriority !== "all" || filterWO !== "all" ||
     filterProvince !== "all" || filterShelterType !== "all" || filterReportingMethod !== "all" || filterSource !== "all" ||
     filterWorkflowState !== "all";
 
   const clearFilters = () => {
-    setFilterStatus("not_closed"); setFilterPriority("all"); setFilterWO("all");
+    setFilterStatus("all"); setFilterPriority("all"); setFilterWO("all");
     setFilterProvince("all"); setFilterShelterType("all"); setFilterReportingMethod("all"); setFilterSource("all"); setFilterWorkflowState("all");
   };
 
