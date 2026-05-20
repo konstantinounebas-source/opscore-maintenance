@@ -12,11 +12,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { getAthensTimestamp } from "@/lib/timeSync";
-import {
-  computeCROMPISLA, computeFMPISLA,
-  mergeRules, formatDeadline, deriveWorkflowStateFromLegacy,
-  computePriorityDeadlines
-} from "@/lib/slaEngine";
+
 import TopHeader from "@/components/layout/TopHeader";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -26,7 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeft, Save, Send, AlertTriangle, CheckCircle2,
-  Lock, Paperclip, Clock, Info, Calendar, FileText, ClipboardCheck
+  Lock, Paperclip, Info, FileText, ClipboardCheck
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/AuthContext";
@@ -84,12 +80,6 @@ export default function CROMPIForm({ incident, incidentId, onClose, onDone }) {
   const queryClient = useQueryClient();
   const isEditing = !!(incident?.cr_ompi_submitted_at);
 
-  // Load SLA rules from config
-  const { data: slaRulesData = [] } = useQuery({
-    queryKey: ["slaRules"],
-    queryFn: () => base44.entities.SLARules.list(),
-  });
-
   // ── Form state ──
   const [operationalPriority, setOperationalPriority] = useState(
     incident?.operational_priority || incident?.initial_priority || ""
@@ -107,21 +97,6 @@ export default function CROMPIForm({ incident, incidentId, onClose, onDone }) {
   const [ompiNotes, setOmpiNotes] = useState(incident?.description || "");
   const [attachments, setAttachments] = useState([]);
   const [saving, setSaving] = useState(false);
-
-  // ── SLA calculations — no repair deadline here ──
-  const startAt = incident?.incident_created_at || incident?.created_date;
-
-  const crOmpiSLA = useMemo(
-    () => startAt ? computeCROMPISLA(startAt, operationalPriority, slaRulesData) : null,
-    [startAt, operationalPriority, slaRulesData]
-  );
-
-  const nowIso = useMemo(() => new Date().toISOString(), []);
-
-  const fmpiSLA = useMemo(
-    () => warrantyStatus ? computeFMPISLA(nowIso, warrantyStatus, slaRulesData) : null,
-    [nowIso, warrantyStatus, slaRulesData]
-  );
 
   const subsystem = useMemo(() => deriveSubsystem(incident), [incident]);
   const assetId = incident?.related_asset_id;
@@ -154,14 +129,6 @@ export default function CROMPIForm({ incident, incidentId, onClose, onDone }) {
       const now = getAthensTimestamp();
       const fmpiApprovalRequired = warrantyStatus === "OWR";
 
-      // Compute FMPI SLA (starts from CR+OMPI submission)
-      const newFmpiSLA = computeFMPISLA(now, warrantyStatus, slaRulesData);
-
-      // Recalculate SLA deadlines in case priority/owr changed at CR+OMPI
-      const createdAt = incident?.incident_created_at || incident?.created_date || now;
-      const isOWR = warrantyStatus === "OWR";
-      const freshDeadlines = computePriorityDeadlines(createdAt, operationalPriority, isOWR, null);
-
       const incidentUpdates = {
         workflow_state: "CR_OMPI_Submitted",
         operational_priority: operationalPriority,
@@ -172,16 +139,6 @@ export default function CROMPIForm({ incident, incidentId, onClose, onDone }) {
         fmpi_approval_required: fmpiApprovalRequired,
         corrective_allowed: !fmpiApprovalRequired,
         cr_ompi_submitted_at: now,
-        // Store/refresh the priority-based SLA deadlines
-        ...freshDeadlines,
-        // Advance SLA to FMPI phase
-        active_sla_code: newFmpiSLA?.active_sla_code || null,
-        active_sla_name: newFmpiSLA?.active_sla_name || null,
-        sla_started_at: now,
-        sla_deadline_at: newFmpiSLA?.sla_deadline_at || null,
-        sla_status: newFmpiSLA?.sla_status || null,
-        previous_sla_code: crOmpiSLA?.active_sla_code || incident?.active_sla_code || null,
-        previous_sla_completed_at: now,
         // Legacy compat
         confirmation_done: true,
         ompi_done: true,
@@ -234,15 +191,13 @@ export default function CROMPIForm({ incident, incidentId, onClose, onDone }) {
         submitted_at: now,
         submitted_by: user?.email,
         form_data: {
-           operational_priority: operationalPriority,
-           warranty_status: warrantyStatus,
-           make_safe_required: makeSafeRequired,
-           inspection_required: inspectionRequired,
-           ompi_notes: ompiNotes,
-           attachments,
-           sla_cr_ompi_deadline: crOmpiSLA?.sla_deadline_at,
-           sla_fmpi_deadline: newFmpiSLA?.sla_deadline_at,
-         },
+         operational_priority: operationalPriority,
+         warranty_status: warrantyStatus,
+         make_safe_required: makeSafeRequired,
+         inspection_required: inspectionRequired,
+         ompi_notes: ompiNotes,
+         attachments,
+        },
         };
 
         // Create or update FormSubmissions — prevent duplicates
@@ -319,7 +274,7 @@ export default function CROMPIForm({ incident, incidentId, onClose, onDone }) {
           {isEditing && (
             <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700 flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 shrink-0" />
-              This CR+OMPI was already submitted on {formatDeadline(incident.cr_ompi_submitted_at)}. Resubmitting will update the incident classification.
+              This CR+OMPI was already submitted on {incident.cr_ompi_submitted_at ? new Date(incident.cr_ompi_submitted_at).toLocaleString() : ""}. Resubmitting will update the incident classification.
             </div>
           )}
 
@@ -365,14 +320,12 @@ export default function CROMPIForm({ incident, incidentId, onClose, onDone }) {
               </p>
               <ul className="list-disc list-inside space-y-0.5 ml-1">
                 <li>Επιχειρησιακή Προτεραιότητα (P1 = Χαμηλή, P2 = Υψηλή/Επείγον)</li>
+
                 <li>Κατάσταση Εγγύησης (Εντός / Εκτός Εγγύησης)</li>
                 <li>Απαίτηση Make Safe (Άμεση ασφάλιση) εάν απαιτείται</li>
                 <li>Απαίτηση Επιθεώρησης εάν απαιτείται</li>
               </ul>
-              <p className="text-blue-700 font-semibold mt-1">
-                Η επιβεβαίωση πρέπει να πραγματοποιηθεί εντός της προθεσμίας SLA:
-                P2 (Επείγον): 24 ώρες · P1 (Κανονική): 48 ώρες από τη δημιουργία
-              </p>
+
             </GuidanceBlock>
 
             {/* Priority selection — CORRECTED: P1 = Low, P2 = High */}
@@ -382,44 +335,29 @@ export default function CROMPIForm({ incident, incidentId, onClose, onDone }) {
               </Label>
               <div className="flex gap-2">
                 {[
-                  { val: "P1", label: "P1 – Low Priority", sublabel: "48h SLA", activeClass: "bg-blue-600 text-white border-blue-600" },
-                  { val: "P2", label: "P2 – High / Urgent", sublabel: "24h SLA", activeClass: "bg-red-600 text-white border-red-600" },
-                ].map(({ val, label, sublabel, activeClass }) => (
-                  <button
-                    key={val}
-                    type="button"
-                    onClick={() => setOperationalPriority(val)}
-                    className={`flex-1 py-2.5 rounded-lg border text-sm font-semibold transition-all ${
-                      operationalPriority === val
-                        ? activeClass
-                        : "bg-white text-slate-600 border-slate-200 hover:border-slate-400"
-                    }`}
-                  >
-                    <div>{label}</div>
-                    <div className={`text-[10px] font-normal mt-0.5 ${operationalPriority === val ? "opacity-80" : "text-slate-400"}`}>{sublabel}</div>
-                  </button>
+                  { val: "P1", label: "P1 – Low Priority", activeClass: "bg-blue-600 text-white border-blue-600" },
+                  { val: "P2", label: "P2 – High / Urgent", activeClass: "bg-red-600 text-white border-red-600" },
+                ].map(({ val, label, activeClass }) => (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => setOperationalPriority(val)}
+                  className={`flex-1 py-2.5 rounded-lg border text-sm font-semibold transition-all ${
+                    operationalPriority === val
+                      ? activeClass
+                      : "bg-white text-slate-600 border-slate-200 hover:border-slate-400"
+                  }`}
+                >
+                  {label}
+                </button>
                 ))}
               </div>
               {operationalPriority === "P2" && (
                 <p className="text-xs text-red-600 flex items-center gap-1 mt-1">
-                  <AlertTriangle className="w-3 h-3" /> P2 High/Urgent: Make Safe consideration may apply. 24-hour SLA clock is active.
+                  <AlertTriangle className="w-3 h-3" /> P2 High/Urgent: Make Safe consideration may apply.
                 </p>
               )}
             </div>
-
-            {/* SLA deadline display (CR+OMPI only — no repair deadline) */}
-            {crOmpiSLA && (
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-indigo-50 border border-indigo-100 text-xs">
-                <Clock className="w-4 h-4 text-indigo-500 shrink-0" />
-                <div>
-                  <span className="font-semibold text-indigo-800">CR+OMPI Deadline: </span>
-                  <span className="text-indigo-700 font-bold">{formatDeadline(crOmpiSLA.sla_deadline_at)}</span>
-                  <span className="text-indigo-400 ml-2">
-                    ({operationalPriority === "P2" ? "24h from creation (High/Urgent)" : "48h from creation (Low)"})
-                  </span>
-                </div>
-              </div>
-            )}
           </Section>
 
           {/* ── Section 3: OMPI ── */}
@@ -441,7 +379,7 @@ export default function CROMPIForm({ incident, incidentId, onClose, onDone }) {
                 Οι αποφάσεις που λαμβάνονται εδώ:
               </p>
               <ul className="list-disc list-inside space-y-0.5 ml-1">
-                <li>Για περιστατικά Out of Warranty (OWR) που απαιτούν έγκριση από την Αναθέτουσα Αρχή (ΑΑ), το FMPI υποβάλλεται εντός επτά (7) ημερών από την επιβεβαίωση λήψης της αναφοράς (Confirmation of Receipt). Για περιστατικά εντός εγγύησης δεν απαιτείται FMPI, εκτός εάν ζητηθεί ειδικά από την ΑΑ ή τον υπεύθυνο διαχείρισης.</li>
+                <li>Για περιστατικά Out of Warranty (OWR) που απαιτούν έγκριση από την Αναθέτουσα Αρχή (ΑΑ), το FMPI υποβάλλεται μετά την επιβεβαίωση λήψης. Για περιστατικά εντός εγγύησης δεν απαιτείται FMPI, εκτός εάν ζητηθεί ειδικά από την ΑΑ ή τον υπεύθυνο διαχείρισης.</li>
                 <li>Καθορίζουν εάν απαιτείται έγκριση CA (μόνο για OWR)</li>
                 <li>Ενεργοποιούν τυχόν Make Safe Work Order εάν επιλεγεί</li>
                 <li>Ενεργοποιούν τυχόν Inspection Work Order εάν επιλεγεί</li>
@@ -475,7 +413,7 @@ export default function CROMPIForm({ incident, incidentId, onClose, onDone }) {
                 </div>
                 {warrantyStatus === "OWR" && (
                  <p className="text-xs text-amber-600 flex items-center gap-1 mt-1">
-                   <AlertTriangle className="w-3 h-3" /> OWR: Απαιτείται έγκριση CA πριν τις διορθωτικές εργασίες. Προθεσμία FMPI: 7 ημερολογιακές ημέρες από CoR.
+                   <AlertTriangle className="w-3 h-3" /> OWR: Απαιτείται έγκριση CA πριν τις διορθωτικές εργασίες.
                  </p>
                 )}
                 {warrantyStatus === "In Warranty" && (
@@ -533,20 +471,6 @@ export default function CROMPIForm({ incident, incidentId, onClose, onDone }) {
                 )}
               </div>
             </div>
-
-            {/* FMPI SLA preview (starts at submission) */}
-            {fmpiSLA && (
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-amber-50 border border-amber-100 text-xs">
-                <Calendar className="w-4 h-4 text-amber-600 shrink-0" />
-                <div>
-                  <span className="font-semibold text-amber-800">FMPI Deadline (after submission): </span>
-                  <span className="text-amber-700 font-bold">{formatDeadline(fmpiSLA.sla_deadline_at)}</span>
-                  <span className="text-amber-400 ml-2">
-                    ({warrantyStatus === "OWR" ? "7 ημερολογιακές ημέρες (OWR)" : "Μόνο εάν ζητηθεί (Εντός Εγγύησης)"})
-                  </span>
-                </div>
-              </div>
-            )}
 
             {/* Outline Plan / Notes */}
             <div className="space-y-1.5 pt-1">

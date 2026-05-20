@@ -344,7 +344,6 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
     queryKey: ["workOrders", incidentId],
     queryFn: () => base44.entities.WorkOrders.filter({ incident_id: incidentId }),
   });
-  const { data: slaRulesData = [] } = useQuery({ queryKey: ["slaRules"], queryFn: () => base44.entities.SLARules.list() });
   // Load all FMPI submissions — includes both digital and manual uploads (both use combined_fmpi_invoice type)
   const { data: fmpiSubmissions = [] } = useQuery({
     queryKey: ["fmpiSubmissions", incidentId],
