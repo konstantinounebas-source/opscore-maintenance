@@ -290,7 +290,6 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
                 <SelectContent>
                   <SelectItem value="P1">P1 – Χαμηλή (Low / 48h)</SelectItem>
                   <SelectItem value="P2">P2 – Υψηλή / Επείγον (High / 24h)</SelectItem>
-                  {initialPriorities.filter(p => p !== "P1" && p !== "P2").map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
                 </SelectContent>
               </Select>
             </Field>
