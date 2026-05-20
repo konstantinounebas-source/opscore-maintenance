@@ -142,7 +142,7 @@ export default function IncidentDetail() {
             <IField label="Incident ID" value={incident.incident_id} />
             <IField label="Related Asset" value={incident.related_asset_name} />
             <IField label="Status"><StatusBadge status={incident.status} /></IField>
-            <IField label="Priority"><StatusBadge status={incident.priority} /></IField>
+            <IField label="Priority">{incident.initial_priority ? <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${incident.initial_priority === "P1" ? "bg-red-100 text-red-700" : "bg-orange-100 text-orange-700"}`}>{incident.initial_priority}</span> : <span className="text-slate-400">—</span>}</IField>
             <IField label="Category" value={incident.category} />
             <IField label="Reported Date" value={incident.reported_date} />
             <IField label="Assigned To" value={incident.assigned_to} />

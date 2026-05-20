@@ -101,8 +101,8 @@ export default function Incidents() {
   });
 
   const exportCSV = () => {
-    const headers = ["Incident ID", "Title", "Asset", "Status", "Priority", "Category", "Reported Date", "Assigned To"];
-    const rows = incidents.map(i => [i.incident_id, i.title, i.related_asset_name, i.status, i.priority, i.category, i.reported_date, i.assigned_to]);
+  const headers = ["Incident ID", "Title", "Asset", "Status", "Priority", "Category", "Reported Date", "Assigned To"];
+  const rows = incidents.map(i => [i.incident_id, i.title, i.related_asset_name, i.status, i.initial_priority, i.category, i.reported_date, i.assigned_to]);
     const csv = [headers, ...rows].map(r => r.map(v => `"${v || ""}"`).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
