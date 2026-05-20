@@ -262,10 +262,13 @@ export function computePriorityDeadlines(createdAt, priority, isOWR, caApprovalD
   let restoration_deadline = null;
 
   if (priority === "P1") {
-    // P1 (Low): acknowledgement = next working day start + 24h
+    // P1 (Low): acknowledgement = day after tomorrow (skipping weekends) at 16:00
     let nextWorkDay = addDays(created, 1);
     while (isWeekend(nextWorkDay)) nextWorkDay = addDays(nextWorkDay, 1);
-    acknowledgement_deadline = addHours(nextWorkDay, 24).toISOString();
+    let dayAfterTomorrow = addDays(nextWorkDay, 1);
+    while (isWeekend(dayAfterTomorrow)) dayAfterTomorrow = addDays(dayAfterTomorrow, 1);
+    dayAfterTomorrow.setHours(16, 0, 0, 0);
+    acknowledgement_deadline = dayAfterTomorrow.toISOString();
 
     // P1: make safe not required
     make_safe_deadline = null;
