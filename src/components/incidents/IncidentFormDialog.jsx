@@ -110,7 +110,7 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
         f.active_shelter_id = asset.asset_id || "";
         f.province = asset.city || "";
         f.municipality = asset.municipality || "";
-        f.shelter_type = asset.shelter_type || "";
+        f.shelter_type = asset.shelter_type || asset.installed_shelter_type || asset.ordered_shelter_type || "";
         f.location_address = asset.location_address || asset.location || "";
         f.title = `${asset.asset_id} - ${f.issue_date}`;
       }
@@ -132,7 +132,7 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
       active_shelter_id: asset?.asset_id || "",
       province: asset?.city || "",
       municipality: asset?.municipality || "",
-      shelter_type: asset?.shelter_type || "",
+      shelter_type: asset?.shelter_type || asset?.installed_shelter_type || asset?.ordered_shelter_type || "",
       location_address: asset?.location_address || asset?.location || "",
       title: asset ? `${asset.asset_id} - ${f.issue_date}` : f.title,
     }));
@@ -182,7 +182,7 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
   // #3 — Validate that selected asset has minimum required data
   const selectedAsset = assets.find(a => a.id === form.related_asset_id);
   const assetValidationError = form.related_asset_id && selectedAsset && (
-    !selectedAsset.city || !selectedAsset.shelter_type
+    !selectedAsset.city || (!selectedAsset.shelter_type && !selectedAsset.installed_shelter_type && !selectedAsset.ordered_shelter_type)
   ) ? "Η επιλεγμένη στάση δεν διαθέτει επαρκή δεδομένα (απαιτείται Πόλη & Τύπος Στεγάστρου). Παρακαλώ ενημερώστε πρώτα το asset." : null;
 
   const validate = () => {
