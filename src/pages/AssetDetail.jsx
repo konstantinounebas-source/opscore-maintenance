@@ -228,7 +228,7 @@ export default function AssetDetail() {
     { key: "incident_id", label: "ID" },
     { key: "title", label: "Title" },
     { key: "status", label: "Status", render: (r) => <StatusBadge status={r.status} /> },
-    { key: "priority", label: "Priority", render: (r) => <StatusBadge status={r.priority} /> },
+    { key: "initial_priority", label: "Priority", render: (r) => r.initial_priority ? <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${r.initial_priority === "P1" ? "bg-red-100 text-red-700" : "bg-orange-100 text-orange-700"}`}>{r.initial_priority}</span> : <span className="text-slate-400">—</span> },
     { key: "reported_date", label: "Reported", render: (r) => { if (!r.reported_date) return <span className="text-slate-400">—</span>; const [y,m,d] = r.reported_date.split("-"); return <span>{d}/{m}/{y}</span>; } },
   ];
 
