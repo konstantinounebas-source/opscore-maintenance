@@ -150,7 +150,7 @@ export default function CROMPIForm({ incident, incidentId, onClose, onDone }) {
       // #10 — Auto-create Make Safe WO when make_safe_required is set
       if (makeSafeRequired) {
         const existingWOs = await base44.entities.WorkOrders.filter({ incident_id: incidentId });
-        const hasMakeSafe = existingWOs.some(w => w.title?.includes("Make Safe"));
+        const hasMakeSafe = existingWOs.some(w => w.title?.toLowerCase().includes("make safe") || w.title?.toLowerCase().includes("make-safe"));
         if (!hasMakeSafe) {
           const woId = `MSAFE-${Date.now().toString(36).toUpperCase()}`;
           await base44.entities.WorkOrders.create({
