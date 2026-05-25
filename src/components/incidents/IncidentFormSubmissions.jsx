@@ -1,9 +1,35 @@
-import React from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Badge } from "@/components/ui/badge";
-import { FileText, ExternalLink, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { FileText, Clock, Download, Loader2 } from "lucide-react";
 import { format } from "date-fns";
+
+async function downloadFormPDF(submissionId, formName) {
+  const res = await base44.functions.invoke('generateFormPDF', { submissionId });
+  const { html, fileName } = res.data;
+
+  const container = document.createElement('div');
+  container.innerHTML = html;
+  container.style.position = 'fixed';
+  container.style.left = '-9999px';
+  container.style.top = '0';
+  document.body.appendChild(container);
+
+  const html2pdf = (await import('html2pdf.js')).default;
+  await html2pdf()
+    .set({
+      margin: 0,
+      filename: fileName || `${formName || 'form'}.pdf`,
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    })
+    .from(container)
+    .save();
+
+  document.body.removeChild(container);
+}
 
 const FORM_TYPE_LABELS = {
   cr_ompi:                          "Confirmation of Receipt + OMPI",
@@ -19,6 +45,22 @@ const STATUS_COLORS = {
   Approved:   "bg-green-100 text-green-700 border-green-200",
   Rejected:   "bg-red-100 text-red-700 border-red-200",
 };
+
+function DownloadPDFButton({ submissionId, formName }) {
+  const [loading, setLoading] = useState(false);
+  const handleClick = async () => {
+    setLoading(true);
+    try { await downloadFormPDF(submissionId, formName); }
+    catch (err) { alert("PDF Error: " + (err?.message || "Unknown error")); }
+    finally { setLoading(false); }
+  };
+  return (
+    <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={handleClick} disabled={loading}>
+      {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
+      PDF
+    </Button>
+  );
+}
 
 export default function IncidentFormSubmissions({ incidentId }) {
   const { data: submissions = [], isLoading } = useQuery({
@@ -77,6 +119,9 @@ export default function IncidentFormSubmissions({ incidentId }) {
                 </p>
               )}
             </div>
+          </div>
+          <div className="shrink-0">
+            <DownloadPDFButton submissionId={sub.id} formName={FORM_TYPE_LABELS[sub.form_type] || sub.form_name} />
           </div>
         </div>
       ))}

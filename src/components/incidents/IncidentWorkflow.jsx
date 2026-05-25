@@ -390,12 +390,27 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
     try {
       const res = await base44.functions.invoke('generateCROMPIPDF', { incidentId });
       const { html, fileName } = res.data;
-      // Use html2pdf via dynamic import approach — render in hidden iframe and print to PDF
-      const win = window.open('', '_blank');
-      win.document.write(html);
-      win.document.close();
-      win.focus();
-      win.print();
+
+      // Render HTML into a hidden element, then use html2pdf to generate a real PDF
+      const container = document.createElement('div');
+      container.innerHTML = html;
+      container.style.position = 'fixed';
+      container.style.left = '-9999px';
+      container.style.top = '0';
+      document.body.appendChild(container);
+
+      const html2pdf = (await import('html2pdf.js')).default;
+      await html2pdf()
+        .set({
+          margin: 0,
+          filename: fileName || `CR_OMPI_${incidentId}.pdf`,
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        })
+        .from(container)
+        .save();
+
+      document.body.removeChild(container);
     } catch (err) {
       toast({ title: "PDF Error", description: err?.message || "Could not generate PDF.", variant: "destructive" });
     } finally {

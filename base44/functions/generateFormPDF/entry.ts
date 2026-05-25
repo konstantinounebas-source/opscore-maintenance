@@ -1,5 +1,4 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-import html2pdf from 'npm:html2pdf.js@0.10.1';
 
 Deno.serve(async (req) => {
   try {
