@@ -28,7 +28,7 @@ import { getAthensTimestamp } from "@/lib/timeSync";
 import {
   CheckCircle2, Circle, Loader2, ChevronRight,
   AlertTriangle, FileCheck, FileText, PenLine,
-  Lock, ChevronDown, Trash2, XCircle, Upload
+  Lock, ChevronDown, Trash2, XCircle, Upload, Download
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -332,6 +332,7 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
   const [showManualFMPI, setShowManualFMPI] = useState(false);
   const [showCAModal, setShowCAModal] = useState(false);
   const [showCloseModal, setShowCloseModal] = useState(false);
+  const [downloadingPDF, setDownloadingPDF] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -374,6 +375,24 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
 
   const advanceToClosureCheck = () => {
     setShowCloseModal(true);
+  };
+
+  const handleDownloadCROMPIPDF = async () => {
+    setDownloadingPDF(true);
+    try {
+      const res = await base44.functions.invoke('generateCROMPIPDF', { incidentId });
+      const { html, fileName } = res.data;
+      // Use html2pdf via dynamic import approach — render in hidden iframe and print to PDF
+      const win = window.open('', '_blank');
+      win.document.write(html);
+      win.document.close();
+      win.focus();
+      win.print();
+    } catch (err) {
+      toast({ title: "PDF Error", description: err?.message || "Could not generate PDF.", variant: "destructive" });
+    } finally {
+      setDownloadingPDF(false);
+    }
   };
 
   return (
@@ -427,14 +446,28 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
               )}
             </div>
           </div>
-          <Button
-            size="sm"
-            variant={workflowState === "Awaiting_CR_OMPI" ? "default" : "outline"}
-            className={`text-xs h-8 ${workflowState === "Awaiting_CR_OMPI" ? "bg-indigo-600 hover:bg-indigo-700" : ""}`}
-            onClick={() => setShowCROMPI(true)}
-          >
-            {workflowState === "Awaiting_CR_OMPI" ? "Submit CR + OMPI" : "View / Resubmit"}
-          </Button>
+          <div className="flex items-center gap-2">
+            {workflowState !== "Awaiting_CR_OMPI" && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-xs h-8 gap-1 border-blue-200 text-blue-700 hover:bg-blue-50"
+                onClick={handleDownloadCROMPIPDF}
+                disabled={downloadingPDF}
+              >
+                {downloadingPDF ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
+                PDF
+              </Button>
+            )}
+            <Button
+              size="sm"
+              variant={workflowState === "Awaiting_CR_OMPI" ? "default" : "outline"}
+              className={`text-xs h-8 ${workflowState === "Awaiting_CR_OMPI" ? "bg-indigo-600 hover:bg-indigo-700" : ""}`}
+              onClick={() => setShowCROMPI(true)}
+            >
+              {workflowState === "Awaiting_CR_OMPI" ? "Submit CR + OMPI" : "View / Resubmit"}
+            </Button>
+          </div>
         </div>
 
         {/* FMPI — dual path: Digital or Manual Upload */}

@@ -239,6 +239,26 @@ export default function CROMPIForm({ incident, incidentId, onClose, onDone }) {
       queryClient.invalidateQueries({ queryKey: ["incident", incidentId] });
       queryClient.invalidateQueries({ queryKey: ["incidentAudit", incidentId] });
       queryClient.invalidateQueries({ queryKey: ["formSubmissions", incidentId] });
+
+      // Auto-generate PDF and attach to incident evidence
+      try {
+        const pdfRes = await base44.functions.invoke('generateCROMPIPDF', { incidentId });
+        const { html, fileName } = pdfRes.data;
+        // Convert HTML to a Blob and upload as PDF attachment
+        const blob = new Blob([html], { type: 'text/html' });
+        const file = new File([blob], fileName.replace('.pdf', '.html'), { type: 'text/html' });
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        await base44.entities.IncidentAttachments.create({
+          incident_id: incidentId,
+          file_url,
+          file_name: fileName.replace('.pdf', '_report.html'),
+          file_type: "Document",
+          uploaded_by: user?.email,
+        });
+      } catch (pdfErr) {
+        console.warn("CR+OMPI PDF auto-attach failed:", pdfErr?.message);
+      }
+
       toast({ title: "CR + OMPI Submitted Successfully" });
       onDone?.();
     } catch (err) {
