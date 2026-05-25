@@ -17,17 +17,15 @@ export function openHtmlPrintWindow(html, fileName) {
     return;
   }
   
-  // Write HTML and wait for fonts/styles to load
+  // Write HTML
   win.document.write(html);
   win.document.close();
   
-  // Wait for all resources (fonts, styles) to load before printing
-  win.addEventListener('load', () => {
-    setTimeout(() => {
-      win.focus();
-      win.print();
-    }, 800);
-  });
+  // Wait for fonts and styles to render, then print
+  setTimeout(() => {
+    win.focus();
+    win.print();
+  }, 1000);
 }
 
 /**
