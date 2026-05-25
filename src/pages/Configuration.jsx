@@ -255,15 +255,14 @@ export default function Configuration() {
               className="hidden"
               id="catalog-upload"
             />
-            <label htmlFor="catalog-upload">
-              <Button 
-                className="bg-emerald-600 hover:bg-emerald-700 gap-2" 
-                disabled={importMutation.isPending}
-              >
-                <Upload className="w-4 h-4" /> 
-                {importMutation.isPending ? 'Importing...' : 'Upload Price List'}
-              </Button>
-            </label>
+            <Button 
+              className="bg-emerald-600 hover:bg-emerald-700 gap-2" 
+              disabled={importMutation.isPending}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Upload className="w-4 h-4" /> 
+              {importMutation.isPending ? 'Importing...' : 'Upload Price List'}
+            </Button>
             {importMutation.isPending && (
               <span className="text-sm text-slate-500">Processing Excel file...</span>
             )}
