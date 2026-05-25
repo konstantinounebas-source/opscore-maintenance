@@ -7,82 +7,169 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2, X, Printer } from "lucide-react";
-import { printFormAsPDF } from "@/lib/printFormAsPDF";
+import { openHtmlPrintWindow } from "@/lib/printFormAsPDF";
 import { generateWorkOrderId } from "@/lib/workOrderIdGenerator";
 
 const Section = ({ title, children }) => (
-  <div className="mb-6">
-    <h3 className="text-sm font-semibold text-slate-700 bg-slate-100 px-3 py-2 rounded mb-3 uppercase tracking-wide">
+  <div className="mb-4">
+    <h3 className="text-xs font-semibold text-slate-700 bg-blue-50 border border-blue-200 px-3 py-1.5 rounded mb-2 uppercase tracking-wide">
       {title}
     </h3>
     <div className="px-1">{children}</div>
   </div>
 );
 
-const CheckRow = ({ label, checked, onChange }) => (
-  <div className="flex items-center gap-3 py-1.5 border-b border-slate-100 last:border-0">
-    <Checkbox checked={checked} onCheckedChange={onChange} />
-    <Label className="text-sm text-slate-700 cursor-pointer" onClick={() => onChange(!checked)}>
+const CheckRow = ({ label, fieldKey, form, set }) => (
+  <div className="flex items-center gap-2 py-1 border-b border-slate-100 last:border-0">
+    <Checkbox checked={!!form[fieldKey]} onCheckedChange={v => set(fieldKey, v)} />
+    <Label className="text-xs text-slate-700 cursor-pointer flex-1" onClick={() => set(fieldKey, !form[fieldKey])}>
       {label}
     </Label>
   </div>
 );
 
+const ChecklistRow = ({ category, items, notesKey, naKey, form, set }) => (
+  <>
+    {items.map((item, idx) => (
+      <tr key={item.checkKey} className="border-b border-slate-100">
+        {idx === 0 && (
+          <>
+            <td rowSpan={items.length} className="border border-slate-300 px-1 text-center align-middle">
+              <Checkbox checked={!!form[naKey]} onCheckedChange={v => set(naKey, v)} />
+            </td>
+            <td rowSpan={items.length} className="border border-slate-300 px-1 font-semibold text-xs align-middle whitespace-nowrap">
+              {category}
+            </td>
+          </>
+        )}
+        <td className="border border-slate-300 px-1 text-xs">{item.label}</td>
+        <td className="border border-slate-300 px-1 text-center">
+          <Checkbox checked={!!form[item.checkKey]} onCheckedChange={v => set(item.checkKey, v)} />
+        </td>
+        <td className="border border-slate-300 px-1">
+          <Input className="h-5 text-xs border-0 p-0" value={form[item.statusKey] || ''} onChange={e => set(item.statusKey, e.target.value)} />
+        </td>
+        {idx === 0 && (
+          <td rowSpan={items.length} className="border border-slate-300 px-1 align-top">
+            <Textarea rows={items.length} className="text-xs min-h-0 border-0 p-0 resize-none" value={form[notesKey] || ''} onChange={e => set(notesKey, e.target.value)} />
+          </td>
+        )}
+      </tr>
+    ))}
+  </>
+);
+
 const defaultData = {
-  // Personnel
-  technician_name: "",
-  technician_phone: "",
-  supervisor_name: "",
+  // Header
   date_of_work: "",
-  work_order_ref: "",
-  // Vehicle
-  vehicle_van: false,
-  vehicle_truck: false,
-  vehicle_cherry_picker: false,
-  vehicle_other: false,
-  vehicle_other_text: "",
-  // Δομική Κατασκευή
-  structural_frame_check: false,
-  structural_roof_check: false,
-  structural_panels_check: false,
-  structural_bolts_check: false,
+  completed_by: "",
+  temperature: "",
+  weather: "",
+  photos_sent: "",
+  // Personnel
+  foreman: "",
+  technician1: "",
+  technician2: "",
+  technician3: "",
+  work_from: "",
+  work_to: "",
+  // Work quality checks
+  hs_measures: "",
+  work_completion: "",
+  quality_check: "",
+  deficiencies: "",
+  // 1) Δομική Κατασκευή
+  structural_na: false,
+  structural_frame_check: false, structural_frame_status: "",
+  structural_connections_check: false, structural_connections_status: "",
+  structural_paint_check: false, structural_paint_status: "",
   structural_notes: "",
-  // Πάνελ & Περιμετρικά
-  panels_side_check: false,
-  panels_back_check: false,
-  panels_front_check: false,
-  panels_seals_check: false,
+  // 2) Πάνελ & Περιμετρικά
+  panels_na: false,
+  panels_side_check: false, panels_side_status: "",
+  panels_plastic_check: false, panels_plastic_status: "",
+  panels_sealing_check: false, panels_sealing_status: "",
   panels_notes: "",
-  // Υαλοπίνακες
-  glass_front_check: false,
-  glass_side_check: false,
-  glass_roof_check: false,
+  // 3) Υαλοπίνακες
+  glass_na: false,
+  glass_surface_check: false, glass_surface_status: "",
+  glass_frames_check: false, glass_frames_status: "",
   glass_notes: "",
-  // Ηλεκτρολογικά
-  electrical_lighting_check: false,
-  electrical_wiring_check: false,
-  electrical_fuse_check: false,
-  electrical_notes: "",
-  // Ηλεκτρονικά
-  electronic_display_check: false,
-  electronic_controller_check: false,
-  electronic_solar_check: false,
-  electronic_notes: "",
-  // Καθισματα / Εξοπλισμός
-  seating_bench_check: false,
-  seating_bin_check: false,
-  seating_signage_check: false,
-  seating_notes: "",
-  // Γενικές Σημειώσεις & Κλείσιμο ΕΕ
+  // 4) Παγκάκια
+  bench_na: false,
+  bench_wood_check: false, bench_wood_status: "",
+  bench_supports_check: false, bench_supports_status: "",
+  bench_notes: "",
+  // 5) Ηλεκτρική Υποδομή
+  elec_infra_na: false,
+  elec_power_panel_check: false, elec_power_panel_status: "",
+  elec_wiring_check: false, elec_wiring_status: "",
+  elec_screen_check: false, elec_screen_status: "",
+  elec_infra_notes: "",
+  // 6) Φωτοβολταϊκό Πάνελ
+  solar_na: false,
+  solar_panel_check: false, solar_panel_status: "",
+  solar_indicator_check: false, solar_indicator_status: "",
+  solar_notes: "",
+  // 7) Αποθήκευση Ενέργειας
+  energy_na: false,
+  energy_battery_check: false, energy_battery_status: "",
+  energy_connections_check: false, energy_connections_status: "",
+  energy_replacement_check: false, energy_replacement_status: "",
+  energy_notes: "",
+  // 8) Ηλεκτολογικό Πάνελ
+  elec_panel_na: false,
+  elec_router_check: false, elec_router_status: "",
+  elec_controller_check: false, elec_controller_status: "",
+  elec_power_check: false, elec_power_status: "",
+  elec_panel_notes: "",
+  // 9) Φωτισμός
+  lighting_na: false,
+  lighting_roof_check: false, lighting_roof_status: "",
+  lighting_sign_check: false, lighting_sign_status: "",
+  lighting_notes: "",
+  // 10) Λογισμικό Σύστημα
+  software_na: false,
+  software_lighting_check: false, software_lighting_status: "",
+  software_normal_check: false, software_normal_status: "",
+  software_notes: "",
+  // 11) Πρόσθετος Εξοπλισμός
+  extra_equip_na: false,
+  extra_malfunction_check: false, extra_malfunction_status: "",
+  extra_bin_check: false, extra_bin_status: "",
+  extra_signs_check: false, extra_signs_status: "",
+  extra_equip_notes: "",
+  // 12) Στέγη
+  roof_na: false,
+  roof_lightbox_check: false, roof_lightbox_status: "",
+  roof_panels_check: false, roof_panels_status: "",
+  roof_notes: "",
+  // Vehicles
+  veh_personnel: false, veh_materials: false, veh_truck: false, veh_crane: false,
+  veh_grinder: false, veh_disc: false, veh_compressor: false, veh_other: false, veh_other_text: "",
+  // Photos
+  photo_inspection: false, photo_hs: false, photo_traffic: false,
+  // Security
+  sec_generator: false, sec_crusher: false, sec_truck: false, sec_crane: false,
+  security_notes: "",
+  // Notes & Works
   general_notes: "",
-  work_completed: null, // true = ΝΑΙ, false = ΟΧΙ
+  specific_work_1: "", specific_work_2: "", specific_work_3: "",
+  specific_work_4: "", specific_work_5: "", specific_work_6: "",
+  specific_work_7: "", specific_work_8: "", specific_work_9: "",
+  specific_work_10: "", specific_work_11: "", specific_work_12: "",
   incomplete_reason: "",
+  additional_works: "",
+  // Closure
+  close_wo_yes: false, close_wo_no: false, close_wo_reason: "",
+  work_order_ref: "",
 };
 
 export default function CorrectiveWOForm({ submission, incident, incidentId, workOrders, onClose }) {
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [printingPDF, setPrintingPDF] = useState(false);
 
   const existingData = submission?.form_data || {};
   const [form, setForm] = useState({ ...defaultData, ...existingData });
@@ -90,7 +177,6 @@ export default function CorrectiveWOForm({ submission, incident, incidentId, wor
 
   const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
 
-  // Auto-generate CORR ID for new forms
   useEffect(() => {
     if (!existingData.corr_id) {
       generateWorkOrderId("corrective").then(id => setCorrId(id));
@@ -123,73 +209,22 @@ export default function CorrectiveWOForm({ submission, incident, incidentId, wor
     toast({ title: "Saved as draft" });
   };
 
-  const [printingPDF, setPrintingPDF] = useState(false);
   const handlePrintPDF = async () => {
     setPrintingPDF(true);
-    await printFormAsPDF({
-      title: "Corrective Work Order Checklist",
-      subtitle: `CORR ID: ${corrId || '—'} | Incident: ${incident?.incident_id || '—'} | WO: ${form.work_order_ref || getWorkOrderRef() || '—'} | Date: ${form.date_of_work || '—'}`,
-      fileName: `CorrectiveWO_${corrId || incident?.incident_id || 'form'}_${form.date_of_work || Date.now()}`,
-      sections: [
-        { heading: "Στοιχεία Τεχνικού / Εργασίας", rows: [
-          { label: "CORR ID", value: corrId },
-          { label: "Όνομα Τεχνικού", value: form.technician_name },
-          { label: "Τηλέφωνο", value: form.technician_phone },
-          { label: "Επόπτης", value: form.supervisor_name },
-          { label: "Ημερομηνία Εργασίας", value: form.date_of_work },
-          { label: "Αρ. Εντολής Εργασίας", value: form.work_order_ref || getWorkOrderRef() },
-        ]},
-        { heading: "Οχήματα / Εξοπλισμός", rows: [
-          { label: "Βαν", type: "checkbox", checked: form.vehicle_van },
-          { label: "Φορτηγό", type: "checkbox", checked: form.vehicle_truck },
-          { label: "Καλαθοφόρο", type: "checkbox", checked: form.vehicle_cherry_picker },
-          { label: "Άλλο", value: form.vehicle_other ? form.vehicle_other_text || "Ναι" : "—" },
-        ]},
-        { heading: "Δομική Κατασκευή", rows: [
-          { label: "Έλεγχος πλαισίου", type: "checkbox", checked: form.structural_frame_check },
-          { label: "Έλεγχος οροφής", type: "checkbox", checked: form.structural_roof_check },
-          { label: "Έλεγχος πάνελ", type: "checkbox", checked: form.structural_panels_check },
-          { label: "Έλεγχος κοχλιών", type: "checkbox", checked: form.structural_bolts_check },
-          { label: "Σημειώσεις", value: form.structural_notes },
-        ]},
-        { heading: "Πάνελ & Περιμετρικά", rows: [
-          { label: "Πλαϊνά πάνελ", type: "checkbox", checked: form.panels_side_check },
-          { label: "Πίσω πάνελ", type: "checkbox", checked: form.panels_back_check },
-          { label: "Μπροστινό πάνελ", type: "checkbox", checked: form.panels_front_check },
-          { label: "Σφραγίσεις", type: "checkbox", checked: form.panels_seals_check },
-          { label: "Σημειώσεις", value: form.panels_notes },
-        ]},
-        { heading: "Υαλοπίνακες", rows: [
-          { label: "Μπροστινός", type: "checkbox", checked: form.glass_front_check },
-          { label: "Πλαϊνοί", type: "checkbox", checked: form.glass_side_check },
-          { label: "Οροφή", type: "checkbox", checked: form.glass_roof_check },
-          { label: "Σημειώσεις", value: form.glass_notes },
-        ]},
-        { heading: "Ηλεκτρολογικά", rows: [
-          { label: "Φωτισμός", type: "checkbox", checked: form.electrical_lighting_check },
-          { label: "Καλωδίωση", type: "checkbox", checked: form.electrical_wiring_check },
-          { label: "Ασφάλειες", type: "checkbox", checked: form.electrical_fuse_check },
-          { label: "Σημειώσεις", value: form.electrical_notes },
-        ]},
-        { heading: "Ηλεκτρονικά", rows: [
-          { label: "Οθόνη", type: "checkbox", checked: form.electronic_display_check },
-          { label: "Controller", type: "checkbox", checked: form.electronic_controller_check },
-          { label: "Solar / PV", type: "checkbox", checked: form.electronic_solar_check },
-          { label: "Σημειώσεις", value: form.electronic_notes },
-        ]},
-        { heading: "Καθίσματα / Εξοπλισμός", rows: [
-          { label: "Παγκάκι", type: "checkbox", checked: form.seating_bench_check },
-          { label: "Κάδος", type: "checkbox", checked: form.seating_bin_check },
-          { label: "Σήμανση", type: "checkbox", checked: form.seating_signage_check },
-          { label: "Σημειώσεις", value: form.seating_notes },
-        ]},
-        { heading: "Κλείσιμο Εντολής Εργασίας", rows: [
-          { label: "Ολοκληρώθηκαν εργασίες", value: form.work_completed === true ? "ΝΑΙ" : form.work_completed === false ? "ΟΧΙ" : "—" },
-          { label: "Αιτία μη ολοκλήρωσης", value: form.incomplete_reason },
-          { label: "Γενικές Σημειώσεις", value: form.general_notes },
-        ]},
-      ],
-    });
+    try {
+      const res = await base44.functions.invoke('generateCorrectiveWOChecklistPDF', {
+        incidentId: incident?.incident_id || incidentId,
+        workOrderId: form.work_order_ref || getWorkOrderRef(),
+        formData: { ...form, corr_id: corrId },
+      });
+      if (res.data?.html) {
+        openHtmlPrintWindow(res.data.html, res.data.fileName || 'CorrectiveWO.pdf');
+      } else {
+        toast({ title: "PDF Error", description: res.data?.error || "Failed to generate PDF", variant: "destructive" });
+      }
+    } catch (err) {
+      toast({ title: "PDF Error", description: err.message, variant: "destructive" });
+    }
     setPrintingPDF(false);
   };
 
@@ -205,6 +240,8 @@ export default function CorrectiveWOForm({ submission, incident, incidentId, wor
     toast({ title: "Form submitted successfully" });
     onClose();
   };
+
+  const woRef = form.work_order_ref || getWorkOrderRef();
 
   return (
     <div className="flex flex-col h-full">
@@ -231,125 +268,233 @@ export default function CorrectiveWOForm({ submission, incident, incidentId, wor
       </div>
 
       {/* Body */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-2">
+      <div className="flex-1 overflow-y-auto p-4 space-y-2">
 
-        {/* Personnel & Vehicle */}
-        <Section title="Στοιχεία Τεχνικού / Εργασίας">
-          <div className="grid grid-cols-2 gap-4 mb-4">
+        {/* ΣΤΟΙΧΕΙΑ */}
+        <Section title="ΣΤΟΙΧΕΙΑ">
+          <div className="grid grid-cols-3 gap-3">
+            <div><Label className="text-xs text-slate-500 mb-1 block">Ημερομηνία</Label>
+              <Input type="date" value={form.date_of_work} onChange={e => set("date_of_work", e.target.value)} /></div>
+            <div><Label className="text-xs text-slate-500 mb-1 block">Συμπληρώθηκε από</Label>
+              <Input value={form.completed_by} onChange={e => set("completed_by", e.target.value)} /></div>
+            <div><Label className="text-xs text-slate-500 mb-1 block">Θερμοκρασία (°C)</Label>
+              <Input value={form.temperature} onChange={e => set("temperature", e.target.value)} /></div>
+            <div><Label className="text-xs text-slate-500 mb-1 block">Καιρός</Label>
+              <Input value={form.weather} onChange={e => set("weather", e.target.value)} /></div>
+            <div><Label className="text-xs text-slate-500 mb-1 block">Αποστολή φωτογραφιών στο πρόγραμμα; (Ναι/Όχι)</Label>
+              <Input value={form.photos_sent} onChange={e => set("photos_sent", e.target.value)} /></div>
+          </div>
+          <div className="grid grid-cols-4 gap-3 mt-3 bg-slate-50 p-2 rounded border border-slate-200">
+            <div><Label className="text-xs text-slate-500 mb-1 block font-semibold">Εργοδηγός</Label>
+              <Input value={form.foreman} onChange={e => set("foreman", e.target.value)} /></div>
+            <div><Label className="text-xs text-slate-500 mb-1 block">Τεχνίτης 1</Label>
+              <Input value={form.technician1} onChange={e => set("technician1", e.target.value)} /></div>
+            <div><Label className="text-xs text-slate-500 mb-1 block">Τεχνίτης 2</Label>
+              <Input value={form.technician2} onChange={e => set("technician2", e.target.value)} /></div>
+            <div><Label className="text-xs text-slate-500 mb-1 block">Τεχνίτης 3</Label>
+              <Input value={form.technician3} onChange={e => set("technician3", e.target.value)} /></div>
+            <div><Label className="text-xs text-slate-500 mb-1 block">Από (ώρα)</Label>
+              <Input value={form.work_from} onChange={e => set("work_from", e.target.value)} /></div>
+            <div><Label className="text-xs text-slate-500 mb-1 block">Έως (ώρα)</Label>
+              <Input value={form.work_to} onChange={e => set("work_to", e.target.value)} /></div>
+          </div>
+        </Section>
+
+        {/* Έλεγχος Εργασίας */}
+        <Section title="Έλεγχος Εργασίας (Ναι/Όχι)">
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { label: "Ενδεδειγμένα Μέτρα Α&Υ", key: "hs_measures" },
+              { label: "Συμπλήρωση Εργασίας", key: "work_completion" },
+              { label: "Διενέργεια Ποιοτικού Έλεγχου Εργασίας", key: "quality_check" },
+              { label: "Ελλείψεις / Ανάγκη για Επιστροφή", key: "deficiencies" },
+            ].map(({ label, key }) => (
+              <div key={key}>
+                <Label className="text-xs text-slate-500 mb-1 block">{label}</Label>
+                <Input value={form[key]} onChange={e => set(key, e.target.value)} placeholder="Ναι/Όχι" />
+              </div>
+            ))}
+          </div>
+        </Section>
+
+        {/* CHECKLIST */}
+        <Section title="Checklist Ελέγχου Στάσης/Στεγάστρου">
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-xs">
+              <thead>
+                <tr className="bg-blue-100">
+                  <th className="border border-slate-300 px-1 py-1 w-8">N/A</th>
+                  <th className="border border-slate-300 px-1 py-1">Κατηγορία</th>
+                  <th className="border border-slate-300 px-1 py-1">Στοιχείο</th>
+                  <th className="border border-slate-300 px-1 py-1 w-12">Εργασία ✓</th>
+                  <th className="border border-slate-300 px-1 py-1 w-20">Κατάσταση</th>
+                  <th className="border border-slate-300 px-1 py-1">Σχόλια</th>
+                </tr>
+              </thead>
+              <tbody>
+                <ChecklistRow category="1) Δομική Κατασκευή" naKey="structural_na" notesKey="structural_notes" form={form} set={set}
+                  items={[
+                    { label: "Σκελετός/βάσεις", checkKey: "structural_frame_check", statusKey: "structural_frame_status" },
+                    { label: "Συνδέσεις/σταθερότητα", checkKey: "structural_connections_check", statusKey: "structural_connections_status" },
+                    { label: "Βαφή/επιφάνειες", checkKey: "structural_paint_check", statusKey: "structural_paint_status" },
+                  ]} />
+                <ChecklistRow category="2) Πάνελ & Περιμετρικά" naKey="panels_na" notesKey="panels_notes" form={form} set={set}
+                  items={[
+                    { label: "Πλευρικά/οπίσθια πάνελ", checkKey: "panels_side_check", statusKey: "panels_side_status" },
+                    { label: "Πλαστικά/ακρυλικά", checkKey: "panels_plastic_check", statusKey: "panels_plastic_status" },
+                    { label: "Στεγάνωση/προστασία", checkKey: "panels_sealing_check", statusKey: "panels_sealing_status" },
+                  ]} />
+                <ChecklistRow category="3) Υαλοπίνακες" naKey="glass_na" notesKey="glass_notes" form={form} set={set}
+                  items={[
+                    { label: "Γυάλινες επιφάνειες", checkKey: "glass_surface_check", statusKey: "glass_surface_status" },
+                    { label: "Πλαίσια/στηρίξεις", checkKey: "glass_frames_check", statusKey: "glass_frames_status" },
+                  ]} />
+                <ChecklistRow category="4) Παγκάκια" naKey="bench_na" notesKey="bench_notes" form={form} set={set}
+                  items={[
+                    { label: "Παγκάκι/Ξύλα", checkKey: "bench_wood_check", statusKey: "bench_wood_status" },
+                    { label: "Στηρίγματα/Μεταλλικά μέρη", checkKey: "bench_supports_check", statusKey: "bench_supports_status" },
+                  ]} />
+                <ChecklistRow category="5) Ηλεκτρική Υποδομή" naKey="elec_infra_na" notesKey="elec_infra_notes" form={form} set={set}
+                  items={[
+                    { label: "Τροφοδοσία/πίνακας", checkKey: "elec_power_panel_check", statusKey: "elec_power_panel_status" },
+                    { label: "Καλωδιώσεις/συνδέσεις", checkKey: "elec_wiring_check", statusKey: "elec_wiring_status" },
+                    { label: "Οθόνη/e-paper", checkKey: "elec_screen_check", statusKey: "elec_screen_status" },
+                  ]} />
+                <ChecklistRow category="6) Φωτοβολταϊκό Πάνελ" naKey="solar_na" notesKey="solar_notes" form={form} set={set}
+                  items={[
+                    { label: "Πάνελ & βάσεις", checkKey: "solar_panel_check", statusKey: "solar_panel_status" },
+                    { label: "Ένδειξη λειτουργίας", checkKey: "solar_indicator_check", statusKey: "solar_indicator_status" },
+                  ]} />
+                <ChecklistRow category="7) Αποθήκευση Ενέργειας" naKey="energy_na" notesKey="energy_notes" form={form} set={set}
+                  items={[
+                    { label: "Μπαταρίες/θήκη", checkKey: "energy_battery_check", statusKey: "energy_battery_status" },
+                    { label: "Συνδέσεις/ασφάλεια", checkKey: "energy_connections_check", statusKey: "energy_connections_status" },
+                    { label: "Αντικατάσταση/Κλοπή", checkKey: "energy_replacement_check", statusKey: "energy_replacement_status" },
+                  ]} />
+                <ChecklistRow category="8) Ηλεκτολογικό Πάνελ" naKey="elec_panel_na" notesKey="elec_panel_notes" form={form} set={set}
+                  items={[
+                    { label: "Router/SIM", checkKey: "elec_router_check", statusKey: "elec_router_status" },
+                    { label: "Controller", checkKey: "elec_controller_check", statusKey: "elec_controller_status" },
+                    { label: "Power Supply", checkKey: "elec_power_check", statusKey: "elec_power_status" },
+                  ]} />
+                <ChecklistRow category="9) Φωτισμός" naKey="lighting_na" notesKey="lighting_notes" form={form} set={set}
+                  items={[
+                    { label: "Φωτισμός Στέγης", checkKey: "lighting_roof_check", statusKey: "lighting_roof_status" },
+                    { label: "Υποδομής/Πινακιδας", checkKey: "lighting_sign_check", statusKey: "lighting_sign_status" },
+                  ]} />
+                <ChecklistRow category="10) Λογισμικό Σύστημα" naKey="software_na" notesKey="software_notes" form={form} set={set}
+                  items={[
+                    { label: "Λειτουργία φωτισμού", checkKey: "software_lighting_check", statusKey: "software_lighting_status" },
+                    { label: "Κανονική λειτουργία", checkKey: "software_normal_check", statusKey: "software_normal_status" },
+                  ]} />
+                <ChecklistRow category="11) Πρόσθετος Εξοπλισμός" naKey="extra_equip_na" notesKey="extra_equip_notes" form={form} set={set}
+                  items={[
+                    { label: "Δυσλειτουργία/έλεγχος", checkKey: "extra_malfunction_check", statusKey: "extra_malfunction_status" },
+                    { label: "Κάδος/βάσεις ποδηλ.", checkKey: "extra_bin_check", statusKey: "extra_bin_status" },
+                    { label: "Πινακίδες", checkKey: "extra_signs_check", statusKey: "extra_signs_status" },
+                  ]} />
+                <ChecklistRow category="12) Στέγη" naKey="roof_na" notesKey="roof_notes" form={form} set={set}
+                  items={[
+                    { label: "Light Box", checkKey: "roof_lightbox_check", statusKey: "roof_lightbox_status" },
+                    { label: "Πανέλα Καπακιών", checkKey: "roof_panels_check", statusKey: "roof_panels_status" },
+                  ]} />
+              </tbody>
+            </table>
+          </div>
+        </Section>
+
+        {/* Vehicles & Equipment */}
+        <Section title="Οχήματα και Εξοπλισμός">
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="text-xs text-slate-500 mb-1 block">Όνομα Τεχνικού</Label>
-              <Input value={form.technician_name} onChange={e => set("technician_name", e.target.value)} placeholder="Όνομα..." />
+              <p className="text-xs font-semibold text-slate-600 mb-1">Οχήματα</p>
+              {[
+                { label: "Όχημα Μεταφοράς Προσωπικού", key: "veh_personnel" },
+                { label: "Όχημα Μεταφοράς Υλικών και Εξοπλισμού", key: "veh_materials" },
+                { label: "Φορτηγό Όχημα", key: "veh_truck" },
+                { label: "Γερανοφόρο Όχημα", key: "veh_crane" },
+              ].map(({ label, key }) => <CheckRow key={key} label={label} fieldKey={key} form={form} set={set} />)}
             </div>
             <div>
-              <Label className="text-xs text-slate-500 mb-1 block">Τηλέφωνο</Label>
-              <Input value={form.technician_phone} onChange={e => set("technician_phone", e.target.value)} placeholder="Τηλ..." />
-            </div>
-            <div>
-              <Label className="text-xs text-slate-500 mb-1 block">Επόπτης</Label>
-              <Input value={form.supervisor_name} onChange={e => set("supervisor_name", e.target.value)} placeholder="Επόπτης..." />
-            </div>
-            <div>
-              <Label className="text-xs text-slate-500 mb-1 block">Ημερομηνία Εργασίας</Label>
-              <Input type="date" value={form.date_of_work} onChange={e => set("date_of_work", e.target.value)} />
-            </div>
-            <div>
-              <Label className="text-xs text-slate-500 mb-1 block">CORR ID</Label>
-              <Input value={corrId} readOnly className="bg-slate-50 font-mono font-semibold text-blue-800" />
-            </div>
-            <div>
-              <Label className="text-xs text-slate-500 mb-1 block">Αρ. Εντολής Εργασίας</Label>
-              <Input value={form.work_order_ref || getWorkOrderRef()} onChange={e => set("work_order_ref", e.target.value)} placeholder="WO-..." />
+              <p className="text-xs font-semibold text-slate-600 mb-1">Εργαλεία/Εξοπλισμός</p>
+              {[
+                { label: "Σμιρίλιο Χεριού", key: "veh_grinder" },
+                { label: "Διαμαντοδίσκος Κοπής", key: "veh_disc" },
+                { label: "Συμπιεστήρας", key: "veh_compressor" },
+                { label: "Άλλο", key: "veh_other" },
+              ].map(({ label, key }) => <CheckRow key={key} label={label} fieldKey={key} form={form} set={set} />)}
+              {form.veh_other && <Input className="mt-1 text-xs" value={form.veh_other_text} onChange={e => set("veh_other_text", e.target.value)} placeholder="Περιγραφή..." />}
             </div>
           </div>
         </Section>
 
-        <Section title="Οχήματα / Εξοπλισμός">
+        {/* Photos */}
+        <Section title="Φωτογραφίες">
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { label: "ΦΩΤΟΓΡΑΦΙΕΣ ΓΙΑ ΕΠΙΘΕΩΡΗΣΗ ΕΡΓΑΣΙΑΣ", key: "photo_inspection" },
+              { label: "H&S MEASURES (SIGNS)", key: "photo_hs" },
+              { label: "TRAFFIC MANAGEMENT PHOTO", key: "photo_traffic" },
+            ].map(({ label, key }) => <CheckRow key={key} label={label} fieldKey={key} form={form} set={set} />)}
+          </div>
+        </Section>
+
+        {/* Security */}
+        <Section title="Ασφάλεια">
           <div className="grid grid-cols-2 gap-2">
-            <CheckRow label="Βαν" checked={form.vehicle_van} onChange={v => set("vehicle_van", v)} />
-            <CheckRow label="Φορτηγό" checked={form.vehicle_truck} onChange={v => set("vehicle_truck", v)} />
-            <CheckRow label="Καλαθοφόρο" checked={form.vehicle_cherry_picker} onChange={v => set("vehicle_cherry_picker", v)} />
-            <CheckRow label="Άλλο" checked={form.vehicle_other} onChange={v => set("vehicle_other", v)} />
+            {[
+              { label: "Ηλεκτρογεννήτρια", key: "sec_generator" },
+              { label: "Ηλεκτρικός Σπαστήρας", key: "sec_crusher" },
+              { label: "Φορτηγό Όχημα", key: "sec_truck" },
+              { label: "Γερανοφόρο Όχημα", key: "sec_crane" },
+            ].map(({ label, key }) => <CheckRow key={key} label={label} fieldKey={key} form={form} set={set} />)}
           </div>
-          {form.vehicle_other && (
-            <Input className="mt-2" value={form.vehicle_other_text} onChange={e => set("vehicle_other_text", e.target.value)} placeholder="Περιγραφή άλλου οχήματος..." />
-          )}
+          <Textarea className="mt-2 text-xs" rows={2} value={form.security_notes} onChange={e => set("security_notes", e.target.value)} placeholder="Σχόλια ασφάλειας..." />
         </Section>
 
-        {/* Structural */}
-        <Section title="Δομική Κατασκευή">
-          <CheckRow label="Έλεγχος πλαισίου" checked={form.structural_frame_check} onChange={v => set("structural_frame_check", v)} />
-          <CheckRow label="Έλεγχος οροφής" checked={form.structural_roof_check} onChange={v => set("structural_roof_check", v)} />
-          <CheckRow label="Έλεγχος πάνελ" checked={form.structural_panels_check} onChange={v => set("structural_panels_check", v)} />
-          <CheckRow label="Έλεγχος κοχλιών / συνδέσμων" checked={form.structural_bolts_check} onChange={v => set("structural_bolts_check", v)} />
-          <Textarea className="mt-2" rows={2} value={form.structural_notes} onChange={e => set("structural_notes", e.target.value)} placeholder="Σημειώσεις..." />
+        {/* Notes */}
+        <Section title="ΣΗΜΕΙΩΣΕΙΣ (Άλλα θέματα για αναφορά)">
+          <Textarea rows={2} className="text-xs" value={form.general_notes} onChange={e => set("general_notes", e.target.value)} placeholder="Γενικές σημειώσεις..." />
         </Section>
 
-        {/* Panels */}
-        <Section title="Πάνελ & Περιμετρικά">
-          <CheckRow label="Πλαϊνά πάνελ" checked={form.panels_side_check} onChange={v => set("panels_side_check", v)} />
-          <CheckRow label="Πίσω πάνελ" checked={form.panels_back_check} onChange={v => set("panels_back_check", v)} />
-          <CheckRow label="Μπροστινό πάνελ" checked={form.panels_front_check} onChange={v => set("panels_front_check", v)} />
-          <CheckRow label="Σφραγίσεις / joints" checked={form.panels_seals_check} onChange={v => set("panels_seals_check", v)} />
-          <Textarea className="mt-2" rows={2} value={form.panels_notes} onChange={e => set("panels_notes", e.target.value)} placeholder="Σημειώσεις..." />
+        <Section title="ΣΥΓΚΕΚΡΙΜΕΝΕΣ ΕΡΓΑΣΙΕΣ (ΣΧΟΛΙΑ)">
+          <div className="grid grid-cols-3 gap-2">
+            {[1,2,3,4,5,6,7,8,9,10,11,12].map(i => (
+              <div key={i}>
+                <Label className="text-xs text-slate-500 mb-1 block">{i})</Label>
+                <Input className="text-xs" value={form[`specific_work_${i}`] || ''} onChange={e => set(`specific_work_${i}`, e.target.value)} />
+              </div>
+            ))}
+          </div>
         </Section>
 
-        {/* Glass */}
-        <Section title="Υαλοπίνακες">
-          <CheckRow label="Μπροστινός υαλοπίνακας" checked={form.glass_front_check} onChange={v => set("glass_front_check", v)} />
-          <CheckRow label="Πλαϊνοί υαλοπίνακες" checked={form.glass_side_check} onChange={v => set("glass_side_check", v)} />
-          <CheckRow label="Οροφή (υαλοπίνακας)" checked={form.glass_roof_check} onChange={v => set("glass_roof_check", v)} />
-          <Textarea className="mt-2" rows={2} value={form.glass_notes} onChange={e => set("glass_notes", e.target.value)} placeholder="Σημειώσεις..." />
+        <Section title="Μη Συμπληρωμένη Εργασία - Ελλείψεις - Ανάγκη για Επιστροφή">
+          <Textarea rows={2} className="text-xs" value={form.incomplete_reason} onChange={e => set("incomplete_reason", e.target.value)} placeholder="Αναλυτική Περιγραφή..." />
         </Section>
 
-        {/* Electrical */}
-        <Section title="Ηλεκτρολογικά">
-          <CheckRow label="Φωτισμός" checked={form.electrical_lighting_check} onChange={v => set("electrical_lighting_check", v)} />
-          <CheckRow label="Καλωδίωση" checked={form.electrical_wiring_check} onChange={v => set("electrical_wiring_check", v)} />
-          <CheckRow label="Ασφάλειες / πίνακας" checked={form.electrical_fuse_check} onChange={v => set("electrical_fuse_check", v)} />
-          <Textarea className="mt-2" rows={2} value={form.electrical_notes} onChange={e => set("electrical_notes", e.target.value)} placeholder="Σημειώσεις..." />
-        </Section>
-
-        {/* Electronics */}
-        <Section title="Ηλεκτρονικά">
-          <CheckRow label="Οθόνη / πληροφορίες" checked={form.electronic_display_check} onChange={v => set("electronic_display_check", v)} />
-          <CheckRow label="Ελεγκτής / controller" checked={form.electronic_controller_check} onChange={v => set("electronic_controller_check", v)} />
-          <CheckRow label="Φωτοβολταϊκά / solar" checked={form.electronic_solar_check} onChange={v => set("electronic_solar_check", v)} />
-          <Textarea className="mt-2" rows={2} value={form.electronic_notes} onChange={e => set("electronic_notes", e.target.value)} placeholder="Σημειώσεις..." />
-        </Section>
-
-        {/* Seating */}
-        <Section title="Καθίσματα / Εξοπλισμός">
-          <CheckRow label="Παγκάκι / καθίσματα" checked={form.seating_bench_check} onChange={v => set("seating_bench_check", v)} />
-          <CheckRow label="Κάδος απορριμάτων" checked={form.seating_bin_check} onChange={v => set("seating_bin_check", v)} />
-          <CheckRow label="Σήμανση / πινακίδες" checked={form.seating_signage_check} onChange={v => set("seating_signage_check", v)} />
-          <Textarea className="mt-2" rows={2} value={form.seating_notes} onChange={e => set("seating_notes", e.target.value)} placeholder="Σημειώσεις..." />
+        <Section title="Επιπρόσθετες Εργασίες πέραν των Προβλεπομένων">
+          <Textarea rows={2} className="text-xs" value={form.additional_works} onChange={e => set("additional_works", e.target.value)} placeholder="Αναλυτική Περιγραφή..." />
         </Section>
 
         {/* Closure */}
-        <Section title="Κλείσιμο Εντολής Εργασίας">
-          <div className="mb-4">
-            <Label className="text-sm text-slate-700 block mb-2">Ολοκληρώθηκαν οι εργασίες;</Label>
-            <div className="flex gap-6">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="radio" name="work_completed" checked={form.work_completed === true} onChange={() => set("work_completed", true)} />
-                <span className="text-sm font-medium text-green-700">ΝΑΙ</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="radio" name="work_completed" checked={form.work_completed === false} onChange={() => set("work_completed", false)} />
-                <span className="text-sm font-medium text-red-700">ΟΧΙ</span>
-              </label>
-            </div>
+        <Section title="Κλείσιμο WO">
+          <div className="flex items-center gap-6 mb-3">
+            <Label className="text-sm font-semibold text-slate-700">Κλείσιμο WO:</Label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="close_wo" checked={!!form.close_wo_yes} onChange={() => { set("close_wo_yes", true); set("close_wo_no", false); }} />
+              <span className="text-sm font-medium text-green-700">ΝΑΙ</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="close_wo" checked={!!form.close_wo_no} onChange={() => { set("close_wo_yes", false); set("close_wo_no", true); }} />
+              <span className="text-sm font-medium text-red-700">ΟΧΙ</span>
+            </label>
           </div>
-          {form.work_completed === false && (
-            <div className="mb-4">
-              <Label className="text-xs text-slate-500 mb-1 block">Αιτία μη ολοκλήρωσης</Label>
-              <Textarea rows={2} value={form.incomplete_reason} onChange={e => set("incomplete_reason", e.target.value)} placeholder="Περιγράψτε τον λόγο..." />
+          {form.close_wo_no && (
+            <div>
+              <Label className="text-xs text-slate-500 mb-1 block">Αν όχι, αιτιολόγησε:</Label>
+              <Textarea rows={2} className="text-xs" value={form.close_wo_reason} onChange={e => set("close_wo_reason", e.target.value)} />
             </div>
           )}
-          <div>
-            <Label className="text-xs text-slate-500 mb-1 block">Γενικές Σημειώσεις</Label>
-            <Textarea rows={3} value={form.general_notes} onChange={e => set("general_notes", e.target.value)} placeholder="Γενικές παρατηρήσεις..." />
-          </div>
         </Section>
 
       </div>
