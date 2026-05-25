@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
   body { font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: #1a1a2e; background: #fff; }
   .header { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color: white; padding: 16px 20px; border-radius: 6px; margin-bottom: 16px; }
   .header h1 { font-size: 16px; font-weight: 700; }
-  .header p { font-size: 10px; opacity: 0.85; margin-top: 3px; }
+  .header p { font-size: 6.5px; opacity: 0.85; margin-top: 3px; }
   .section { margin-bottom: 12px; border: 1px solid #e2e8f0; border-radius: 5px; overflow: hidden; page-break-inside: avoid; }
   .section-title { background: #f1f5f9; border-bottom: 1px solid #e2e8f0; padding: 5px 10px; font-size: 10px; font-weight: 700; color: #334155; text-transform: uppercase; letter-spacing: 0.4px; }
   table { width: 100%; border-collapse: collapse; }
