@@ -13,7 +13,7 @@ import {
   ArrowLeft, Save, Send, Lock, AlertTriangle, CheckCircle2,
   Upload, X, ShieldAlert, ZapOff, Info, Printer
 } from "lucide-react";
-import { printFormAsPDF } from "@/lib/printFormAsPDF";
+import { openHtmlPrintWindow } from "@/lib/printFormAsPDF";
 import { useToast } from "@/components/ui/use-toast";
 import FileUploadArea from "@/components/shared/FileUploadArea";
 
@@ -189,76 +189,22 @@ export default function MakeSafeChecklistForm({ submission, incidents, assets, w
   const [printingPDF, setPrintingPDF] = React.useState(false);
   const handlePrintPDF = async () => {
     setPrintingPDF(true);
-    await printFormAsPDF({
-      title: "MAKE-SAFE CHECKLIST ΠΕΔΙΟΥ",
-      subtitle: `Incident: ${incident?.incident_id || '—'} | Asset: ${asset?.asset_id || '—'} | Date: ${fd.date || '—'}`,
-      fileName: `MakeSafe_${incident?.incident_id || 'form'}_${fd.date || Date.now()}`,
-      sections: [
-        { heading: "A. Στοιχεία", rows: [
-          { label: "Ημερομηνία", value: fd.date },
-          { label: "Incident ID", value: incident?.incident_id },
-          { label: "Asset ID", value: asset?.asset_id },
-          { label: "Τοποθεσία", value: asset?.location_address },
-          { label: "Ώρα Έναρξης", value: fd.time_start },
-          { label: "Τεχνικός", value: fd.technician },
-          { label: "Όχημα", value: fd.vehicle },
-          { label: "Ώρα Άφιξης", value: fd.time_arrival },
-          { label: "Ώρα Ολοκλήρωσης", value: fd.time_end },
-        ]},
-        { heading: "B. Stop & Assess", rows: [
-          { label: "360° έλεγχος", type: "checkbox", checked: fd.check_360 },
-          { label: "Κίνδυνος: Ηλεκτρ.", type: "checkbox", checked: fd.danger_electrical },
-          { label: "Κίνδυνος: Γυαλί", type: "checkbox", checked: fd.danger_glass },
-          { label: "Κίνδυνος: Δομικό", type: "checkbox", checked: fd.danger_structural },
-          { label: "Κίνδυνος: PV/Μπατ.", type: "checkbox", checked: fd.danger_pv },
-          { label: "Άμεσος κίνδυνος ζωής", value: fd.immediate_danger === "yes" ? "ΝΑΙ" : fd.immediate_danger === "no" ? "ΟΧΙ" : "—" },
-          { label: "Περιγραφή κινδύνου", value: fd.danger_description },
-        ]},
-        { heading: "C. PPE & Εξοπλισμός", rows: [
-          { label: "Γιλέκο", type: "checkbox", checked: fd.ppe_vest },
-          { label: "Κράνος", type: "checkbox", checked: fd.ppe_helmet },
-          { label: "Γάντια", type: "checkbox", checked: fd.ppe_gloves },
-          { label: "Γυαλιά", type: "checkbox", checked: fd.ppe_glasses },
-          { label: "Υποδήματα", type: "checkbox", checked: fd.ppe_shoes },
-          { label: "Μάσκα", type: "checkbox", checked: fd.ppe_mask },
-          { label: "Κώνοι/κορδέλες LOTO kit", type: "checkbox", checked: fd.eq_cones },
-          { label: "LOTO kit", type: "checkbox", checked: fd.eq_loto_kit },
-        ]},
-        { heading: "E. LOTO", rows: [
-          { label: "AC", type: "checkbox", checked: fd.loto_ac },
-          { label: "PV DC", type: "checkbox", checked: fd.loto_pv },
-          { label: "Μπαταρία", type: "checkbox", checked: fd.loto_battery },
-          { label: "Απομόνωση", type: "checkbox", checked: fd.loto_isolation },
-          { label: "Lock + Tag", value: fd.loto_lock_tag_name || (fd.loto_lock_tag ? "Ναι" : "—") },
-          { label: "Παρατηρήσεις", value: fd.loto_notes },
-        ]},
-        { heading: "F. Ενέργειες Make-Safe", rows: [
-          { label: "F1 Κάλυψη/Απομόνωση ηλεκτρ.", type: "checkbox", checked: fd.f1_cover },
-          { label: "F2 Γυαλί – Συλλογή", type: "checkbox", checked: fd.f2_collect },
-          { label: "F3 Δομικό – Σταθεροποίηση", type: "checkbox", checked: fd.f3_stabilize },
-          { label: "F4 PV – Απομόνωση", type: "checkbox", checked: fd.f4_isolate },
-          { label: "Θερμικό/οσμές", value: fd.f4_thermal === "yes" ? "ΝΑΙ" : fd.f4_thermal === "no" ? "ΟΧΙ" : "—" },
-          { label: "Ολική αφαίρεση στάσης", type: "checkbox", checked: fd.f4_full_removal },
-          { label: "F5 Άλλο", value: fd.f5_other },
-        ]},
-        { heading: "H. Εκκρεμότητες / Corrective", rows: [
-          { label: "Εκκρεμότητες", value: fd.pending_corrective },
-        ]},
-        { heading: "I. Τεκμηρίωση", rows: [
-          { label: "Φωτο ΠΡΙΝ", type: "checkbox", checked: fd.doc_photo_before },
-          { label: "Φωτο ΜΕΤΑ", type: "checkbox", checked: fd.doc_photo_after },
-          { label: "Καταχώρηση ΕΕ στο WM", type: "checkbox", checked: fd.doc_wm },
-          { label: "Make Safe COMPLETED", type: "checkbox", checked: fd.doc_make_safe_completed },
-          { label: "Σχόλια HD/IM", value: fd.doc_hd_comments },
-        ]},
-        { heading: "K. Υπογραφές", rows: [
-          { label: "Τεχνικός", value: fd.sig_tech },
-          { label: "HD / Supervisor", value: fd.sig_hd },
-          { label: "Ημ/νία", value: fd.sig_date },
-        ]},
-      ],
-    });
-    setPrintingPDF(false);
+    try {
+      const res = await base44.functions.invoke('generateMakeSafeChecklistPDF', {
+        incidentId: incident?.incident_id,
+        workOrderId: workOrder?.work_order_id,
+        formData: fd,
+      });
+      if (res.data?.html) {
+        openHtmlPrintWindow(res.data.html, res.data.fileName);
+      } else {
+        toast({ title: "Σφάλμα δημιουργίας PDF", variant: "destructive" });
+      }
+    } catch (err) {
+      toast({ title: err.message || "Σφάλμα PDF", variant: "destructive" });
+    } finally {
+      setPrintingPDF(false);
+    }
   };
 
   // ── Save ───────────────────────────────────────────────────────────────────
