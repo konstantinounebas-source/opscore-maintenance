@@ -148,7 +148,6 @@ export default function AssetFormUnified({ open, onOpenChange, onSave, asset }) 
   const shelterTypes = useConfigLists("Asset Shelter Types");
   const statuses = useConfigLists("Asset Status");
   const evidenceOptions = useConfigLists("Asset Evidence Types");
-  const phases = useConfigLists("Asset Phase");
   const inspectionStatuses = useConfigLists("Asset Inspection Status");
   const defaultDocTypes = ["Installation Photos", "Delivery Note", "Signed Install Form", "Handover Form", "Warranty Document", "Other"];
   const docTypes = evidenceOptions.length ? evidenceOptions : defaultDocTypes;
@@ -267,15 +266,6 @@ export default function AssetFormUnified({ open, onOpenChange, onSave, asset }) 
                 <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                 <SelectContent>
                   {(statuses.length ? statuses : ["Active", "Inactive", "Under Maintenance", "Decommissioned"]).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Phase</Label>
-              <Select value={form.phase || ""} onValueChange={v => set("phase", v)}>
-                <SelectTrigger><SelectValue placeholder="Select (optional)" /></SelectTrigger>
-                <SelectContent>
-                  {phases.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
