@@ -6,7 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2, X } from "lucide-react";
+import { Loader2, X, Printer } from "lucide-react";
+import { printFormAsPDF } from "@/lib/printFormAsPDF";
 
 const Section = ({ title, children }) => (
   <div className="mb-6">
@@ -111,6 +112,75 @@ export default function CorrectiveWOForm({ submission, incident, incidentId, wor
     }
     setSaving(false);
     toast({ title: "Saved as draft" });
+  };
+
+  const [printingPDF, setPrintingPDF] = useState(false);
+  const handlePrintPDF = async () => {
+    setPrintingPDF(true);
+    await printFormAsPDF({
+      title: "Corrective Work Order Checklist",
+      subtitle: `Incident: ${incident?.incident_id || '—'} | WO: ${form.work_order_ref || getWorkOrderRef() || '—'} | Date: ${form.date_of_work || '—'}`,
+      fileName: `CorrectiveWO_${incident?.incident_id || 'form'}_${form.date_of_work || Date.now()}`,
+      sections: [
+        { heading: "Στοιχεία Τεχνικού / Εργασίας", rows: [
+          { label: "Όνομα Τεχνικού", value: form.technician_name },
+          { label: "Τηλέφωνο", value: form.technician_phone },
+          { label: "Επόπτης", value: form.supervisor_name },
+          { label: "Ημερομηνία Εργασίας", value: form.date_of_work },
+          { label: "Αρ. Εντολής Εργασίας", value: form.work_order_ref || getWorkOrderRef() },
+        ]},
+        { heading: "Οχήματα / Εξοπλισμός", rows: [
+          { label: "Βαν", type: "checkbox", checked: form.vehicle_van },
+          { label: "Φορτηγό", type: "checkbox", checked: form.vehicle_truck },
+          { label: "Καλαθοφόρο", type: "checkbox", checked: form.vehicle_cherry_picker },
+          { label: "Άλλο", value: form.vehicle_other ? form.vehicle_other_text || "Ναι" : "—" },
+        ]},
+        { heading: "Δομική Κατασκευή", rows: [
+          { label: "Έλεγχος πλαισίου", type: "checkbox", checked: form.structural_frame_check },
+          { label: "Έλεγχος οροφής", type: "checkbox", checked: form.structural_roof_check },
+          { label: "Έλεγχος πάνελ", type: "checkbox", checked: form.structural_panels_check },
+          { label: "Έλεγχος κοχλιών", type: "checkbox", checked: form.structural_bolts_check },
+          { label: "Σημειώσεις", value: form.structural_notes },
+        ]},
+        { heading: "Πάνελ & Περιμετρικά", rows: [
+          { label: "Πλαϊνά πάνελ", type: "checkbox", checked: form.panels_side_check },
+          { label: "Πίσω πάνελ", type: "checkbox", checked: form.panels_back_check },
+          { label: "Μπροστινό πάνελ", type: "checkbox", checked: form.panels_front_check },
+          { label: "Σφραγίσεις", type: "checkbox", checked: form.panels_seals_check },
+          { label: "Σημειώσεις", value: form.panels_notes },
+        ]},
+        { heading: "Υαλοπίνακες", rows: [
+          { label: "Μπροστινός", type: "checkbox", checked: form.glass_front_check },
+          { label: "Πλαϊνοί", type: "checkbox", checked: form.glass_side_check },
+          { label: "Οροφή", type: "checkbox", checked: form.glass_roof_check },
+          { label: "Σημειώσεις", value: form.glass_notes },
+        ]},
+        { heading: "Ηλεκτρολογικά", rows: [
+          { label: "Φωτισμός", type: "checkbox", checked: form.electrical_lighting_check },
+          { label: "Καλωδίωση", type: "checkbox", checked: form.electrical_wiring_check },
+          { label: "Ασφάλειες", type: "checkbox", checked: form.electrical_fuse_check },
+          { label: "Σημειώσεις", value: form.electrical_notes },
+        ]},
+        { heading: "Ηλεκτρονικά", rows: [
+          { label: "Οθόνη", type: "checkbox", checked: form.electronic_display_check },
+          { label: "Controller", type: "checkbox", checked: form.electronic_controller_check },
+          { label: "Solar / PV", type: "checkbox", checked: form.electronic_solar_check },
+          { label: "Σημειώσεις", value: form.electronic_notes },
+        ]},
+        { heading: "Καθίσματα / Εξοπλισμός", rows: [
+          { label: "Παγκάκι", type: "checkbox", checked: form.seating_bench_check },
+          { label: "Κάδος", type: "checkbox", checked: form.seating_bin_check },
+          { label: "Σήμανση", type: "checkbox", checked: form.seating_signage_check },
+          { label: "Σημειώσεις", value: form.seating_notes },
+        ]},
+        { heading: "Κλείσιμο Εντολής Εργασίας", rows: [
+          { label: "Ολοκληρώθηκαν εργασίες", value: form.work_completed === true ? "ΝΑΙ" : form.work_completed === false ? "ΟΧΙ" : "—" },
+          { label: "Αιτία μη ολοκλήρωσης", value: form.incomplete_reason },
+          { label: "Γενικές Σημειώσεις", value: form.general_notes },
+        ]},
+      ],
+    });
+    setPrintingPDF(false);
   };
 
   const handleSubmit = async () => {
@@ -266,6 +336,9 @@ export default function CorrectiveWOForm({ submission, incident, incidentId, wor
       {/* Footer */}
       <div className="flex justify-end gap-3 px-6 py-4 border-t bg-slate-50">
         <Button variant="outline" onClick={onClose}>Άκυρο</Button>
+        <Button variant="outline" onClick={handlePrintPDF} disabled={printingPDF} className="gap-1.5">
+          <Printer className="w-4 h-4" /> {printingPDF ? "..." : "PDF"}
+        </Button>
         <Button variant="outline" onClick={handleSave} disabled={saving}>
           {saving && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}
           Αποθήκευση Draft
