@@ -81,16 +81,16 @@ Deno.serve(async (req) => {
           <td style="border:none;width:20%;font-size:7px;">${e(fd.date_of_work || '')}</td>
           <td style="border:none;width:14%;font-weight:bold;font-size:7px;">Συμπληρώθηκε από</td>
           <td style="border:none;width:20%;font-size:7px;">${e(fd.completed_by || '')}</td>
-          <td style="border:none;width:14%;font-weight:bold;font-size:7px;color:#c00000;">INCIDENT NUMBER:</td>
-          <td style="border:none;width:18%;font-weight:bold;font-size:7px;">${e(inc.incident_id || '')}</td>
+          <td style="border:none;width:14%;font-weight:bold;font-size:6.5px;color:#c00000;">INCIDENT NUMBER:</td>
+          <td style="border:none;width:18%;font-weight:bold;font-size:6.5px;">${e(inc.incident_id || '')}</td>
         </tr>
         <tr>
           <td style="border:none;font-weight:bold;font-size:7px;">Αρ. Στάσης (ID)</td>
           <td style="border:none;font-size:7px;">${e(asset.asset_id || asset.asset_code || inc.related_asset_name || '')}</td>
           <td style="border:none;font-weight:bold;font-size:7px;">Δήμος</td>
           <td style="border:none;font-size:7px;">${e(inc.municipality || asset.municipality || '')}</td>
-          <td style="border:none;font-weight:bold;font-size:7px;color:#c00000;">WORKORDER NUMBER:</td>
-          <td style="border:none;font-weight:bold;font-size:7px;">${e(resolvedWorkOrderId || fd.work_order_ref || '')}</td>
+          <td style="border:none;font-weight:bold;font-size:6.5px;color:#c00000;">WORKORDER NUMBER:</td>
+          <td style="border:none;font-weight:bold;font-size:6.5px;">${e(resolvedWorkOrderId || fd.work_order_ref || '')}</td>
         </tr>
         <tr>
           <td style="border:none;font-weight:bold;font-size:7px;">Επαρχία</td>
