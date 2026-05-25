@@ -233,8 +233,16 @@ function CloseIncidentModal({ incident, incidentId, workOrders, onClose, onDone 
   const [photos, setPhotos] = useState([]);
   const [saving, setSaving] = useState(false);
 
-  const openWOs = workOrders.filter(w => w.status !== "Completed" && w.status !== "Cancelled");
-  const canClose = openWOs.length === 0;
+  // Only block closure on WOs that are required for this specific incident
+  const requiredOpenWOs = workOrders.filter(w => {
+    if (w.status === "Completed" || w.status === "Cancelled") return false;
+    const title = w.title || "";
+    if (title.includes("Make Safe") && incident.make_safe_required) return true;
+    if (title.includes("Inspection") && incident.inspection_required) return true;
+    if ((title.includes("Corrective") || title.includes("CORR")) && incident.corrective_allowed) return true;
+    return false;
+  });
+  const canClose = requiredOpenWOs.length === 0;
 
   const handleSubmit = async () => {
     setSaving(true);
@@ -291,10 +299,10 @@ function CloseIncidentModal({ incident, incidentId, workOrders, onClose, onDone 
           <DialogTitle>Close Incident</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 mt-2">
-          {openWOs.length > 0 && (
+          {requiredOpenWOs.length > 0 && (
             <div className="p-2.5 bg-red-50 border border-red-200 rounded text-xs text-red-700 flex items-center gap-1.5">
               <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-              {openWOs.length} work order(s) still open. All must be Completed or Cancelled.
+              {requiredOpenWOs.length} required work order(s) still open: {requiredOpenWOs.map(w => w.work_order_id || w.title).join(", ")}. These must be Completed or Cancelled before closing.
             </div>
           )}
           <div className="space-y-1.5">
@@ -607,7 +615,8 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
               <div>
                 <p className="text-sm font-medium text-slate-800">Close Incident</p>
                 <p className="text-xs text-slate-400">
-                  Requires: FMPI submitted{fmpiApprovalRequired ? ", CA Approved" : ""}, all WOs completed, closure photos
+                  Requires: all relevant WOs completed
+                  {fmpiApprovalRequired ? ", CA Approved" : ""}
                 </p>
               </div>
             </div>
