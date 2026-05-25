@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, Pencil, Check, X, GripVertical, ToggleLeft, ToggleRight } from "lucide-react";
+import { Plus, Trash2, Pencil, Check, X, GripVertical, ToggleLeft, ToggleRight, Upload } from "lucide-react";
 import WorkflowConfig from "@/components/configuration/WorkflowConfig";
 import ChildLogicConfig from "@/components/configuration/ChildLogicConfig";
 import FormsConfig from "@/components/configuration/FormsConfig";
@@ -202,13 +202,73 @@ function ListManager({ listTypes, allItems, queryClient }) {
 
 export default function Configuration() {
   const queryClient = useQueryClient();
+  const fileInputRef = useRef(null);
 
   const { data: allItems = [] } = useQuery({ queryKey: ["configLists"], queryFn: () => base44.entities.ConfigLists.list() });
+
+  const importMutation = useMutation({
+    mutationFn: async (file) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      const response = await fetch('/api/functions/importChildCatalog', {
+        method: 'POST',
+        body: formData,
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Import failed');
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      alert(`Success! ${data.message}`);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    },
+    onError: (error) => {
+      alert(`Error: ${error.message}`);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    },
+  });
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (confirm('This will delete all existing ChildCatalog records and replace them with data from the Excel file. Continue?')) {
+        importMutation.mutate(file);
+      }
+    }
+  };
 
   return (
     <div>
       <TopHeader title="Configuration" />
       <div className="p-6 space-y-6">
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <h2 className="text-sm font-semibold text-slate-900 mb-1">Child Catalog Import</h2>
+          <p className="text-xs text-slate-500 mb-4">Upload the Excel price list to import ChildCatalog data. This will replace all existing records.</p>
+          <div className="flex items-center gap-4">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx,.xls"
+              onChange={handleFileUpload}
+              className="hidden"
+              id="catalog-upload"
+            />
+            <label htmlFor="catalog-upload">
+              <Button 
+                className="bg-emerald-600 hover:bg-emerald-700 gap-2" 
+                disabled={importMutation.isPending}
+              >
+                <Upload className="w-4 h-4" /> 
+                {importMutation.isPending ? 'Importing...' : 'Upload Price List'}
+              </Button>
+            </label>
+            {importMutation.isPending && (
+              <span className="text-sm text-slate-500">Processing Excel file...</span>
+            )}
+          </div>
+        </div>
         <div className="bg-white rounded-xl border border-slate-200 p-6">
           <h2 className="text-sm font-semibold text-slate-900 mb-1">Manage Dropdown Lists of Incident</h2>
           <p className="text-xs text-slate-500 mb-6">Configure the dropdown values used across the application. These lists power category, type, status, and priority fields.</p>

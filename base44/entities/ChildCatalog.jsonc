@@ -72,6 +72,38 @@
           },
           "unit_price": {
             "type": "number"
+          },
+          "excel_contract_number": {
+            "type": "string",
+            "description": "Contract Number from Excel"
+          },
+          "excel_contract_item": {
+            "type": "string",
+            "description": "Contract Item from Excel"
+          },
+          "excel_contract_qty": {
+            "type": "number",
+            "description": "Contract Quantity from Excel"
+          },
+          "excel_contract_price": {
+            "type": "number",
+            "description": "Contract Price from Excel"
+          },
+          "excel_allocation_percentage": {
+            "type": "number",
+            "description": "Allocation Percentage from Excel"
+          },
+          "excel_price_allocation": {
+            "type": "number",
+            "description": "Price Allocation from Excel"
+          },
+          "excel_remaining_balance_from_contract_item": {
+            "type": "number",
+            "description": "Remaining Balance From Contract item from Excel"
+          },
+          "excel_total_price": {
+            "type": "number",
+            "description": "Total Price from Excel"
           }
         },
         "required": [
@@ -87,6 +119,38 @@
     "active": {
       "type": "boolean",
       "default": true
+    },
+    "excel_contract_number": {
+      "type": "string",
+      "description": "Contract Number from Excel"
+    },
+    "excel_contract_item": {
+      "type": "string",
+      "description": "Contract Item from Excel"
+    },
+    "excel_contract_qty": {
+      "type": "number",
+      "description": "Contract Quantity from Excel"
+    },
+    "excel_contract_price": {
+      "type": "number",
+      "description": "Contract Price from Excel"
+    },
+    "excel_allocation_percentage": {
+      "type": "number",
+      "description": "Allocation Percentage from Excel"
+    },
+    "excel_price_allocation": {
+      "type": "number",
+      "description": "Price Allocation from Excel"
+    },
+    "excel_remaining_balance_from_contract_item": {
+      "type": "number",
+      "description": "Remaining Balance From Contract item from Excel"
+    },
+    "excel_total_price": {
+      "type": "number",
+      "description": "Total Price from Excel"
     }
   },
   "required": [
