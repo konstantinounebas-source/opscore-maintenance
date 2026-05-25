@@ -4,62 +4,26 @@ Deno.serve(async (req) => {
   try {
     console.log("[generateFormPDF] Received request");
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
 
-    if (!user) {
-      console.error("[generateFormPDF] User not authenticated");
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    console.log("[generateFormPDF] User authenticated:", user.email);
-
-    let requestBody;
-    try {
-      requestBody = await req.json();
-    } catch (err) {
-      console.error("[generateFormPDF] Failed to parse JSON:", err.message);
-      return Response.json({ error: 'Invalid JSON request body' }, { status: 400 });
-    }
-
-    const { submissionId } = requestBody;
+    const { submissionId } = await req.json();
 
     if (!submissionId) {
-      console.error("[generateFormPDF] Missing submissionId");
       return Response.json({ error: 'Missing submissionId parameter' }, { status: 400 });
     }
 
-    console.log("[generateFormPDF] Fetching submission:", submissionId);
-
-    let sub;
-    try {
-      sub = await base44.entities.FormSubmissions.get(submissionId);
-    } catch (err) {
-      console.error("[generateFormPDF] Error fetching submission:", err.message);
-      return Response.json({ error: `Failed to fetch submission: ${err.message}` }, { status: 500 });
-    }
+    const sub = await base44.asServiceRole.entities.FormSubmissions.get(submissionId);
 
     if (!sub) {
-      console.error("[generateFormPDF] Submission not found:", submissionId);
       return Response.json({ error: `Submission ${submissionId} not found` }, { status: 404 });
     }
-
-    console.log("[generateFormPDF] Submission found, form_type:", sub.form_type);
 
     let incident = null;
     let asset = null;
     if (sub.incident_id) {
-      try {
-        incident = await base44.entities.Incidents.get(sub.incident_id);
-      } catch (err) {
-        console.warn("[generateFormPDF] Could not fetch incident:", err.message);
-      }
+      try { incident = await base44.asServiceRole.entities.Incidents.get(sub.incident_id); } catch (_) {}
     }
     if (sub.asset_id) {
-      try {
-        asset = await base44.entities.Assets.get(sub.asset_id);
-      } catch (err) {
-        console.warn("[generateFormPDF] Could not fetch asset:", err.message);
-      }
+      try { asset = await base44.asServiceRole.entities.Assets.get(sub.asset_id); } catch (_) {}
     }
 
     // Build HTML content with proper Unicode support

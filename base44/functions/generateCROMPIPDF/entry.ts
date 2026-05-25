@@ -3,23 +3,21 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { incidentId } = await req.json();
     if (!incidentId) return Response.json({ error: 'Missing incidentId' }, { status: 400 });
 
-    const incident = await base44.entities.Incidents.get(incidentId);
+    const incident = await base44.asServiceRole.entities.Incidents.get(incidentId);
     if (!incident) return Response.json({ error: 'Incident not found' }, { status: 404 });
 
     let asset = null;
     if (incident.related_asset_id) {
-      const results = await base44.entities.Assets.filter({ id: incident.related_asset_id });
+      const results = await base44.asServiceRole.entities.Assets.filter({ id: incident.related_asset_id });
       asset = results[0] || null;
     }
 
     // Fetch the CR+OMPI form submission
-    const submissions = await base44.entities.FormSubmissions.filter({
+    const submissions = await base44.asServiceRole.entities.FormSubmissions.filter({
       incident_id: incidentId,
       form_type: "cr_ompi"
     });
