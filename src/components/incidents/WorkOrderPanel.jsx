@@ -21,7 +21,7 @@ import {
   Plus, ChevronDown, ChevronUp, CheckCircle2, Clock,
   Loader2, Paperclip, StickyNote, XCircle, Lock, FileText
 } from "lucide-react";
-import { nanoid } from 'nanoid';
+import { generateWorkOrderId } from "@/lib/workOrderIdGenerator";
 
 const WO_TYPE_CONFIG = {
   make_safe:   { label: "Make Safe WO",   prefix: "MSAFE", priority: "Critical", color: "text-red-700 bg-red-50 border-red-200" },
@@ -98,7 +98,7 @@ function CreateWOModal({ woType, incident, incidentId, onClose, onDone }) {
       let woCreated = false;
 
       if (true) {
-        const woId = `${config.prefix}-${nanoid(6)}`;
+        const woId = await generateWorkOrderId(woType);
         await base44.entities.WorkOrders.create({
           work_order_id: woId,
           incident_id: incidentId,

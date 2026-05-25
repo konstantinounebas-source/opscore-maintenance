@@ -12,6 +12,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { getAthensTimestamp } from "@/lib/timeSync";
+import { generateWorkOrderId } from "@/lib/workOrderIdGenerator";
 
 import TopHeader from "@/components/layout/TopHeader";
 import { Button } from "@/components/ui/button";
@@ -152,7 +153,7 @@ export default function CROMPIForm({ incident, incidentId, onClose, onDone }) {
         const existingWOs = await base44.entities.WorkOrders.filter({ incident_id: incidentId });
         const hasMakeSafe = existingWOs.some(w => w.title?.toLowerCase().includes("make safe") || w.title?.toLowerCase().includes("make-safe"));
         if (!hasMakeSafe) {
-          const woId = `MSAFE-${Date.now().toString(36).toUpperCase()}`;
+          const woId = await generateWorkOrderId("make_safe");
           await base44.entities.WorkOrders.create({
             work_order_id: woId,
             incident_id: incidentId,
