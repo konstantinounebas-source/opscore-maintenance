@@ -123,7 +123,7 @@ const emptyForm = {
   materials_warranty_end_date: "",
   structural_warranty_end_date: "",
   preventive_inspection_date: "2029-01-01",
-  next_inspection_date: "2030-01-01",
+  next_inspection_date: "2032-01-01",
   // Notes
   notes: "",
   // Attachments (transient)
@@ -177,6 +177,15 @@ export default function AssetFormUnified({ open, onOpenChange, onSave, asset }) 
     const yr = new Date(form.delivery_date).getFullYear() + 1;
     if (yr >= 2000 && yr <= 2100) setForm(f => ({ ...f, warranty_base_year: yr }));
   }, [form.delivery_date]);
+
+  // Auto-calculate next_inspection_date as preventive + 3 years
+  useEffect(() => {
+    if (!form.preventive_inspection_date) return;
+    const d = new Date(form.preventive_inspection_date);
+    if (isNaN(d)) return;
+    d.setFullYear(d.getFullYear() + 3);
+    setForm(f => ({ ...f, next_inspection_date: d.toISOString().split("T")[0] }));
+  }, [form.preventive_inspection_date]);
 
   // Auto-calculate warranty end dates
   useEffect(() => {
