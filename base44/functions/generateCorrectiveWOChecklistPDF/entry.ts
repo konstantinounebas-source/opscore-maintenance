@@ -9,13 +9,24 @@ Deno.serve(async (req) => {
     const { incidentId, workOrderId, formData } = await req.json();
     if (!incidentId) return Response.json({ error: 'Missing incidentId' }, { status: 400 });
 
-    const [incidents, assets] = await Promise.all([
+    const [incidents, workOrders] = await Promise.all([
       base44.asServiceRole.entities.Incidents.filter({ incident_id: incidentId }),
-      base44.asServiceRole.entities.Assets.list(),
+      base44.asServiceRole.entities.WorkOrders.filter({ incident_id: incidentId }),
     ]);
 
     const inc = incidents[0] || {};
-    const asset = assets.find(a => a.id === inc.related_asset_id) || {};
+
+    // Fetch asset by record ID
+    let asset = {};
+    if (inc.related_asset_id) {
+      const allAssets = await base44.asServiceRole.entities.Assets.list('-created_date', 500);
+      asset = allAssets.find(a => a.id === inc.related_asset_id) || {};
+    }
+
+    // Resolve work order number: prefer passed-in, then look up corrective WO for this incident
+    const resolvedWorkOrderId = workOrderId ||
+      workOrders.find(w => w.work_order_type === 'corrective' || w.title?.toLowerCase().includes('corrective'))?.work_order_id ||
+      workOrders[0]?.work_order_id || '';
 
     const fd = formData || {};
 
@@ -72,11 +83,11 @@ Deno.serve(async (req) => {
         </tr>
         <tr>
           <td style="border:none;font-weight:bold;font-size:7px;">Αρ. Στάσης (ID)</td>
-          <td style="border:none;font-size:7px;">${e(asset.asset_code || inc.related_asset_id || '')}</td>
+          <td style="border:none;font-size:7px;">${e(asset.asset_id || asset.asset_code || inc.related_asset_name || '')}</td>
           <td style="border:none;font-weight:bold;font-size:7px;">Δήμος</td>
           <td style="border:none;font-size:7px;">${e(inc.municipality || asset.municipality || '')}</td>
           <td style="border:none;font-weight:bold;font-size:7px;color:#c00000;">WORKORDER NUMBER:</td>
-          <td style="border:none;font-weight:bold;font-size:7px;">${e(workOrderId || fd.work_order_ref || '')}</td>
+          <td style="border:none;font-weight:bold;font-size:7px;">${e(resolvedWorkOrderId || fd.work_order_ref || '')}</td>
         </tr>
         <tr>
           <td style="border:none;font-weight:bold;font-size:7px;">Επαρχία</td>
@@ -440,7 +451,7 @@ Deno.serve(async (req) => {
 </body>
 </html>`;
 
-    const fileName = `CorrectiveWO_${inc.incident_id || 'form'}_${workOrderId || ''}.pdf`;
+    const fileName = `CorrectiveWO_${inc.incident_id || 'form'}_${resolvedWorkOrderId || ''}.pdf`;
     return Response.json({ success: true, html, fileName });
 
   } catch (error) {
