@@ -470,18 +470,6 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {workflowState !== "Awaiting_CR_OMPI" && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="text-xs h-8 gap-1 border-blue-200 text-blue-700 hover:bg-blue-50"
-                onClick={handleDownloadCROMPIPDF}
-                disabled={downloadingPDF}
-              >
-                {downloadingPDF ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
-                PDF
-              </Button>
-            )}
             <Button
               size="sm"
               variant={workflowState === "Awaiting_CR_OMPI" ? "default" : "outline"}
