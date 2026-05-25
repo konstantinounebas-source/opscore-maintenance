@@ -152,7 +152,7 @@ export default function MakeSafeChecklistForm({ submission, incidents, assets, w
       if (linkedIncidentId && !linkedWOId && incident) {
         try {
           const newWO = await base44.entities.WorkOrders.create({
-            work_order_id: `WO-${Date.now()}`,
+            work_order_id: `MS-${Date.now()}`,
             incident_id: linkedIncidentId,
             title: `Make-Safe WO for ${incident.incident_id}`,
             related_asset_id: incident.related_asset_id,
@@ -248,7 +248,7 @@ export default function MakeSafeChecklistForm({ submission, incidents, assets, w
           const inc = incidentList[0];
           const { nanoid } = await import('nanoid');
           await base44.entities.WorkOrders.create({
-            work_order_id: `MSAFE-${nanoid(6)}`,
+           work_order_id: `MS-${nanoid(6)}`,
             incident_id: incId,
             title: `Make Safe WO - ${inc?.incident_id || incId}`,
             related_asset_id: inc?.related_asset_id || data.asset_id,
