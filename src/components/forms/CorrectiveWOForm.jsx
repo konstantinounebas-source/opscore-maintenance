@@ -231,11 +231,41 @@ export default function CorrectiveWOForm({ submission, incident, incidentId, wor
   const handleSubmit = async () => {
     setSubmitting(true);
     const payload = { ...buildPayload("Submitted"), submitted_at: new Date().toISOString() };
-    if (submission?.id) {
-      await base44.entities.FormSubmissions.update(submission.id, payload);
-    } else {
-      await base44.entities.FormSubmissions.create(payload);
+    const result = submission?.id
+      ? await base44.entities.FormSubmissions.update(submission.id, payload)
+      : await base44.entities.FormSubmissions.create(payload);
+    
+    // Auto-generate PDF and attach to incident evidence
+    try {
+      const user = await base44.auth.me();
+      const pdfRes = await base44.functions.invoke('generateCorrectiveWOChecklistPDF', {
+        incidentId: incident?.incident_id || incidentId,
+        workOrderId: form.work_order_ref || getWorkOrderRef(),
+        formData: { ...form, corr_id: corrId },
+      });
+      const { html, fileName } = pdfRes.data;
+      const blob = new Blob([html], { type: 'text/html' });
+      const file = new File([blob], fileName.replace('.pdf', '_CorrectiveWO_Report.html'), { type: 'text/html' });
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      await base44.entities.IncidentAttachments.create({
+        incident_id: incidentId,
+        file_url,
+        file_name: fileName.replace('.pdf', '_CorrectiveWO_Report.html'),
+        file_type: "Document",
+        uploaded_by: user?.email,
+      });
+      await base44.entities.IncidentAuditTrail.create({
+        incident_id: incidentId,
+        action: "Corrective WO PDF Generated",
+        details: `Corrective WO Checklist PDF report automatically generated and attached.`,
+        user: user?.email,
+        attachments: [file_url],
+        attachment_names: [fileName.replace('.pdf', '_CorrectiveWO_Report.html')],
+      });
+    } catch (pdfErr) {
+      console.warn("Corrective WO PDF auto-attach failed:", pdfErr?.message);
     }
+    
     setSubmitting(false);
     toast({ title: "Form submitted successfully" });
     onClose();

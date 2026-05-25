@@ -240,7 +240,7 @@ export default function MakeSafeChecklistForm({ submission, incidents, assets, w
         ));
       }
 
-      // On Submission: create WO + update incident workflow flag
+      // On Submission: create WO + update incident workflow flag + auto-attach PDF
       if (data.status === "Submitted" && incId) {
         // Create Make Safe WO if none exists yet for this incident
         const existingWOs = await base44.entities.WorkOrders.filter({ incident_id: incId });
@@ -265,6 +265,35 @@ export default function MakeSafeChecklistForm({ submission, incidents, assets, w
         const incidentList2 = await base44.entities.Incidents.filter({ id: incId });
         if (incidentList2.length > 0) {
           await base44.entities.Incidents.update(incidentList2[0].id, { make_safe_done: true });
+        }
+
+        // Auto-generate PDF and attach to incident evidence
+        try {
+          const pdfRes = await base44.functions.invoke('generateMakeSafeChecklistPDF', {
+            incidentId: incId,
+            formData: data.form_data,
+          });
+          const { html, fileName } = pdfRes.data;
+          const blob = new Blob([html], { type: 'text/html' });
+          const file = new File([blob], fileName.replace('.pdf', '_MakeSafe_Report.html'), { type: 'text/html' });
+          const { file_url } = await base44.integrations.Core.UploadFile({ file });
+          await base44.entities.IncidentAttachments.create({
+            incident_id: incId,
+            file_url,
+            file_name: fileName.replace('.pdf', '_MakeSafe_Report.html'),
+            file_type: "Document",
+            uploaded_by: user?.email,
+          });
+          await base44.entities.IncidentAuditTrail.create({
+            incident_id: incId,
+            action: "Make Safe PDF Generated",
+            details: `Make Safe Checklist PDF report automatically generated and attached.`,
+            user: user?.email,
+            attachments: [file_url],
+            attachment_names: [fileName.replace('.pdf', '_MakeSafe_Report.html')],
+          });
+        } catch (pdfErr) {
+          console.warn("Make Safe PDF auto-attach failed:", pdfErr?.message);
         }
       }
 
