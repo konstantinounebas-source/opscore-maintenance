@@ -23,8 +23,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeft, Save, Send, AlertTriangle, CheckCircle2,
-  Lock, Paperclip, Info, FileText, ClipboardCheck
+  Lock, Paperclip, Info, FileText, ClipboardCheck, Download
 } from "lucide-react";
+import { openHtmlPrintWindow } from "@/lib/printFormAsPDF";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/AuthContext";
 import FileUploadArea from "@/components/shared/FileUploadArea";
@@ -97,6 +98,20 @@ export default function CROMPIForm({ incident, incidentId, onClose, onDone }) {
   const [ompiNotes, setOmpiNotes] = useState(incident?.description || "");
   const [attachments, setAttachments] = useState([]);
   const [saving, setSaving] = useState(false);
+  const [downloadingPDF, setDownloadingPDF] = useState(false);
+
+  const handleDownloadPDF = async () => {
+    setDownloadingPDF(true);
+    try {
+      const pdfRes = await base44.functions.invoke('generateCROMPIPDF', { incidentId });
+      const { html, fileName } = pdfRes.data;
+      openHtmlPrintWindow(html, fileName);
+    } catch (err) {
+      toast({ title: "PDF Error", description: err?.message || "Failed to generate PDF" });
+    } finally {
+      setDownloadingPDF(false);
+    }
+  };
 
   const subsystem = useMemo(() => deriveSubsystem(incident), [incident]);
   const assetId = incident?.related_asset_id;
@@ -280,6 +295,11 @@ export default function CROMPIForm({ incident, incidentId, onClose, onDone }) {
             <Button variant="outline" size="sm" onClick={onClose} className="gap-1.5 text-xs">
               <ArrowLeft className="w-3.5 h-3.5" /> Back
             </Button>
+            {isEditing && (
+              <Button variant="outline" size="sm" onClick={handleDownloadPDF} disabled={downloadingPDF} className="gap-1.5 text-xs">
+                <Download className="w-3.5 h-3.5" /> {downloadingPDF ? "..." : "PDF"}
+              </Button>
+            )}
             <Button size="sm" onClick={() => handleSubmit("Submitted")} disabled={saving}
               className="bg-indigo-600 hover:bg-indigo-700 gap-1.5 text-xs">
               <Send className="w-3.5 h-3.5" /> {saving ? "Submitting..." : "Submit CR + OMPI"}

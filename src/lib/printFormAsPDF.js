@@ -1,4 +1,26 @@
 /**
+ * Opens a pre-built HTML string in a print window (for server-generated HTML PDFs).
+ */
+export function openHtmlPrintWindow(html, fileName) {
+  const win = window.open('', '_blank');
+  if (!win) {
+    // Fallback: blob download as HTML
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = (fileName || 'document').replace(/\.pdf$/, '.html');
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    return;
+  }
+  win.document.write(html);
+  win.document.close();
+}
+
+/**
  * Generates a styled A4 PDF from form data using jsPDF + html2canvas.
  * Renders content in a visible overlay to avoid blank canvas issues.
  */

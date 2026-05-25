@@ -2,10 +2,12 @@ import { Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { useState } from 'react';
-import { toast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/ui/use-toast';
+import { openHtmlPrintWindow } from '@/lib/printFormAsPDF';
 
 export default function WorkOrderDownloadButton({ workOrderId, workOrderType, incidentId }) {
   const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
   const handleDownload = async () => {
     try {
@@ -13,24 +15,16 @@ export default function WorkOrderDownloadButton({ workOrderId, workOrderType, in
       const response = await base44.functions.invoke('generateWorkOrderPDF', {
         workOrderId,
         workOrderType,
-        incidentId
+        incidentId,
       });
 
-      if (!response.data) {
+      const { html, fileName } = response.data;
+      if (!html) {
         toast({ title: 'Error', description: 'Failed to generate PDF' });
         return;
       }
 
-      // Create blob and download
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${workOrderType.replace(/\s+/g, '_')}_${workOrderId}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      openHtmlPrintWindow(html, fileName);
     } catch (error) {
       toast({ title: 'Error', description: error.message });
     } finally {

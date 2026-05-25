@@ -7,7 +7,8 @@ Deno.serve(async (req) => {
     const { incidentId } = await req.json();
     if (!incidentId) return Response.json({ error: 'Missing incidentId' }, { status: 400 });
 
-    const incident = await base44.asServiceRole.entities.Incidents.get(incidentId);
+    const incidentList = await base44.asServiceRole.entities.Incidents.filter({ id: incidentId });
+    const incident = incidentList[0];
     if (!incident) return Response.json({ error: 'Incident not found' }, { status: 404 });
 
     let asset = null;
@@ -234,6 +235,11 @@ Deno.serve(async (req) => {
   </div>
 
 </div>
+  <script>
+    window.onload = function() {
+      setTimeout(function() { window.print(); }, 300);
+    };
+  </script>
 </body>
 </html>`;
 
