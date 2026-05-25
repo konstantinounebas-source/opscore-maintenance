@@ -2,30 +2,16 @@
  * Opens a pre-built HTML string in a print window (for server-generated HTML PDFs).
  */
 export function openHtmlPrintWindow(html, fileName) {
-  const win = window.open('', '_blank');
-  if (!win) {
-    // Fallback: blob download as HTML
-    const blob = new Blob([html], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = (fileName || 'document').replace(/\.pdf$/, '.html');
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    return;
-  }
-  
-  // Write HTML
-  win.document.write(html);
-  win.document.close();
-  
-  // Wait for fonts and styles to render, then print
-  setTimeout(() => {
-    win.focus();
-    win.print();
-  }, 1000);
+  // Download as HTML file - user can open and print from browser
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = (fileName || 'document').replace(/\.pdf$/, '.html');
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 /**
