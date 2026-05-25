@@ -260,16 +260,25 @@ export default function CROMPIForm({ incident, incidentId, onClose, onDone }) {
       try {
         const pdfRes = await base44.functions.invoke('generateCROMPIPDF', { incidentId });
         const { html, fileName } = pdfRes.data;
-        // Convert HTML to a Blob and upload as PDF attachment
+        // Convert HTML to a Blob and upload as HTML report attachment
         const blob = new Blob([html], { type: 'text/html' });
         const file = new File([blob], fileName.replace('.pdf', '.html'), { type: 'text/html' });
         const { file_url } = await base44.integrations.Core.UploadFile({ file });
         await base44.entities.IncidentAttachments.create({
           incident_id: incidentId,
           file_url,
-          file_name: fileName.replace('.pdf', '_report.html'),
+          file_name: fileName.replace('.pdf', '_CROMPI_Report.html'),
           file_type: "Document",
           uploaded_by: user?.email,
+        });
+        // Add audit trail entry for the PDF attachment
+        await base44.entities.IncidentAuditTrail.create({
+          incident_id: incidentId,
+          action: "CR+OMPI PDF Generated",
+          details: `CR+OMPI PDF report automatically generated and attached.`,
+          user: user?.email,
+          attachments: [file_url],
+          attachment_names: [fileName.replace('.pdf', '_CROMPI_Report.html')],
         });
       } catch (pdfErr) {
         console.warn("CR+OMPI PDF auto-attach failed:", pdfErr?.message);
