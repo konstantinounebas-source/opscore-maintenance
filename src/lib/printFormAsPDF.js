@@ -1,8 +1,9 @@
 /**
- * Renders a form's current data as a styled A4 PDF and downloads it.
+ * Opens a styled print window and triggers the browser's Save as PDF dialog.
+ * This approach is 100% reliable — no canvas rendering issues.
  */
-export async function printFormAsPDF({ title, subtitle, sections, fileName }) {
-  const checkmark = (val) => val ? '☑' : '☐';
+export function printFormAsPDF({ title, subtitle, sections, fileName }) {
+  const checkmark = (val) => val ? '&#9745;' : '&#9744;';
 
   const escapeHtml = (s) =>
     String(s ?? '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m]));
@@ -10,83 +11,137 @@ export async function printFormAsPDF({ title, subtitle, sections, fileName }) {
   const sectionsHtml = sections.map(sec => {
     const rowsHtml = sec.rows.map(row => {
       if (row.type === 'checkbox') {
-        return `<tr><td colspan="2" style="padding:4px 8px;border-bottom:1px solid #f1f5f9;font-size:11px;">
-          <span style="font-size:14px;">${checkmark(row.checked)}</span>&nbsp;${escapeHtml(String(row.label))}
-        </td></tr>`;
+        return `<tr>
+          <td colspan="2" class="cb-row">
+            <span class="cb">${checkmark(row.checked)}</span>&nbsp;${escapeHtml(String(row.label))}
+          </td>
+        </tr>`;
       }
       let displayVal;
       if (row.value === null || row.value === undefined || row.value === '') {
-        displayVal = '<span style="color:#94a3b8;">—</span>';
+        displayVal = '<span class="empty">—</span>';
       } else if (typeof row.value === 'boolean') {
-        displayVal = row.value ? '<span style="color:#16a34a;font-weight:bold;">✓ Ναι</span>' : '<span style="color:#dc2626;">✗ Όχι</span>';
+        displayVal = row.value
+          ? '<span class="yes">✓ Ναι</span>'
+          : '<span class="no">✗ Όχι</span>';
       } else {
         displayVal = escapeHtml(String(row.value));
       }
       return `<tr>
-        <td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;font-size:11px;font-weight:600;color:#64748b;width:38%;vertical-align:top;">${escapeHtml(String(row.label))}</td>
-        <td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;font-size:11px;color:#1e293b;vertical-align:top;">${displayVal}</td>
+        <td class="label-cell">${escapeHtml(String(row.label))}</td>
+        <td class="value-cell">${displayVal}</td>
       </tr>`;
     }).join('');
 
     return `
-      <div style="margin-bottom:14px;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;page-break-inside:avoid;">
-        <div style="background:#f8fafc;border-bottom:1px solid #e2e8f0;padding:7px 12px;">
-          <span style="font-size:11px;font-weight:700;color:#334155;text-transform:uppercase;letter-spacing:0.5px;">${escapeHtml(sec.heading || '')}</span>
-        </div>
-        <table style="width:100%;border-collapse:collapse;">${rowsHtml}</table>
+      <div class="section">
+        <div class="section-heading">${escapeHtml(sec.heading || '')}</div>
+        <table>${rowsHtml}</table>
       </div>`;
   }).join('');
 
-  // Build the wrapper div (NOT a full HTML doc — html2pdf renders from a DOM element)
-  const wrapper = document.createElement('div');
-  wrapper.style.cssText = `
-    position: fixed;
-    left: -9999px;
-    top: 0;
-    width: 794px;
-    background: #fff;
-    font-family: Arial, Helvetica, sans-serif;
-  `;
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>${escapeHtml(title)}</title>
+  <style>
+    @page { size: A4 portrait; margin: 12mm 12mm 12mm 12mm; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: #1a1a2e; background: #fff; }
 
-  wrapper.innerHTML = `
-    <div style="padding:24px 28px;background:#fff;">
-      <!-- Header -->
-      <div style="background:linear-gradient(135deg,#1e3a8a 0%,#3b82f6 100%);color:white;padding:16px 20px;border-radius:8px;margin-bottom:18px;">
-        <div style="font-size:16px;font-weight:700;">${escapeHtml(title)}</div>
-        ${subtitle ? `<div style="font-size:10px;opacity:0.85;margin-top:3px;">${escapeHtml(subtitle)}</div>` : ''}
-      </div>
+    .doc-header {
+      background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+      color: white;
+      padding: 14px 18px;
+      border-radius: 6px;
+      margin-bottom: 14px;
+    }
+    .doc-header h1 { font-size: 15px; font-weight: 700; }
+    .doc-header p { font-size: 10px; opacity: 0.85; margin-top: 3px; }
 
-      <!-- Sections -->
-      ${sectionsHtml}
+    .section {
+      margin-bottom: 10px;
+      border: 1px solid #e2e8f0;
+      border-radius: 5px;
+      overflow: hidden;
+      page-break-inside: avoid;
+    }
+    .section-heading {
+      background: #f1f5f9;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 5px 10px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #334155;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
 
-      <!-- Footer -->
-      <div style="border-top:1px solid #e2e8f0;margin-top:18px;padding-top:8px;display:flex;justify-content:space-between;font-size:9px;color:#94a3b8;">
-        <span>${escapeHtml(title)}</span>
-        <span>Generated: ${new Date().toLocaleString('el-GR')}</span>
-      </div>
-    </div>
-  `;
+    table { width: 100%; border-collapse: collapse; }
+    tr:last-child td { border-bottom: none; }
 
-  document.body.appendChild(wrapper);
+    .label-cell {
+      padding: 4px 8px;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 10px;
+      font-weight: 600;
+      color: #64748b;
+      width: 38%;
+      vertical-align: top;
+    }
+    .value-cell {
+      padding: 4px 8px;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 10px;
+      color: #1e293b;
+      vertical-align: top;
+    }
+    .cb-row {
+      padding: 3px 8px;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 10px;
+      color: #1e293b;
+    }
+    .cb { font-size: 13px; }
+    .empty { color: #94a3b8; }
+    .yes { color: #16a34a; font-weight: bold; }
+    .no  { color: #dc2626; font-weight: bold; }
 
-  try {
-    const html2pdf = (await import('html2pdf.js')).default;
-    await html2pdf()
-      .set({
-        margin: [8, 8, 8, 8],
-        filename: `${fileName || 'form'}.pdf`,
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          backgroundColor: '#ffffff',
-        },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['avoid-all', 'css'] },
-      })
-      .from(wrapper)
-      .save();
-  } finally {
-    document.body.removeChild(wrapper);
-  }
+    .doc-footer {
+      border-top: 1px solid #e2e8f0;
+      margin-top: 14px;
+      padding-top: 6px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 8px;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+  <div class="doc-header">
+    <h1>${escapeHtml(title)}</h1>
+    ${subtitle ? `<p>${escapeHtml(subtitle)}</p>` : ''}
+  </div>
+
+  ${sectionsHtml}
+
+  <div class="doc-footer">
+    <span>${escapeHtml(title)}</span>
+    <span>Generated: ${new Date().toLocaleString('el-GR')}</span>
+  </div>
+
+  <script>
+    window.onload = function() {
+      document.title = ${JSON.stringify(fileName || title)};
+      setTimeout(function() { window.print(); }, 300);
+    };
+  </script>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank');
+  win.document.write(html);
+  win.document.close();
 }
