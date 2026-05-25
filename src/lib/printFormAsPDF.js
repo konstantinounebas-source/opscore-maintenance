@@ -16,13 +16,18 @@ export function openHtmlPrintWindow(html, fileName) {
     URL.revokeObjectURL(url);
     return;
   }
+  
+  // Write HTML and wait for fonts/styles to load
   win.document.write(html);
   win.document.close();
-  // Delay print to allow DOM to render
-  setTimeout(() => {
-    win.focus();
-    win.print();
-  }, 500);
+  
+  // Wait for all resources (fonts, styles) to load before printing
+  win.addEventListener('load', () => {
+    setTimeout(() => {
+      win.focus();
+      win.print();
+    }, 800);
+  });
 }
 
 /**
