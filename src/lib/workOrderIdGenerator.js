@@ -1,7 +1,7 @@
 import { base44 } from "@/api/base44Client";
 
 const PREFIX_MAP = {
-  make_safe: "MSAFE",
+  make_safe: "MS",
   inspection: "INSP",
   corrective: "CORR",
 };

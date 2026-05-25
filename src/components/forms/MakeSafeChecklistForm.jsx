@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { getAthensTimestamp } from "@/lib/timeSync";
+import { generateWorkOrderId } from "@/lib/workOrderIdGenerator";
 import TopHeader from "@/components/layout/TopHeader";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -151,8 +152,9 @@ export default function MakeSafeChecklistForm({ submission, incidents, assets, w
     const createWO = async () => {
       if (linkedIncidentId && !linkedWOId && incident) {
         try {
+          const woId = await generateWorkOrderId("make_safe");
           const newWO = await base44.entities.WorkOrders.create({
-            work_order_id: `MS-${Date.now()}`,
+            work_order_id: woId,
             incident_id: linkedIncidentId,
             title: `Make-Safe WO for ${incident.incident_id}`,
             related_asset_id: incident.related_asset_id,
@@ -246,9 +248,9 @@ export default function MakeSafeChecklistForm({ submission, incidents, assets, w
         if (!hasMakeSafeWO) {
           const incidentList = await base44.entities.Incidents.filter({ id: incId });
           const inc = incidentList[0];
-          const { nanoid } = await import('nanoid');
+          const woId = await generateWorkOrderId("make_safe");
           await base44.entities.WorkOrders.create({
-           work_order_id: `MS-${nanoid(6)}`,
+           work_order_id: woId,
             incident_id: incId,
             title: `Make Safe WO - ${inc?.incident_id || incId}`,
             related_asset_id: inc?.related_asset_id || data.asset_id,
