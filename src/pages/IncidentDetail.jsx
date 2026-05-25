@@ -188,7 +188,7 @@ export default function IncidentDetail() {
           )}
 
           {/* Incident Evidence — all attachments with image thumbnails */}
-          <IncidentAttachmentsPreview attachments={attachments} auditTrail={auditTrail} />
+          <IncidentAttachmentsPreview attachments={attachments} auditTrail={auditTrail} evidenceFiles={incident.evidence_files || []} />
 
           <button
             onClick={() => setShowMore(v => !v)}

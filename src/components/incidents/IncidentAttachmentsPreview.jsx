@@ -105,7 +105,7 @@ function DocCard({ doc }) {
 const IMAGE_PREVIEW_LIMIT = 6;
 const DOC_PREVIEW_LIMIT = 5;
 
-export default function IncidentAttachmentsPreview({ attachments = [], auditTrail = [] }) {
+export default function IncidentAttachmentsPreview({ attachments = [], auditTrail = [], evidenceFiles = [] }) {
   const [lightbox, setLightbox] = useState(null);
   const [showAllImages, setShowAllImages] = useState(false);
   const [showAllDocs, setShowAllDocs] = useState(false);
@@ -113,6 +113,15 @@ export default function IncidentAttachmentsPreview({ attachments = [], auditTrai
   // Collect all unique files (same logic as IncidentDocuments)
   const seen = new Set();
   const allDocs = [];
+
+  // Include evidence_files stored directly on the incident (uploaded at creation time)
+  evidenceFiles.forEach(url => {
+    if (url && !seen.has(url)) {
+      seen.add(url);
+      const name = url.split("/").pop() || "attachment";
+      allDocs.push({ url, name });
+    }
+  });
 
   attachments.forEach(a => {
     if (!seen.has(a.file_url)) {
