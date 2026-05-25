@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2, X, Printer } from "lucide-react";
 import { printFormAsPDF } from "@/lib/printFormAsPDF";
+import { generateWorkOrderId } from "@/lib/workOrderIdGenerator";
 
 const Section = ({ title, children }) => (
   <div className="mb-6">
@@ -85,8 +86,16 @@ export default function CorrectiveWOForm({ submission, incident, incidentId, wor
 
   const existingData = submission?.form_data || {};
   const [form, setForm] = useState({ ...defaultData, ...existingData });
+  const [corrId, setCorrId] = useState(existingData.corr_id || "");
 
   const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
+
+  // Auto-generate CORR ID for new forms
+  useEffect(() => {
+    if (!existingData.corr_id) {
+      generateWorkOrderId("corrective").then(id => setCorrId(id));
+    }
+  }, []);
 
   const getWorkOrderRef = () => {
     if (form.work_order_ref) return form.work_order_ref;
@@ -100,7 +109,7 @@ export default function CorrectiveWOForm({ submission, incident, incidentId, wor
     incident_id: incidentId,
     asset_id: incident?.related_asset_id || "",
     status,
-    form_data: { ...form, work_order_ref: form.work_order_ref || getWorkOrderRef() },
+    form_data: { ...form, work_order_ref: form.work_order_ref || getWorkOrderRef(), corr_id: corrId },
   });
 
   const handleSave = async () => {
@@ -119,10 +128,11 @@ export default function CorrectiveWOForm({ submission, incident, incidentId, wor
     setPrintingPDF(true);
     await printFormAsPDF({
       title: "Corrective Work Order Checklist",
-      subtitle: `Incident: ${incident?.incident_id || '—'} | WO: ${form.work_order_ref || getWorkOrderRef() || '—'} | Date: ${form.date_of_work || '—'}`,
-      fileName: `CorrectiveWO_${incident?.incident_id || 'form'}_${form.date_of_work || Date.now()}`,
+      subtitle: `CORR ID: ${corrId || '—'} | Incident: ${incident?.incident_id || '—'} | WO: ${form.work_order_ref || getWorkOrderRef() || '—'} | Date: ${form.date_of_work || '—'}`,
+      fileName: `CorrectiveWO_${corrId || incident?.incident_id || 'form'}_${form.date_of_work || Date.now()}`,
       sections: [
         { heading: "Στοιχεία Τεχνικού / Εργασίας", rows: [
+          { label: "CORR ID", value: corrId },
           { label: "Όνομα Τεχνικού", value: form.technician_name },
           { label: "Τηλέφωνο", value: form.technician_phone },
           { label: "Επόπτης", value: form.supervisor_name },
@@ -201,7 +211,14 @@ export default function CorrectiveWOForm({ submission, incident, incidentId, wor
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b bg-slate-50">
         <div>
-          <h2 className="text-base font-semibold text-slate-800">Corrective Work Order Checklist</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-base font-semibold text-slate-800">Corrective Work Order Checklist</h2>
+            {corrId && (
+              <span className="text-xs font-mono font-bold bg-blue-100 text-blue-800 px-2 py-0.5 rounded border border-blue-200">
+                {corrId}
+              </span>
+            )}
+          </div>
           {incident && (
             <p className="text-xs text-slate-500 mt-0.5">
               Incident: {incident.incident_id} — {incident.title}
@@ -235,7 +252,11 @@ export default function CorrectiveWOForm({ submission, incident, incidentId, wor
               <Label className="text-xs text-slate-500 mb-1 block">Ημερομηνία Εργασίας</Label>
               <Input type="date" value={form.date_of_work} onChange={e => set("date_of_work", e.target.value)} />
             </div>
-            <div className="col-span-2">
+            <div>
+              <Label className="text-xs text-slate-500 mb-1 block">CORR ID</Label>
+              <Input value={corrId} readOnly className="bg-slate-50 font-mono font-semibold text-blue-800" />
+            </div>
+            <div>
               <Label className="text-xs text-slate-500 mb-1 block">Αρ. Εντολής Εργασίας</Label>
               <Input value={form.work_order_ref || getWorkOrderRef()} onChange={e => set("work_order_ref", e.target.value)} placeholder="WO-..." />
             </div>
