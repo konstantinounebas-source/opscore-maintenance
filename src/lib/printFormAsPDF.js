@@ -18,6 +18,11 @@ export function openHtmlPrintWindow(html, fileName) {
   }
   win.document.write(html);
   win.document.close();
+  // Delay print to allow DOM to render
+  setTimeout(() => {
+    win.focus();
+    win.print();
+  }, 500);
 }
 
 /**

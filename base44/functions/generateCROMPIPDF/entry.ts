@@ -235,11 +235,7 @@ Deno.serve(async (req) => {
   </div>
 
 </div>
-  <script>
-    window.onload = function() {
-      setTimeout(function() { window.print(); }, 300);
-    };
-  </script>
+
 </body>
 </html>`;
 
