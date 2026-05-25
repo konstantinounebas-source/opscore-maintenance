@@ -9,7 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Loader2 } from "lucide-react";
 import MakeSafeChecklistForm from "@/components/forms/MakeSafeChecklistForm";
-import WorkOrderFormF from "@/components/forms/WorkOrderFormF";
+import CorrectiveWOForm from "@/components/forms/CorrectiveWOForm.jsx";
 
 export default function EmbeddedFormWrapper({
   woType,
@@ -20,14 +20,14 @@ export default function EmbeddedFormWrapper({
   allChildAssets,
   onClose,
 }) {
-  // Load existing FMPI submission if it exists
+  // Load existing corrective WO checklist submission if it exists
   const { data: existingFMPI = [], isLoading: fmpiLoading } = useQuery({
-    queryKey: ["fmpiSubmissions", incidentId],
+    queryKey: ["correctiveWOSubmissions", incidentId],
     queryFn: async () => {
       if (woType !== "corrective") return [];
       const submissions = await base44.entities.FormSubmissions.filter({
         incident_id: incidentId,
-        form_type: "combined_fmpi_invoice",
+        form_type: "corrective_wo_checklist",
       });
       return submissions;
     },
@@ -74,15 +74,12 @@ export default function EmbeddedFormWrapper({
           />
         )}
         {woType === "corrective" && (
-          <WorkOrderFormF
+          <CorrectiveWOForm
             submission={fmpiToEdit}
-            incidents={allIncidents}
-            assets={allAssets}
+            incident={allIncidents.find(i => i.id === incidentId)}
+            incidentId={incidentId}
             workOrders={allWorkOrders}
-            childAssets={allChildAssets}
-            crews={[]}
             onClose={onClose}
-            defaultIncidentId={incidentId}
           />
         )}
       </DialogContent>
