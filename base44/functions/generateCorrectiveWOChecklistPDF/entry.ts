@@ -9,23 +9,26 @@ Deno.serve(async (req) => {
     const { incidentId, workOrderId, formData } = await req.json();
     if (!incidentId) return Response.json({ error: 'Missing incidentId' }, { status: 400 });
 
-    const [incidents, workOrders] = await Promise.all([
-      base44.asServiceRole.entities.Incidents.filter({ incident_id: incidentId }),
-      base44.asServiceRole.entities.WorkOrders.filter({ incident_id: incidentId }),
-    ]);
-
+    const incidents = await base44.asServiceRole.entities.Incidents.filter({ incident_id: incidentId });
     const inc = incidents[0] || {};
 
-    // Fetch asset by record ID
+    // Fetch asset and work orders in parallel using the incident's record ID
     let asset = {};
-    if (inc.related_asset_id) {
-      const allAssets = await base44.asServiceRole.entities.Assets.list('-created_date', 500);
-      asset = allAssets.find(a => a.id === inc.related_asset_id) || {};
+    let workOrders = [];
+    if (inc.id) {
+      const [allAssets, wos] = await Promise.all([
+        inc.related_asset_id ? base44.asServiceRole.entities.Assets.list('-created_date', 500) : Promise.resolve([]),
+        base44.asServiceRole.entities.WorkOrders.filter({ incident_id: inc.id }),
+      ]);
+      if (inc.related_asset_id) {
+        asset = allAssets.find(a => a.id === inc.related_asset_id) || {};
+      }
+      workOrders = wos;
     }
 
-    // Resolve work order number: prefer passed-in, then look up corrective WO for this incident
+    // Resolve work order number: prefer passed-in, then corrective WO, then first WO
     const resolvedWorkOrderId = workOrderId ||
-      workOrders.find(w => w.work_order_type === 'corrective' || w.title?.toLowerCase().includes('corrective'))?.work_order_id ||
+      workOrders.find(w => w.title?.toLowerCase().includes('corrective'))?.work_order_id ||
       workOrders[0]?.work_order_id || '';
 
     const fd = formData || {};
