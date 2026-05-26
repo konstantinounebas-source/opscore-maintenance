@@ -390,9 +390,16 @@ function TypeTemplatesTab({ templates, catalog, shelterTypeDefs, queryClient }) 
     });
   };
 
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
   const resetAndPopulate = async () => {
-    await Promise.all(typeRows.map(row => base44.entities.TypeTemplates.delete(row.id)));
+    // Delete in small batches to avoid rate limit
+    for (let i = 0; i < typeRows.length; i += 5) {
+      await Promise.all(typeRows.slice(i, i + 5).map(row => base44.entities.TypeTemplates.delete(row.id)));
+      if (i + 5 < typeRows.length) await sleep(300);
+    }
     await queryClient.invalidateQueries({ queryKey: ["typeTemplates"] });
+    // Create with a small delay between each
     for (let idx = 0; idx < matchingChildren.length; idx++) {
       await base44.entities.TypeTemplates.create({
         shelter_type_code: selectedType,
@@ -402,6 +409,7 @@ function TypeTemplatesTab({ templates, catalog, shelterTypeDefs, queryClient }) 
         display_order: idx,
         active: true,
       });
+      if (idx % 5 === 4) await sleep(300);
     }
     queryClient.invalidateQueries({ queryKey: ["typeTemplates"] });
   };
