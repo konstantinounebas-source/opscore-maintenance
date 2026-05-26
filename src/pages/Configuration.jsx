@@ -208,17 +208,9 @@ export default function Configuration() {
 
   const importMutation = useMutation({
     mutationFn: async (file) => {
-      const formData = new FormData();
-      formData.append('file', file);
-      const response = await fetch('/api/functions/importChildCatalog', {
-        method: 'POST',
-        body: formData,
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Import failed');
-      }
-      return response.json();
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const response = await base44.functions.invoke('importChildCatalog', { file_url });
+      return response.data;
     },
     onSuccess: (data) => {
       alert(`Success! ${data.message}`);

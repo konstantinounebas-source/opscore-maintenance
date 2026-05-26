@@ -14,24 +14,33 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
         }
 
-        const formData = await req.formData();
-        const file = formData.get('file');
-        
-        if (!file) {
-            return Response.json({ error: 'No file provided' }, { status: 400 });
+        const body = await req.json();
+        const { file_url } = body;
+
+        if (!file_url) {
+            return Response.json({ error: 'No file_url provided' }, { status: 400 });
         }
 
-        const arrayBuffer = await file.arrayBuffer();
+        // Fetch the uploaded file
+        const fileResponse = await fetch(file_url);
+        if (!fileResponse.ok) {
+            return Response.json({ error: 'Failed to fetch uploaded file' }, { status: 400 });
+        }
+        const arrayBuffer = await fileResponse.arrayBuffer();
         const workbook = read(arrayBuffer, { type: 'array' });
 
         const priceListSheet = workbook.Sheets['Price List'];
         if (!priceListSheet) {
-            return Response.json({ error: 'Price List sheet not found' }, { status: 400 });
+            return Response.json({ error: 'Price List sheet not found in the Excel file' }, { status: 400 });
         }
 
         const data = utils.sheet_to_json(priceListSheet);
 
-        await base44.asServiceRole.entities.ChildCatalog.delete({});
+        // Clear existing records
+        const existing = await base44.asServiceRole.entities.ChildCatalog.list();
+        for (const record of existing) {
+            await base44.asServiceRole.entities.ChildCatalog.delete(record.id);
+        }
 
         const bundleMap = new Map();
 
@@ -68,7 +77,7 @@ Deno.serve(async (req) => {
 
         const catalogRecords = [];
         for (const [bundleKey, items] of bundleMap.entries()) {
-            const [description, shelterType] = bundleKey.split('|');
+            const [description] = bundleKey.split('|');
             const firstItem = items[0];
 
             if (items.length === 1) {
