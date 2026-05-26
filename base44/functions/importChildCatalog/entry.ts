@@ -31,10 +31,14 @@ Deno.serve(async (req) => {
         const arrayBuffer = await fileResponse.arrayBuffer();
         const workbook = read(arrayBuffer, { type: 'array' });
 
-        const priceListSheet = workbook.Sheets['Price List'];
+        const sheetNames = workbook.SheetNames;
+        console.log('Available sheets:', sheetNames);
+        
+        const priceListSheet = workbook.Sheets['Price List'] || workbook.Sheets[sheetNames[0]];
         if (!priceListSheet) {
-            return Response.json({ error: 'Price List sheet not found in the Excel file' }, { status: 400 });
+            return Response.json({ error: `No sheets found in the Excel file` }, { status: 400 });
         }
+        console.log('Using sheet:', workbook.Sheets['Price List'] ? 'Price List' : sheetNames[0]);
 
         const data = utils.sheet_to_json(priceListSheet);
 
