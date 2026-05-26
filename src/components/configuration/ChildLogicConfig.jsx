@@ -367,7 +367,21 @@ function TypeTemplatesTab({ templates, catalog, shelterTypeDefs, queryClient }) 
   const usedChildIds = new Set(typeRows.map(r => r.child_catalog_id));
 
   const autoPopulate = () => {
-    const matchingChildren = catalog.filter(c => c.active && c.child_type === selectedType && !usedChildIds.has(c.id));
+    // Match catalog items where child_type matches the shelter type code.
+    // child_type is stored as "A", "B", "C", "C1/C2" etc.
+    // selectedType is like "A1", "A2", "B", "C1", "C2", "Refurbished", etc.
+    const matchingChildren = catalog.filter(c => {
+      if (!c.active || usedChildIds.has(c.id)) return false;
+      const ct = (c.child_type || '').trim().toUpperCase();
+      const st = selectedType.toUpperCase();
+      // Exact match
+      if (ct === st) return true;
+      // "C1/C2" matches both C1 and C2
+      if (ct === 'C1/C2' && (st === 'C1' || st === 'C2')) return true;
+      // "A" matches A1, A2 etc — single letter prefix match
+      if (ct.length === 1 && st.startsWith(ct)) return true;
+      return false;
+    });
     matchingChildren.forEach((child, idx) => {
       createMutation.mutate({ 
         shelter_type_code: selectedType, 
@@ -389,7 +403,15 @@ function TypeTemplatesTab({ templates, catalog, shelterTypeDefs, queryClient }) 
           <SelectContent>{availableTypes.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
         </Select>
         <Badge variant="secondary" className="text-xs">{typeRows.length} children</Badge>
-        <Button size="sm" variant="outline" className="h-8 text-xs" onClick={autoPopulate} disabled={catalog.filter(c => c.active && c.child_type === selectedType && !usedChildIds.has(c.id)).length === 0}>
+        <Button size="sm" variant="outline" className="h-8 text-xs" onClick={autoPopulate} disabled={catalog.filter(c => {
+            if (!c.active || usedChildIds.has(c.id)) return false;
+            const ct = (c.child_type || '').trim().toUpperCase();
+            const st = selectedType.toUpperCase();
+            if (ct === st) return true;
+            if (ct === 'C1/C2' && (st === 'C1' || st === 'C2')) return true;
+            if (ct.length === 1 && st.startsWith(ct)) return true;
+            return false;
+          }).length === 0}>
           Auto-populate
         </Button>
       </div>
