@@ -34,22 +34,6 @@ Deno.serve(async (req) => {
         const sheetNames = workbook.SheetNames;
         console.log('Available sheets:', sheetNames);
         
-        const priceListSheet = workbook.Sheets['Price List'] || workbook.Sheets[sheetNames[0]];
-        if (!priceListSheet) {
-            return Response.json({ error: `No sheets found in the Excel file` }, { status: 400 });
-        }
-        console.log('Using sheet:', workbook.Sheets['Price List'] ? 'Price List' : sheetNames[0]);
-
-        const data = utils.sheet_to_json(priceListSheet);
-        console.log('Total rows parsed:', data.length);
-        if (data.length > 0) {
-            console.log('First row keys:', Object.keys(data[0]));
-            console.log('First row sample:', JSON.stringify(data[0]));
-        }
-
-        if (data.length === 0) {
-            return Response.json({ error: 'No data rows found in sheet. Check the Excel format.' }, { status: 400 });
-        }
 
         // Clear existing records
         const existing = await base44.asServiceRole.entities.ChildCatalog.list();
@@ -57,32 +41,81 @@ Deno.serve(async (req) => {
             await base44.asServiceRole.entities.ChildCatalog.delete(record.id);
         }
 
+        // Helper to parse rows from a sheet
+        const parseSheet = (sheet, sheetLabel) => {
+            const rawRows = utils.sheet_to_json(sheet, { header: 1 });
+            let headerRowIdx = -1;
+            for (let i = 0; i < Math.min(rawRows.length, 10); i++) {
+                const row = rawRows[i].map(c => String(c || '').toLowerCase());
+                if (row.some(c => c.includes('descrep') || c.includes('descrip'))) {
+                    headerRowIdx = i;
+                    break;
+                }
+            }
+            if (headerRowIdx === -1) return [];
+            const headers = rawRows[headerRowIdx].map(h => String(h || '').trim());
+            const col = (name) => headers.findIndex(h => h.toLowerCase().includes(name.toLowerCase()));
+            const descIdx = col('descrep') !== -1 ? col('descrep') : col('descrip');
+            const partNumIdx = col('assembly part') !== -1 ? col('assembly part') : col('part number');
+            const shelterTypeIdx = col('shelter type');
+            const typeIdx = col('type');
+            const contractNumIdx = col('contract number');
+            const contractItemIdx = col('contract item');
+            const contractQtyIdx = col('contract qty');
+            const contractPriceIdx = col('contract price');
+            const allocPctIdx = col('% allocation') !== -1 ? col('% allocation') : col('allocation');
+            const priceAllocIdx = col('price allocation');
+            const remainingBalIdx = col('remaining balance');
+            const totalPriceIdx = col('total price');
+            if (descIdx === -1) return [];
+            return rawRows.slice(headerRowIdx + 1)
+                .filter(row => row[descIdx] && String(row[descIdx]).trim())
+                .map(row => ({
+                    Description: String(row[descIdx] || '').trim(),
+                    PartNumber: String(row[partNumIdx] !== undefined ? row[partNumIdx] : '').trim(),
+                    ShelterType: sheetLabel || String(row[shelterTypeIdx] !== undefined ? row[shelterTypeIdx] : '').trim(),
+                    Type: String(row[typeIdx] !== undefined ? row[typeIdx] : '').trim(),
+                    ContractNumber: String(row[contractNumIdx] !== undefined ? row[contractNumIdx] : '').trim(),
+                    ContractItem: String(row[contractItemIdx] !== undefined ? row[contractItemIdx] : '').trim(),
+                    ContractQty: parseFloat(row[contractQtyIdx]) || 0,
+                    ContractPrice: parseFloat(row[contractPriceIdx]) || 0,
+                    AllocPct: parseFloat(row[allocPctIdx]) || 0,
+                    PriceAlloc: parseFloat(row[priceAllocIdx]) || 0,
+                    RemainingBal: parseFloat(row[remainingBalIdx]) || 0,
+                    TotalPrice: parseFloat(row[totalPriceIdx]) || 0,
+                }));
+        };
+
+        // Process all relevant sheets
+        const allData = [];
+        for (const sheetName of sheetNames) {
+            if (sheetName.toLowerCase().includes('form')) continue; // skip FORM sheets
+            const sheet = workbook.Sheets[sheetName];
+            const rows = parseSheet(sheet, sheetName);
+            console.log(`Sheet "${sheetName}": ${rows.length} rows`);
+            allData.push(...rows);
+        }
+        console.log('Total rows across all sheets:', allData.length);
+
         const bundleMap = new Map();
-
-        for (const row of data) {
-            const description = row['Description']?.toString() || '';
-            const shelterType = row['Shelter Type']?.toString() || '';
-            
+        for (const row of allData) {
+            const description = row.Description;
+            const shelterType = row.ShelterType;
             if (!description) continue;
-
             const bundleKey = `${description}|${shelterType}`;
-            
             const itemData = {
                 child_name: description,
-                child_code: row['Child Code']?.toString() || '',
-                child_category: row['Category']?.toString() || '',
-                child_type: row['Type']?.toString() || '',
-                unit_price: parseFloat(row['Unit Price']) || 0,
-                excel_contract_number: row['Contract Number']?.toString() || '',
-                excel_contract_item: row['Contract Item']?.toString() || '',
-                excel_contract_qty: parseInt(row['Contract Qty']) || 0,
-                excel_contract_price: parseFloat(row['Contract Price']) || 0,
-                excel_allocation_percentage: parseFloat(row['Allocation %']) || 0,
-                excel_price_allocation: parseFloat(row['Price Allocation']) || 0,
-                excel_remaining_balance_from_contract_item: parseFloat(row['Remaining Balance From Contract item']) || 0,
-                excel_total_price: parseFloat(row['Total Price']) || 0
+                child_code: row.PartNumber,
+                child_type: row.Type,
+                excel_contract_number: row.ContractNumber,
+                excel_contract_item: row.ContractItem,
+                excel_contract_qty: row.ContractQty,
+                excel_contract_price: row.ContractPrice,
+                excel_allocation_percentage: row.AllocPct,
+                excel_price_allocation: row.PriceAlloc,
+                excel_remaining_balance_from_contract_item: row.RemainingBal,
+                excel_total_price: row.TotalPrice,
             };
-
             if (bundleMap.has(bundleKey)) {
                 bundleMap.get(bundleKey).push(itemData);
             } else {
@@ -92,16 +125,14 @@ Deno.serve(async (req) => {
 
         const catalogRecords = [];
         for (const [bundleKey, items] of bundleMap.entries()) {
-            const [description] = bundleKey.split('|');
+            const [description, shelterType] = bundleKey.split('|');
             const firstItem = items[0];
-
             if (items.length === 1) {
                 catalogRecords.push({
                     child_name: firstItem.child_name,
                     child_code: firstItem.child_code,
-                    child_category: firstItem.child_category,
                     child_type: firstItem.child_type,
-                    unit_price: firstItem.unit_price,
+                    child_category: shelterType,
                     pricing_type: 'Individual',
                     active: true,
                     excel_contract_number: firstItem.excel_contract_number,
@@ -115,12 +146,11 @@ Deno.serve(async (req) => {
                 });
             } else {
                 const bundlePrice = items.reduce((sum, item) => sum + (item.excel_total_price || 0), 0);
-                
                 catalogRecords.push({
                     child_name: description,
                     child_code: firstItem.child_code,
-                    child_category: firstItem.child_category,
                     child_type: firstItem.child_type,
+                    child_category: shelterType,
                     pricing_type: 'Bundle',
                     bundle_items: items,
                     bundle_price: bundlePrice,
