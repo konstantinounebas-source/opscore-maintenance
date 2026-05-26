@@ -41,6 +41,15 @@ Deno.serve(async (req) => {
         console.log('Using sheet:', workbook.Sheets['Price List'] ? 'Price List' : sheetNames[0]);
 
         const data = utils.sheet_to_json(priceListSheet);
+        console.log('Total rows parsed:', data.length);
+        if (data.length > 0) {
+            console.log('First row keys:', Object.keys(data[0]));
+            console.log('First row sample:', JSON.stringify(data[0]));
+        }
+
+        if (data.length === 0) {
+            return Response.json({ error: 'No data rows found in sheet. Check the Excel format.' }, { status: 400 });
+        }
 
         // Clear existing records
         const existing = await base44.asServiceRole.entities.ChildCatalog.list();
