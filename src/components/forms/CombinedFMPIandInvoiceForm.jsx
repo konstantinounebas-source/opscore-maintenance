@@ -158,23 +158,6 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
   const activeCatalog = useMemo(() => childCatalog.filter(c => c.active !== false), [childCatalog]);
   const catalogMap = useMemo(() => Object.fromEntries(activeCatalog.map(c => [c.id, c])), [activeCatalog]);
 
-  // Filter catalog to only items matching the linked asset's shelter type
-  const filteredCatalog = useMemo(() => {
-    const asset = assets.find(a => a.id === linkedAssetId);
-    const shelterType = asset?.shelter_type || asset?.installed_shelter_type || asset?.ordered_shelter_type;
-    if (!shelterType || !typeTemplates.length) return activeCatalog;
-    // Normalize shelter type for matching (e.g. "Type B" → "B")
-    const normalizeType = (s) => s?.trim().replace(/^type\s+/i, "").toUpperCase();
-    const normalized = normalizeType(shelterType);
-    const templateIds = new Set(
-      typeTemplates
-        .filter(t => normalizeType(t.shelter_type_code) === normalized && t.active !== false)
-        .map(t => t.child_catalog_id)
-    );
-    if (!templateIds.size) return activeCatalog; // fallback: show all if no template found
-    return activeCatalog.filter(c => templateIds.has(c.id));
-  }, [activeCatalog, typeTemplates, linkedAssetId, assets]);
-
   // ── Tab state ──
   const [activeTab, setActiveTab] = useState("fmpi");
 
@@ -247,6 +230,21 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
 
   const subsystem = useMemo(() => deriveSubsystem(incident), [incident]);
   const subcategory = useMemo(() => deriveSubcategory(incident), [incident]);
+
+  // Filter catalog to only items matching the linked asset's shelter type
+  const filteredCatalog = useMemo(() => {
+    const shelterType = asset?.shelter_type || asset?.installed_shelter_type || asset?.ordered_shelter_type;
+    if (!shelterType || !typeTemplates.length) return activeCatalog;
+    const normalizeType = (s) => s?.trim().replace(/^type\s+/i, "").toUpperCase();
+    const normalized = normalizeType(shelterType);
+    const templateIds = new Set(
+      typeTemplates
+        .filter(t => normalizeType(t.shelter_type_code) === normalized && t.active !== false)
+        .map(t => t.child_catalog_id)
+    );
+    if (!templateIds.size) return activeCatalog;
+    return activeCatalog.filter(c => templateIds.has(c.id));
+  }, [activeCatalog, typeTemplates, asset]);
 
   // Priority: prefer OMPI form value, fall back to incident
   const ompiForm = useMemo(() => {
