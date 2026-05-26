@@ -105,7 +105,9 @@ export default function DataTable({ columns, data, onRowClick, searchPlaceholder
                 </TableCell>
               </TableRow>
             ) : (
-              paged.map((row, idx) => (
+              paged.map((row, idx) => {
+                const globalIdx = currentPageSize === 0 ? idx : page * currentPageSize + idx;
+                return (
                 <TableRow
                   key={row.id || idx}
                   className={`transition-colors ${onRowClick ? "cursor-pointer hover:bg-slate-50" : ""}`}
@@ -113,11 +115,12 @@ export default function DataTable({ columns, data, onRowClick, searchPlaceholder
                 >
                   {columns.map(col => (
                     <TableCell key={col.key} className="text-sm text-slate-700 whitespace-nowrap">
-                      {col.render ? col.render(row) : (col.accessor ? col.accessor(row) : row[col.key]) || "—"}
+                      {col.render ? col.render(row, globalIdx) : (col.accessor ? col.accessor(row) : row[col.key]) || "—"}
                     </TableCell>
                   ))}
                 </TableRow>
-              ))
+                );
+              })
             )}
           </TableBody>
         </Table>
