@@ -22,49 +22,30 @@ function ChildCatalogTab({ catalog, queryClient }) {
   const [editing, setEditing] = useState(null);
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState({});
-  const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [currentPage, setCurrentPage] = useState(0);
-  const [filterType, setFilterType] = useState("");
-  const [filterCategory, setFilterCategory] = useState("");
-  const [filterPricing, setFilterPricing] = useState("");
+  const [filterType, setFilterType] = useState("all");
+  const [expandedCategories, setExpandedCategories] = useState({});
 
   const uniqueTypes = [...new Set(catalog.map(c => c.child_type).filter(Boolean))].sort();
-  const uniqueCategories = [...new Set(catalog.map(c => c.child_category).filter(Boolean))].sort();
 
-  const filteredCatalog = catalog.filter(item => {
-    if (filterType && item.child_type !== filterType) return false;
-    if (filterCategory && item.child_category !== filterCategory) return false;
-    if (filterPricing && (item.pricing_type || "Individual") !== filterPricing) return false;
-    return true;
-  });
+  const filtered = filterType === "all" ? catalog : catalog.filter(c => c.child_type === filterType);
 
-  const paginatedCatalog = filteredCatalog.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
-  const totalPages = Math.ceil(filteredCatalog.length / itemsPerPage);
+  // Group by category
+  const groupedByCategory = filtered.reduce((acc, item) => {
+    const cat = item.child_category || "Uncategorized";
+    if (!acc[cat]) acc[cat] = [];
+    acc[cat].push(item);
+    return acc;
+  }, {});
+
+  const toggleCategory = (cat) => setExpandedCategories(prev => ({ ...prev, [cat]: !prev[cat] }));
+  const isCatExpanded = (cat) => expandedCategories[cat] !== false; // default expanded
 
   const createMutation = useMutation({
-    mutationFn: (d) => {
-      // Normalize bundle_items prices to proper numbers
-      if (d.bundle_items?.length > 0) {
-        d.bundle_items = d.bundle_items.map(item => ({
-          ...item,
-          unit_price: item.unit_price != null ? parseFloat(item.unit_price) : null
-        }));
-      }
-      return base44.entities.ChildCatalog.create(d);
-    },
+    mutationFn: (d) => base44.entities.ChildCatalog.create(d),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["childCatalog"] }); setAdding(false); setForm({}); }
   });
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => {
-      // Normalize bundle_items prices to proper numbers
-      if (data.bundle_items?.length > 0) {
-        data.bundle_items = data.bundle_items.map(item => ({
-          ...item,
-          unit_price: item.unit_price != null ? parseFloat(item.unit_price) : null
-        }));
-      }
-      return base44.entities.ChildCatalog.update(id, data);
-    },
+    mutationFn: ({ id, data }) => base44.entities.ChildCatalog.update(id, data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["childCatalog"] }); setEditing(null); }
   });
   const deleteMutation = useMutation({
@@ -72,181 +53,108 @@ function ChildCatalogTab({ catalog, queryClient }) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["childCatalog"] })
   });
 
-
-
-  const handleItemsPerPageChange = (val) => {
-    setItemsPerPage(val === "all" ? filteredCatalog.length : val);
-    setCurrentPage(0);
-  };
-
-  const handleFilterTypeChange = (val) => {
-    setFilterType(val === "clear" ? "" : val);
-    setCurrentPage(0);
-  };
-
-  const handleFilterCategoryChange = (val) => {
-    setFilterCategory(val === "clear" ? "" : val);
-    setCurrentPage(0);
-  };
-
-  const handleFilterPricingChange = (val) => {
-    setFilterPricing(val === "clear" ? "" : val);
-    setCurrentPage(0);
+  const formatPrice = (item) => {
+    const p = item.pricing_type === "Bundle" ? item.bundle_price : item.unit_price;
+    return p != null ? `€${Number(p).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—";
   };
 
   return (
     <div className="space-y-3">
+      {/* Toolbar */}
       <div className="flex justify-between items-center gap-3 flex-wrap">
-        <p className="text-xs text-slate-500">{filteredCatalog.length} of {catalog.length} child components</p>
-        <div className="flex gap-2 items-center flex-wrap">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-slate-500">{filtered.length} of {catalog.length} items</span>
           <div className="flex items-center gap-1.5">
-            <span className="text-xs text-slate-500">Type:</span>
-            <Select value={filterType} onValueChange={handleFilterTypeChange}>
-              <SelectTrigger className="w-32 h-7 text-xs"><SelectValue placeholder="All types" /></SelectTrigger>
+            <span className="text-xs text-slate-500">Shelter Type:</span>
+            <Select value={filterType} onValueChange={setFilterType}>
+              <SelectTrigger className="w-28 h-7 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="clear">All types</SelectItem>
+                <SelectItem value="all">All</SelectItem>
                 {uniqueTypes.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-slate-500">Category:</span>
-            <Select value={filterCategory} onValueChange={handleFilterCategoryChange}>
-              <SelectTrigger className="w-32 h-7 text-xs"><SelectValue placeholder="All categories" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="clear">All categories</SelectItem>
-                {uniqueCategories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-slate-500">Pricing:</span>
-            <Select value={filterPricing} onValueChange={handleFilterPricingChange}>
-              <SelectTrigger className="w-28 h-7 text-xs"><SelectValue placeholder="All" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="clear">All</SelectItem>
-                <SelectItem value="Individual">Individual</SelectItem>
-                <SelectItem value="Bundle">Bundle</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-slate-500">Show:</span>
-            <Select value={itemsPerPage.toString()} onValueChange={handleItemsPerPageChange}>
-              <SelectTrigger className="w-20 h-7 text-xs"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="10">10</SelectItem>
-                <SelectItem value="20">20</SelectItem>
-                <SelectItem value="40">40</SelectItem>
-                <SelectItem value="80">80</SelectItem>
-                <SelectItem value="all">All</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => {
-            const csv = ["child_code,child_name,child_category,child_type,default_warranty_months,warranty_start_rule",
-              ...catalog.map(c => `${c.child_code},${c.child_name},${c.child_category || ""},${c.child_type || ""},${c.default_warranty_months || ""},${c.warranty_start_rule || ""}`)].join("\n");
-            const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "child_catalog.csv"; a.click();
-          }}><Download className="w-3 h-3" />Export CSV</Button>
-          <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 h-7 text-xs gap-1" onClick={() => { setAdding(true); setForm({ warranty_start_rule: "asset_delivery_date", active: true, pricing_type: "Individual" }); }}>
-            <Plus className="w-3 h-3" />Add Child
-          </Button>
         </div>
+        <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 h-7 text-xs gap-1" onClick={() => { setAdding(true); setForm({ warranty_start_rule: "asset_delivery_date", active: true, pricing_type: "Individual" }); }}>
+          <Plus className="w-3 h-3" />Add Child
+        </Button>
       </div>
 
-      {adding && <ChildCatalogForm value={form} onChange={setForm} allCatalog={catalog} onCancel={() => { setAdding(false); setForm({}); }} onSave={() => {
-        const dataToSave = { ...form };
-        // Auto-derive category/type from bundle items if not set
-        if (form.pricing_type === "Bundle" && form.bundle_items?.length > 0) {
-          const itemTypes = [...new Set(form.bundle_items.map(item => item.child_type).filter(Boolean))];
-          if (!form.child_type?.trim()) dataToSave.child_type = itemTypes.length === 1 ? itemTypes[0] : itemTypes.join(",");
-          const itemCategories = [...new Set(form.bundle_items.map(item => item.child_category).filter(Boolean))];
-          if (!form.child_category?.trim()) dataToSave.child_category = itemCategories.length === 1 ? itemCategories[0] : itemCategories.join(",");
-        }
-        createMutation.mutate(dataToSave);
-      }} onCancel={() => { setAdding(false); setForm({}); }} saving={createMutation.isPending} />}
+      {adding && (
+        <ChildCatalogForm value={form} onChange={setForm} allCatalog={catalog}
+          onCancel={() => { setAdding(false); setForm({}); }}
+          onSave={() => createMutation.mutate(form)}
+          saving={createMutation.isPending} />
+      )}
 
+      {/* Excel-style grouped table */}
       <div className="border rounded-lg overflow-hidden">
         <table className="w-full text-xs">
-          <thead className="bg-slate-50 border-b">
+          <thead className="bg-slate-800 text-white">
             <tr>
-              {["Code","Name / Display Name","Category","Type","Pricing","Price (€)","Items","Warranty","Active",""].map(h => (
-                <th key={h} className="px-3 py-2 text-left font-semibold text-slate-600 text-xs">{h}</th>
+              {["No.", "Shelter Type", "Type", "Description", "Total Price", "Active", ""].map(h => (
+                <th key={h} className="px-3 py-2 text-left font-semibold text-xs">{h}</th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
-            {catalog.length === 0 && <tr><td colSpan={10} className="px-3 py-6 text-center text-slate-400">No children defined yet</td></tr>}
-            {paginatedCatalog.map(item => (
-              <tr key={item.id} className={`hover:bg-slate-50 ${!item.active ? "opacity-50" : ""}`}>
-                {editing?.id === item.id ? (
-                  <td colSpan={10} className="p-2">
-                   <ChildCatalogForm value={editing} onChange={setEditing} allCatalog={catalog}
-                      onCancel={() => setEditing(null)}
-                      onSave={() => {
-                        const dataToSave = { ...editing };
-                        if (editing.pricing_type === "Bundle" && editing.bundle_items?.length > 0) {
-                          const itemTypes = [...new Set(editing.bundle_items.map(bi => bi.child_type).filter(Boolean))];
-                          if (!editing.child_type?.trim()) dataToSave.child_type = itemTypes.length === 1 ? itemTypes[0] : itemTypes.join(",");
-                          const itemCategories = [...new Set(editing.bundle_items.map(bi => bi.child_category).filter(Boolean))];
-                          if (!editing.child_category?.trim()) dataToSave.child_category = itemCategories.length === 1 ? itemCategories[0] : itemCategories.join(",");
-                        }
-                        updateMutation.mutate({ id: item.id, data: dataToSave });
-                      }}
-                      onCancel={() => setEditing(null)} saving={updateMutation.isPending} />
+          <tbody>
+            {catalog.length === 0 && (
+              <tr><td colSpan={7} className="px-3 py-6 text-center text-slate-400">No children defined yet. Import from Excel or add manually.</td></tr>
+            )}
+            {Object.entries(groupedByCategory).map(([category, items]) => (
+              <React.Fragment key={category}>
+                {/* Category header row */}
+                <tr
+                  className="bg-slate-100 cursor-pointer hover:bg-slate-200 select-none"
+                  onClick={() => toggleCategory(category)}
+                >
+                  <td colSpan={7} className="px-3 py-1.5 font-bold text-slate-700 text-xs uppercase tracking-wide">
+                    <span className="mr-2 text-slate-400">{isCatExpanded(category) ? "▼" : "▶"}</span>
+                    {category}
+                    <span className="ml-2 text-slate-400 font-normal normal-case tracking-normal">({items.length})</span>
                   </td>
-                ) : (
-                  <>
-                    <td className="px-3 py-2 font-mono text-slate-700">{item.child_code}</td>
-                    <td className="px-3 py-2">
-                      <div className="font-medium text-slate-800 text-xs">{item.display_name || item.child_name}</div>
-                      {item.display_name && item.display_name !== item.child_name && (
-                        <div className="text-[10px] text-slate-400">{item.child_name}</div>
-                      )}
-                    </td>
-                    <td className="px-3 py-2 text-slate-600 text-xs">{item.child_category}</td>
-                    <td className="px-3 py-2 text-slate-600 text-xs">{item.child_type}</td>
-                    <td className="px-3 py-2 text-xs">
-                      {item.pricing_type === "Bundle"
-                        ? <Badge className="text-[10px] bg-purple-100 text-purple-700 border border-purple-200 hover:bg-purple-100">Bundle</Badge>
-                        : <Badge variant="outline" className="text-[10px]">Individual</Badge>
-                      }
-                    </td>
-                    <td className="px-3 py-2 text-slate-600 text-xs">{item.pricing_type === "Bundle" ? (item.bundle_price != null ? `€${item.bundle_price.toLocaleString()}` : "—") : (item.unit_price != null ? `€${item.unit_price.toLocaleString()}` : "—")}</td>
-                    <td className="px-3 py-2 text-xs text-slate-500">{item.pricing_type === "Bundle" ? (item.bundle_items?.length ?? 0) : "—"}</td>
-                    <td className="px-3 py-2 text-xs">{item.default_warranty_months ? `${item.default_warranty_months} mo` : "—"}</td>
-                    <td className="px-3 py-2">
-                      <button onClick={() => updateMutation.mutate({ id: item.id, data: { active: !item.active } })}>
-                        {item.active ? <ToggleRight className="w-4 h-4 text-green-500" /> : <ToggleLeft className="w-4 h-4 text-slate-400" />}
-                      </button>
-                    </td>
-                    <td className="px-3 py-2">
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setEditing({ ...item })}><Pencil className="w-3 h-3" /></Button>
-                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-red-400 hover:text-red-600" onClick={() => deleteMutation.mutate(item.id)}><Trash2 className="w-3 h-3" /></Button>
-                      </div>
-                    </td>
-                  </>
-                )}
-              </tr>
+                </tr>
+                {isCatExpanded(category) && items.map(item => (
+                  <React.Fragment key={item.id}>
+                    {editing?.id === item.id ? (
+                      <tr>
+                        <td colSpan={7} className="p-2 bg-indigo-50">
+                          <ChildCatalogForm value={editing} onChange={setEditing} allCatalog={catalog}
+                            onCancel={() => setEditing(null)}
+                            onSave={() => updateMutation.mutate({ id: item.id, data: editing })}
+                            saving={updateMutation.isPending} />
+                        </td>
+                      </tr>
+                    ) : (
+                      <tr className={`hover:bg-slate-50 border-b border-slate-100 ${!item.active ? "opacity-40" : ""}`}>
+                        <td className="px-3 py-1.5 font-mono text-slate-600 text-xs w-16">{item.child_code || "—"}</td>
+                        <td className="px-3 py-1.5 text-slate-600 text-xs w-24">{item.child_type || "—"}</td>
+                        <td className="px-3 py-1.5 text-slate-500 text-xs w-40 max-w-[160px] truncate" title={item.display_name}>{item.display_name || "—"}</td>
+                        <td className="px-3 py-1.5 text-slate-800 text-xs">
+                          <div>{item.child_name}</div>
+                          {item.pricing_type === "Bundle" && <Badge className="mt-0.5 text-[10px] bg-purple-100 text-purple-700 border border-purple-200 hover:bg-purple-100">Bundle</Badge>}
+                        </td>
+                        <td className="px-3 py-1.5 font-mono text-slate-700 text-xs font-medium w-28">{formatPrice(item)}</td>
+                        <td className="px-3 py-1.5 w-12">
+                          <button onClick={() => updateMutation.mutate({ id: item.id, data: { active: !item.active } })}>
+                            {item.active ? <ToggleRight className="w-4 h-4 text-green-500" /> : <ToggleLeft className="w-4 h-4 text-slate-400" />}
+                          </button>
+                        </td>
+                        <td className="px-3 py-1.5 w-16">
+                          <div className="flex gap-1">
+                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setEditing({ ...item })}><Pencil className="w-3 h-3" /></Button>
+                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-red-400 hover:text-red-600" onClick={() => deleteMutation.mutate(item.id)}><Trash2 className="w-3 h-3" /></Button>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                ))}
+              </React.Fragment>
             ))}
           </tbody>
         </table>
       </div>
-
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-slate-500">Page {currentPage + 1} of {totalPages}</p>
-          <div className="flex gap-1">
-            <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setCurrentPage(Math.max(0, currentPage - 1))} disabled={currentPage === 0}>
-              ← Prev
-            </Button>
-            <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setCurrentPage(Math.min(totalPages - 1, currentPage + 1))} disabled={currentPage === totalPages - 1}>
-              Next →
-            </Button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -433,57 +341,69 @@ function TypeTemplatesTab({ templates, catalog, shelterTypeDefs, queryClient }) 
 
       <div className="border rounded-lg overflow-hidden">
         <table className="w-full text-xs">
-          <thead className="bg-slate-50 border-b">
+          <thead className="bg-slate-800 text-white">
             <tr>
-              {["Code","Name / Display Name","Category","Type","Pricing","Price (€)","Warranty","Default","Mandatory","Active",""].map(h => (
-                <th key={h} className="px-3 py-2 text-left font-semibold text-slate-600 text-xs">{h}</th>
+              {["No.", "Shelter Type", "Type", "Description", "Total Price", "Default", "Mandatory", "Active", ""].map(h => (
+                <th key={h} className="px-3 py-2 text-left font-semibold text-xs">{h}</th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
-            {typeRows.length === 0 && <tr><td colSpan={11} className="px-3 py-6 text-center text-slate-400">No children mapped to this shelter type</td></tr>}
-            {typeRows.map(row => {
-              const child = catalog.find(c => c.id === row.child_catalog_id);
-              return (
-                <tr key={row.id} className="hover:bg-slate-50">
-                  <td className="px-3 py-2 font-mono text-slate-700">{child?.child_code || "—"}</td>
-                  <td className="px-3 py-2">
-                    <div className="font-medium text-slate-800 text-xs">{child ? (child.display_name || child.child_name) : <span className="text-red-400">Unknown</span>}</div>
-                    {child?.display_name && child.display_name !== child.child_name && (
-                      <div className="text-[10px] text-slate-400">{child.child_name}</div>
-                    )}
-                  </td>
-                  <td className="px-3 py-2 text-slate-600 text-xs">{child?.child_category || "—"}</td>
-                  <td className="px-3 py-2 text-slate-600 text-xs">{child?.child_type || "—"}</td>
-                  <td className="px-3 py-2 text-xs">
-                    {child?.pricing_type === "Bundle"
-                      ? <Badge className="text-[10px] bg-purple-100 text-purple-700 border border-purple-200 hover:bg-purple-100">Bundle</Badge>
-                      : <Badge variant="outline" className="text-[10px]">Individual</Badge>
-                    }
-                  </td>
-                  <td className="px-3 py-2 text-slate-600 text-xs">{child?.pricing_type === "Bundle" ? (child?.bundle_price != null ? `€${child.bundle_price.toLocaleString()}` : "—") : (child?.unit_price != null ? `€${child.unit_price.toLocaleString()}` : "—")}</td>
-                  <td className="px-3 py-2 text-xs">{child?.default_warranty_months ? `${child.default_warranty_months} mo` : "—"}</td>
-                  <td className="px-3 py-2">
-                    <button onClick={() => updateMutation.mutate({ id: row.id, data: { default_included: !row.default_included } })}>
-                      {row.default_included ? <ToggleRight className="w-4 h-4 text-green-500" /> : <ToggleLeft className="w-4 h-4 text-slate-400" />}
-                    </button>
-                  </td>
-                  <td className="px-3 py-2">
-                    <button onClick={() => updateMutation.mutate({ id: row.id, data: { mandatory: !row.mandatory } })}>
-                      {row.mandatory ? <Badge className="text-[10px] h-5 bg-red-100 text-red-700 border-red-200 hover:bg-red-100">Yes</Badge> : <Badge variant="outline" className="text-[10px] h-5">No</Badge>}
-                    </button>
-                  </td>
-                  <td className="px-3 py-2">
-                    <button onClick={() => updateMutation.mutate({ id: row.id, data: { active: !row.active } })}>
-                      {row.active ? <ToggleRight className="w-4 h-4 text-green-500" /> : <ToggleLeft className="w-4 h-4 text-slate-400" />}
-                    </button>
-                  </td>
-                  <td className="px-3 py-2">
-                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-red-400 hover:text-red-600" onClick={() => deleteMutation.mutate(row.id)}><Trash2 className="w-3 h-3" /></Button>
-                  </td>
-                </tr>
-              );
-            })}
+          <tbody>
+            {typeRows.length === 0 && <tr><td colSpan={9} className="px-3 py-6 text-center text-slate-400">No children mapped to this shelter type. Use Auto-populate or Reset &amp; Re-populate.</td></tr>}
+            {(() => {
+              // Group by category for Excel-style layout
+              const grouped = typeRows.reduce((acc, row) => {
+                const child = catalog.find(c => c.id === row.child_catalog_id);
+                const cat = child?.child_category || "Uncategorized";
+                if (!acc[cat]) acc[cat] = [];
+                acc[cat].push({ row, child });
+                return acc;
+              }, {});
+              return Object.entries(grouped).map(([cat, entries]) => (
+                <React.Fragment key={cat}>
+                  <tr className="bg-slate-100">
+                    <td colSpan={9} className="px-3 py-1.5 font-bold text-slate-700 text-xs uppercase tracking-wide">
+                      {cat}
+                      <span className="ml-2 text-slate-400 font-normal normal-case tracking-normal">({entries.length})</span>
+                    </td>
+                  </tr>
+                  {entries.map(({ row, child }) => {
+                    const price = child?.pricing_type === "Bundle" ? child?.bundle_price : child?.unit_price;
+                    const priceStr = price != null ? `€${Number(price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—";
+                    return (
+                      <tr key={row.id} className={`hover:bg-slate-50 border-b border-slate-100 ${!row.active ? "opacity-40" : ""}`}>
+                        <td className="px-3 py-1.5 font-mono text-slate-600 text-xs w-16">{child?.child_code || "—"}</td>
+                        <td className="px-3 py-1.5 text-slate-600 text-xs w-24">{child?.child_type || "—"}</td>
+                        <td className="px-3 py-1.5 text-slate-500 text-xs w-40 max-w-[160px] truncate" title={child?.display_name}>{child?.display_name || "—"}</td>
+                        <td className="px-3 py-1.5 text-slate-800 text-xs">
+                          {child ? child.child_name : <span className="text-red-400">Unknown</span>}
+                          {child?.pricing_type === "Bundle" && <Badge className="ml-1 text-[10px] bg-purple-100 text-purple-700 border border-purple-200 hover:bg-purple-100">Bundle</Badge>}
+                        </td>
+                        <td className="px-3 py-1.5 font-mono text-slate-700 text-xs font-medium w-28">{priceStr}</td>
+                        <td className="px-3 py-1.5 w-14">
+                          <button onClick={() => updateMutation.mutate({ id: row.id, data: { default_included: !row.default_included } })}>
+                            {row.default_included ? <ToggleRight className="w-4 h-4 text-green-500" /> : <ToggleLeft className="w-4 h-4 text-slate-400" />}
+                          </button>
+                        </td>
+                        <td className="px-3 py-1.5 w-16">
+                          <button onClick={() => updateMutation.mutate({ id: row.id, data: { mandatory: !row.mandatory } })}>
+                            {row.mandatory ? <Badge className="text-[10px] h-5 bg-red-100 text-red-700 border-red-200 hover:bg-red-100">Yes</Badge> : <Badge variant="outline" className="text-[10px] h-5">No</Badge>}
+                          </button>
+                        </td>
+                        <td className="px-3 py-1.5 w-12">
+                          <button onClick={() => updateMutation.mutate({ id: row.id, data: { active: !row.active } })}>
+                            {row.active ? <ToggleRight className="w-4 h-4 text-green-500" /> : <ToggleLeft className="w-4 h-4 text-slate-400" />}
+                          </button>
+                        </td>
+                        <td className="px-3 py-1.5 w-10">
+                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-red-400 hover:text-red-600" onClick={() => deleteMutation.mutate(row.id)}><Trash2 className="w-3 h-3" /></Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </React.Fragment>
+              ));
+            })()}
           </tbody>
         </table>
       </div>
@@ -526,9 +446,9 @@ function TypeTemplatesTab({ templates, catalog, shelterTypeDefs, queryClient }) 
 export default function ChildLogicConfig() {
   const queryClient = useQueryClient();
 
-  const { data: catalog = [] } = useQuery({ queryKey: ["childCatalog"], queryFn: () => base44.entities.ChildCatalog.list() });
+  const { data: catalog = [] } = useQuery({ queryKey: ["childCatalog"], queryFn: () => base44.entities.ChildCatalog.list('created_date', 1000) });
   const { data: shelterTypeDefs = [] } = useQuery({ queryKey: ["shelterTypeDefs"], queryFn: () => base44.entities.ShelterTypeDefinitions.list() });
-  const { data: templates = [] } = useQuery({ queryKey: ["typeTemplates"], queryFn: () => base44.entities.TypeTemplates.list() });
+  const { data: templates = [] } = useQuery({ queryKey: ["typeTemplates"], queryFn: () => base44.entities.TypeTemplates.list('created_date', 1000) });
 
   return (
     <Tabs defaultValue="catalog">
