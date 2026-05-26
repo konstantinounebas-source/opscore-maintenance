@@ -25,21 +25,22 @@ export default function AddChildFromTemplateDialog({ open, onOpenChange, asset, 
 
   const { data: templates = [], isLoading: loadingTemplates } = useQuery({
     queryKey: ["typeTemplates", shelterType],
-    queryFn: () => base44.entities.TypeTemplates.filter({ shelter_type_code: shelterType, active: true }),
+    queryFn: () => base44.entities.TypeTemplates.list('display_order', 1000),
     enabled: open && !!shelterType,
   });
 
   const { data: catalog = [], isLoading: loadingCatalog } = useQuery({
     queryKey: ["childCatalog"],
-    queryFn: () => base44.entities.ChildCatalog.filter({ active: true }),
+    queryFn: () => base44.entities.ChildCatalog.list('created_date', 1000),
     enabled: open,
   });
 
   const [selected, setSelected] = useState({});
   const [saving, setSaving] = useState(false);
 
-  // Build rows by joining templates with catalog
+  // Build rows by joining templates with catalog, filtered to this shelter type
   const rows = templates
+    .filter(t => t.shelter_type_code === shelterType && t.active !== false)
     .sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
     .map(t => {
       const cat = catalog.find(c => c.id === t.child_catalog_id);
@@ -49,12 +50,12 @@ export default function AddChildFromTemplateDialog({ open, onOpenChange, asset, 
 
   // Initialize checkboxes when rows load
   useEffect(() => {
-    if (rows.length > 0 && Object.keys(selected).length === 0) {
+    if (rows.length > 0) {
       const init = {};
       rows.forEach(r => { init[r.template.id] = r.template.default_included !== false; });
       setSelected(init);
     }
-  }, [rows.length]);
+  }, [rows.length, shelterType]);
 
   // Reset when dialog closes
   useEffect(() => {
