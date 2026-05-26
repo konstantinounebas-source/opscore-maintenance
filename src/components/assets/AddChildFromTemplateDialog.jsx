@@ -72,6 +72,7 @@ export default function AddChildFromTemplateDialog({ open, onOpenChange, asset, 
     const toCreate = rows.filter(r => selected[r.template.id]);
     for (const { cat } of toCreate) {
       await onSave({
+        child_id: `${asset.asset_id || asset.id}-${cat.child_code || cat.id}-${Date.now()}`,
         parent_asset_id: asset.id,
         category: cat.child_category || "",
         child_type: cat.child_type || "",
