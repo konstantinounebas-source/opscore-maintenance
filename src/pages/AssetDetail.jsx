@@ -204,8 +204,7 @@ export default function AssetDetail() {
   if (!asset) return <div className="flex items-center justify-center h-screen"><div className="w-8 h-8 border-4 border-slate-200 border-t-indigo-600 rounded-full animate-spin" /></div>;
 
   const childColumns = [
-    { key: "row_number", label: "No.", render: (r, i) => i + 1 },
-    { key: "child_id", label: "ID" },
+    { key: "child_id", label: "No.", render: (r) => <span className="font-mono text-slate-600 text-xs">{r.child_id || "—"}</span> },
     { key: "description", label: "Description", render: (r) => <span className="text-slate-800 font-medium">{r.description || r.child_type || "—"}</span> },
     { key: "category", label: "Category" },
     { key: "shelter_type", label: "Shelter Type", render: () => asset.shelter_type || asset.installed_shelter_type || "—" },
