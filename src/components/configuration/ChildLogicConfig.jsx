@@ -419,21 +419,35 @@ function TypeTemplatesTab({ templates, catalog, shelterTypeDefs, queryClient }) 
       <div className="border rounded-lg overflow-hidden">
         <table className="w-full text-xs">
           <thead className="bg-slate-50 border-b">
-            <tr>{["#","Child Component","Category","Warranty","Default","Mandatory","Active",""].map(h => <th key={h} className="px-3 py-2 text-left font-semibold text-slate-600">{h}</th>)}</tr>
+            <tr>
+              {["Code","Name / Display Name","Category","Type","Pricing","Price (€)","Warranty","Default","Mandatory","Active",""].map(h => (
+                <th key={h} className="px-3 py-2 text-left font-semibold text-slate-600 text-xs">{h}</th>
+              ))}
+            </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {typeRows.length === 0 && <tr><td colSpan={8} className="px-3 py-6 text-center text-slate-400">No children mapped to this shelter type</td></tr>}
+            {typeRows.length === 0 && <tr><td colSpan={11} className="px-3 py-6 text-center text-slate-400">No children mapped to this shelter type</td></tr>}
             {typeRows.map(row => {
               const child = catalog.find(c => c.id === row.child_catalog_id);
               return (
                 <tr key={row.id} className="hover:bg-slate-50">
-                  <td className="px-3 py-2 text-slate-400">{row.display_order}</td>
-                  <td className="px-3 py-2 font-medium text-slate-800">
-                    {child ? (child.display_name || child.child_name) : <span className="text-red-400">Unknown</span>}
-                    {child?.pricing_type === "Bundle" && <Badge className="ml-1 text-[9px] bg-purple-100 text-purple-700 border border-purple-200 hover:bg-purple-100">Bundle</Badge>}
+                  <td className="px-3 py-2 font-mono text-slate-700">{child?.child_code || "—"}</td>
+                  <td className="px-3 py-2">
+                    <div className="font-medium text-slate-800 text-xs">{child ? (child.display_name || child.child_name) : <span className="text-red-400">Unknown</span>}</div>
+                    {child?.display_name && child.display_name !== child.child_name && (
+                      <div className="text-[10px] text-slate-400">{child.child_name}</div>
+                    )}
                   </td>
-                  <td className="px-3 py-2 text-slate-500">{child?.child_category}</td>
-                  <td className="px-3 py-2">{child?.default_warranty_months} mo</td>
+                  <td className="px-3 py-2 text-slate-600 text-xs">{child?.child_category || "—"}</td>
+                  <td className="px-3 py-2 text-slate-600 text-xs">{child?.child_type || "—"}</td>
+                  <td className="px-3 py-2 text-xs">
+                    {child?.pricing_type === "Bundle"
+                      ? <Badge className="text-[10px] bg-purple-100 text-purple-700 border border-purple-200 hover:bg-purple-100">Bundle</Badge>
+                      : <Badge variant="outline" className="text-[10px]">Individual</Badge>
+                    }
+                  </td>
+                  <td className="px-3 py-2 text-slate-600 text-xs">{child?.pricing_type === "Bundle" ? (child?.bundle_price != null ? `€${child.bundle_price.toLocaleString()}` : "—") : (child?.unit_price != null ? `€${child.unit_price.toLocaleString()}` : "—")}</td>
+                  <td className="px-3 py-2 text-xs">{child?.default_warranty_months ? `${child.default_warranty_months} mo` : "—"}</td>
                   <td className="px-3 py-2">
                     <button onClick={() => updateMutation.mutate({ id: row.id, data: { default_included: !row.default_included } })}>
                       {row.default_included ? <ToggleRight className="w-4 h-4 text-green-500" /> : <ToggleLeft className="w-4 h-4 text-slate-400" />}
