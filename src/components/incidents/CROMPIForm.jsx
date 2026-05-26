@@ -25,7 +25,7 @@ import {
   ArrowLeft, Save, Send, AlertTriangle, CheckCircle2,
   Lock, Paperclip, Info, FileText, ClipboardCheck, Download
 } from "lucide-react";
-import { openHtmlPrintWindow } from "@/lib/printFormAsPDF";
+import html2pdf from "html2pdf.js";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/AuthContext";
 import FileUploadArea from "@/components/shared/FileUploadArea";
@@ -105,7 +105,17 @@ export default function CROMPIForm({ incident, incidentId, onClose, onDone }) {
     try {
       const pdfRes = await base44.functions.invoke('generateCROMPIPDF', { incidentId });
       const { html, fileName } = pdfRes.data;
-      openHtmlPrintWindow(html, fileName);
+      const container = document.createElement("div");
+      container.innerHTML = html;
+      document.body.appendChild(container);
+      await html2pdf().set({
+        margin: 10,
+        filename: fileName,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      }).from(container).save();
+      document.body.removeChild(container);
     } catch (err) {
       toast({ title: "PDF Error", description: err?.message || "Failed to generate PDF" });
     } finally {
@@ -260,25 +270,33 @@ export default function CROMPIForm({ incident, incidentId, onClose, onDone }) {
       try {
         const pdfRes = await base44.functions.invoke('generateCROMPIPDF', { incidentId });
         const { html, fileName } = pdfRes.data;
-        // Convert HTML to a Blob and upload as HTML report attachment
-        const blob = new Blob([html], { type: 'text/html' });
-        const file = new File([blob], fileName.replace('.pdf', '.html'), { type: 'text/html' });
+        const container = document.createElement("div");
+        container.innerHTML = html;
+        document.body.appendChild(container);
+        const pdfBlob = await html2pdf().set({
+          margin: 10,
+          filename: fileName,
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+        }).from(container).outputPdf("blob");
+        document.body.removeChild(container);
+        const file = new File([pdfBlob], fileName, { type: "application/pdf" });
         const { file_url } = await base44.integrations.Core.UploadFile({ file });
         await base44.entities.IncidentAttachments.create({
           incident_id: incidentId,
           file_url,
-          file_name: fileName.replace('.pdf', '_CROMPI_Report.html'),
+          file_name: fileName,
           file_type: "Document",
           uploaded_by: user?.email,
         });
-        // Add audit trail entry for the PDF attachment
         await base44.entities.IncidentAuditTrail.create({
           incident_id: incidentId,
           action: "CR+OMPI PDF Generated",
           details: `CR+OMPI PDF report automatically generated and attached.`,
           user: user?.email,
           attachments: [file_url],
-          attachment_names: [fileName.replace('.pdf', '_CROMPI_Report.html')],
+          attachment_names: [fileName],
         });
       } catch (pdfErr) {
         console.warn("CR+OMPI PDF auto-attach failed:", pdfErr?.message);
