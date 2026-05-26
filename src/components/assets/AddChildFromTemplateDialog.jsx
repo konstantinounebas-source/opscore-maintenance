@@ -6,8 +6,22 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2 } from "lucide-react";
 
+// Normalize "TYPE C1", "REFURBISHED - A2", "type-b" etc. → "C1", "A2", "B"
+function normalizeShelterType(raw) {
+  if (!raw) return null;
+  const s = raw.trim().toUpperCase();
+  // Try to extract known type codes: A1, A2, B, C1, C2, C3, D1, D2, Refurbished
+  const match = s.match(/\b(A1|A2|C1|C2|C3|D1|D2|B)\b/);
+  if (match) return match[1];
+  if (s.includes("REFURBISHED")) return "Refurbished";
+  if (s.includes("BICYCLE") || s.includes("RACK")) return "Bicycle racks";
+  // fallback: return as-is (trimmed)
+  return raw.trim();
+}
+
 export default function AddChildFromTemplateDialog({ open, onOpenChange, asset, onSave }) {
-  const shelterType = asset?.shelter_type || asset?.installed_shelter_type || asset?.ordered_shelter_type;
+  const rawShelterType = asset?.shelter_type || asset?.installed_shelter_type || asset?.ordered_shelter_type;
+  const shelterType = normalizeShelterType(rawShelterType);
 
   const { data: templates = [], isLoading: loadingTemplates } = useQuery({
     queryKey: ["typeTemplates", shelterType],
