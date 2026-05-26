@@ -512,15 +512,14 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
                 </Select>
               </div>
               <div>
-                <Label className="text-xs font-medium text-slate-600">Asset *</Label>
+                <Label className="text-xs font-medium text-slate-600">Address *</Label>
                 <Select value={linkedAssetId || "_none"} onValueChange={v => setLinkedAssetId(v === "_none" ? "" : v)}>
                   <SelectTrigger className="mt-1 text-sm"><SelectValue placeholder="Επιλογή..." /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="_none">— Επιλογή —</SelectItem>
                     {assets.map(a => (
                       <SelectItem key={a.id} value={a.id}>
-                        <span className="font-mono text-xs mr-1">{a.active_shelter_id || a.asset_id}</span>
-                        {a.location_address || ""}
+                        {a.location_address || "—"}
                       </SelectItem>
                     ))}
                   </SelectContent>
