@@ -391,20 +391,19 @@ function TypeTemplatesTab({ templates, catalog, shelterTypeDefs, queryClient }) 
   };
 
   const resetAndPopulate = async () => {
-    for (const row of typeRows) {
-      await base44.entities.TypeTemplates.delete(row.id);
+    await Promise.all(typeRows.map(row => base44.entities.TypeTemplates.delete(row.id)));
+    await queryClient.invalidateQueries({ queryKey: ["typeTemplates"] });
+    for (let idx = 0; idx < matchingChildren.length; idx++) {
+      await base44.entities.TypeTemplates.create({
+        shelter_type_code: selectedType,
+        child_catalog_id: matchingChildren[idx].id,
+        default_included: true,
+        mandatory: false,
+        display_order: idx,
+        active: true,
+      });
     }
     queryClient.invalidateQueries({ queryKey: ["typeTemplates"] });
-    matchingChildren.forEach((child, idx) => {
-      createMutation.mutate({ 
-        shelter_type_code: selectedType, 
-        child_catalog_id: child.id, 
-        default_included: true, 
-        mandatory: false, 
-        display_order: idx, 
-        active: true 
-      });
-    });
   };
 
   return (
