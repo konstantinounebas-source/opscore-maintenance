@@ -208,8 +208,10 @@ export default function Configuration() {
 
   const importMutation = useMutation({
     mutationFn: async (file) => {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const uploadResult = await base44.integrations.Core.UploadFile({ file });
+      const file_url = uploadResult.file_url || uploadResult.url || uploadResult;
       const response = await base44.functions.invoke('importChildCatalog', { file_url });
+      if (response.data?.error) throw new Error(response.data.error);
       return response.data;
     },
     onSuccess: (data) => {

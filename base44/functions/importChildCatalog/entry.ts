@@ -22,9 +22,11 @@ Deno.serve(async (req) => {
         }
 
         // Fetch the uploaded file
+        console.log('Fetching file from URL:', file_url);
         const fileResponse = await fetch(file_url);
         if (!fileResponse.ok) {
-            return Response.json({ error: 'Failed to fetch uploaded file' }, { status: 400 });
+            console.error('File fetch failed:', fileResponse.status, fileResponse.statusText);
+            return Response.json({ error: `Failed to fetch uploaded file: ${fileResponse.status} ${fileResponse.statusText}` }, { status: 400 });
         }
         const arrayBuffer = await fileResponse.arrayBuffer();
         const workbook = read(arrayBuffer, { type: 'array' });
