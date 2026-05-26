@@ -207,8 +207,8 @@ export default function AssetDetail() {
     { key: "child_id", label: "ID" },
     { key: "description", label: "Description", render: (r) => <span className="text-slate-800 font-medium">{r.description || r.child_type || "—"}</span> },
     { key: "category", label: "Category" },
-    { key: "serial_number", label: "Serial Number" },
-    { key: "installation_date", label: "Install Date" },
+    { key: "shelter_type", label: "Shelter Type", render: () => asset.shelter_type || asset.installed_shelter_type || "—" },
+    { key: "unit_price", label: "Total Price", render: (r) => r.unit_price ? `€${r.unit_price.toFixed(2)}` : "—" },
     {
       key: "move",
       label: "",
