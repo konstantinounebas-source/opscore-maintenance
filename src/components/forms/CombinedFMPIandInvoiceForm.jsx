@@ -151,8 +151,29 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
     queryKey: ["childCatalog"],
     queryFn: () => base44.entities.ChildCatalog.list(),
   });
+  const { data: typeTemplates = [] } = useQuery({
+    queryKey: ["typeTemplates"],
+    queryFn: () => base44.entities.TypeTemplates.list(),
+  });
   const activeCatalog = useMemo(() => childCatalog.filter(c => c.active !== false), [childCatalog]);
   const catalogMap = useMemo(() => Object.fromEntries(activeCatalog.map(c => [c.id, c])), [activeCatalog]);
+
+  // Filter catalog to only items matching the linked asset's shelter type
+  const filteredCatalog = useMemo(() => {
+    const asset = assets.find(a => a.id === linkedAssetId);
+    const shelterType = asset?.shelter_type || asset?.installed_shelter_type || asset?.ordered_shelter_type;
+    if (!shelterType || !typeTemplates.length) return activeCatalog;
+    // Normalize shelter type for matching (e.g. "Type B" → "B")
+    const normalizeType = (s) => s?.trim().replace(/^type\s+/i, "").toUpperCase();
+    const normalized = normalizeType(shelterType);
+    const templateIds = new Set(
+      typeTemplates
+        .filter(t => normalizeType(t.shelter_type_code) === normalized && t.active !== false)
+        .map(t => t.child_catalog_id)
+    );
+    if (!templateIds.size) return activeCatalog; // fallback: show all if no template found
+    return activeCatalog.filter(c => templateIds.has(c.id));
+  }, [activeCatalog, typeTemplates, linkedAssetId, assets]);
 
   // ── Tab state ──
   const [activeTab, setActiveTab] = useState("fmpi");
@@ -722,7 +743,7 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
                                 </SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value="_none">— Επιλογή —</SelectItem>
-                                  {activeCatalog.map(c => (
+                                  {filteredCatalog.map(c => (
                                     <SelectItem key={c.id} value={c.id}>
                                       <span className="font-mono text-xs mr-1">{c.child_code}</span>
                                       {c.display_name || c.child_name}
