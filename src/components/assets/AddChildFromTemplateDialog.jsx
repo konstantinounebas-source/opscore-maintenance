@@ -70,15 +70,15 @@ export default function AddChildFromTemplateDialog({ open, onOpenChange, asset, 
   const handleSave = async () => {
     setSaving(true);
     const toCreate = rows.filter(r => selected[r.template.id]);
-    for (const { cat } of toCreate) {
+    for (const { cat, template } of toCreate) {
       await onSave({
-        child_id: `${asset.asset_id || asset.id}-${cat.child_code || cat.id}-${Date.now()}`,
+        child_id: cat.child_code || `${asset.asset_id || asset.id}-${cat.id.slice(-6)}`,
         parent_asset_id: asset.id,
         category: cat.child_category || "",
-        child_type: cat.child_type || "",
+        child_type: cat.child_name || cat.display_name || "",
         description: cat.child_name,
         serial_number: cat.serial_number || "",
-        unit_price: cat.unit_price || 0,
+        unit_price: cat.pricing_type === "Bundle" ? (cat.bundle_price || 0) : (cat.unit_price || 0),
       });
     }
     setSaving(false);

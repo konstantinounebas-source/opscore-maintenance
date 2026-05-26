@@ -205,10 +205,10 @@ export default function AssetDetail() {
 
   const childColumns = [
     { key: "child_id", label: "ID" },
+    { key: "description", label: "Description", render: (r) => <span className="text-slate-800 font-medium">{r.description || r.child_type || "—"}</span> },
     { key: "category", label: "Category" },
     { key: "serial_number", label: "Serial Number" },
     { key: "installation_date", label: "Install Date" },
-    { key: "child_type", label: "Type" },
     {
       key: "move",
       label: "",
