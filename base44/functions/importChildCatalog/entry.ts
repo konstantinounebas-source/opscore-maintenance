@@ -131,8 +131,9 @@ Deno.serve(async (req) => {
                 catalogRecords.push({
                     child_name: firstItem.child_name,
                     child_code: firstItem.child_code,
-                    child_type: firstItem.child_type,
-                    child_category: shelterType,
+                    child_type: shelterType,
+                    child_category: firstItem.child_type || '',
+                    unit_price: firstItem.excel_total_price || firstItem.excel_contract_price || null,
                     pricing_type: 'Individual',
                     active: true,
                     excel_contract_number: firstItem.excel_contract_number,
@@ -149,10 +150,13 @@ Deno.serve(async (req) => {
                 catalogRecords.push({
                     child_name: description,
                     child_code: firstItem.child_code,
-                    child_type: firstItem.child_type,
-                    child_category: shelterType,
+                    child_type: shelterType,
+                    child_category: firstItem.child_type || '',
                     pricing_type: 'Bundle',
-                    bundle_items: items,
+                    bundle_items: items.map(item => ({
+                        ...item,
+                        unit_price: item.excel_contract_price || null
+                    })),
                     bundle_price: bundlePrice,
                     active: true
                 });
