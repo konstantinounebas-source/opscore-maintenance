@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2 } from "lucide-react";
 
 export default function AddChildFromTemplateDialog({ open, onOpenChange, asset, onSave }) {
-  const shelterType = asset?.shelter_type;
+  const shelterType = asset?.shelter_type || asset?.installed_shelter_type || asset?.ordered_shelter_type;
 
   const { data: templates = [], isLoading: loadingTemplates } = useQuery({
     queryKey: ["typeTemplates", shelterType],
