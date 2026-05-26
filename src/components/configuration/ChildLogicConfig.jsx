@@ -298,16 +298,18 @@ function TypeTemplatesTab({ templates, catalog, shelterTypeDefs, queryClient }) 
     });
   };
 
+  const [isResetting, setIsResetting] = useState(false);
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
   const resetAndPopulate = async () => {
-    // Delete in small batches to avoid rate limit
-    for (let i = 0; i < typeRows.length; i += 5) {
-      await Promise.all(typeRows.slice(i, i + 5).map(row => base44.entities.TypeTemplates.delete(row.id)));
-      if (i + 5 < typeRows.length) await sleep(300);
+    setIsResetting(true);
+    // Delete one by one with 400ms gap to stay under rate limit
+    for (let i = 0; i < typeRows.length; i++) {
+      await base44.entities.TypeTemplates.delete(typeRows[i].id);
+      await sleep(400);
     }
     await queryClient.invalidateQueries({ queryKey: ["typeTemplates"] });
-    // Create with a small delay between each
+    // Create one by one with 400ms gap
     for (let idx = 0; idx < matchingChildren.length; idx++) {
       await base44.entities.TypeTemplates.create({
         shelter_type_code: selectedType,
@@ -317,9 +319,10 @@ function TypeTemplatesTab({ templates, catalog, shelterTypeDefs, queryClient }) 
         display_order: idx,
         active: true,
       });
-      if (idx % 5 === 4) await sleep(300);
+      await sleep(400);
     }
-    queryClient.invalidateQueries({ queryKey: ["typeTemplates"] });
+    await queryClient.invalidateQueries({ queryKey: ["typeTemplates"] });
+    setIsResetting(false);
   };
 
   return (
@@ -334,8 +337,8 @@ function TypeTemplatesTab({ templates, catalog, shelterTypeDefs, queryClient }) 
         <Button size="sm" variant="outline" className="h-8 text-xs" onClick={autoPopulate} disabled={matchingChildren.filter(c => !usedChildIds.has(c.id)).length === 0}>
           Auto-populate
         </Button>
-        <Button size="sm" variant="outline" className="h-8 text-xs border-red-300 text-red-600 hover:bg-red-50" onClick={resetAndPopulate} disabled={matchingChildren.length === 0}>
-          Reset &amp; Re-populate
+        <Button size="sm" variant="outline" className="h-8 text-xs border-red-300 text-red-600 hover:bg-red-50" onClick={resetAndPopulate} disabled={matchingChildren.length === 0 || isResetting}>
+          {isResetting ? "Resetting..." : "Reset & Re-populate"}
         </Button>
       </div>
 
