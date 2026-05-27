@@ -168,27 +168,10 @@ export default function CorrectiveWOForm({ submission, incident, incidentId, wor
     if (!existingData.corr_id) {
       generateWorkOrderId("corrective").then(id => setCorrId(id));
     }
-    // Auto-populate work_order_ref from linked work orders if not already set
-    if (!existingData.work_order_ref && workOrders?.length) {
-      const wo = workOrders.find(w =>
-        w.incident_id === incidentId &&
-        (w.title?.toLowerCase().includes('corrective') || w.work_order_type === "corrective")
-      ) || workOrders.find(w => w.incident_id === incidentId);
-      if (wo?.work_order_id) {
-        setForm(prev => ({ ...prev, work_order_ref: wo.work_order_id }));
-      }
-    }
+  
   }, []);
 
-  const getWorkOrderRef = () => {
-    if (form.work_order_ref) return form.work_order_ref;
-    // Find any corrective WO linked to this incident (by title keyword or just first WO)
-    const wo = workOrders?.find(w =>
-      w.incident_id === incidentId &&
-      (w.title?.toLowerCase().includes('corrective') || w.work_order_type === "corrective")
-    ) || workOrders?.find(w => w.incident_id === incidentId);
-    return wo?.work_order_id || "";
-  };
+  const getWorkOrderRef = () => corrId || form.work_order_ref || "";
 
   const buildPayload = (status) => ({
     form_type: "corrective_wo_checklist",
