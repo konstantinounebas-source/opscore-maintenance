@@ -22,6 +22,7 @@ import WorkOrderPanel from "@/components/incidents/WorkOrderPanel";
 import CROMPIForm from "@/components/incidents/CROMPIForm";
 import OutlineManagementForm from "@/components/forms/OutlineManagementForm";
 import CombinedFMPIandInvoiceForm from "@/components/forms/CombinedFMPIandInvoiceForm";
+import FMPIReadOnlyViewer from "@/components/forms/FMPIReadOnlyViewer";
 import ManualFMPIModal from "@/components/incidents/ManualFMPIModal";
 import WorkflowStepper from "@/components/incidents/WorkflowStepper";
 import { getAthensTimestamp } from "@/lib/timeSync";
@@ -71,9 +72,7 @@ function CAApprovalModal({ incident, incidentId, onClose, onDone }) {
     queryKey: ["caFmpiSubmissions", incidentId],
     queryFn: () => base44.entities.FormSubmissions.filter({ incident_id: incidentId, form_type: "combined_fmpi_invoice" }),
   });
-  const { data: allIncidents = [] } = useQuery({ queryKey: ["incidents"], queryFn: () => base44.entities.Incidents.list(), enabled: !!viewingSubmission });
-  const { data: allAssets = [] } = useQuery({ queryKey: ["assets"], queryFn: () => base44.entities.Assets.list(), enabled: !!viewingSubmission });
-  const { data: allWorkOrders = [] } = useQuery({ queryKey: ["allWorkOrders"], queryFn: () => base44.entities.WorkOrders.list(), enabled: !!viewingSubmission });
+
 
   const handleSubmit = async () => {
     if (!decision) { toast({ title: "Select a decision (Approved / Rejected)" }); return; }
@@ -167,18 +166,13 @@ function CAApprovalModal({ incident, incidentId, onClose, onDone }) {
             </div>
           )}
 
-          {/* Nested dialog to view FMPI submission */}
+          {/* Read-only printable viewer for FMPI submission */}
           {viewingSubmission && (
             <Dialog open onOpenChange={() => setViewingSubmission(null)}>
-              <DialogContent className="max-w-5xl w-full max-h-[95vh] overflow-y-auto p-0">
-                <CombinedFMPIandInvoiceForm
+              <DialogContent className="max-w-5xl w-full max-h-[95vh] overflow-hidden p-0 flex flex-col">
+                <FMPIReadOnlyViewer
                   submission={viewingSubmission}
-                  incidents={allIncidents}
-                  assets={allAssets}
-                  workOrders={allWorkOrders}
-                  crews={[]}
                   onClose={() => setViewingSubmission(null)}
-                  defaultIncidentId={incidentId}
                 />
               </DialogContent>
             </Dialog>
