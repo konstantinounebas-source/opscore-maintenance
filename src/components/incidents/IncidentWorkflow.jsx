@@ -66,10 +66,14 @@ function CAApprovalModal({ incident, incidentId, onClose, onDone }) {
    const [comment, setComment] = useState("");
    const [files, setFiles] = useState([]);
    const [saving, setSaving] = useState(false);
+   const [viewingSubmission, setViewingSubmission] = useState(null);
   const { data: fmpiSubmissions = [] } = useQuery({
     queryKey: ["caFmpiSubmissions", incidentId],
     queryFn: () => base44.entities.FormSubmissions.filter({ incident_id: incidentId, form_type: "combined_fmpi_invoice" }),
   });
+  const { data: allIncidents = [] } = useQuery({ queryKey: ["incidents"], queryFn: () => base44.entities.Incidents.list(), enabled: !!viewingSubmission });
+  const { data: allAssets = [] } = useQuery({ queryKey: ["assets"], queryFn: () => base44.entities.Assets.list(), enabled: !!viewingSubmission });
+  const { data: allWorkOrders = [] } = useQuery({ queryKey: ["allWorkOrders"], queryFn: () => base44.entities.WorkOrders.list(), enabled: !!viewingSubmission });
 
   const handleSubmit = async () => {
     if (!decision) { toast({ title: "Select a decision (Approved / Rejected)" }); return; }
@@ -143,7 +147,12 @@ function CAApprovalModal({ incident, incidentId, onClose, onDone }) {
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-2">
               <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">FMPI Submissions to Review</p>
               {fmpiSubmissions.map(s => (
-                <div key={s.id} className="flex items-center gap-2 px-2 py-1.5 rounded border border-indigo-200 bg-indigo-50 text-xs text-indigo-700">
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => setViewingSubmission(s)}
+                  className="w-full flex items-center gap-2 px-2 py-1.5 rounded border border-indigo-200 bg-indigo-50 text-xs text-indigo-700 hover:bg-indigo-100 hover:border-indigo-300 transition-colors text-left"
+                >
                   <FileCheck className="w-3 h-3 shrink-0" />
                   <span className="flex-1 truncate">
                     {s.form_name || "FMPI & Pricing Order"}
@@ -152,9 +161,27 @@ function CAApprovalModal({ incident, incidentId, onClose, onDone }) {
                     )}
                   </span>
                   <span className={`px-1.5 py-0.5 rounded font-medium ${s.status === "Submitted" ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"}`}>{s.status}</span>
-                </div>
+                  <span className="text-indigo-400 text-[10px] font-medium">View →</span>
+                </button>
               ))}
             </div>
+          )}
+
+          {/* Nested dialog to view FMPI submission */}
+          {viewingSubmission && (
+            <Dialog open onOpenChange={() => setViewingSubmission(null)}>
+              <DialogContent className="max-w-5xl w-full max-h-[95vh] overflow-y-auto p-0">
+                <CombinedFMPIandInvoiceForm
+                  submission={viewingSubmission}
+                  incidents={allIncidents}
+                  assets={allAssets}
+                  workOrders={allWorkOrders}
+                  crews={[]}
+                  onClose={() => setViewingSubmission(null)}
+                  defaultIncidentId={incidentId}
+                />
+              </DialogContent>
+            </Dialog>
           )}
 
           <div className="space-y-1.5">
