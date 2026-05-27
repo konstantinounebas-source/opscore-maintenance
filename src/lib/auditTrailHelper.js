@@ -33,7 +33,8 @@ export async function createAuditEntry(params) {
   } = params;
 
   const timestamp = getAthensTimestamp();
-  const user = await base44.auth.me();
+  let user = null;
+  try { user = await base44.auth.me(); } catch (_) {}
 
   // Build state transition metadata for details
   let enrichedDetails = details || action;
@@ -86,7 +87,8 @@ export async function createAuditEntry(params) {
  */
 export async function logStateTransition(incident_id, oldState, newState, details, context = {}) {
   const { attachments = [], work_order_id, form_type, form_submission_id } = context;
-  const user = await base44.auth.me();
+  let user = null;
+  try { user = await base44.auth.me(); } catch (_) {}
 
   return createAuditEntry({
     incident_id,
@@ -106,7 +108,8 @@ export async function logStateTransition(incident_id, oldState, newState, detail
  * Logs a form submission event with full context.
  */
 export async function logFormSubmission(incident_id, formType, formName, attachments = [], workOrderId) {
-  const user = await base44.auth.me();
+  let user = null;
+  try { user = await base44.auth.me(); } catch (_) {}
 
   return createAuditEntry({
     incident_id,
