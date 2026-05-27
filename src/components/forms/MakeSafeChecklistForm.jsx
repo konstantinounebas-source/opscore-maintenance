@@ -3,122 +3,114 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { getAthensTimestamp } from "@/lib/timeSync";
 import { generateWorkOrderId } from "@/lib/workOrderIdGenerator";
-import TopHeader from "@/components/layout/TopHeader";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import {
-  ArrowLeft, Save, Send, Lock, AlertTriangle, CheckCircle2,
-  Upload, X, ShieldAlert, ZapOff, Info, Printer
-} from "lucide-react";
+import { ArrowLeft, Save, Send, Printer, ShieldAlert, ZapOff, CheckCircle2, AlertTriangle, Upload, X } from "lucide-react";
 import { openHtmlPrintWindow } from "@/lib/printFormAsPDF";
 import { useToast } from "@/components/ui/use-toast";
 import FileUploadArea from "@/components/shared/FileUploadArea";
 
-// ── Reusable primitives ───────────────────────────────────────────────────────
+// ── PDF-style primitives ──────────────────────────────────────────────────────
 
-function ReadOnlyField({ label, value }) {
+function PdfSection({ title, children, redTitle }) {
   return (
-    <div className="space-y-1">
-      <Label className="text-xs font-medium text-slate-500 uppercase tracking-wide">{label}</Label>
-      <div className="flex items-center gap-2 min-h-[36px] px-3 py-2 rounded-md bg-slate-50 border border-slate-200 text-sm text-slate-700">
-        <Lock className="w-3 h-3 text-slate-300 flex-shrink-0" />
-        <span className="flex-1">{value || <span className="text-slate-300 italic">—</span>}</span>
+    <div className="border border-black">
+      <div className={`px-2 py-1 font-bold text-xs uppercase tracking-wide border-b border-black ${redTitle ? "bg-red-50 text-red-800" : "bg-gray-200 text-gray-900"}`}>
+        {title}
       </div>
+      <div className="p-2">{children}</div>
     </div>
   );
 }
 
-function Section({ id, title, accent, children }) {
+function FieldLabel({ children }) {
+  return <span className="font-bold text-xs text-gray-800 whitespace-nowrap">{children}</span>;
+}
+
+function FieldValue({ children, className }) {
   return (
-    <div id={id} className={`bg-white rounded-xl border ${accent || "border-slate-200"} overflow-hidden`}>
-      <div className={`px-5 py-3.5 border-b ${accent ? "border-inherit bg-slate-50/60" : "border-slate-100 bg-slate-50/30"}`}>
-        <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider">{title}</h3>
-      </div>
-      <div className="p-5 space-y-4">{children}</div>
-    </div>
+    <span className={`text-xs text-gray-900 border-b border-gray-400 min-w-[80px] inline-block px-1 ${className || ""}`}>
+      {children || "\u00A0"}
+    </span>
   );
 }
 
-function CbRow({ label, checked, onChange, className }) {
+function ChkBox({ checked, onChange, label, className }) {
   return (
-    <label className={`flex items-start gap-3 cursor-pointer group ${className || ""}`}>
-      <Checkbox
-        checked={!!checked}
-        onCheckedChange={v => onChange(!!v)}
-        className="mt-0.5 w-5 h-5 flex-shrink-0"
-      />
-      <span className="text-sm text-slate-700 leading-snug group-hover:text-slate-900">{label}</span>
+    <label className={`flex items-center gap-1 cursor-pointer ${className || ""}`}>
+      <span
+        onClick={() => onChange(!checked)}
+        className={`inline-flex items-center justify-center w-4 h-4 border-2 rounded-sm flex-shrink-0 cursor-pointer text-xs font-bold select-none
+          ${checked ? "bg-gray-800 border-gray-800 text-white" : "bg-white border-gray-500"}`}
+      >
+        {checked ? "✓" : ""}
+      </span>
+      {label && <span className="text-xs text-gray-800 leading-tight">{label}</span>}
     </label>
   );
 }
 
+function RadioOpt({ name, value, current, onChange, label }) {
+  return (
+    <label className="flex items-center gap-1 cursor-pointer">
+      <input type="radio" name={name} value={value} checked={current === value} onChange={() => onChange(value)} className="w-3.5 h-3.5" />
+      <span className="text-xs text-gray-800">{label}</span>
+    </label>
+  );
+}
 
+function EditableField({ value, onChange, placeholder, type = "text", className }) {
+  return (
+    <input
+      type={type}
+      value={value || ""}
+      onChange={e => onChange(e.target.value)}
+      placeholder={placeholder}
+      className={`border-b border-gray-400 bg-transparent text-xs text-gray-900 outline-none focus:border-blue-500 px-1 min-w-[60px] ${className || ""}`}
+    />
+  );
+}
+
+function EditableTextarea({ value, onChange, placeholder, rows = 2, className }) {
+  return (
+    <textarea
+      value={value || ""}
+      onChange={e => onChange(e.target.value)}
+      placeholder={placeholder}
+      rows={rows}
+      className={`border border-gray-300 bg-white text-xs text-gray-900 outline-none focus:border-blue-500 px-1 w-full resize-none ${className || ""}`}
+    />
+  );
+}
 
 // ── Default state factory ─────────────────────────────────────────────────────
 const defaultData = () => ({
-  // A
-  date: "",
-  time_start: "",
-  technician: "",
-  vehicle: "",
-  time_arrival: "",
-  time_end: "",
-  // B
+  date: "", time_start: "", technician: "", vehicle: "", time_arrival: "", time_end: "",
   check_360: false,
-  danger_electrical: false,
-  danger_glass: false,
-  danger_structural: false,
-  danger_pv: false,
-  danger_other: false,
-  danger_other_text: "",
-  immediate_danger: "",   // "yes" | "no"
-  danger_description: "",
-  // C
+  danger_electrical: false, danger_glass: false, danger_structural: false, danger_pv: false, danger_other: false, danger_other_text: "",
+  immediate_danger: "", danger_description: "",
   ppe_vest: false, ppe_helmet: false, ppe_gloves: false, ppe_glasses: false,
   ppe_shoes: false, ppe_mask: false, ppe_extinguisher: false, ppe_all: false,
-  eq_cones: false, eq_loto_kit: false, eq_all: false,
-  eq_other: false, eq_other_text: "",
-  // D
+  eq_cones: false, eq_loto_kit: false, eq_all: false, eq_other: false, eq_other_text: "",
   tmp1: false, tmp2: false, tmp3: false, tmp4: false,
-  tmr1: false, tmr2: false, tmr3: false,
-  tmbs1: false, tmbs2: false,
+  tmr1: false, tmr2: false, tmr3: false, tmbs1: false, tmbs2: false,
   coord_police: false, coord_municipality: false, coord_other: false, coord_other_text: "",
-  // E
   loto_ac: false, loto_pv: false, loto_battery: false, loto_other: false, loto_other_text: "",
-  loto_isolation: false,
-  loto_lock_tag: false, loto_lock_tag_name: "",
-  loto_confirm: false,
-  loto_notes: "",
-  // F
+  loto_isolation: false, loto_lock_tag: false, loto_lock_tag_name: "", loto_confirm: false, loto_notes: "",
   f1_cover: false, f1_panel_lock: false,
   f2_collect: false, f2_stabilize: false, f2_cover: false,
   f3_stabilize: false, f3_remove: false,
-  f4_isolate: false, f4_thermal: "",   // "yes" | "no"
-  f4_evacuate: false,
-  f4_full_removal: false,
-  f5_other: "",
-  // G
+  f4_isolate: false, f4_thermal: "", f4_evacuate: false, f4_full_removal: false, f5_other: "",
   vehicle_none: false, vehicle_yes: false,
-  veh_cherry: false, veh_crane: false, veh_other: false, veh_other_text: "",
-  veh_justification: "",
-  // H
+  veh_cherry: false, veh_crane: false, veh_other: false, veh_other_text: "", veh_justification: "",
   pending_corrective: "",
-  // I
   doc_photo_before: false, doc_photo_after: false, doc_wm: false,
-  doc_materials: false, doc_materials_text: "",
-  doc_make_safe_completed: false,
-  doc_hd_comments: "",
-  // K
-  sig_tech: "", sig_tech_upload: null,
-  sig_hd: "", sig_hd_upload: null,
-  sig_date: "",
-  // photos
-  photos_before: [],
-  photos_after: [],
+  doc_materials: false, doc_materials_text: "", doc_make_safe_completed: false, doc_hd_comments: "",
+  sig_tech: "", sig_tech_upload: null, sig_hd: "", sig_hd_upload: null, sig_date: "",
+  photos_before: [], photos_after: [],
 });
 
 // ── Main Component ────────────────────────────────────────────────────────────
@@ -130,16 +122,12 @@ export default function MakeSafeChecklistForm({ submission, incidents, assets, w
   const [linkedWOId, setLinkedWOId]             = useState(submission?.work_order_id || "");
   const [linkedAssetId, setLinkedAssetId]       = useState(submission?.asset_id || "");
 
-  const [fd, setFd] = useState(() => ({
-    ...defaultData(),
-    ...(submission?.form_data || {}),
-  }));
+  const [fd, setFd] = useState(() => ({ ...defaultData(), ...(submission?.form_data || {}) }));
 
-  const incident = useMemo(() => incidents.find(i => i.id === linkedIncidentId), [incidents, linkedIncidentId]);
+  const incident  = useMemo(() => incidents.find(i => i.id === linkedIncidentId), [incidents, linkedIncidentId]);
   const workOrder = useMemo(() => workOrders.find(w => w.id === linkedWOId), [workOrders, linkedWOId]);
-  const asset = useMemo(() => assets.find(a => a.id === linkedAssetId), [assets, linkedAssetId]);
+  const asset     = useMemo(() => assets.find(a => a.id === linkedAssetId), [assets, linkedAssetId]);
 
-  // Auto-fill asset from incident or WO
   useEffect(() => {
     if (!linkedAssetId) {
       const src = incident?.related_asset_id || workOrder?.related_asset_id;
@@ -147,24 +135,18 @@ export default function MakeSafeChecklistForm({ submission, incidents, assets, w
     }
   }, [incident, workOrder]);
 
-  // Auto-create WO from incident if not exists
   useEffect(() => {
     const createWO = async () => {
       if (linkedIncidentId && !linkedWOId && incident) {
         try {
           const woId = await generateWorkOrderId("make_safe");
           const newWO = await base44.entities.WorkOrders.create({
-            work_order_id: woId,
-            incident_id: linkedIncidentId,
+            work_order_id: woId, incident_id: linkedIncidentId,
             title: `Make-Safe WO for ${incident.incident_id}`,
-            related_asset_id: incident.related_asset_id,
-            status: "Open",
-            priority: incident.priority || "Medium",
+            related_asset_id: incident.related_asset_id, status: "Open", priority: incident.priority || "Medium",
           });
           setLinkedWOId(newWO.id);
-        } catch (err) {
-          console.error("Error creating work order:", err);
-        }
+        } catch (err) { console.error("Error creating work order:", err); }
       }
     };
     createWO();
@@ -182,11 +164,8 @@ export default function MakeSafeChecklistForm({ submission, incidents, assets, w
     set(field, { name: file.name, url: file_url });
   };
 
-  // ── Visual indicators ──────────────────────────────────────────────────────
   const isHighRisk = fd.immediate_danger === "yes";
   const hasLoto    = fd.loto_ac || fd.loto_pv || fd.loto_battery || fd.loto_other;
-  const isCompleted = fd.doc_make_safe_completed;
-  const photosAfterMissing = fd.doc_photo_after && fd.photos_after.length === 0;
 
   const [printingPDF, setPrintingPDF] = React.useState(false);
   const handlePrintPDF = async () => {
@@ -197,26 +176,19 @@ export default function MakeSafeChecklistForm({ submission, incidents, assets, w
         workOrderId: workOrder?.work_order_id,
         formData: fd,
       });
-      if (res.data?.html) {
-        openHtmlPrintWindow(res.data.html, res.data.fileName);
-      } else {
-        toast({ title: "Σφάλμα δημιουργίας PDF", variant: "destructive" });
-      }
-    } catch (err) {
-      toast({ title: err.message || "Σφάλμα PDF", variant: "destructive" });
-    } finally {
-      setPrintingPDF(false);
-    }
+      if (res.data?.html) { openHtmlPrintWindow(res.data.html, res.data.fileName); }
+      else { toast({ title: "Σφάλμα δημιουργίας PDF", variant: "destructive" }); }
+    } catch (err) { toast({ title: err.message || "Σφάλμα PDF", variant: "destructive" }); }
+    finally { setPrintingPDF(false); }
   };
 
-  // ── Save ───────────────────────────────────────────────────────────────────
   const queryClient = useQueryClient();
   const saveMutation = useMutation({
     mutationFn: async (data) => {
       const result = isEditing
         ? await base44.entities.FormSubmissions.update(submission.id, data)
         : await base44.entities.FormSubmissions.create(data);
-      
+
       const incId = data.incident_id;
       const user = await base44.auth.me();
       const timestamp = getAthensTimestamp();
@@ -227,12 +199,10 @@ export default function MakeSafeChecklistForm({ submission, incidents, assets, w
         ...[data.form_data?.sig_tech_upload, data.form_data?.sig_hd_upload].filter(Boolean),
       ].filter(f => f?.url);
 
-      // Mirror to IncidentAttachments in parallel
       if (incId && allFiles.length > 0) {
         await Promise.all(allFiles.map(f =>
           base44.entities.IncidentAttachments.create({
-            incident_id: incId,
-            file_url: f.url,
+            incident_id: incId, file_url: f.url,
             file_name: f.name || f.url.split("/").pop(),
             file_type: /\.(jpg|jpeg|png|gif|webp)$/i.test(f.name || "") ? "Photo" : "Document",
             uploaded_by: user?.email,
@@ -240,9 +210,7 @@ export default function MakeSafeChecklistForm({ submission, incidents, assets, w
         ));
       }
 
-      // On Submission: create WO + update incident workflow flag + auto-attach PDF
       if (data.status === "Submitted" && incId) {
-        // Create Make Safe WO if none exists yet for this incident
         const existingWOs = await base44.entities.WorkOrders.filter({ incident_id: incId });
         const hasMakeSafeWO = existingWOs.some(w => w.title?.includes("Make Safe WO"));
         if (!hasMakeSafeWO) {
@@ -250,68 +218,42 @@ export default function MakeSafeChecklistForm({ submission, incidents, assets, w
           const inc = incidentList[0];
           const woId = await generateWorkOrderId("make_safe");
           await base44.entities.WorkOrders.create({
-           work_order_id: woId,
-            incident_id: incId,
+            work_order_id: woId, incident_id: incId,
             title: `Make Safe WO - ${inc?.incident_id || incId}`,
             related_asset_id: inc?.related_asset_id || data.asset_id,
             related_asset_name: inc?.related_asset_name || "",
-            status: "Open",
-            priority: "Critical",
+            status: "Open", priority: "Critical",
             description: `Created via Make Safe Checklist form`,
             assigned_to: data.form_data?.technician || "",
           });
         }
-        // Mark make_safe_done on incident
         const incidentList2 = await base44.entities.Incidents.filter({ id: incId });
         if (incidentList2.length > 0) {
           await base44.entities.Incidents.update(incidentList2[0].id, { make_safe_done: true });
         }
-
-        // Auto-generate PDF and attach to incident evidence
         try {
-          const pdfRes = await base44.functions.invoke('generateMakeSafeChecklistPDF', {
-            incidentId: incId,
-            formData: data.form_data,
-          });
+          const pdfRes = await base44.functions.invoke('generateMakeSafeChecklistPDF', { incidentId: incId, formData: data.form_data });
           const { html, fileName } = pdfRes.data;
           const blob = new Blob([html], { type: 'text/html' });
           const file = new File([blob], fileName.replace('.pdf', '_MakeSafe_Report.html'), { type: 'text/html' });
           const { file_url } = await base44.integrations.Core.UploadFile({ file });
           await base44.entities.IncidentAttachments.create({
-            incident_id: incId,
-            file_url,
+            incident_id: incId, file_url,
             file_name: fileName.replace('.pdf', '_MakeSafe_Report.html'),
-            file_type: "Document",
-            uploaded_by: user?.email,
+            file_type: "Document", uploaded_by: user?.email,
           });
           await base44.entities.IncidentAuditTrail.create({
-            incident_id: incId,
-            action: "Make Safe PDF Generated",
+            incident_id: incId, action: "Make Safe PDF Generated",
             details: `Make Safe Checklist PDF report automatically generated and attached.`,
-            user: user?.email,
-            attachments: [file_url],
+            user: user?.email, attachments: [file_url],
             attachment_names: [fileName.replace('.pdf', '_MakeSafe_Report.html')],
           });
-        } catch (pdfErr) {
-          console.warn("Make Safe PDF auto-attach failed:", pdfErr?.message);
-        }
+        } catch (pdfErr) { console.warn("Make Safe PDF auto-attach failed:", pdfErr?.message); }
       }
 
       const auditAttachments = [
-        ...(data.status === "Submitted" && result?.id ? [{
-          url: `form:${result.id}:${data.form_type}`,
-          name: `${data.form_name} (Submitted)`,
-          author: user?.email,
-          author_name: user?.full_name,
-          created_at: timestamp,
-        }] : []),
-        ...allFiles.map(f => ({
-          url: f.url,
-          name: f.name || f.url.split("/").pop(),
-          author: user?.email,
-          author_name: user?.full_name,
-          created_at: timestamp,
-        })),
+        ...(data.status === "Submitted" && result?.id ? [{ url: `form:${result.id}:${data.form_type}`, name: `${data.form_name} (Submitted)`, author: user?.email, author_name: user?.full_name, created_at: timestamp }] : []),
+        ...allFiles.map(f => ({ url: f.url, name: f.name || f.url.split("/").pop(), author: user?.email, author_name: user?.full_name, created_at: timestamp })),
       ];
 
       await base44.entities.IncidentAuditTrail.create({
@@ -323,7 +265,7 @@ export default function MakeSafeChecklistForm({ submission, incidents, assets, w
         user: user?.email,
         ...(auditAttachments.length > 0 ? { attachment_metadata: auditAttachments } : {}),
       });
-      
+
       return result;
     },
     onSuccess: (_, variables) => {
@@ -354,89 +296,86 @@ export default function MakeSafeChecklistForm({ submission, incidents, assets, w
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50">
-      <TopHeader
-        title="MAKE-SAFE CHECKLIST ΠΕΔΙΟΥ"
-        subtitle="Smart Bus Shelters – Άμεση ασφάλιση χώρου/κινδύνου (Make-Safe)"
-        actions={
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={onClose} className="gap-1.5 text-xs">
-              <ArrowLeft className="w-3.5 h-3.5" /> Πίσω
-            </Button>
-            <Button variant="outline" size="sm" onClick={handlePrintPDF} disabled={printingPDF} className="gap-1.5 text-xs">
-              <Printer className="w-3.5 h-3.5" /> {printingPDF ? "..." : "PDF"}
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => handleSave("Draft")} disabled={saveMutation.isPending} className="gap-1.5 text-xs">
-              <Save className="w-3.5 h-3.5" /> Draft
-            </Button>
-            <Button size="sm" onClick={() => handleSave("Submitted")} disabled={saveMutation.isPending}
-              className="bg-indigo-600 hover:bg-indigo-700 gap-1.5 text-xs">
-              <Send className="w-3.5 h-3.5" /> Υποβολή
-            </Button>
+    <div className="flex flex-col min-h-screen bg-gray-100">
+      {/* ── Toolbar ── */}
+      <div className="sticky top-0 z-10 bg-white border-b border-gray-300 shadow-sm px-4 py-2 flex items-center justify-between">
+        <div>
+          <h1 className="text-sm font-bold text-red-800 uppercase tracking-wide">MAKE-SAFE CHECKLIST ΠΕΔΙΟΥ</h1>
+          <p className="text-xs text-gray-500">Smart Bus Shelters – Άμεση ασφάλιση χώρου/κινδύνου</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={onClose} className="gap-1 text-xs h-7">
+            <ArrowLeft className="w-3 h-3" /> Πίσω
+          </Button>
+          <Button variant="outline" size="sm" onClick={handlePrintPDF} disabled={printingPDF} className="gap-1 text-xs h-7">
+            <Printer className="w-3 h-3" /> {printingPDF ? "..." : "PDF / Εκτύπωση"}
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => handleSave("Draft")} disabled={saveMutation.isPending} className="gap-1 text-xs h-7">
+            <Save className="w-3 h-3" /> Draft
+          </Button>
+          <Button size="sm" onClick={() => handleSave("Submitted")} disabled={saveMutation.isPending}
+            className="bg-indigo-600 hover:bg-indigo-700 gap-1 text-xs h-7">
+            <Send className="w-3 h-3" /> Υποβολή
+          </Button>
+        </div>
+      </div>
+
+      {/* ── Alert banners ── */}
+      {(isHighRisk || hasLoto) && (
+        <div className="flex flex-wrap gap-2 px-4 py-2 bg-red-50 border-b border-red-200">
+          {isHighRisk && (
+            <div className="flex items-center gap-2 bg-red-600 text-white rounded px-3 py-1.5 text-xs font-bold animate-pulse">
+              <ShieldAlert className="w-4 h-4" /> ΑΜΕΣΟΣ ΚΙΝΔΥΝΟΣ ΖΩΗΣ – ΚΑΛΕΣΤΕ 112 / ΑΠΟΜΑΚΡΥΝΣΗ
+            </div>
+          )}
+          {hasLoto && (
+            <div className="flex items-center gap-2 bg-amber-500 text-white rounded px-3 py-1.5 text-xs font-semibold">
+              <ZapOff className="w-3.5 h-3.5" /> LOTO – Ηλεκτρική Απομόνωση Ενεργή
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Form body: print-style layout ── */}
+      <div className="flex-1 overflow-y-auto p-4">
+        <div className="max-w-5xl mx-auto space-y-1 bg-white border border-gray-300 shadow p-3 font-sans">
+
+          {/* Title */}
+          <div className="text-center mb-2">
+            <h2 className="text-sm font-bold underline text-red-800 uppercase tracking-wide">MAKE-SAFE CHECKLIST ΠΕΔΙΟΥ</h2>
+            <p className="text-xs text-gray-600">Smart Bus Shelters – Άμεση ασφάλιση χώρου/κινδύνου (Make-Safe)</p>
           </div>
-        }
-      />
 
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-5xl mx-auto p-6 space-y-5">
-
-          {/* ── Visual Indicators bar ── */}
-          <div className="flex flex-wrap gap-2">
-            {isHighRisk && (
-              <div className="flex items-center gap-2 bg-red-600 text-white rounded-lg px-4 py-2 shadow font-bold text-sm animate-pulse">
-                <ShieldAlert className="w-5 h-5" />
-                ΑΜΕΣΟΣ ΚΙΝΔΥΝΟΣ ΖΩΗΣ – ΚΑΛΕΣΤΕ 112 / ΑΠΟΜΑΚΡΥΝΣΗ
-              </div>
-            )}
-            {hasLoto && (
-              <div className="flex items-center gap-2 bg-amber-500 text-white rounded-lg px-3 py-1.5 text-xs font-semibold">
-                <ZapOff className="w-4 h-4" /> LOTO – Ηλεκτρική Απομόνωση Ενεργή
-              </div>
-            )}
-            {isCompleted && (
-              <div className="flex items-center gap-2 bg-emerald-600 text-white rounded-lg px-3 py-1.5 text-xs font-semibold">
-                <CheckCircle2 className="w-4 h-4" /> MAKE SAFE ΟΛΟΚΛΗΡΩΘΗΚΕ
-              </div>
-            )}
-            {photosAfterMissing && (
-              <div className="flex items-center gap-2 bg-amber-100 text-amber-700 border border-amber-300 rounded-lg px-3 py-1.5 text-xs font-semibold">
-                <AlertTriangle className="w-4 h-4" /> Απαιτούνται φωτογραφίες ΜΕΤΑ
-              </div>
-            )}
-          </div>
-
-          {/* ── Linked records ── */}
-          <div className="bg-white rounded-xl border border-indigo-100 p-5 space-y-4">
-            <h3 className="text-sm font-semibold text-indigo-800 flex items-center gap-2">
-              <Info className="w-4 h-4" /> Σύνδεση Εγγραφών
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {/* Linked records selector */}
+          <div className="border border-blue-200 rounded p-2 mb-2 bg-blue-50">
+            <p className="text-xs font-semibold text-blue-800 mb-1.5">Σύνδεση Εγγραφών</p>
+            <div className="grid grid-cols-3 gap-2">
               <div>
-                <Label className="text-xs font-medium text-slate-600">Incident</Label>
+                <Label className="text-xs text-gray-600 mb-0.5 block">Incident</Label>
                 <Select value={linkedIncidentId || "_none"} onValueChange={v => setLinkedIncidentId(v === "_none" ? "" : v)}>
-                  <SelectTrigger className="mt-1 text-sm"><SelectValue placeholder="Επιλογή Incident..." /></SelectTrigger>
+                  <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Επιλογή..." /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="_none">— Επιλογή —</SelectItem>
-                    {incidents.map(i => {
-                      const d = i.reported_date || i.first_report_date;
-                      const dateFmt = d ? (() => { const [y,m,dd] = d.split("-"); return `${dd}/${m}/${y}`; })() : null;
-                      return (
-                        <SelectItem key={i.id} value={i.id}>
-                          <span className="font-mono text-xs font-bold">{i.incident_id}</span>
-                          <span className="mx-1 text-slate-300">|</span>
-                          <span>{i.title.replace(/\s*[-–]\s*\d{4}-\d{2}-\d{2}$/, "")}</span>
-                          {dateFmt && <><span className="mx-1 text-slate-300">|</span><span className="text-slate-500 text-xs">{dateFmt}</span></>}
-                        </SelectItem>
-                      );
-                    })}
+                    {incidents.map(i => (
+                      <SelectItem key={i.id} value={i.id}>
+                        <span className="font-mono font-bold text-xs">{i.incident_id}</span>
+                        <span className="mx-1 text-gray-300">|</span>
+                        <span className="text-xs">{i.title?.replace(/\s*[-–]\s*\d{4}-\d{2}-\d{2}$/, "")}</span>
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
-              <ReadOnlyField label="Work Order" value={workOrder?.work_order_id} />
               <div>
-                <Label className="text-xs font-medium text-slate-600">Asset / Στάση</Label>
+                <Label className="text-xs text-gray-600 mb-0.5 block">Work Order</Label>
+                <div className="h-7 flex items-center px-2 bg-gray-50 border border-gray-200 rounded text-xs text-gray-700">
+                  {workOrder?.work_order_id || <span className="text-gray-300 italic">Auto</span>}
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs text-gray-600 mb-0.5 block">Asset / Στάση</Label>
                 <Select value={linkedAssetId || "_none"} onValueChange={v => setLinkedAssetId(v === "_none" ? "" : v)}>
-                  <SelectTrigger className="mt-1 text-sm"><SelectValue placeholder="Επιλογή Asset..." /></SelectTrigger>
+                  <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Επιλογή..." /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="_none">— Επιλογή —</SelectItem>
                     {assets.map(a => (
@@ -450,482 +389,336 @@ export default function MakeSafeChecklistForm({ submission, incidents, assets, w
             </div>
           </div>
 
-          {/* ══════════════════════════════════════════════════════════════════
-              A. ΣΤΟΙΧΕΙΑ
-          ══════════════════════════════════════════════════════════════════ */}
-          <Section title="A. ΣΤΟΙΧΕΙΑ">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {/* Date – manual */}
+          {/* ── A. ΣΤΟΙΧΕΙΑ ── */}
+          <PdfSection title="A. ΣΤΟΙΧΕΙΑ">
+            <table className="w-full text-xs border-collapse">
+              <tbody>
+                <tr>
+                  <td className="pr-2 py-0.5"><FieldLabel>Ημερομηνία:</FieldLabel></td>
+                  <td className="pr-4 py-0.5"><EditableField type="date" value={fd.date} onChange={v => set("date", v)} /></td>
+                  <td className="pr-2 py-0.5"><FieldLabel className="text-red-700">Incident ID:</FieldLabel></td>
+                  <td className="pr-4 py-0.5"><FieldValue>{incident?.incident_id}</FieldValue></td>
+                  <td className="pr-2 py-0.5"><FieldLabel className="text-red-700">WO ID:</FieldLabel></td>
+                  <td className="py-0.5"><FieldValue>{workOrder?.work_order_id}</FieldValue></td>
+                </tr>
+                <tr>
+                  <td className="pr-2 py-0.5"><FieldLabel>Asset ID:</FieldLabel></td>
+                  <td className="pr-4 py-0.5"><FieldValue>{asset?.asset_id}</FieldValue></td>
+                  <td className="pr-2 py-0.5" colSpan={4}><FieldLabel>Τοποθεσία:</FieldLabel> <FieldValue className="min-w-[200px]">{asset?.location_address}</FieldValue></td>
+                </tr>
+                <tr>
+                  <td className="pr-2 py-0.5"><FieldLabel>Ώρα Έναρξης:</FieldLabel></td>
+                  <td className="pr-4 py-0.5"><EditableField type="time" value={fd.time_start} onChange={v => set("time_start", v)} /></td>
+                  <td className="pr-2 py-0.5"><FieldLabel>Τεχνικός:</FieldLabel></td>
+                  <td className="pr-4 py-0.5"><EditableField value={fd.technician} onChange={v => set("technician", v)} placeholder="Τεχνικός..." /></td>
+                  <td colSpan={2}></td>
+                </tr>
+                <tr>
+                  <td className="pr-2 py-0.5"><FieldLabel>Όχημα:</FieldLabel></td>
+                  <td className="pr-4 py-0.5"><EditableField value={fd.vehicle} onChange={v => set("vehicle", v)} placeholder="Αρ. κυκλοφορίας..." /></td>
+                  <td className="pr-2 py-0.5"><FieldLabel>Ώρα Άφιξης:</FieldLabel></td>
+                  <td className="pr-4 py-0.5"><EditableField type="time" value={fd.time_arrival} onChange={v => set("time_arrival", v)} /></td>
+                  <td className="pr-2 py-0.5"><FieldLabel>Ώρα ολοκλ.:</FieldLabel></td>
+                  <td className="py-0.5"><EditableField type="time" value={fd.time_end} onChange={v => set("time_end", v)} /></td>
+                </tr>
+              </tbody>
+            </table>
+          </PdfSection>
+
+          {/* ── B. STOP & ASSESS ── */}
+          <PdfSection title="B. STOP & ASSESS">
+            <div className="space-y-1.5">
+              <ChkBox checked={fd.check_360} onChange={v => set("check_360", v)} label="360° έλεγχος" />
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <FieldLabel>Κίνδυνος:</FieldLabel>
+                <ChkBox checked={fd.danger_electrical} onChange={v => set("danger_electrical", v)} label="Ηλεκτρ." />
+                <ChkBox checked={fd.danger_glass} onChange={v => set("danger_glass", v)} label="Γυαλί" />
+                <ChkBox checked={fd.danger_structural} onChange={v => set("danger_structural", v)} label="Δομικό" />
+                <ChkBox checked={fd.danger_pv} onChange={v => set("danger_pv", v)} label="PV/μπατ." />
+                <ChkBox checked={fd.danger_other} onChange={v => set("danger_other", v)} label="Άλλο:" />
+                {fd.danger_other && <EditableField value={fd.danger_other_text} onChange={v => set("danger_other_text", v)} placeholder="Περιγραφή..." className="w-40" />}
+              </div>
+              <div className="flex items-center gap-x-3 flex-wrap">
+                <FieldLabel>Άμεσος κίνδυνος ζωής:</FieldLabel>
+                <RadioOpt name="immediate_danger" value="yes" current={fd.immediate_danger} onChange={v => set("immediate_danger", v)} label={<span className={fd.immediate_danger === "yes" ? "text-red-700 font-bold" : ""}>Ναι → 112 / απομάκρυνση</span>} />
+                <RadioOpt name="immediate_danger" value="no" current={fd.immediate_danger} onChange={v => set("immediate_danger", v)} label="Όχι" />
+              </div>
+              <div>
+                <FieldLabel>Περιγραφή κινδύνου{isHighRisk && <span className="text-red-600 ml-0.5">*</span>}:</FieldLabel>
+                <EditableTextarea value={fd.danger_description} onChange={v => set("danger_description", v)} placeholder="Περιγράψτε τον κίνδυνο..." rows={2} className="mt-0.5" />
+              </div>
+            </div>
+          </PdfSection>
+
+          {/* ── C. PPE & ΕΞΟΠΛΙΣΜΟΣ ── */}
+          <PdfSection title="C. PPE & ΕΞΟΠΛΙΣΜΟΣ">
+            <div className="flex flex-wrap gap-x-3 gap-y-1 mb-1.5">
+              <ChkBox checked={fd.ppe_vest} onChange={v => set("ppe_vest", v)} label="Γιλέκο" />
+              <ChkBox checked={fd.ppe_helmet} onChange={v => set("ppe_helmet", v)} label="Κράνος" />
+              <ChkBox checked={fd.ppe_gloves} onChange={v => set("ppe_gloves", v)} label="Γάντια" />
+              <ChkBox checked={fd.ppe_glasses} onChange={v => set("ppe_glasses", v)} label="Γυαλιά" />
+              <ChkBox checked={fd.ppe_shoes} onChange={v => set("ppe_shoes", v)} label="Υποδήματα" />
+              <ChkBox checked={fd.ppe_mask} onChange={v => set("ppe_mask", v)} label="Μάσκα" />
+              <ChkBox checked={fd.ppe_extinguisher} onChange={v => set("ppe_extinguisher", v)} label="Πυροσβεστήρας" />
+              <ChkBox checked={fd.ppe_all} onChange={v => set("ppe_all", v)} label="Όλα τα παραπάνω" />
+            </div>
+            <div className="border-t border-gray-200 pt-1 flex flex-wrap gap-x-3 gap-y-1">
+              <ChkBox checked={fd.eq_cones} onChange={v => set("eq_cones", v)} label="Κιτ σήμανσης/αποκλεισμού (Κώνοι/κορδέλες κλπ.)" />
+              <ChkBox checked={fd.eq_loto_kit} onChange={v => set("eq_loto_kit", v)} label="LOTO kit (Lock/Tag)" />
+              <ChkBox checked={fd.eq_all} onChange={v => set("eq_all", v)} label="Όλα τα παραπάνω" />
+              <ChkBox checked={fd.eq_other} onChange={v => set("eq_other", v)} label="Άλλο:" />
+              {fd.eq_other && <EditableField value={fd.eq_other_text} onChange={v => set("eq_other_text", v)} placeholder="Άλλος εξοπλισμός..." className="w-40" />}
+            </div>
+          </PdfSection>
+
+          {/* ── D. ΑΣΦΑΛΙΣΗ ΠΕΡΙΟΧΗΣ ── */}
+          <PdfSection title="D. ΑΣΦΑΛΙΣΗ ΠΕΡΙΟΧΗΣ">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs mb-1.5">
               <div className="space-y-1">
-                <Label className="text-xs font-medium text-slate-600 uppercase tracking-wide">Ημερομηνία *</Label>
-                <Input type="date" value={fd.date} onChange={e => set("date", e.target.value)} className="text-sm" />
-              </div>
-              {/* Auto-fill readonly fields */}
-              <ReadOnlyField label="Incident ID" value={incident?.incident_id} />
-              <ReadOnlyField label="WO ID" value={workOrder?.work_order_id} />
-              <ReadOnlyField label="Asset ID" value={asset?.asset_id} />
-              <div className="col-span-2 md:col-span-2">
-                <ReadOnlyField label="Τοποθεσία" value={asset?.location_address} />
-              </div>
-              {/* Manual fields */}
-              <div className="space-y-1">
-                <Label className="text-xs font-medium text-slate-600 uppercase tracking-wide">Ώρα Έναρξης *</Label>
-                <Input type="time" value={fd.time_start} onChange={e => set("time_start", e.target.value)} className="text-sm" />
+                <ChkBox checked={fd.tmp1} onChange={v => set("tmp1", v)} label="TMP-1 Ασφάλιση της περιμέτρου στάσης λεωφορείου με διατήρηση διέλευσης πεζών." />
+                <ChkBox checked={fd.tmp2} onChange={v => set("tmp2", v)} label="TMP-2 Ασφάλιση της περιμέτρου στάσης λεωφορείου με εκτροπή πεζών." />
+                <ChkBox checked={fd.tmp3} onChange={v => set("tmp3", v)} label="TMP-3 Προσωρινά καλύμματα πάνω από εκσκαφές για πλευρές που παραμένουν χωρίς επίβλεψη." />
+                <ChkBox checked={fd.tmp4} onChange={v => set("tmp4", v)} label="TMP-4 Προσωρινές ξύλινες διαβάσεις πεζών (footway boards) πάνω από εκσκαφές." />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs font-medium text-slate-600 uppercase tracking-wide">Τεχνικός</Label>
-                <Input value={fd.technician} onChange={e => set("technician", e.target.value)} placeholder="Τεχνικός..." className="text-sm" />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs font-medium text-slate-600 uppercase tracking-wide">Όχημα</Label>
-                <Input value={fd.vehicle} onChange={e => set("vehicle", e.target.value)} placeholder="Αρ. κυκλοφορίας..." className="text-sm" />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs font-medium text-slate-600 uppercase tracking-wide">Ώρα Άφιξης</Label>
-                <Input type="time" value={fd.time_arrival} onChange={e => set("time_arrival", e.target.value)} className="text-sm" />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs font-medium text-slate-600 uppercase tracking-wide">Ώρα ολοκλ.</Label>
-                <Input type="time" value={fd.time_end} onChange={e => set("time_end", e.target.value)} className="text-sm" />
+                <ChkBox checked={fd.tmr1} onChange={v => set("tmr1", v)} label="TMR-1 Ασφάλιση της εσοχής στάσης λεωφορείου (bus stop bay)." />
+                <ChkBox checked={fd.tmr2} onChange={v => set("tmr2", v)} label="TMR-2 Προσωρινή στάθμευση οχήματος εργασιών μπροστά από την περιοχή εργασιών." />
+                <ChkBox checked={fd.tmr3} onChange={v => set("tmr3", v)} label="TMR-3 Ρύθμιση κυκλοφορίας με πινακίδες Stop/Go." />
+                <ChkBox checked={fd.tmbs1} onChange={v => set("tmbs1", v)} label="TMBS-1 Προσωρινή στάση λεωφορείου." />
+                <ChkBox checked={fd.tmbs2} onChange={v => set("tmbs2", v)} label="TMBS-2 Προσωρινά μη εξυπηρετούμενη στάση λεωφορείου." />
               </div>
             </div>
-          </Section>
+            <div className="border-t border-gray-200 pt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+              <FieldLabel>Συντονισμός με:</FieldLabel>
+              <ChkBox checked={fd.coord_police} onChange={v => set("coord_police", v)} label="Αστυνομία" />
+              <ChkBox checked={fd.coord_municipality} onChange={v => set("coord_municipality", v)} label="Δήμος" />
+              <ChkBox checked={fd.coord_other} onChange={v => set("coord_other", v)} label="Άλλο:" />
+              {fd.coord_other && <EditableField value={fd.coord_other_text} onChange={v => set("coord_other_text", v)} placeholder="Άλλος..." className="w-40" />}
+            </div>
+          </PdfSection>
 
-          {/* ══════════════════════════════════════════════════════════════════
-              B. STOP & ASSESS
-          ══════════════════════════════════════════════════════════════════ */}
-          <Section title="B. STOP & ASSESS">
-            <CbRow label="360° έλεγχος" checked={fd.check_360} onChange={v => set("check_360", v)} />
-
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Κίνδυνος:</Label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-                <CbRow label="Ηλεκτρ."   checked={fd.danger_electrical} onChange={v => set("danger_electrical", v)} />
-                <CbRow label="Γυαλί"     checked={fd.danger_glass}      onChange={v => set("danger_glass", v)} />
-                <CbRow label="Δομικό"    checked={fd.danger_structural}  onChange={v => set("danger_structural", v)} />
-                <CbRow label="PV/μπατ."  checked={fd.danger_pv}         onChange={v => set("danger_pv", v)} />
-                <CbRow label="Άλλο"      checked={fd.danger_other}      onChange={v => set("danger_other", v)} />
+          {/* ── E. LOTO ── */}
+          <PdfSection title={`E. LOTO (όπου εφαρμόζεται)${hasLoto ? " ⚡" : ""}`}>
+            <div className="space-y-1.5">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <FieldLabel>Πηγές:</FieldLabel>
+                <ChkBox checked={fd.loto_ac} onChange={v => set("loto_ac", v)} label="AC" />
+                <ChkBox checked={fd.loto_pv} onChange={v => set("loto_pv", v)} label="PV DC" />
+                <ChkBox checked={fd.loto_battery} onChange={v => set("loto_battery", v)} label="Μπαταρία" />
+                <ChkBox checked={fd.loto_other} onChange={v => set("loto_other", v)} label="Άλλο:" />
+                {fd.loto_other && <EditableField value={fd.loto_other_text} onChange={v => set("loto_other_text", v)} placeholder="Άλλη πηγή..." className="w-32" />}
               </div>
-              {fd.danger_other && (
-                <Input value={fd.danger_other_text} onChange={e => set("danger_other_text", e.target.value)}
-                  placeholder="Περιγράψτε άλλο κίνδυνο..." className="text-sm mt-1" />
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Άμεσος κίνδυνος ζωής:</Label>
-              <div className="flex gap-6">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" name="immediate_danger" value="yes"
-                    checked={fd.immediate_danger === "yes"}
-                    onChange={() => set("immediate_danger", "yes")}
-                    className="w-4 h-4 accent-red-600"
-                  />
-                  <span className={`text-sm font-medium ${fd.immediate_danger === "yes" ? "text-red-700 font-bold" : "text-slate-700"}`}>
-                    Ναι → 112 / απομάκρυνση
-                  </span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" name="immediate_danger" value="no"
-                    checked={fd.immediate_danger === "no"}
-                    onChange={() => set("immediate_danger", "no")}
-                    className="w-4 h-4 accent-slate-600"
-                  />
-                  <span className="text-sm text-slate-700">Όχι</span>
-                </label>
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
-                Περιγραφή κινδύνου {isHighRisk && <span className="text-red-600">*</span>}
-              </Label>
-              <Textarea
-                value={fd.danger_description}
-                onChange={e => set("danger_description", e.target.value)}
-                placeholder="Περιγράψτε τον κίνδυνο..."
-                rows={3} className="text-sm"
-              />
-            </div>
-          </Section>
-
-          {/* ══════════════════════════════════════════════════════════════════
-              C. PPE & ΕΞΟΠΛΙΣΜΟΣ
-          ══════════════════════════════════════════════════════════════════ */}
-          <Section title="C. PPE & ΕΞΟΠΛΙΣΜΟΣ">
-            <div>
-              <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2 block">PPE:</Label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <CbRow label="Γιλέκο"       checked={fd.ppe_vest}         onChange={v => set("ppe_vest", v)} />
-                <CbRow label="Κράνος"        checked={fd.ppe_helmet}       onChange={v => set("ppe_helmet", v)} />
-                <CbRow label="Γάντια"        checked={fd.ppe_gloves}       onChange={v => set("ppe_gloves", v)} />
-                <CbRow label="Γυαλιά"        checked={fd.ppe_glasses}      onChange={v => set("ppe_glasses", v)} />
-                <CbRow label="Υποδήματα"     checked={fd.ppe_shoes}        onChange={v => set("ppe_shoes", v)} />
-                <CbRow label="Μάσκα"         checked={fd.ppe_mask}         onChange={v => set("ppe_mask", v)} />
-                <CbRow label="Πυροσβεστήρας" checked={fd.ppe_extinguisher} onChange={v => set("ppe_extinguisher", v)} />
-                <CbRow label="Όλα τα παραπάνω" checked={fd.ppe_all}        onChange={v => set("ppe_all", v)} />
-              </div>
-            </div>
-
-            <div className="border-t border-slate-100 pt-4">
-              <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2 block">Εξοπλισμός:</Label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <CbRow label="Κιτ σήμανσης/αποκλεισμού (Κώνοι/κορδέλες κλπ.)" checked={fd.eq_cones}    onChange={v => set("eq_cones", v)} />
-                <CbRow label="LOTO kit (Lock/Tag)"                               checked={fd.eq_loto_kit} onChange={v => set("eq_loto_kit", v)} />
-                <CbRow label="Όλα τα παραπάνω"                                   checked={fd.eq_all}      onChange={v => set("eq_all", v)} />
-                <CbRow label="Άλλο"                                               checked={fd.eq_other}    onChange={v => set("eq_other", v)} />
-              </div>
-              {fd.eq_other && (
-                <Input value={fd.eq_other_text} onChange={e => set("eq_other_text", e.target.value)}
-                  placeholder="Άλλος εξοπλισμός..." className="text-sm mt-2" />
-              )}
-            </div>
-          </Section>
-
-          {/* ══════════════════════════════════════════════════════════════════
-              D. ΑΣΦΑΛΙΣΗ ΠΕΡΙΟΧΗΣ
-          ══════════════════════════════════════════════════════════════════ */}
-          <Section title="D. ΑΣΦΑΛΙΣΗ ΠΕΡΙΟΧΗΣ">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* LEFT */}
-              <div className="space-y-3">
-                <CbRow label="TMP-1 Ασφάλιση της περιμέτρου στάσης λεωφορείου με διατήρηση διέλευσης πεζών." checked={fd.tmp1} onChange={v => set("tmp1", v)} />
-                <CbRow label="TMP-2 Ασφάλιση της περιμέτρου στάσης λεωφορείου με εκτροπή πεζών." checked={fd.tmp2} onChange={v => set("tmp2", v)} />
-                <CbRow label="TMP-3 Προσωρινά καλύμματα πάνω από εκσκαφές για πλευρές που παραμένουν χωρίς επίβλεψη." checked={fd.tmp3} onChange={v => set("tmp3", v)} />
-                <CbRow label="TMP-4 Προσωρινές ξύλινες διαβάσεις πεζών (footway boards) πάνω από εκσκαφές για πλευρές που παραμένουν χωρίς επίβλεψη." checked={fd.tmp4} onChange={v => set("tmp4", v)} />
-              </div>
-              {/* RIGHT */}
-              <div className="space-y-3">
-                <CbRow label="TMR-1 Ασφάλιση της εσοχής στάσης λεωφορείου (bus stop bay)." checked={fd.tmr1} onChange={v => set("tmr1", v)} />
-                <CbRow label="TMR-2 Προσωρινή στάθμευση οχήματος εργασιών μπροστά από την περιοχή εργασιών." checked={fd.tmr2} onChange={v => set("tmr2", v)} />
-                <CbRow label="TMR-3 Ρύθμιση κυκλοφορίας με πινακίδες Stop/Go." checked={fd.tmr3} onChange={v => set("tmr3", v)} />
-                <CbRow label="TMBS-1 Προσωρινή στάση λεωφορείου." checked={fd.tmbs1} onChange={v => set("tmbs1", v)} />
-                <CbRow label="TMBS-2 Προσωρινά μη εξυπηρετούμενη στάση λεωφορείου." checked={fd.tmbs2} onChange={v => set("tmbs2", v)} />
-              </div>
-            </div>
-
-            <div className="border-t border-slate-100 pt-4 space-y-2">
-              <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Συντονισμός με:</Label>
-              <div className="flex flex-wrap gap-6">
-                <CbRow label="Αστυνομία"  checked={fd.coord_police}       onChange={v => set("coord_police", v)} />
-                <CbRow label="Δήμος"      checked={fd.coord_municipality} onChange={v => set("coord_municipality", v)} />
-                <CbRow label="Άλλο"       checked={fd.coord_other}        onChange={v => set("coord_other", v)} />
-              </div>
-              {fd.coord_other && (
-                <Input value={fd.coord_other_text} onChange={e => set("coord_other_text", e.target.value)}
-                  placeholder="Άλλος συντονισμός..." className="text-sm" />
-              )}
-            </div>
-          </Section>
-
-          {/* ══════════════════════════════════════════════════════════════════
-              E. LOTO
-          ══════════════════════════════════════════════════════════════════ */}
-          <Section title="E. LOTO (όπου εφαρμόζεται)" accent={hasLoto ? "border-amber-300" : undefined}>
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Πηγές:</Label>
-              <div className="flex flex-wrap gap-6">
-                <CbRow label="AC"         checked={fd.loto_ac}      onChange={v => set("loto_ac", v)} />
-                <CbRow label="PV DC"      checked={fd.loto_pv}      onChange={v => set("loto_pv", v)} />
-                <CbRow label="Μπαταρία"   checked={fd.loto_battery} onChange={v => set("loto_battery", v)} />
-                <CbRow label="Άλλο"       checked={fd.loto_other}   onChange={v => set("loto_other", v)} />
-              </div>
-              {fd.loto_other && (
-                <Input value={fd.loto_other_text} onChange={e => set("loto_other_text", e.target.value)}
-                  placeholder="Άλλη πηγή..." className="text-sm" />
-              )}
-            </div>
-
-            <CbRow label="Απομόνωση / απενεργοποίηση" checked={fd.loto_isolation} onChange={v => set("loto_isolation", v)} />
-
-            <div className="flex items-start gap-3">
-              <Checkbox checked={!!fd.loto_lock_tag} onCheckedChange={v => set("loto_lock_tag", !!v)} className="mt-1 w-5 h-5" />
-              <div className="flex-1 space-y-1">
-                <span className="text-sm text-slate-700">Lock + Tag (όνομα/ώρα):</span>
-                {fd.loto_lock_tag && (
-                  <Input value={fd.loto_lock_tag_name} onChange={e => set("loto_lock_tag_name", e.target.value)}
-                    placeholder="Όνομα / Ώρα..." className="text-sm" />
-                )}
-              </div>
-            </div>
-
-            <CbRow label="Επιβεβαίωση ασφαλούς κατάστασης (όπου δυνατό)" checked={fd.loto_confirm} onChange={v => set("loto_confirm", v)} />
-
-            <div className="space-y-1">
-              <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Παρατηρήσεις:</Label>
-              <Textarea value={fd.loto_notes} onChange={e => set("loto_notes", e.target.value)}
-                placeholder="Παρατηρήσεις LOTO..." rows={3} className="text-sm" />
-            </div>
-          </Section>
-
-          {/* ══════════════════════════════════════════════════════════════════
-              F. ΕΝΕΡΓΕΙΕΣ MAKE-SAFE
-          ══════════════════════════════════════════════════════════════════ */}
-          <Section title="F. ΕΝΕΡΓΕΙΕΣ MAKE-SAFE">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* LEFT */}
-              <div className="space-y-5">
-                <div className="space-y-2">
-                  <p className="text-xs font-bold text-slate-600 uppercase tracking-wide">F1 Ηλεκτρ.:</p>
-                  <CbRow label="Κάλυψη/απομόνωση"            checked={fd.f1_cover}      onChange={v => set("f1_cover", v)} />
-                  <CbRow label="Κλείδωμα πίνακα / αποτροπή πρόσβασης" checked={fd.f1_panel_lock} onChange={v => set("f1_panel_lock", v)} />
-                </div>
-                <div className="space-y-2">
-                  <p className="text-xs font-bold text-slate-600 uppercase tracking-wide">F2 Γυαλί:</p>
-                  <CbRow label="Συλλογή"              checked={fd.f2_collect}   onChange={v => set("f2_collect", v)} />
-                  <CbRow label="Σταθεροποίηση/αφαίρεση" checked={fd.f2_stabilize} onChange={v => set("f2_stabilize", v)} />
-                  <CbRow label="Κάλυψη + αποκλεισμός"  checked={fd.f2_cover}    onChange={v => set("f2_cover", v)} />
-                </div>
-                <div className="space-y-2">
-                  <p className="text-xs font-bold text-slate-600 uppercase tracking-wide">F3 Δομικό:</p>
-                  <CbRow label="Σταθεροποίηση"           checked={fd.f3_stabilize} onChange={v => set("f3_stabilize", v)} />
-                  <CbRow label="Αφαίρεση χαλαρών μερών"  checked={fd.f3_remove}   onChange={v => set("f3_remove", v)} />
+              <div className="grid grid-cols-2 gap-x-4">
+                <ChkBox checked={fd.loto_isolation} onChange={v => set("loto_isolation", v)} label="Απομόνωση / απενεργοποίηση." />
+                <div className="flex items-center gap-1.5">
+                  <ChkBox checked={fd.loto_lock_tag} onChange={v => set("loto_lock_tag", v)} label="Lock + Tag (όνομα/ώρα):" />
+                  {fd.loto_lock_tag && <EditableField value={fd.loto_lock_tag_name} onChange={v => set("loto_lock_tag_name", v)} placeholder="Όνομα/Ώρα..." className="w-32" />}
                 </div>
               </div>
+              <ChkBox checked={fd.loto_confirm} onChange={v => set("loto_confirm", v)} label="Επιβεβαίωση ασφαλούς κατάστασης (όπου δυνατό)." />
+              <div>
+                <FieldLabel>Παρατηρήσεις:</FieldLabel>
+                <EditableTextarea value={fd.loto_notes} onChange={v => set("loto_notes", v)} placeholder="Παρατηρήσεις LOTO..." rows={2} className="mt-0.5" />
+              </div>
+            </div>
+          </PdfSection>
 
-              {/* RIGHT */}
-              <div className="space-y-5">
-                <div className="space-y-2">
-                  <p className="text-xs font-bold text-slate-600 uppercase tracking-wide">F4 PV/Μπατ.:</p>
-                  <CbRow label="Απομόνωση" checked={fd.f4_isolate} onChange={v => set("f4_isolate", v)} />
-                  <div className="space-y-1 pl-1">
-                    <span className="text-xs font-medium text-slate-600">Θερμικό/οσμές/φούσκωμα:</span>
-                    <div className="flex gap-6 mt-1">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="f4_thermal" value="yes"
-                          checked={fd.f4_thermal === "yes"}
-                          onChange={() => set("f4_thermal", "yes")}
-                          className="w-4 h-4 accent-red-600" />
-                        <span className={`text-sm ${fd.f4_thermal === "yes" ? "text-red-700 font-bold" : "text-slate-700"}`}>Ναι</span>
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="f4_thermal" value="no"
-                          checked={fd.f4_thermal === "no"}
-                          onChange={() => set("f4_thermal", "no")}
-                          className="w-4 h-4" />
-                        <span className="text-sm text-slate-700">Όχι</span>
-                      </label>
-                    </div>
+          {/* ── F. ΕΝΕΡΓΕΙΕΣ MAKE-SAFE ── */}
+          <PdfSection title="F. ΕΝΕΡΓΕΙΕΣ MAKE-SAFE">
+            <div className="grid grid-cols-2 gap-x-4 text-xs">
+              <div className="space-y-2">
+                <div>
+                  <p className="font-bold text-xs mb-0.5">F1 Ηλεκτρ.:</p>
+                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 pl-2">
+                    <ChkBox checked={fd.f1_cover} onChange={v => set("f1_cover", v)} label="Κάλυψη/απομόνωση" />
+                    <ChkBox checked={fd.f1_panel_lock} onChange={v => set("f1_panel_lock", v)} label="Κλείδωμα πίνακα / αποτροπή πρόσβασης" />
                   </div>
-                  {fd.f4_thermal === "yes" && (
-                    <div className="ml-2 p-3 bg-red-50 border border-red-200 rounded-lg space-y-1">
-                      <p className="text-xs font-semibold text-red-700">Αν ΝΑΙ:</p>
-                      <CbRow label="Απομάκρυνση κοινού + ενημέρωση Help Desk/Maintenance Supervisor"
-                        checked={fd.f4_evacuate} onChange={v => set("f4_evacuate", v)} />
-                    </div>
-                  )}
                 </div>
-
-                <CbRow label="Ολική αφαίρεση Στάσης" checked={fd.f4_full_removal} onChange={v => set("f4_full_removal", v)} />
+                <div>
+                  <p className="font-bold text-xs mb-0.5">F2 Γυαλί:</p>
+                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 pl-2">
+                    <ChkBox checked={fd.f2_collect} onChange={v => set("f2_collect", v)} label="Συλλογή" />
+                    <ChkBox checked={fd.f2_stabilize} onChange={v => set("f2_stabilize", v)} label="Σταθεροποίηση/αφαίρεση" />
+                    <ChkBox checked={fd.f2_cover} onChange={v => set("f2_cover", v)} label="Κάλυψη + αποκλεισμός" />
+                  </div>
+                </div>
+                <div>
+                  <p className="font-bold text-xs mb-0.5">F3 Δομικό:</p>
+                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 pl-2">
+                    <ChkBox checked={fd.f3_stabilize} onChange={v => set("f3_stabilize", v)} label="Σταθεροποίηση" />
+                    <ChkBox checked={fd.f3_remove} onChange={v => set("f3_remove", v)} label="Αφαίρεση χαλαρών μερών" />
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div>
+                  <p className="font-bold text-xs mb-0.5">F4 PV/Μπατ.:</p>
+                  <div className="pl-2 space-y-0.5">
+                    <ChkBox checked={fd.f4_isolate} onChange={v => set("f4_isolate", v)} label="Απομόνωση" />
+                    <div className="flex items-center gap-x-3">
+                      <span className="text-xs text-gray-700">Θερμικό/οσμές/φούσκωμα:</span>
+                      <RadioOpt name="f4_thermal" value="yes" current={fd.f4_thermal} onChange={v => set("f4_thermal", v)} label={<span className={fd.f4_thermal === "yes" ? "text-red-700 font-bold" : ""}>Ναι</span>} />
+                      <RadioOpt name="f4_thermal" value="no" current={fd.f4_thermal} onChange={v => set("f4_thermal", v)} label="Όχι" />
+                    </div>
+                    {fd.f4_thermal === "yes" && (
+                      <div className="ml-2 border border-red-300 bg-red-50 rounded p-1">
+                        <ChkBox checked={fd.f4_evacuate} onChange={v => set("f4_evacuate", v)} label="Απομάκρυνση κοινού + ενημέρωση Help Desk/Maintenance Supervisor" />
+                      </div>
+                    )}
+                    <ChkBox checked={fd.f4_full_removal} onChange={v => set("f4_full_removal", v)} label="Ολική αφαίρεση Στάσης" />
+                  </div>
+                </div>
               </div>
             </div>
-
-            {/* BOTTOM */}
-            <div className="border-t border-slate-100 pt-4 space-y-1">
-              <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">F5 Άλλο:</Label>
-              <Textarea value={fd.f5_other} onChange={e => set("f5_other", e.target.value)}
-                placeholder="Άλλες ενέργειες Make-Safe..." rows={3} className="text-sm" />
+            <div className="border-t border-gray-200 pt-1 mt-1">
+              <FieldLabel>F5 Άλλο:</FieldLabel>
+              <EditableTextarea value={fd.f5_other} onChange={v => set("f5_other", v)} placeholder="Άλλες ενέργειες Make-Safe..." rows={2} className="mt-0.5" />
             </div>
-          </Section>
+          </PdfSection>
 
-          {/* ══════════════════════════════════════════════════════════════════
-              G. ΕΙΔΙΚΟ ΟΧΗΜΑ / ΕΞΟΠΛΙΣΜΟΣ
-          ══════════════════════════════════════════════════════════════════ */}
-          <Section title="G. ΕΙΔΙΚΟ ΟΧΗΜΑ / ΕΞΟΠΛΙΣΜΟΣ (αν απαιτήθηκε)">
-            <div className="flex gap-6">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="radio" name="special_vehicle" value="no"
-                  checked={fd.vehicle_none}
-                  onChange={() => { set("vehicle_none", true); set("vehicle_yes", false); }}
-                  className="w-4 h-4" />
-                <span className="text-sm text-slate-700">Όχι</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="radio" name="special_vehicle" value="yes"
-                  checked={fd.vehicle_yes}
-                  onChange={() => { set("vehicle_yes", true); set("vehicle_none", false); }}
-                  className="w-4 h-4" />
-                <span className="text-sm text-slate-700">Ναι</span>
-              </label>
+          {/* ── G. ΕΙΔΙΚΟ ΟΧΗΜΑ ── */}
+          <PdfSection title="G. ΕΙΔΙΚΟ ΟΧΗΜΑ / ΕΞΟΠΛΙΣΜΟΣ (αν απαιτήθηκε)">
+            <div className="flex items-center gap-x-4 gap-y-1 flex-wrap mb-1">
+              <RadioOpt name="special_vehicle" value="no" current={fd.vehicle_none ? "no" : fd.vehicle_yes ? "yes" : ""}
+                onChange={() => { set("vehicle_none", true); set("vehicle_yes", false); }} label="Όχι" />
+              <RadioOpt name="special_vehicle" value="yes" current={fd.vehicle_none ? "no" : fd.vehicle_yes ? "yes" : ""}
+                onChange={() => { set("vehicle_yes", true); set("vehicle_none", false); }} label="Ναι" />
+              {fd.vehicle_yes && (
+                <>
+                  <FieldLabel>Τύπος:</FieldLabel>
+                  <ChkBox checked={fd.veh_cherry} onChange={v => set("veh_cherry", v)} label="Cherry picker" />
+                  <ChkBox checked={fd.veh_crane} onChange={v => set("veh_crane", v)} label="Crane" />
+                  <ChkBox checked={fd.veh_other} onChange={v => set("veh_other", v)} label="Άλλο:" />
+                  {fd.veh_other && <EditableField value={fd.veh_other_text} onChange={v => set("veh_other_text", v)} placeholder="Άλλο..." className="w-32" />}
+                </>
+              )}
             </div>
-
             {fd.vehicle_yes && (
-              <div className="space-y-3">
-                <div className="flex flex-wrap gap-6">
-                  <CbRow label="Cherry picker" checked={fd.veh_cherry} onChange={v => set("veh_cherry", v)} />
-                  <CbRow label="Crane"         checked={fd.veh_crane}  onChange={v => set("veh_crane", v)} />
-                  <CbRow label="Άλλο"          checked={fd.veh_other}  onChange={v => set("veh_other", v)} />
-                </div>
-                {fd.veh_other && (
-                  <Input value={fd.veh_other_text} onChange={e => set("veh_other_text", e.target.value)}
-                    placeholder="Άλλο όχημα/εξοπλισμός..." className="text-sm" />
-                )}
-                <div className="space-y-1">
-                  <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Αιτιολόγηση *</Label>
-                  <Textarea value={fd.veh_justification} onChange={e => set("veh_justification", e.target.value)}
-                    placeholder="Αιτιολόγηση χρήσης ειδικού οχήματος/εξοπλισμού..." rows={3} className="text-sm" />
-                </div>
+              <div>
+                <FieldLabel>Αιτιολόγηση:</FieldLabel>
+                <EditableTextarea value={fd.veh_justification} onChange={v => set("veh_justification", v)} placeholder="Αιτιολόγηση χρήσης..." rows={2} className="mt-0.5" />
               </div>
             )}
-          </Section>
+          </PdfSection>
 
-          {/* ══════════════════════════════════════════════════════════════════
-              H. Εκκρεμότητες / Corrective
-          ══════════════════════════════════════════════════════════════════ */}
-          <Section title="H. Εκκρεμότητες / Corrective">
-            <Textarea value={fd.pending_corrective} onChange={e => set("pending_corrective", e.target.value)}
-              placeholder="Εκκρεμότητες / Απαιτούμενες διορθωτικές ενέργειες..." rows={4} className="text-sm" />
-          </Section>
+          {/* ── H. Εκκρεμότητες ── */}
+          <PdfSection title="H. Εκκρεμότητες / Corrective">
+            <FieldLabel>Εκκρεμότητες / Απαιτούμενες διορθωτικές ενέργειες:</FieldLabel>
+            <EditableTextarea value={fd.pending_corrective} onChange={v => set("pending_corrective", v)} placeholder="Εκκρεμότητες..." rows={3} className="mt-0.5" />
+          </PdfSection>
 
-          {/* ══════════════════════════════════════════════════════════════════
-              I. ΤΕΚΜΗΡΙΩΣΗ & WM / ΚΛΙΜΑΚΩΣΗ
-          ══════════════════════════════════════════════════════════════════ */}
-          <Section title="I. ΤΕΚΜΗΡΙΩΣΗ & WM / ΚΛΙΜΑΚΩΣΗ">
-            <div className="space-y-3">
-              <CbRow label="Φωτο ΠΡΙΝ"                        checked={fd.doc_photo_before}    onChange={v => set("doc_photo_before", v)} />
-              <CbRow label="Φωτο ΜΕΤΑ (με σήμανση)"           checked={fd.doc_photo_after}     onChange={v => set("doc_photo_after", v)} />
-              <CbRow label="Καταχώρηση ενεργειών στο WM"      checked={fd.doc_wm}              onChange={v => set("doc_wm", v)} />
-
-              <div className="flex items-start gap-3">
-                <Checkbox checked={!!fd.doc_materials} onCheckedChange={v => set("doc_materials", !!v)} className="mt-1 w-5 h-5" />
-                <div className="flex-1 space-y-1">
-                  <span className="text-sm text-slate-700">Υλικά προσωρινής ασφάλειας:</span>
-                  {fd.doc_materials && (
-                    <Input value={fd.doc_materials_text} onChange={e => set("doc_materials_text", e.target.value)}
-                      placeholder="Περιγράψτε υλικά..." className="text-sm" />
-                  )}
-                </div>
+          {/* ── I. ΤΕΚΜΗΡΙΩΣΗ ── */}
+          <PdfSection title="I. ΤΕΚΜΗΡΙΩΣΗ & WM / ΚΛΙΜΑΚΩΣΗ">
+            <div className="space-y-1.5">
+              <div className="flex flex-wrap gap-x-4 gap-y-1">
+                <ChkBox checked={fd.doc_photo_before} onChange={v => set("doc_photo_before", v)} label="Φωτο ΠΡΙΝ" />
+                <ChkBox checked={fd.doc_photo_after} onChange={v => set("doc_photo_after", v)} label="Φωτο ΜΕΤΑ (με σήμανση)" />
+                <ChkBox checked={fd.doc_wm} onChange={v => set("doc_wm", v)} label="Καταχώρηση ενεργειών στο WM" />
               </div>
-
-              <div className="flex items-center gap-3 py-2 px-4 rounded-lg border-2 border-emerald-200 bg-emerald-50/60 w-fit">
-                <Checkbox
-                  checked={!!fd.doc_make_safe_completed}
-                  onCheckedChange={v => set("doc_make_safe_completed", !!v)}
-                  className="w-5 h-5"
-                />
-                <span className={`text-sm font-bold ${fd.doc_make_safe_completed ? "text-emerald-700" : "text-slate-600"}`}>
+              <div className="flex items-center gap-1.5">
+                <ChkBox checked={fd.doc_materials} onChange={v => set("doc_materials", v)} label="Υλικά προσωρινής ασφάλειας:" />
+                {fd.doc_materials && <EditableField value={fd.doc_materials_text} onChange={v => set("doc_materials_text", v)} placeholder="Περιγράψτε υλικά..." className="w-48" />}
+              </div>
+              <div className={`flex items-center gap-2 px-2 py-1 rounded border-2 w-fit ${fd.doc_make_safe_completed ? "border-emerald-400 bg-emerald-50" : "border-gray-300"}`}>
+                <ChkBox checked={fd.doc_make_safe_completed} onChange={v => set("doc_make_safe_completed", v)} />
+                <span className={`text-xs font-bold ${fd.doc_make_safe_completed ? "text-emerald-700" : "text-gray-600"}`}>
                   Make Safe WO COMPLETED (Make-Safe)
                 </span>
-                {fd.doc_make_safe_completed && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
+                {fd.doc_make_safe_completed && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
+              </div>
+              <div>
+                <FieldLabel>Ενημέρωση HD/IM – Σχόλια:</FieldLabel>
+                <EditableTextarea value={fd.doc_hd_comments} onChange={v => set("doc_hd_comments", v)} placeholder="Σχόλια προς HD/IM..." rows={2} className="mt-0.5" />
+              </div>
+              <div className="border-t border-gray-200 pt-2 grid grid-cols-2 gap-4">
+                <FileUploadArea label="Φωτο ΠΡΙΝ" files={fd.photos_before} onChange={v => set("photos_before", v)} accept="image/*" />
+                <FileUploadArea label="Φωτο ΜΕΤΑ (με σήμανση)" files={fd.photos_after} onChange={v => set("photos_after", v)} required={fd.doc_photo_after} accept="image/*" />
               </div>
             </div>
+          </PdfSection>
 
-            <div className="space-y-1">
-              <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Ενημέρωση HD/IM – Σχόλια:</Label>
-              <Textarea value={fd.doc_hd_comments} onChange={e => set("doc_hd_comments", e.target.value)}
-                placeholder="Σχόλια προς HD/IM..." rows={3} className="text-sm" />
-            </div>
-
-            {/* Photo uploads */}
-            <div className="border-t border-slate-100 pt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FileUploadArea
-                label="Φωτο ΠΡΙΝ"
-                files={fd.photos_before}
-                onChange={v => set("photos_before", v)}
-                accept="image/*"
-              />
-              <FileUploadArea
-                label="Φωτο ΜΕΤΑ (με σήμανση)"
-                files={fd.photos_after}
-                onChange={v => set("photos_after", v)}
-                required={fd.doc_photo_after}
-                accept="image/*"
-              />
-            </div>
-          </Section>
-
-          {/* ══════════════════════════════════════════════════════════════════
-              K. ΥΠΟΓΡΑΦΕΣ
-          ══════════════════════════════════════════════════════════════════ */}
-          <Section title="K. ΥΠΟΓΡΑΦΕΣ" accent="border-indigo-200">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* ── K. ΥΠΟΓΡΑΦΕΣ ── */}
+          <PdfSection title="K. ΥΠΟΓΡΑΦΕΣ">
+            <div className="grid grid-cols-2 gap-6 mb-2">
               {/* Τεχνικός */}
-              <div className="space-y-4">
-                <p className="text-xs font-bold text-slate-600 uppercase tracking-wide">Τεχνικός</p>
-                <div className="space-y-1">
-                  <Label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Ονοματεπώνυμο</Label>
-                  <Input value={fd.sig_tech} onChange={e => set("sig_tech", e.target.value)}
-                    placeholder="Τεχνικός..." className="text-sm" />
+              <div className="space-y-1.5">
+                <p className="text-xs font-bold text-gray-700 uppercase">Τεχνικός</p>
+                <div className="flex items-center gap-2">
+                  <FieldLabel>Ονοματεπώνυμο:</FieldLabel>
+                  <EditableField value={fd.sig_tech} onChange={v => set("sig_tech", v)} placeholder="Τεχνικός..." className="flex-1 min-w-0" />
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Υπογρ.</Label>
+                <div>
+                  <FieldLabel>Υπογρ.:</FieldLabel>
                   {fd.sig_tech_upload ? (
-                    <div className="relative inline-block group">
-                      <img src={fd.sig_tech_upload.url} alt="Υπογραφή" className="h-16 border border-slate-200 rounded-lg object-contain bg-white px-2" />
+                    <div className="relative inline-block group ml-2">
+                      <img src={fd.sig_tech_upload.url} alt="Υπογραφή" className="h-12 border border-gray-300 rounded object-contain bg-white px-1" />
                       <button type="button" onClick={() => set("sig_tech_upload", null)}
-                        className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <X className="w-3 h-3" />
+                        className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <X className="w-2.5 h-2.5" />
                       </button>
                     </div>
                   ) : (
-                    <div>
-                      <Button type="button" variant="outline" size="sm" className="gap-1.5 text-xs"
+                    <span className="ml-2">
+                      <Button type="button" variant="outline" size="sm" className="gap-1 text-xs h-6 px-2"
                         onClick={() => sigTechRef.current?.click()}>
-                        <Upload className="w-3.5 h-3.5" /> Μεταφόρτωση Υπογραφής
+                        <Upload className="w-3 h-3" /> Μεταφόρτωση
                       </Button>
                       <input ref={sigTechRef} type="file" accept="image/*" className="hidden"
                         onChange={e => handleSigUpload(e, "sig_tech_upload")} />
-                    </div>
+                    </span>
                   )}
                 </div>
               </div>
-
-              {/* HD / Maintenance Supervisor */}
-              <div className="space-y-4">
-                <p className="text-xs font-bold text-slate-600 uppercase tracking-wide">HD / Maintenance Supervisor</p>
-                <div className="space-y-1">
-                  <Label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Ονοματεπώνυμο</Label>
-                  <Input value={fd.sig_hd} onChange={e => set("sig_hd", e.target.value)}
-                    placeholder="HD / Supervisor..." className="text-sm" />
+              {/* HD */}
+              <div className="space-y-1.5">
+                <p className="text-xs font-bold text-gray-700 uppercase">HD / Maintenance Supervisor</p>
+                <div className="flex items-center gap-2">
+                  <FieldLabel>Ονοματεπώνυμο:</FieldLabel>
+                  <EditableField value={fd.sig_hd} onChange={v => set("sig_hd", v)} placeholder="HD / Supervisor..." className="flex-1 min-w-0" />
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Υπογρ.</Label>
+                <div>
+                  <FieldLabel>Υπογρ.:</FieldLabel>
                   {fd.sig_hd_upload ? (
-                    <div className="relative inline-block group">
-                      <img src={fd.sig_hd_upload.url} alt="Υπογραφή" className="h-16 border border-slate-200 rounded-lg object-contain bg-white px-2" />
+                    <div className="relative inline-block group ml-2">
+                      <img src={fd.sig_hd_upload.url} alt="Υπογραφή" className="h-12 border border-gray-300 rounded object-contain bg-white px-1" />
                       <button type="button" onClick={() => set("sig_hd_upload", null)}
-                        className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <X className="w-3 h-3" />
+                        className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <X className="w-2.5 h-2.5" />
                       </button>
                     </div>
                   ) : (
-                    <div>
-                      <Button type="button" variant="outline" size="sm" className="gap-1.5 text-xs"
+                    <span className="ml-2">
+                      <Button type="button" variant="outline" size="sm" className="gap-1 text-xs h-6 px-2"
                         onClick={() => sigHdRef.current?.click()}>
-                        <Upload className="w-3.5 h-3.5" /> Μεταφόρτωση Υπογραφής
+                        <Upload className="w-3 h-3" /> Μεταφόρτωση
                       </Button>
                       <input ref={sigHdRef} type="file" accept="image/*" className="hidden"
                         onChange={e => handleSigUpload(e, "sig_hd_upload")} />
-                    </div>
+                    </span>
                   )}
                 </div>
               </div>
             </div>
-
-            <div className="border-t border-slate-100 pt-4">
-              <div className="space-y-1 max-w-xs">
-                <Label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Ημ/νία *</Label>
-                <Input type="date" value={fd.sig_date} onChange={e => set("sig_date", e.target.value)} className="text-sm" />
-              </div>
+            <div className="border-t border-gray-200 pt-1.5 flex items-center gap-2">
+              <FieldLabel>Ημ/νία:</FieldLabel>
+              <EditableField type="date" value={fd.sig_date} onChange={v => set("sig_date", v)} />
             </div>
-          </Section>
+          </PdfSection>
 
           {/* Bottom actions */}
-           <div className="flex justify-end gap-3 pt-2 pb-8">
-             <Button variant="outline" onClick={onClose}>Άκυρο</Button>
-             <Button variant="outline" onClick={() => handleSave("Draft")} disabled={saveMutation.isPending} className="gap-1.5">
-               <Save className="w-4 h-4" /> Αποθήκευση Draft
-             </Button>
-             <Button onClick={() => handleSave("Submitted")} disabled={saveMutation.isPending}
-               className="bg-indigo-600 hover:bg-indigo-700 gap-1.5">
-               <Send className="w-4 h-4" /> Υποβολή Φόρμας
-             </Button>
-             <Button onClick={() => { handleSave("Submitted"); onClose(); }} disabled={saveMutation.isPending}
-               className="bg-red-600 hover:bg-red-700 gap-1.5">
-               <Send className="w-4 h-4" /> Υποβολή & Κλείσιμο Incident
-             </Button>
-           </div>
-
+          <div className="flex justify-end gap-3 pt-3 pb-2">
+            <Button variant="outline" onClick={onClose} className="text-xs h-8">Άκυρο</Button>
+            <Button variant="outline" onClick={handlePrintPDF} disabled={printingPDF} className="gap-1.5 text-xs h-8">
+              <Printer className="w-3.5 h-3.5" /> {printingPDF ? "..." : "PDF / Εκτύπωση"}
+            </Button>
+            <Button variant="outline" onClick={() => handleSave("Draft")} disabled={saveMutation.isPending} className="gap-1.5 text-xs h-8">
+              <Save className="w-3.5 h-3.5" /> Αποθήκευση Draft
+            </Button>
+            <Button onClick={() => handleSave("Submitted")} disabled={saveMutation.isPending}
+              className="bg-indigo-600 hover:bg-indigo-700 gap-1.5 text-xs h-8">
+              <Send className="w-3.5 h-3.5" /> Υποβολή Φόρμας
+            </Button>
+          </div>
         </div>
       </div>
     </div>
