@@ -51,6 +51,39 @@ export default function FMPIReadOnlyViewer({ submission, onClose }) {
   });
   const catalogMap = useMemo(() => Object.fromEntries(childCatalog.map(c => [c.id, c])), [childCatalog]);
 
+  const { data: incident } = useQuery({
+    queryKey: ["incident", submission?.incident_id],
+    queryFn: () => base44.entities.Incidents.filter({ id: submission.incident_id }).then(r => r[0] || null),
+    enabled: !!submission?.incident_id,
+  });
+
+  const { data: asset } = useQuery({
+    queryKey: ["asset", submission?.asset_id],
+    queryFn: () => base44.entities.Assets.filter({ id: submission.asset_id }).then(r => r[0] || null),
+    enabled: !!submission?.asset_id,
+  });
+
+  const subsystem = useMemo(() => {
+    if (!incident) return null;
+    const parts = [];
+    if (incident.subsystem_structural_selected) parts.push("Structural");
+    if (incident.subsystem_electrical_selected) parts.push("Electrical");
+    if (incident.subsystem_electronic_selected) parts.push("Electronic");
+    if (incident.subsystem_other_selected) parts.push("Other");
+    return parts.join(", ") || null;
+  }, [incident]);
+
+  const subcategory = useMemo(() => {
+    if (!incident) return null;
+    const parts = [
+      incident.subsystem_structural_issue,
+      incident.subsystem_electrical_issue,
+      incident.subsystem_electronic_issue,
+      incident.subsystem_other_issue,
+    ].filter(Boolean);
+    return parts.join(", ") || null;
+  }, [incident]);
+
   const totalCost = rows.reduce((s, r) => s + (parseFloat(r.unit_price) || 0) * (parseFloat(r.qty) || 0), 0);
   const owrRaw = submission?.ektos_eggyhshs;
   const caRaw = submission?.apaiteitai_eggkrisi_ca;
@@ -228,24 +261,64 @@ export default function FMPIReadOnlyViewer({ submission, onClose }) {
   </div>
 
   <!-- Section 1: General Info -->
-  <div class="section-title">1. Γενικά Στοιχεία / General</div>
+  <div class="section-title">1. Γενικά Στοιχεία / Incident</div>
   <div class="section-body">
     <div class="grid-2">
       <div>
-        <div class="field-label">Form Name</div>
-        <div class="field-value">${submission?.form_name || "—"}</div>
+        <div class="field-label">Αριθμός Περιστατικού</div>
+        <div class="field-value">${incident?.incident_id || "—"}</div>
+      </div>
+      <div>
+        <div class="field-label">Ημερομηνία Αναφοράς από Α.Α.</div>
+        <div class="field-value">${fmtDate(incident?.reported_date || incident?.first_report_date)}</div>
       </div>
       <div>
         <div class="field-label">Ημερομηνία Outline Management Plan</div>
         <div class="field-value">${fmtDate(submission?.fmp_outline_date)}</div>
       </div>
       <div>
-        <div class="field-label">Submitted At</div>
+        <div class="field-label">Ημερομηνία Υποβολής FMPI</div>
         <div class="field-value">${fmtDate(submission?.submitted_at)}</div>
       </div>
       <div>
-        <div class="field-label">Submitted By</div>
+        <div class="field-label">Υποβλήθηκε από</div>
         <div class="field-value">${submission?.submitted_by || "—"}</div>
+      </div>
+      <div>
+        <div class="field-label">Κωδικός Στάσης</div>
+        <div class="field-value">${asset?.active_shelter_id || asset?.asset_id || "—"}</div>
+      </div>
+      <div>
+        <div class="field-label">Τύπος Στεγάστρου</div>
+        <div class="field-value">${asset?.installed_shelter_type || asset?.shelter_type || "—"}</div>
+      </div>
+      <div>
+        <div class="field-label">Επαρχία</div>
+        <div class="field-value">${asset?.city || "—"}</div>
+      </div>
+      <div>
+        <div class="field-label">Δήμος</div>
+        <div class="field-value">${asset?.municipality || "—"}</div>
+      </div>
+      <div style="grid-column:span 2">
+        <div class="field-label">Διεύθυνση</div>
+        <div class="field-value">${asset?.location_address || "—"}</div>
+      </div>
+      <div>
+        <div class="field-label">Επηρεαζόμενο Υποσύστημα</div>
+        <div class="field-value">${subsystem || "—"}</div>
+      </div>
+      <div>
+        <div class="field-label">Υποκατηγορία</div>
+        <div class="field-value">${subcategory || "—"}</div>
+      </div>
+      <div>
+        <div class="field-label">Προέλευση Αναφοράς</div>
+        <div class="field-value">${incident?.incident_source || "—"}</div>
+      </div>
+      <div>
+        <div class="field-label">Αναφέρθηκε από</div>
+        <div class="field-value">${incident?.reported_by_name || "—"}</div>
       </div>
     </div>
   </div>
@@ -389,12 +462,22 @@ export default function FMPIReadOnlyViewer({ submission, onClose }) {
         <div className="max-w-3xl mx-auto space-y-0">
 
           {/* Section 1 */}
-          <Section title="1. Γενικά Στοιχεία / General">
+          <Section title="1. Γενικά Στοιχεία / Incident">
             <div className="grid grid-cols-2 gap-4">
-              <FieldRow label="Form Name" value={submission?.form_name} />
-              <FieldRow label="Ημερομηνία Outline plan" value={fmtDate(submission?.fmp_outline_date)} />
-              <FieldRow label="Submitted At" value={fmtDate(submission?.submitted_at)} />
-              <FieldRow label="Submitted By" value={submission?.submitted_by} />
+              <FieldRow label="Αριθμός Περιστατικού" value={incident?.incident_id} />
+              <FieldRow label="Ημερομηνία Αναφοράς από Α.Α." value={fmtDate(incident?.reported_date || incident?.first_report_date)} />
+              <FieldRow label="Ημερομηνία Outline Management Plan" value={fmtDate(submission?.fmp_outline_date)} />
+              <FieldRow label="Ημερομηνία Υποβολής FMPI" value={fmtDate(submission?.submitted_at)} />
+              <FieldRow label="Υποβλήθηκε από" value={submission?.submitted_by} />
+              <FieldRow label="Κωδικός Στάσης" value={asset?.active_shelter_id || asset?.asset_id} />
+              <FieldRow label="Τύπος Στεγάστρου" value={asset?.installed_shelter_type || asset?.shelter_type} />
+              <FieldRow label="Επαρχία" value={asset?.city} />
+              <FieldRow label="Δήμος" value={asset?.municipality} />
+              <div className="col-span-2"><FieldRow label="Διεύθυνση" value={asset?.location_address} /></div>
+              <FieldRow label="Επηρεαζόμενο Υποσύστημα" value={subsystem} />
+              <FieldRow label="Υποκατηγορία" value={subcategory} />
+              <FieldRow label="Προέλευση Αναφοράς" value={incident?.incident_source} />
+              <FieldRow label="Αναφέρθηκε από" value={incident?.reported_by_name} />
             </div>
           </Section>
 
