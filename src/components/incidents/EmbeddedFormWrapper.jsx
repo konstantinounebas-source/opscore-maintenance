@@ -10,6 +10,7 @@ import { base44 } from "@/api/base44Client";
 import { Loader2 } from "lucide-react";
 import MakeSafeChecklistForm from "@/components/forms/MakeSafeChecklistForm";
 import CorrectiveWOForm from "@/components/forms/CorrectiveWOForm.jsx";
+import InspectionWOChecklistForm from "@/components/forms/InspectionWOChecklistForm.jsx";
 
 export default function EmbeddedFormWrapper({
   woType,
@@ -46,9 +47,22 @@ export default function EmbeddedFormWrapper({
     },
   });
 
-  const isLoading = fmpiLoading || makeSafeLoading;
+  // Load existing Inspection WO submission if it exists
+  const { data: existingInspection = [], isLoading: inspectionLoading } = useQuery({
+    queryKey: ["inspectionSubmissions", incidentId],
+    queryFn: async () => {
+      if (woType !== "inspection") return [];
+      return base44.entities.FormSubmissions.filter({
+        incident_id: incidentId,
+        form_type: "inspection_wo_checklist",
+      });
+    },
+  });
+
+  const isLoading = fmpiLoading || makeSafeLoading || inspectionLoading;
   const fmpiToEdit = woType === "corrective" ? existingFMPI[0] : null;
   const makeSafeToEdit = woType === "make_safe" ? existingMakeSafe[0] : null;
+  const inspectionToEdit = woType === "inspection" ? existingInspection[0] : null;
 
   if (isLoading) {
     return (
@@ -76,6 +90,15 @@ export default function EmbeddedFormWrapper({
         {woType === "corrective" && (
           <CorrectiveWOForm
             submission={fmpiToEdit}
+            incident={allIncidents.find(i => i.id === incidentId)}
+            incidentId={incidentId}
+            workOrders={allWorkOrders}
+            onClose={onClose}
+          />
+        )}
+        {woType === "inspection" && (
+          <InspectionWOChecklistForm
+            submission={inspectionToEdit}
             incident={allIncidents.find(i => i.id === incidentId)}
             incidentId={incidentId}
             workOrders={allWorkOrders}

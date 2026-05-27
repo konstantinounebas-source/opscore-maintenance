@@ -498,10 +498,10 @@ export default function WorkOrderPanel({ woType, incident, incidentId, lockedRea
           )}
         </div>
         <div className="flex items-center gap-2">
-          {!isCorrectiveLocked && (woType === "make_safe" || woType === "corrective") && (
+          {!isCorrectiveLocked && (woType === "make_safe" || woType === "corrective" || woType === "inspection") && (
             <button
               onClick={e => { e.stopPropagation(); setShowEmbeddedForm(true); }}
-              className="flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-800 font-medium"
+              className={`flex items-center gap-1 text-xs font-medium ${woType === "inspection" ? "text-blue-600 hover:text-blue-800" : "text-emerald-600 hover:text-emerald-800"}`}
             >
               <FileText className="w-3.5 h-3.5" /> Fill Form
             </button>
