@@ -5,13 +5,17 @@ Deno.serve(async (req) => {
     console.log("[generateFormPDF] Received request");
     const base44 = createClientFromRequest(req);
 
+    // Validate auth — required for RLS to work properly
+    const user = await base44.auth.me();
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
     const { submissionId } = await req.json();
 
     if (!submissionId) {
       return Response.json({ error: 'Missing submissionId parameter' }, { status: 400 });
     }
 
-    const sub = await base44.asServiceRole.entities.FormSubmissions.get(submissionId);
+    const sub = await base44.entities.FormSubmissions.get(submissionId);
 
     if (!sub) {
       return Response.json({ error: `Submission ${submissionId} not found` }, { status: 404 });
@@ -20,10 +24,10 @@ Deno.serve(async (req) => {
     let incident = null;
     let asset = null;
     if (sub.incident_id) {
-      try { incident = await base44.asServiceRole.entities.Incidents.get(sub.incident_id); } catch (_) {}
+      try { incident = await base44.entities.Incidents.get(sub.incident_id); } catch (_) {}
     }
     if (sub.asset_id) {
-      try { asset = await base44.asServiceRole.entities.Assets.get(sub.asset_id); } catch (_) {}
+      try { asset = await base44.entities.Assets.get(sub.asset_id); } catch (_) {}
     }
 
     // Build HTML content with proper Unicode support

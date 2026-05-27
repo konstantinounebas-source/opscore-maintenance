@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FileText, Clock, Download, Loader2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { FileText, Clock, Download, Loader2, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 
 async function downloadFormPDF(submissionId, formName) {
@@ -63,6 +64,7 @@ function DownloadPDFButton({ submissionId, formName }) {
 }
 
 export default function IncidentFormSubmissions({ incidentId }) {
+  const navigate = useNavigate();
   const { data: submissions = [], isLoading } = useQuery({
     queryKey: ["formSubmissions", incidentId],
     queryFn: () => base44.entities.FormSubmissions.filter({ incident_id: incidentId }),
@@ -120,7 +122,16 @@ export default function IncidentFormSubmissions({ incidentId }) {
               )}
             </div>
           </div>
-          <div className="shrink-0">
+          <div className="shrink-0 flex gap-1.5">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs gap-1"
+              onClick={() => navigate(`/Forms?submission=${sub.id}`)}
+            >
+              <ExternalLink className="w-3 h-3" />
+              Edit
+            </Button>
             <DownloadPDFButton submissionId={sub.id} formName={FORM_TYPE_LABELS[sub.form_type] || sub.form_name} />
           </div>
         </div>

@@ -715,12 +715,12 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
         <Dialog open onOpenChange={() => setShowFMPIForm(false)}>
           <DialogContent className="max-w-5xl w-full max-h-[95vh] overflow-y-auto p-0">
             <CombinedFMPIandInvoiceForm
-              submission={null}
+              submission={digitalFMPI || null}
               incidents={allIncidents}
               assets={allAssets}
               workOrders={allWorkOrders}
               crews={[]}
-              onClose={() => setShowFMPIForm(false)}
+              onClose={() => { setShowFMPIForm(false); onRefresh(); }}
               defaultIncidentId={incidentId}
             />
           </DialogContent>
