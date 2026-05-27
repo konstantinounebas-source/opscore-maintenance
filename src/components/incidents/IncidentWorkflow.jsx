@@ -169,7 +169,7 @@ function CAApprovalModal({ incident, incidentId, onClose, onDone }) {
           {/* Read-only printable viewer for FMPI submission */}
           {viewingSubmission && (
             <Dialog open onOpenChange={() => setViewingSubmission(null)}>
-              <DialogContent className="max-w-5xl w-full max-h-[95vh] overflow-hidden p-0 flex flex-col">
+              <DialogContent className="max-w-5xl w-[95vw] h-[95vh] p-0 flex flex-col overflow-hidden">
                 <FMPIReadOnlyViewer
                   submission={viewingSubmission}
                   onClose={() => setViewingSubmission(null)}
