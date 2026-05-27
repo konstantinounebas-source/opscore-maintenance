@@ -371,11 +371,12 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
          }
        }
 
-      if (data.status === "Submitted" && incId && result?.id) {
+      if (data.status === "Submitted" && incId) {
         // Generate PDF client-side, upload, attach to incident + audit trail
+        const submissionRecordId = isEditing ? submission.id : result?.id;
         let pdfAttachment = null;
         try {
-          const pdfResp = await base44.functions.invoke("generateFormPDF", { submissionId: result.id });
+          const pdfResp = await base44.functions.invoke("generateFormPDF", { submissionId: submissionRecordId });
           const { html: pdfHtml, fileName: pdfFileName } = pdfResp?.data || {};
           if (pdfHtml) {
             const html2pdf = (await import("html2pdf.js")).default;
