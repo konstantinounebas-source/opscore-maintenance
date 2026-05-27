@@ -136,8 +136,19 @@ export default function MakeSafeChecklistForm({ submission, incidents, assets, w
   }, [incident, workOrder]);
 
   useEffect(() => {
-    const createWO = async () => {
-      if (linkedIncidentId && !linkedWOId && incident) {
+    const resolveWO = async () => {
+      if (!linkedIncidentId || !incident) return;
+      // First try to find an existing Make-Safe WO for this incident
+      const existingWOs = await base44.entities.WorkOrders.filter({ incident_id: linkedIncidentId });
+      const makeSafeWO = existingWOs.find(w =>
+        w.title?.toLowerCase().includes('make safe') || w.title?.toLowerCase().includes('make-safe')
+      );
+      if (makeSafeWO) {
+        setLinkedWOId(makeSafeWO.id);
+        return;
+      }
+      // None found — create one
+      if (!linkedWOId) {
         try {
           const woId = await generateWorkOrderId("make_safe");
           const newWO = await base44.entities.WorkOrders.create({
@@ -149,8 +160,8 @@ export default function MakeSafeChecklistForm({ submission, incidents, assets, w
         } catch (err) { console.error("Error creating work order:", err); }
       }
     };
-    createWO();
-  }, [linkedIncidentId]);
+    resolveWO();
+  }, [linkedIncidentId, incident]);
 
   const set = (key, val) => setFd(prev => ({ ...prev, [key]: val }));
 
