@@ -16,9 +16,10 @@ import { useAuth } from "@/lib/AuthContext";
 import MakeSafeChecklistForm from "@/components/forms/MakeSafeChecklistForm";
 import WorkOrderFormF from "@/components/forms/WorkOrderFormF";
 import WorkOrderDownloadButton from "@/components/shared/WorkOrderDownloadButton";
+import { openHtmlPrintWindow } from "@/lib/printFormAsPDF";
 import {
   Plus, ChevronDown, ChevronUp, CheckCircle2, Clock,
-  Loader2, Paperclip, StickyNote, XCircle, Lock, FileText, Upload
+  Loader2, Paperclip, StickyNote, XCircle, Lock, FileText, Upload, Printer
 } from "lucide-react";
 import { generateWorkOrderId } from "@/lib/workOrderIdGenerator";
 
@@ -547,7 +548,29 @@ export default function WorkOrderPanel({ woType, incident, incidentId, lockedRea
   const [closingWO, setClosingWO] = useState(null);
   const [checklistWO, setChecklistWO] = useState(null);
   const [showUploadForm, setShowUploadForm] = useState(false);
+  const [printingPDF, setPrintingPDF] = useState(false);
+  const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const handlePrintForm = async (e) => {
+    e.stopPropagation();
+    setPrintingPDF(true);
+    try {
+      const targetWO = wos[0];
+      const response = await base44.functions.invoke('generateWorkOrderPDF', {
+        workOrderId: targetWO?.id || null,
+        workOrderType: woType,
+        incidentId,
+      });
+      const { html, fileName } = response.data;
+      if (html) openHtmlPrintWindow(html, fileName);
+      else toast({ title: "Error", description: "Failed to generate PDF" });
+    } catch (err) {
+      toast({ title: "Error", description: err?.message || "Failed to generate PDF" });
+    } finally {
+      setPrintingPDF(false);
+    }
+  };
 
   const { data: allWOs = [] } = useQuery({
     queryKey: ["workOrders", incidentId],
@@ -584,12 +607,22 @@ export default function WorkOrderPanel({ woType, incident, incidentId, lockedRea
         </div>
         <div className="flex items-center gap-2">
           {!isCorrectiveLocked && (woType === "make_safe" || woType === "corrective" || woType === "inspection") && (
-            <button
-              onClick={e => { e.stopPropagation(); setShowUploadForm(true); }}
-              className="flex items-center gap-1 text-xs font-medium text-violet-600 hover:text-violet-800"
-            >
-              <Upload className="w-3.5 h-3.5" /> Upload Form
-            </button>
+            <>
+              <button
+                onClick={handlePrintForm}
+                disabled={printingPDF}
+                className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800 disabled:opacity-50"
+              >
+                {printingPDF ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Printer className="w-3.5 h-3.5" />}
+                {printingPDF ? "Generating..." : "PDF/Print Form"}
+              </button>
+              <button
+                onClick={e => { e.stopPropagation(); setShowUploadForm(true); }}
+                className="flex items-center gap-1 text-xs font-medium text-violet-600 hover:text-violet-800"
+              >
+                <Upload className="w-3.5 h-3.5" /> Upload Form
+              </button>
+            </>
           )}
           {!isCorrectiveLocked && (
             <button
