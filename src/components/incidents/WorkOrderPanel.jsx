@@ -19,7 +19,7 @@ import WorkOrderDownloadButton from "@/components/shared/WorkOrderDownloadButton
 import EmbeddedFormWrapper from "@/components/incidents/EmbeddedFormWrapper";
 import {
   Plus, ChevronDown, ChevronUp, CheckCircle2, Clock,
-  Loader2, Paperclip, StickyNote, XCircle, Lock, FileText
+  Loader2, Paperclip, StickyNote, XCircle, Lock, FileText, Upload
 } from "lucide-react";
 import { generateWorkOrderId } from "@/lib/workOrderIdGenerator";
 
@@ -433,6 +433,113 @@ function ChecklistModal({ wo, incidentId, onClose, onDone }) {
   );
 }
 
+function UploadFormModal({ woType, incidentId, onClose, onDone }) {
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const config = WO_TYPE_CONFIG[woType];
+  const [files, setFiles] = useState([]);
+  const [notes, setNotes] = useState("");
+  const [person, setPerson] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const { data: personList = [] } = useQuery({
+    queryKey: ["configList", "incident_person"],
+    queryFn: async () => {
+      const items = await base44.entities.ConfigLists.filter({ list_type: "incident_person" });
+      return items.map(i => i.value);
+    },
+  });
+
+  const handleSubmit = async () => {
+    if (files.length === 0) { toast({ title: "Please upload at least one file" }); return; }
+    if (!person.trim()) { toast({ title: "Person required" }); return; }
+    setSaving(true);
+    try {
+      // Save to incident evidence
+      await Promise.all(
+        files.map(f =>
+          base44.entities.IncidentAttachments.create({
+            file_url: f.file_url,
+            file_name: f.file_name,
+            file_type: "Document",
+            incident_id: incidentId,
+            uploaded_by: user?.email,
+          })
+        )
+      );
+      // Log to audit trail
+      await base44.entities.IncidentAuditTrail.create({
+        incident_id: incidentId,
+        action: `${config.label} Manual Form Uploaded`,
+        details: `Manual paper form uploaded for ${config.label}${notes ? ` — ${notes}` : ""}`,
+        user: person || user?.email,
+        attachments: files.map(f => f.file_url),
+        attachment_names: files.map(f => f.file_name),
+      });
+      queryClient.invalidateQueries({ queryKey: ["incidentAudit", incidentId] });
+      queryClient.invalidateQueries({ queryKey: ["incidentAttachments", incidentId] });
+      toast({ title: "Form uploaded successfully" });
+      onDone();
+    } catch (err) {
+      toast({ title: "Error", description: err?.message || "Something went wrong." });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Upload Manual Form — {config.label}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 mt-2">
+          <p className="text-xs text-slate-500">Upload a photo or scan of the manually completed paper form. It will be saved to incident evidence and audit trail.</p>
+          <div className="space-y-1.5">
+            <Label className="text-xs flex items-center gap-1"><Paperclip className="w-3 h-3" /> Form Photo / Scan *</Label>
+            <FileUploader onUpload={fd => setFiles(prev => [...prev, fd])} label="Upload Form Photo / PDF" />
+            {files.length > 0 && (
+              <div className="space-y-1.5 mt-1">
+                {files.map((f, idx) => (
+                  <div key={idx} className="flex items-center justify-between bg-slate-50 p-2 rounded border border-slate-200">
+                    <span className="text-xs text-slate-600 truncate">{f.file_name}</span>
+                    <button type="button" onClick={() => setFiles(prev => prev.filter((_, i) => i !== idx))} className="text-xs text-red-600 hover:text-red-700 font-medium">Remove</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs flex items-center gap-1"><StickyNote className="w-3 h-3" /> Notes (optional)</Label>
+            <Textarea placeholder="Any notes..." rows={2} value={notes} onChange={e => setNotes(e.target.value)} className="text-sm" />
+          </div>
+          <div className="space-y-1.5 border-t pt-3">
+            <Label className="text-xs font-semibold">Uploaded By *</Label>
+            {personList.length > 0 && (
+              <Select value={personList.includes(person) ? person : "__manual__"} onValueChange={v => { if (v !== "__manual__") setPerson(v); }}>
+                <SelectTrigger className="mb-1"><SelectValue placeholder="Select from list..." /></SelectTrigger>
+                <SelectContent>
+                  {personList.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                  <SelectItem value="__manual__">— Manual Entry —</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+            <Input placeholder="Enter person name..." value={person} onChange={e => setPerson(e.target.value)} className="text-sm" />
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={onClose}>Cancel</Button>
+            <Button className="bg-indigo-600 hover:bg-indigo-700" onClick={handleSubmit} disabled={saving || files.length === 0 || !person.trim()}>
+              {saving && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
+              {saving ? "Uploading..." : "Upload & Save"}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function WorkOrderPanel({ woType, incident, incidentId, lockedReason }) {
   const config = WO_TYPE_CONFIG[woType];
   const isCorrectiveLocked = !!lockedReason;
@@ -441,6 +548,7 @@ export default function WorkOrderPanel({ woType, incident, incidentId, lockedRea
   const [closingWO, setClosingWO] = useState(null);
   const [checklistWO, setChecklistWO] = useState(null);
   const [showEmbeddedForm, setShowEmbeddedForm] = useState(false);
+  const [showUploadForm, setShowUploadForm] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: allWOs = [] } = useQuery({
@@ -499,12 +607,20 @@ export default function WorkOrderPanel({ woType, incident, incidentId, lockedRea
         </div>
         <div className="flex items-center gap-2">
           {!isCorrectiveLocked && (woType === "make_safe" || woType === "corrective" || woType === "inspection") && (
-            <button
-              onClick={e => { e.stopPropagation(); setShowEmbeddedForm(true); }}
-              className={`flex items-center gap-1 text-xs font-medium ${woType === "inspection" ? "text-blue-600 hover:text-blue-800" : "text-emerald-600 hover:text-emerald-800"}`}
-            >
-              <FileText className="w-3.5 h-3.5" /> Fill Form
-            </button>
+            <>
+              <button
+                onClick={e => { e.stopPropagation(); setShowEmbeddedForm(true); }}
+                className={`flex items-center gap-1 text-xs font-medium ${woType === "inspection" ? "text-blue-600 hover:text-blue-800" : "text-emerald-600 hover:text-emerald-800"}`}
+              >
+                <FileText className="w-3.5 h-3.5" /> Fill Form
+              </button>
+              <button
+                onClick={e => { e.stopPropagation(); setShowUploadForm(true); }}
+                className="flex items-center gap-1 text-xs font-medium text-violet-600 hover:text-violet-800"
+              >
+                <Upload className="w-3.5 h-3.5" /> Upload Form
+              </button>
+            </>
           )}
           {!isCorrectiveLocked && (
             <button
@@ -563,6 +679,7 @@ export default function WorkOrderPanel({ woType, incident, incidentId, lockedRea
         />
       )}
       {showEmbeddedForm && <EmbeddedFormWrapper woType={woType} incidentId={incidentId} allIncidents={allIncidents} allAssets={allAssets} allWorkOrders={allWorkOrders} allChildAssets={allChildAssets} onClose={() => setShowEmbeddedForm(false)} />}
+      {showUploadForm && <UploadFormModal woType={woType} incidentId={incidentId} onClose={() => setShowUploadForm(false)} onDone={() => setShowUploadForm(false)} />}
     </div>
   );
 }
