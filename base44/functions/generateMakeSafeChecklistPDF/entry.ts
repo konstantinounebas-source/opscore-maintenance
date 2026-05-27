@@ -9,15 +9,15 @@ Deno.serve(async (req) => {
     const { incidentId, workOrderId, formData } = await req.json();
     if (!incidentId) return Response.json({ error: 'Missing incidentId' }, { status: 400 });
 
-    const incidents = await base44.asServiceRole.entities.Incidents.filter({ incident_id: incidentId });
+    const incidents = await base44.entities.Incidents.filter({ incident_id: incidentId });
     const inc = incidents[0] || {};
 
     let asset = {};
     let workOrders = [];
     if (inc.id) {
       const [allAssets, wos] = await Promise.all([
-        inc.related_asset_id ? base44.asServiceRole.entities.Assets.list('-created_date', 500) : Promise.resolve([]),
-        base44.asServiceRole.entities.WorkOrders.filter({ incident_id: inc.id }),
+        inc.related_asset_id ? base44.entities.Assets.list('-created_date', 500) : Promise.resolve([]),
+        base44.entities.WorkOrders.filter({ incident_id: inc.id }),
       ]);
       if (inc.related_asset_id) {
         asset = allAssets.find(a => a.id === inc.related_asset_id) || {};
