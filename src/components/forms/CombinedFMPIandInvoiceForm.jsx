@@ -353,15 +353,10 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
          ...(data.form_data?.sig_upload ? [data.form_data.sig_upload] : []),
        ].filter(f => f?.url);
 
-       // Mirror attachments to IncidentAttachments — only if FormSubmissions create succeeds
-       // Only mirror if this is a create operation (not an update)
+       // Mirror photos to IncidentAttachments
        if (!isEditing && incId && allFiles.length > 0) {
-         // Check for duplicates before mirroring
-         const existingAttachments = await base44.entities.IncidentAttachments.filter({
-           incident_id: incId,
-         });
+         const existingAttachments = await base44.entities.IncidentAttachments.filter({ incident_id: incId });
          const existingUrls = new Set(existingAttachments.map(a => a.file_url));
-
          const newFiles = allFiles.filter(f => !existingUrls.has(f.url));
          if (newFiles.length > 0) {
            await Promise.all(newFiles.map(f =>
@@ -376,17 +371,39 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
          }
        }
 
-      // Log via audit trail helper for atomic grouping
-      if (data.status === "Submitted") {
-        await logFormSubmission(
-          incId,
-          data.form_type,
-          data.form_name,
-          buildAttachmentMetadata(allFiles),
-          data.work_order_id
-        );
-      } else {
-        // Draft save: use generic audit entry
+      if (data.status === "Submitted" && incId && result?.id) {
+        // Generate PDF client-side, upload, attach to incident + audit trail
+        let pdfAttachment = null;
+        try {
+          const pdfResp = await base44.functions.invoke("generateFormPDF", { submissionId: result.id });
+          const { html: pdfHtml, fileName: pdfFileName } = pdfResp?.data || {};
+          if (pdfHtml) {
+            const html2pdf = (await import("html2pdf.js")).default;
+            const pdfBlob = await html2pdf()
+              .set({ margin: 10, filename: pdfFileName, html2canvas: { scale: 2 }, jsPDF: { unit: "mm", format: "a4" } })
+              .from(pdfHtml)
+              .outputPdf("blob");
+            const pdfFile = new File([pdfBlob], pdfFileName, { type: "application/pdf" });
+            const { file_url: pdfUrl } = await base44.integrations.Core.UploadFile({ file: pdfFile });
+            await base44.entities.IncidentAttachments.create({
+              incident_id: incId,
+              file_url: pdfUrl,
+              file_name: pdfFileName,
+              file_type: "Document",
+              uploaded_by: user?.email,
+            });
+            pdfAttachment = { url: pdfUrl, name: pdfFileName };
+          }
+        } catch (pdfErr) {
+          console.warn("PDF generation failed (non-blocking):", pdfErr);
+        }
+
+        // Audit trail — include PDF if generated
+        const auditAttachments = [...buildAttachmentMetadata(allFiles)];
+        if (pdfAttachment) auditAttachments.push({ url: pdfAttachment.url, name: pdfAttachment.name });
+        await logFormSubmission(incId, data.form_type, data.form_name, auditAttachments, data.work_order_id);
+      } else if (data.status !== "Submitted") {
+        // Draft save
         await base44.entities.IncidentAuditTrail.create({
           incident_id: incId,
           action: "Form Saved",
