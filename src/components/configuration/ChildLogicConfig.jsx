@@ -27,7 +27,8 @@ function ChildCatalogTab({ catalog, queryClient }) {
 
   const uniqueTypes = [...new Set(catalog.map(c => c.child_type).filter(Boolean))].sort();
 
-  const filtered = filterType === "all" ? catalog : catalog.filter(c => c.child_type === filterType);
+  const filtered = (filterType === "all" ? catalog : catalog.filter(c => c.child_type === filterType))
+    .filter(c => c.child_code !== "Others" && c.child_name !== "Others");
 
   // Group by category, excluding "Others" and "Uncategorized"
   const groupedByCategory = filtered.reduce((acc, item) => {
@@ -271,7 +272,13 @@ function TypeTemplatesTab({ templates, catalog, shelterTypeDefs, queryClient }) 
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["typeTemplates"] })
   });
 
-  const typeRows = templates.filter(t => t.shelter_type_code === selectedType).sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+  const typeRows = templates
+    .filter(t => t.shelter_type_code === selectedType)
+    .filter(t => {
+      const child = catalog.find(c => c.id === t.child_catalog_id);
+      return child?.child_code !== "Others" && child?.child_name !== "Others";
+    })
+    .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
   const availableTypes = shelterTypeDefs.length ? shelterTypeDefs.map(s => s.shelter_type_code) : SHELTER_TYPES;
   const usedChildIds = new Set(typeRows.map(r => r.child_catalog_id));
 
