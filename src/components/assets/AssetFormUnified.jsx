@@ -59,7 +59,7 @@ function DocTypeUploader({ label, files = [], onAdd, onRemove }) {
           <input ref={fileRef} type="file" multiple className="hidden" onChange={e => handleFiles(e.target.files)} />
           <Button type="button" variant="ghost" size="sm" className="h-7 text-xs gap-1 text-indigo-600 hover:text-indigo-700 px-2" onClick={() => fileRef.current?.click()} disabled={uploading}>
             {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-            Add Files
+            Προσθήκη
           </Button>
         </div>
       </div>
@@ -71,8 +71,8 @@ function DocTypeUploader({ label, files = [], onAdd, onRemove }) {
         onClick={() => fileRef.current?.click()}
       >
         {uploading
-          ? <span className="text-slate-500 flex items-center justify-center gap-1"><Loader2 className="w-3.5 h-3.5 animate-spin" /> Uploading...</span>
-          : <span className="text-slate-400">Drop files here or click to browse</span>
+          ? <span className="text-slate-500 flex items-center justify-center gap-1"><Loader2 className="w-3.5 h-3.5 animate-spin" /> Ανέβασμα...</span>
+          : <span className="text-slate-400">Σύρετε αρχεία εδώ ή κάντε κλικ</span>
         }
       </div>
       {files.length > 0 && (
@@ -252,25 +252,25 @@ export default function AssetFormUnified({ open, onOpenChange, onSave, asset }) 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit Asset" : "Add New Asset"}</DialogTitle>
+          <DialogTitle>{isEdit ? "Επεξεργασία Στάσης" : "Προσθήκη Νέας Στάσης"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-5 mt-2">
 
           {Object.keys(errors).length > 0 && (
             <div className="bg-red-50 border border-red-200 rounded-md px-3 py-2 text-xs text-red-600">
-              Please fill in all required fields marked with <span className="font-bold">*</span>
+              Παρακαλώ συμπληρώστε όλα τα υποχρεωτικά πεδία που σημειώνονται με <span className="font-bold">*</span>
             </div>
           )}
 
           {/* ── 1. Asset Identity ── */}
-          <SectionHeader title="Asset Identity" color="indigo" />
+          <SectionHeader title="Ταυτότητα Στάσης" color="indigo" />
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs">Αριθμός Στάσης (Shelter ID)</Label>
               <Input value={form.asset_id || ""} onChange={e => set("asset_id", e.target.value)} placeholder="π.χ. SH-001" />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Status</Label>
+              <Label className="text-xs">Κατάσταση</Label>
               <Select value={form.status || ""} onValueChange={v => set("status", v)}>
                 <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                 <SelectContent>
@@ -281,24 +281,24 @@ export default function AssetFormUnified({ open, onOpenChange, onSave, asset }) 
           </div>
 
           {/* ── 2. Location ── */}
-          <SectionHeader title="Location" color="blue" />
+          <SectionHeader title="Τοποθεσία" color="blue" />
           <div className="space-y-1.5">
-            <Label className="text-xs">Address</Label>
-            <Input value={form.location_address} onChange={e => set("location_address", e.target.value)} placeholder="Street address" />
+            <Label className="text-xs">Διεύθυνση</Label>
+            <Input value={form.location_address} onChange={e => set("location_address", e.target.value)} placeholder="Οδός και αριθμός" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-xs">City <span className="text-red-500">*</span></Label>
+              <Label className="text-xs">Πόλη <span className="text-red-500">*</span></Label>
               <Select value={form.city} onValueChange={v => set("city", v)}>
                 <SelectTrigger className={err("city")}><SelectValue placeholder="Select" /></SelectTrigger>
                 <SelectContent>
                   {(cities.length ? cities : ["Nicosia", "Limassol", "Larnaca", "Paphos", "Famagusta"]).map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                 </SelectContent>
               </Select>
-              {errors.city && <p className="text-xs text-red-500">Required</p>}
+              {errors.city && <p className="text-xs text-red-500">Υποχρεωτικό</p>}
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Municipality</Label>
+              <Label className="text-xs">Δήμος</Label>
               <Select value={form.municipality || ""} onValueChange={v => set("municipality", v)}>
                 <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                 <SelectContent>{municipalities.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
@@ -306,18 +306,18 @@ export default function AssetFormUnified({ open, onOpenChange, onSave, asset }) 
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs">Coordinates (Latitude / Longitude)</Label>
+            <Label className="text-xs">Συντεταγμένες (Γεωγρ. Πλάτος / Μήκος)</Label>
             <div className="grid grid-cols-2 gap-4">
-              <Input type="number" step="any" value={form.latitude} onChange={e => set("latitude", e.target.value)} placeholder="Latitude e.g. 35.1234" />
-              <Input type="number" step="any" value={form.longitude} onChange={e => set("longitude", e.target.value)} placeholder="Longitude e.g. 33.3823" />
+              <Input type="number" step="any" value={form.latitude} onChange={e => set("latitude", e.target.value)} placeholder="Γεωγρ. Πλάτος π.χ. 35.1234" />
+              <Input type="number" step="any" value={form.longitude} onChange={e => set("longitude", e.target.value)} placeholder="Γεωγρ. Μήκος π.χ. 33.3823" />
             </div>
           </div>
 
           {/* ── 3. Shelter / Physical Details ── */}
-          <SectionHeader title="Shelter / Physical Details" color="slate" />
+          <SectionHeader title="Στοιχεία Στεγάστρου" color="slate" />
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-xs">Ordered Shelter Type</Label>
+              <Label className="text-xs">Παραγγελθείς Τύπος Στεγάστρου</Label>
               <Select value={form.ordered_shelter_type || ""} onValueChange={v => set("ordered_shelter_type", v)}>
                 <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                 <SelectContent>
@@ -326,7 +326,7 @@ export default function AssetFormUnified({ open, onOpenChange, onSave, asset }) 
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Installed Shelter Type</Label>
+              <Label className="text-xs">Εγκατεστημένος Τύπος Στεγάστρου</Label>
               <Select value={form.installed_shelter_type || ""} onValueChange={v => set("installed_shelter_type", v)}>
                 <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                 <SelectContent>
@@ -339,86 +339,86 @@ export default function AssetFormUnified({ open, onOpenChange, onSave, asset }) 
 
 
           {/* ── 4. Condition / Existing Site Details ── */}
-          <SectionHeader title="Condition / Existing Site" color="amber" />
+          <SectionHeader title="Κατάσταση / Υφιστάμενη Τοποθεσία" color="amber" />
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-xs">Existing Condition</Label>
+              <Label className="text-xs">Υφιστάμενη Κατάσταση</Label>
               <Select value={form.existing_condition || ""} onValueChange={v => set("existing_condition", v)}>
-                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Επιλογή" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
-                  <SelectItem value="sign_only">Sign Only</SelectItem>
-                  <SelectItem value="shelter_only">Shelter Only</SelectItem>
-                  <SelectItem value="sign_and_shelter">Sign &amp; Shelter</SelectItem>
-                  <SelectItem value="unknown">Unknown</SelectItem>
+                  <SelectItem value="none">Κανένα</SelectItem>
+                  <SelectItem value="sign_only">Μόνο Πινακίδα</SelectItem>
+                  <SelectItem value="shelter_only">Μόνο Στέγαστρο</SelectItem>
+                  <SelectItem value="sign_and_shelter">Πινακίδα &amp; Στέγαστρο</SelectItem>
+                  <SelectItem value="unknown">Άγνωστο</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Has Bay</Label>
+              <Label className="text-xs">Ύπαρξη Κόλπου</Label>
               <Select value={form.has_bay || ""} onValueChange={v => set("has_bay", v)}>
-                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Επιλογή" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="yes">Yes</SelectItem>
-                  <SelectItem value="no">No</SelectItem>
-                  <SelectItem value="unknown">Unknown</SelectItem>
+                  <SelectItem value="yes">Ναι</SelectItem>
+                  <SelectItem value="no">Όχι</SelectItem>
+                  <SelectItem value="unknown">Άγνωστο</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
           {/* ── 5. Dates / Lifecycle ── */}
-          <SectionHeader title="Dates / Lifecycle" color="blue" />
+          <SectionHeader title="Ημερομηνίες / Κύκλος Ζωής" color="blue" />
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-xs">Installation Date</Label>
+              <Label className="text-xs">Ημερομηνία Εγκατάστασης</Label>
               <Input type="date" value={form.installation_date || ""} onChange={e => set("installation_date", e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Delivery Date</Label>
+              <Label className="text-xs">Ημερομηνία Παράδοσης</Label>
               <Input type="date" value={form.delivery_date || ""} onChange={e => set("delivery_date", e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Order Year</Label>
-              <Input type="number" value={form.order_year || ""} onChange={e => set("order_year", e.target.value)} placeholder="e.g. 2024" min="2000" max="2100" />
+              <Label className="text-xs">Έτος Παραγγελίας</Label>
+              <Input type="number" value={form.order_year || ""} onChange={e => set("order_year", e.target.value)} placeholder="π.χ. 2024" min="2000" max="2100" />
             </div>
           </div>
 
           {/* ── 6. Warranty / Inspection ── */}
-          <SectionHeader title="Warranty / Inspection" color="green" />
+          <SectionHeader title="Εγγύηση / Επιθεώρηση" color="green" />
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-xs">Warranty Base Year <span className="text-slate-400 font-normal">(auto from delivery date +1)</span></Label>
-              <Input type="number" value={form.warranty_base_year || ""} onChange={e => set("warranty_base_year", e.target.value)} placeholder="e.g. 2024" min="2000" max="2100" />
+              <Label className="text-xs">Βάση Έτους Εγγύησης <span className="text-slate-400 font-normal">(αυτόματα από ημ. παράδοσης +1)</span></Label>
+              <Input type="number" value={form.warranty_base_year || ""} onChange={e => set("warranty_base_year", e.target.value)} placeholder="π.χ. 2024" min="2000" max="2100" />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Preventive Inspection Date</Label>
+              <Label className="text-xs">Ημερομηνία Προληπτικής Επιθεώρησης</Label>
               <Input type="date" value={form.preventive_inspection_date || ""} onChange={e => set("preventive_inspection_date", e.target.value)} className="bg-slate-50" />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Next Inspection Date</Label>
+              <Label className="text-xs">Επόμενη Επιθεώρηση</Label>
               <Input type="date" value={form.next_inspection_date || ""} onChange={e => set("next_inspection_date", e.target.value)} className="bg-slate-50" />
             </div>
           </div>
           <div className="p-3 bg-green-50 border border-green-100 rounded-lg space-y-3">
-            <p className="text-xs font-semibold text-green-700">Warranty End Dates (auto-calculated from base year)</p>
+            <p className="text-xs font-semibold text-green-700">Ημερομηνίες Λήξης Εγγύησης (αυτόματος υπολογισμός από βάση έτους)</p>
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1"><Label className="text-xs">Software (3 Years)</Label><Input type="date" value={form.software_warranty_end_date || ""} onChange={e => set("software_warranty_end_date", e.target.value)} className="bg-white" /></div>
-              <div className="space-y-1"><Label className="text-xs">Electronics (5 Years)</Label><Input type="date" value={form.electronics_warranty_end_date || ""} onChange={e => set("electronics_warranty_end_date", e.target.value)} className="bg-white" /></div>
-              <div className="space-y-1"><Label className="text-xs">Materials (10 Years)</Label><Input type="date" value={form.materials_warranty_end_date || ""} onChange={e => set("materials_warranty_end_date", e.target.value)} className="bg-white" /></div>
-              <div className="space-y-1"><Label className="text-xs">Structural (15 Years)</Label><Input type="date" value={form.structural_warranty_end_date || ""} onChange={e => set("structural_warranty_end_date", e.target.value)} className="bg-white" /></div>
+              <div className="space-y-1"><Label className="text-xs">Λογισμικό (3 Έτη)</Label><Input type="date" value={form.software_warranty_end_date || ""} onChange={e => set("software_warranty_end_date", e.target.value)} className="bg-white" /></div>
+              <div className="space-y-1"><Label className="text-xs">Ηλεκτρονικά (5 Έτη)</Label><Input type="date" value={form.electronics_warranty_end_date || ""} onChange={e => set("electronics_warranty_end_date", e.target.value)} className="bg-white" /></div>
+              <div className="space-y-1"><Label className="text-xs">Υλικά (10 Έτη)</Label><Input type="date" value={form.materials_warranty_end_date || ""} onChange={e => set("materials_warranty_end_date", e.target.value)} className="bg-white" /></div>
+              <div className="space-y-1"><Label className="text-xs">Δομικά (15 Έτη)</Label><Input type="date" value={form.structural_warranty_end_date || ""} onChange={e => set("structural_warranty_end_date", e.target.value)} className="bg-white" /></div>
             </div>
           </div>
 
           {/* ── 7. Notes ── */}
-          <SectionHeader title="Notes" color="slate" />
+          <SectionHeader title="Σημειώσεις" color="slate" />
           <div className="space-y-1.5">
-            <Label className="text-xs">Notes</Label>
+            <Label className="text-xs">Σημειώσεις</Label>
             <Textarea value={form.notes || ""} onChange={e => set("notes", e.target.value)} rows={2} />
           </div>
 
           {/* ── 8. Attachments / Documents ── */}
-          <SectionHeader title="Attachments / Documents" color="rose" />
+          <SectionHeader title="Συνημμένα / Έγγραφα" color="rose" />
           <div className="space-y-3">
             {docTypes.map(label => (
               <DocTypeUploader
@@ -432,9 +432,9 @@ export default function AssetFormUnified({ open, onOpenChange, onSave, asset }) 
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Ακύρωση</Button>
             <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700">
-              {isEdit ? "Save Changes" : "Create Asset"}
+              {isEdit ? "Αποθήκευση" : "Δημιουργία Στάσης"}
             </Button>
           </div>
         </form>

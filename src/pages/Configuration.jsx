@@ -263,20 +263,20 @@ export default function Configuration() {
           </div>
         </div>
         <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <h2 className="text-sm font-semibold text-slate-900 mb-1">Manage Dropdown Lists of Incident</h2>
-          <p className="text-xs text-slate-500 mb-6">Configure the dropdown values used across the application. These lists power category, type, status, and priority fields.</p>
+          <h2 className="text-sm font-semibold text-slate-900 mb-1">Διαχείριση Λιστών Συμβάντος</h2>
+          <p className="text-xs text-slate-500 mb-6">Ρύθμιση των τιμών dropdown που χρησιμοποιούνται στη φόρμα συμβάντος (κατηγορία, τύπος, κατάσταση, προτεραιότητα).</p>
           <ListManager listTypes={INCIDENT_LIST_TYPES} allItems={allItems} queryClient={queryClient} />
         </div>
 
         <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <h2 className="text-sm font-semibold text-slate-900 mb-1">Manage Dropdown Lists for Assets</h2>
-          <p className="text-xs text-slate-500 mb-6">Configure the dropdown values used in asset management. These lists power shelter types, cities, child categories, and status fields.</p>
+          <h2 className="text-sm font-semibold text-slate-900 mb-1">Διαχείριση Λιστών Στάσεων</h2>
+          <p className="text-xs text-slate-500 mb-6">Ρύθμιση των τιμών dropdown για τη διαχείριση στάσεων (τύποι στεγάστρου, πόλεις, κατηγορίες εξαρτημάτων, κατάσταση).</p>
           <ListManager listTypes={ASSET_LIST_TYPES} allItems={allItems} queryClient={queryClient} />
         </div>
 
         <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <h2 className="text-sm font-semibold text-slate-900 mb-1">Manage Dropdown Lists for Childs</h2>
-          <p className="text-xs text-slate-500 mb-6">Configure the dropdown values used in child asset management. These lists power category, type, parent asset, and status fields.</p>
+          <h2 className="text-sm font-semibold text-slate-900 mb-1">Διαχείριση Λιστών Εξαρτημάτων</h2>
+          <p className="text-xs text-slate-500 mb-6">Ρύθμιση των τιμών dropdown για τη διαχείριση εξαρτημάτων (κατηγορία, τύπος, γονικό asset, κατάσταση).</p>
           <ListManager listTypes={CHILD_LIST_TYPES} allItems={allItems} queryClient={queryClient} />
         </div>
 
