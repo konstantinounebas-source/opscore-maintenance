@@ -216,7 +216,7 @@ Deno.serve(async (req) => {
         <div><div class="field-label">Ημερομηνία Υποβολής FMPI</div><div class="field-value">${fmtDate(sub.submitted_at)}</div></div>
         <div><div class="field-label">Υποβλήθηκε από</div><div class="field-value">${esc(sub.submitted_by || '—')}</div></div>
         <div><div class="field-label">Κωδικός Στάσης</div><div class="field-value">${esc(asset?.active_shelter_id || asset?.asset_id || '—')}</div></div>
-        <div><div class="field-label">Τύπος Στεγάστρου</div><div class="field-value">${esc(asset?.installed_shelter_type || asset?.shelter_type || '—')}</div></div>
+        <div><div class="field-label">Τύπος Στεγάστρου</div><div class="field-value">${esc(fd.shelter_type || asset?.installed_shelter_type || asset?.ordered_shelter_type || asset?.shelter_type || '—')}</div></div>
         <div><div class="field-label">Επαρχία</div><div class="field-value">${esc(asset?.city || '—')}</div></div>
         <div><div class="field-label">Δήμος</div><div class="field-value">${esc(asset?.municipality || '—')}</div></div>
         <div class="span-2"><div class="field-label">Διεύθυνση</div><div class="field-value">${esc(asset?.location_address || '—')}</div></div>

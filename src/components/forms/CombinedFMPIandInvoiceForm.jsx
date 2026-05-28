@@ -474,6 +474,7 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
          sig_service: sigService,
          sig_date: sigDate,
          sig_upload: sigUpload,
+         shelter_type: asset?.installed_shelter_type || asset?.ordered_shelter_type || "",
        },
     });
   };
