@@ -103,6 +103,20 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Save files to IncidentAttachments
+    if (status === 'Submitted' && fileUrls.length > 0) {
+      const user = await base44.auth.me();
+      for (let i = 0; i < fileUrls.length; i++) {
+        await base44.asServiceRole.entities.IncidentAttachments.create({
+          incident_id: incidentId,
+          file_url: fileUrls[i],
+          file_name: fileNames[i],
+          file_type: /\.(jpg|jpeg|png|gif|webp)$/i.test(fileNames[i]) ? "Photo" : "Document",
+          uploaded_by: user?.email || 'field-worker',
+        });
+      }
+    }
+
     // Audit trail with attachments
     await base44.asServiceRole.entities.IncidentAuditTrail.create({
       incident_id: incidentId,
