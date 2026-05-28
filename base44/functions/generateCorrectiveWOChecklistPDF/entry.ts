@@ -6,15 +6,31 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { incidentId, workOrderId, formData } = await req.json();
-    if (!incidentId) return Response.json({ error: 'Missing incidentId' }, { status: 400 });
-
-    const incidents = await base44.entities.Incidents.filter({ incident_id: incidentId });
-    const inc = incidents[0] || {};
-
-    // Fetch asset and work orders in parallel using the incident's record ID
+    const { incidentId, workOrderId, formData, submissionId } = await req.json();
+    
+    // If submissionId provided, fetch from FormSubmissions
+    let inc = {};
+    let fd = formData || {};
     let asset = {};
+    let resolvedWorkOrderId = workOrderId || '';
     let workOrders = [];
+    
+    if (submissionId) {
+      const submission = await base44.entities.FormSubmissions.get(submissionId);
+      if (!submission) return Response.json({ error: 'Submission not found' }, { status: 404 });
+      fd = submission.form_data || {};
+      if (submission.incident_id) {
+        const incidents = await base44.entities.Incidents.filter({ id: submission.incident_id });
+        inc = incidents[0] || {};
+      }
+    } else if (incidentId) {
+      const incidents = await base44.entities.Incidents.filter({ incident_id: incidentId });
+      inc = incidents[0] || {};
+    } else {
+      return Response.json({ error: 'Missing incidentId or submissionId' }, { status: 400 });
+    }
+    
+    // Fetch asset and work orders
     if (inc.id) {
       const [allAssets, wos] = await Promise.all([
         inc.related_asset_id ? base44.entities.Assets.list('-created_date', 500) : Promise.resolve([]),
@@ -26,12 +42,11 @@ Deno.serve(async (req) => {
       workOrders = wos;
     }
 
-    // Resolve work order number: prefer passed-in, then corrective WO, then first WO
-    const resolvedWorkOrderId = workOrderId ||
-      workOrders.find(w => w.title?.toLowerCase().includes('corrective'))?.work_order_id ||
+    // Resolve work order number if not already set
+    if (!resolvedWorkOrderId && workOrders.length > 0) {
+      resolvedWorkOrderId = workOrders.find(w => w.title?.toLowerCase().includes('corrective'))?.work_order_id ||
       workOrders[0]?.work_order_id || '';
-
-    const fd = formData || {};
+    }
 
     function e(s) {
       const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };

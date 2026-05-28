@@ -102,13 +102,14 @@ export default function SendToFieldWorkerDialog({ incident, incidentId, onClose 
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold">Form Type *</Label>
               <Select value={formType} onValueChange={setFormType}>
-                <SelectTrigger className="h-9">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="make_safe">🛡️ Make-Safe Checklist</SelectItem>
-                  <SelectItem value="corrective">🔧 Corrective Work Order Checklist</SelectItem>
-                </SelectContent>
+              <SelectTrigger className="h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="make_safe">🛡️ Make-Safe Checklist</SelectItem>
+                <SelectItem value="corrective">🔧 Corrective Work Order Checklist</SelectItem>
+                <SelectItem value="inspection">📋 Inspection WO Checklist</SelectItem>
+              </SelectContent>
               </Select>
             </div>
 

@@ -12,6 +12,8 @@ const FORM_TYPE_LABELS = {
   outline_management_incident_plan: "Outline Management Incident Plan (Legacy)",
   combined_fmpi_invoice:            "FMPI & Pricing Order",
   make_safe_checklist:              "MAKE-SAFE CHECKLIST ΠΕΔΙΟΥ",
+  corrective_wo_checklist:          "Corrective Work Order Checklist",
+  inspection_wo_checklist:          "Inspection WO Checklist",
   work_order_form_f:                "Work Order Invoice",
 };
 
@@ -22,12 +24,24 @@ const STATUS_COLORS = {
   Rejected:   "bg-red-100 text-red-700 border-red-200",
 };
 
-function DownloadPDFButton({ submissionId, formName }) {
+function DownloadPDFButton({ submissionId, formName, formType }) {
   const [loading, setLoading] = useState(false);
   const handleClick = async () => {
     setLoading(true);
     try {
-      const res = await base44.functions.invoke('generateFormPDF', { submissionId });
+      // Use specific PDF generator based on form type
+      let pdfFunc;
+      if (formType === 'make_safe_checklist') {
+        pdfFunc = 'generateMakeSafeChecklistPDF';
+      } else if (formType === 'corrective_wo_checklist') {
+        pdfFunc = 'generateCorrectiveWOChecklistPDF';
+      } else if (formType === 'inspection_wo_checklist') {
+        pdfFunc = 'generateFormPDF'; // Use generic for now
+      } else {
+        pdfFunc = 'generateFormPDF';
+      }
+      
+      const res = await base44.functions.invoke(pdfFunc, { submissionId });
       const { html, fileName } = res.data;
       const html2pdf = (await import('html2pdf.js')).default;
       const container = document.createElement('div');
@@ -40,7 +54,7 @@ function DownloadPDFButton({ submissionId, formName }) {
         margin: 0,
         filename: fileName || `${formName || 'form'}.pdf`,
         html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
       }).from(container).save();
       document.body.removeChild(container);
     }
@@ -127,6 +141,7 @@ export default function IncidentFormSubmissions({ incidentId }) {
             <DownloadPDFButton
               submissionId={sub.id}
               formName={FORM_TYPE_LABELS[sub.form_type] || sub.form_name}
+              formType={sub.form_type}
             />
           </div>
         </div>

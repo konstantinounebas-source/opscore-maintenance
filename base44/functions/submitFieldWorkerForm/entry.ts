@@ -67,12 +67,49 @@ Deno.serve(async (req) => {
       result = await base44.asServiceRole.entities.FormSubmissions.create(payload);
     }
 
-    // Audit trail
+    // Extract file URLs from formData for audit trail
+    const fileUrls = [];
+    const fileNames = [];
+    const fileMetadata = [];
+    const user = workerName || 'Field Worker';
+    
+    // Collect signature URL
+    if (formData.signature_url) {
+      fileUrls.push(formData.signature_url);
+      fileNames.push(`signature_${formType}.png`);
+      fileMetadata.push({
+        url: formData.signature_url,
+        name: `Signature - ${user}`,
+        author: user,
+        author_name: user,
+        created_at: new Date().toISOString(),
+      });
+    }
+    
+    // Collect photo URLs
+    if (formData.photo_urls && Array.isArray(formData.photo_urls)) {
+      formData.photo_urls.forEach((url, idx) => {
+        fileUrls.push(url);
+        fileNames.push(`photo_${idx + 1}.jpg`);
+        fileMetadata.push({
+          url: url,
+          name: `Field Photo ${idx + 1}`,
+          author: user,
+          author_name: user,
+          created_at: new Date().toISOString(),
+        });
+      });
+    }
+
+    // Audit trail with attachments
     await base44.asServiceRole.entities.IncidentAuditTrail.create({
       incident_id: incidentId,
       action: status === 'Submitted' ? `Field Worker Form Submitted` : 'Field Worker Form Draft Saved',
       details: `${dbFormName} ${status === 'Submitted' ? 'submitted' : 'saved as draft'} by ${workerName || 'Field Worker'} via mobile form link.`,
       user: workerName || 'Field Worker (via Telegram link)',
+      attachments: status === 'Submitted' && fileUrls.length > 0 ? fileUrls : undefined,
+      attachment_names: status === 'Submitted' && fileNames.length > 0 ? fileNames : undefined,
+      attachment_metadata: status === 'Submitted' && fileMetadata.length > 0 ? fileMetadata : undefined,
     });
 
     // If submitted, update incident make_safe_done flag

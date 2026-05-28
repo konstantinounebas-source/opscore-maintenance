@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Loader2, AlertTriangle, CheckCircle2 } from "lucide-react";
 import MobileMakeSafeForm from "@/components/fieldworker/MobileMakeSafeForm.jsx";
 import MobileCorrectiveForm from "@/components/fieldworker/MobileCorrectiveForm.jsx";
+import MobileInspectionForm from "@/components/fieldworker/MobileInspectionForm.jsx";
 
 export default function FieldWorkerForm() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -83,7 +84,7 @@ export default function FieldWorkerForm() {
         <div>
           <p className="text-xs text-slate-400 uppercase tracking-wider">Smart Bus Shelters</p>
           <h1 className="text-sm font-bold">
-            {formType === 'make_safe' ? '🛡️ Make-Safe Checklist' : '🔧 Corrective Work Order'}
+            {formType === 'make_safe' ? '🛡️ Make-Safe Checklist' : formType === 'inspection' ? '📋 Inspection WO Checklist' : '🔧 Corrective Work Order'}
           </h1>
         </div>
       </div>
@@ -104,6 +105,14 @@ export default function FieldWorkerForm() {
             incident={incident}
             asset={asset}
             workOrders={workOrders}
+            existingSubmission={existingSubmission}
+            onSubmitted={() => setSubmitted(true)}
+          />
+        ) : formType === 'inspection' ? (
+          <MobileInspectionForm
+            token={token}
+            incident={incident}
+            asset={asset}
             existingSubmission={existingSubmission}
             onSubmitted={() => setSubmitted(true)}
           />

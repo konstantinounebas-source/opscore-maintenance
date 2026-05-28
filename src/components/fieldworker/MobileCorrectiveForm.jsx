@@ -76,9 +76,15 @@ export default function MobileCorrectiveForm({ token, incident, existingSubmissi
     else setSaving(true);
     setError(null);
     try {
+      // Extract file URLs from form data for audit trail
+      const formDataWithFiles = {
+        ...form,
+        signature_url: form.signature,
+        photo_urls: form.photos || [],
+      };
       const res = await base44.functions.invoke('submitFieldWorkerForm', {
         token,
-        formData: form,
+        formData: formDataWithFiles,
         status,
         workerName: form.completed_by || form.foreman || 'Field Worker',
       });

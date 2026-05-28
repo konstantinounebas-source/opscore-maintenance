@@ -25,6 +25,7 @@ Deno.serve(async (req) => {
     const formLabels = {
       make_safe: '🛡️ Make-Safe Checklist',
       corrective: '🔧 Corrective Work Order Checklist',
+      inspection: '📋 Inspection WO Checklist',
     };
 
     const formLabel = formLabels[formType] || formType;

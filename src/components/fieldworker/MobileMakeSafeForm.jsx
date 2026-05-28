@@ -77,9 +77,15 @@ export default function MobileMakeSafeForm({ token, incident, asset, existingSub
     else setSaving(true);
     setError(null);
     try {
+      // Extract file URLs from form data for audit trail
+      const formDataWithFiles = {
+        ...fd,
+        signature_url: fd.signature,
+        photo_urls: fd.photos || [],
+      };
       const res = await base44.functions.invoke('submitFieldWorkerForm', {
         token,
-        formData: fd,
+        formData: formDataWithFiles,
         status,
         workerName: fd.technician || 'Field Worker',
       });
