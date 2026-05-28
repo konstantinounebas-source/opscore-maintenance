@@ -37,18 +37,18 @@ export default function PDFPreviewModal({ html, fileName, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-slate-900/80 backdrop-blur-sm">
       {/* Toolbar */}
-      <div className="flex items-center justify-between px-4 py-2.5 bg-slate-800 border-b border-slate-700 shrink-0">
-        <span className="text-sm font-medium text-white truncate max-w-md">{fileName || "Document Preview"}</span>
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between px-4 py-2.5 bg-slate-800 border-b border-slate-700 shrink-0 min-w-0">
+        <span className="text-sm font-medium text-white truncate mr-4 flex-1 min-w-0">{fileName || "Document Preview"}</span>
+        <div className="flex items-center gap-2 shrink-0">
           <Button size="sm" variant="outline" className="gap-1.5 text-xs border-slate-600 text-slate-200 hover:bg-slate-700 hover:text-white" onClick={handlePrint}>
             <Printer className="w-3.5 h-3.5" /> Print
           </Button>
           <Button size="sm" variant="outline" className="gap-1.5 text-xs border-slate-600 text-slate-200 hover:bg-slate-700 hover:text-white" onClick={handleDownload}>
             <Download className="w-3.5 h-3.5" /> Download PDF
           </Button>
-          <Button size="sm" variant="ghost" className="gap-1.5 text-xs text-slate-300 hover:bg-slate-700 hover:text-white" onClick={onClose}>
-            <X className="w-4 h-4" /> Close
-          </Button>
+          <button onClick={onClose} className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors">
+            <X className="w-3.5 h-3.5" /> Close
+          </button>
         </div>
       </div>
 
