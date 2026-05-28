@@ -105,7 +105,7 @@ function DocCard({ doc }) {
 const IMAGE_PREVIEW_LIMIT = 6;
 const DOC_PREVIEW_LIMIT = 5;
 
-export default function IncidentAttachmentsPreview({ attachments = [], auditTrail = [], evidenceFiles = [] }) {
+export default function IncidentAttachmentsPreview({ attachments = [], auditTrail = [], evidenceFiles = [], formSubmissions = [] }) {
   const [lightbox, setLightbox] = useState(null);
   const [showAllImages, setShowAllImages] = useState(false);
   const [showAllDocs, setShowAllDocs] = useState(false);
@@ -143,6 +143,24 @@ export default function IncidentAttachmentsPreview({ attachments = [], auditTrai
         allDocs.push({ url, name: entry.attachment_names?.[i], uploadedBy: entry.user, date: entry.created_date });
       }
     });
+  });
+
+  // Include photos from submitted forms
+  formSubmissions.forEach(sub => {
+    if (sub.status === "Submitted" || sub.status === "Approved") {
+      const photos = sub.form_data?.photo_urls || [];
+      photos.forEach((url, i) => {
+        if (!seen.has(url)) {
+          seen.add(url);
+          allDocs.push({ 
+            url, 
+            name: `${sub.form_name || sub.form_type} - Photo ${i + 1}`, 
+            uploadedBy: sub.submitted_by, 
+            date: sub.submitted_at || sub.created_date 
+          });
+        }
+      });
+    }
   });
 
   // Sort newest first

@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { FileText, Clock, Download, Loader2, ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CheckCircle2, FileText, Clock, Download, Loader2, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
+import { useToast } from "@/components/ui/use-toast";
 
 
 const FORM_TYPE_LABELS = {
@@ -69,12 +70,44 @@ function DownloadPDFButton({ submissionId, formName, formType }) {
   );
 }
 
-export default function IncidentFormSubmissions({ incidentId }) {
+export default function IncidentFormSubmissions({ incidentId, onApprove }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
   const { data: submissions = [], isLoading } = useQuery({
     queryKey: ["formSubmissions", incidentId],
     queryFn: () => base44.entities.FormSubmissions.filter({ incident_id: incidentId }),
     enabled: !!incidentId,
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: async (submission) => {
+      const user = await base44.auth.me();
+      // Update submission status
+      await base44.entities.FormSubmissions.update(submission.id, { status: "Approved" });
+      // Add audit trail entry
+      await base44.entities.IncidentAuditTrail.create({
+        incident_id: incidentId,
+        action: "Form Approved",
+        details: `${submission.form_name || submission.form_type} approved by ${user?.email}`,
+        user: user?.email,
+        attachments: submission.form_data?.photo_urls || [],
+        attachment_metadata: (submission.form_data?.photo_urls || []).map((url, i) => ({
+          url,
+          name: `Photo ${i + 1}`,
+          author: user?.email,
+          author_name: user?.full_name || user?.email,
+          created_at: new Date().toISOString(),
+        })),
+      });
+      return submission;
+    },
+    onSuccess: (sub) => {
+      queryClient.invalidateQueries({ queryKey: ["formSubmissions", incidentId] });
+      queryClient.invalidateQueries({ queryKey: ["incidentAudit", incidentId] });
+      toast({ title: "Form approved", description: "The work order can now be closed." });
+      if (onApprove) onApprove(sub);
+    },
   });
 
   if (isLoading) {
@@ -128,7 +161,24 @@ export default function IncidentFormSubmissions({ incidentId }) {
               )}
             </div>
           </div>
-          <div className="shrink-0 flex gap-1.5">
+          <div className="shrink-0 flex gap-1.5 items-center">
+            {sub.status === "Submitted" && (
+              <Button
+                variant="default"
+                size="sm"
+                className="h-7 text-xs gap-1 bg-emerald-600 hover:bg-emerald-700"
+                onClick={() => approveMutation.mutate(sub)}
+                disabled={approveMutation.isPending}
+              >
+                {approveMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
+                Approve
+              </Button>
+            )}
+            {sub.status === "Approved" && (
+              <span className="text-xs text-emerald-700 font-semibold flex items-center gap-1">
+                <CheckCircle2 className="w-3 h-3" /> Approved
+              </span>
+            )}
             <Button
               variant="outline"
               size="sm"
@@ -136,7 +186,7 @@ export default function IncidentFormSubmissions({ incidentId }) {
               onClick={() => navigate(`/Forms?submission=${sub.id}`)}
             >
               <ExternalLink className="w-3 h-3" />
-              Edit
+              View
             </Button>
             <DownloadPDFButton
               submissionId={sub.id}

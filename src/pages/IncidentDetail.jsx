@@ -39,6 +39,7 @@ export default function IncidentDetail() {
   const { data: comments = [] } = useQuery({ queryKey: ["incidentComments", incidentId], queryFn: () => base44.entities.IncidentComments.filter({ incident_id: incidentId }), enabled: !!incidentId });
   const { data: auditTrail = [] } = useQuery({ queryKey: ["incidentAudit", incidentId], queryFn: () => base44.entities.IncidentAuditTrail.filter({ incident_id: incidentId }), enabled: !!incidentId });
   const { data: attachments = [] } = useQuery({ queryKey: ["incidentAttachments", incidentId], queryFn: () => base44.entities.IncidentAttachments.filter({ incident_id: incidentId }), enabled: !!incidentId });
+  const { data: formSubmissions = [] } = useQuery({ queryKey: ["formSubmissions", incidentId], queryFn: () => base44.entities.FormSubmissions.filter({ incident_id: incidentId }), enabled: !!incidentId });
 
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ["incident", incidentId] });
@@ -190,7 +191,12 @@ export default function IncidentDetail() {
           )}
 
           {/* Incident Evidence — all attachments with image thumbnails */}
-          <IncidentAttachmentsPreview attachments={attachments} auditTrail={auditTrail} evidenceFiles={incident.evidence_files || []} />
+          <IncidentAttachmentsPreview 
+            attachments={attachments} 
+            auditTrail={auditTrail} 
+            evidenceFiles={incident.evidence_files || []}
+            formSubmissions={formSubmissions}
+          />
 
           <button
             onClick={() => setShowMore(v => !v)}
@@ -245,7 +251,14 @@ export default function IncidentDetail() {
               <IncidentDocuments attachments={attachments} auditTrail={auditTrail} />
             </TabsContent>
             <TabsContent value="forms">
-              <IncidentFormSubmissions incidentId={incidentId} />
+              <IncidentFormSubmissions 
+                incidentId={incidentId} 
+                onApprove={(sub) => {
+                  // Refresh data after approval
+                  queryClient.invalidateQueries({ queryKey: ["formSubmissions", incidentId] });
+                  queryClient.invalidateQueries({ queryKey: ["incidentAudit", incidentId] });
+                }}
+              />
             </TabsContent>
           </Tabs>
         </div>
