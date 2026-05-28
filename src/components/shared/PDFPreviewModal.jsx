@@ -35,7 +35,7 @@ export default function PDFPreviewModal({ html, fileName, onClose }) {
   const srcDoc = html;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-slate-900/80 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[9999] flex flex-col" style={{ height: '100dvh' }}>
       {/* Toolbar */}
       <div className="flex items-center justify-between px-4 py-2.5 bg-slate-800 border-b border-slate-700 shrink-0 min-w-0">
         <span className="text-sm font-medium text-white truncate mr-4 flex-1 min-w-0">{fileName || "Document Preview"}</span>
@@ -53,12 +53,13 @@ export default function PDFPreviewModal({ html, fileName, onClose }) {
       </div>
 
       {/* Iframe viewer */}
-      <div className="flex-1 overflow-hidden bg-slate-600 p-4">
+      <div className="bg-slate-600 p-4" style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
         <iframe
           ref={iframeRef}
           srcDoc={srcDoc}
           className="w-full h-full bg-white rounded shadow-xl"
           title="PDF Preview"
+          style={{ display: 'block', width: '100%', height: '100%' }}
         />
       </div>
     </div>
