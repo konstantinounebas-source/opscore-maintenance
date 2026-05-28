@@ -29,9 +29,10 @@ function ChildCatalogTab({ catalog, queryClient }) {
 
   const filtered = filterType === "all" ? catalog : catalog.filter(c => c.child_type === filterType);
 
-  // Group by category
+  // Group by category, excluding "Others" and "Uncategorized"
   const groupedByCategory = filtered.reduce((acc, item) => {
     const cat = item.child_category || "Uncategorized";
+    if (cat === "Others" || cat === "Uncategorized") return acc;
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(item);
     return acc;
@@ -354,10 +355,11 @@ function TypeTemplatesTab({ templates, catalog, shelterTypeDefs, queryClient }) 
           <tbody>
             {typeRows.length === 0 && <tr><td colSpan={9} className="px-3 py-6 text-center text-slate-400">No children mapped to this shelter type. Use Auto-populate or Reset &amp; Re-populate.</td></tr>}
             {(() => {
-              // Group by category for Excel-style layout
+              // Group by category for Excel-style layout, excluding "Others" and "Uncategorized"
               const grouped = typeRows.reduce((acc, row) => {
                 const child = catalog.find(c => c.id === row.child_catalog_id);
                 const cat = child?.child_category || "Uncategorized";
+                if (cat === "Others" || cat === "Uncategorized") return acc;
                 if (!acc[cat]) acc[cat] = [];
                 acc[cat].push({ row, child });
                 return acc;
