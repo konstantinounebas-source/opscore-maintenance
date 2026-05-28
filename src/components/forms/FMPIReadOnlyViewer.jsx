@@ -91,161 +91,177 @@ export default function FMPIReadOnlyViewer({ submission, onClose }) {
   const caDisplay = caRaw === "Yes" ? "ΝΑΙ — Απαιτείται Έγκριση" : caRaw === "No" ? "ΟΧΙ" : caRaw || "—";
 
   const handlePrint = () => {
+    const esc = (s) => String(s ?? "").replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+
     const rowsHtml = rows.map((row, i) => {
       const cat = catalogMap[row.catalog_id];
       const name = cat ? (cat.display_name || cat.child_name) : (row.catalog_name || row.catalog_id || "—");
       const category = cat?.child_category || "";
       const amount = (parseFloat(row.unit_price) || 0) * (parseFloat(row.qty) || 0);
       const bg = i % 2 === 0 ? "#ffffff" : "#f8fafc";
-      return `
-        <tr style="background:${bg}">
-          <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:9pt">
-            ${name}${category ? `<br><small style="color:#94a3b8;font-size:7.5pt">${category}</small>` : ""}
-          </td>
-          <td style="padding:6px 8px;border:1px solid #e2e8f0;text-align:center;font-size:9pt">${row.qty || ""}</td>
-          <td style="padding:6px 8px;border:1px solid #e2e8f0;text-align:center;font-size:9pt">${fmtNum(row.unit_price)}</td>
-          <td style="padding:6px 8px;border:1px solid #e2e8f0;text-align:center;font-weight:600;color:#1e3a8a;font-size:9pt">${fmtNum(amount)}</td>
-          <td style="padding:6px 8px;border:1px solid #e2e8f0;text-align:center;font-size:10pt">${row.confirmed ? "✓" : ""}</td>
-          <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:9pt;color:#475569">${row.comments || ""}</td>
-        </tr>`;
+      return `<tr style="background:${bg};page-break-inside:avoid">
+        <td style="padding:5px 7px;border:1px solid #cbd5e1;font-size:8.5pt;word-break:break-word;max-width:200px">
+          <strong>${esc(name)}</strong>${category ? `<br><span style="color:#94a3b8;font-size:7pt">${esc(category)}</span>` : ""}
+        </td>
+        <td style="padding:5px 7px;border:1px solid #cbd5e1;text-align:center;font-size:8.5pt">${esc(String(row.qty ?? ""))}</td>
+        <td style="padding:5px 7px;border:1px solid #cbd5e1;text-align:right;font-size:8.5pt">${fmtNum(row.unit_price)}</td>
+        <td style="padding:5px 7px;border:1px solid #cbd5e1;text-align:right;font-weight:700;color:#1e3a8a;font-size:8.5pt">${fmtNum(amount)}</td>
+        <td style="padding:5px 7px;border:1px solid #cbd5e1;text-align:center;font-size:10pt;color:#16a34a">${row.confirmed ? "✓" : ""}</td>
+        <td style="padding:5px 7px;border:1px solid #cbd5e1;font-size:8pt;color:#475569;word-break:break-word">${esc(row.comments || "")}</td>
+      </tr>`;
     }).join("");
 
     const sigImgHtml = fd.sig_upload?.url
-      ? `<img src="${fd.sig_upload.url}" style="max-height:64px;object-fit:contain;border:1px solid #e2e8f0;padding:4px;border-radius:4px"/>`
-      : `<div style="border-bottom:2px solid #94a3b8;min-height:64px;"></div>`;
+      ? `<img src="${esc(fd.sig_upload.url)}" style="max-height:56px;max-width:160px;object-fit:contain;border:1px solid #e2e8f0;padding:3px;border-radius:3px;display:block"/>`
+      : `<div style="border-bottom:1.5px solid #94a3b8;min-height:56px;"></div>`;
 
-    const owrBg = owrRaw === "Yes" ? "#fef3c7" : "#d1fae5";
-    const owrColor = owrRaw === "Yes" ? "#92400e" : "#065f46";
-    const owrBorder = owrRaw === "Yes" ? "#fcd34d" : "#34d399";
-    const caBg = caRaw === "Yes" ? "#fee2e2" : "#d1fae5";
-    const caColor = caRaw === "Yes" ? "#991b1b" : "#065f46";
-    const caBorder = caRaw === "Yes" ? "#fca5a5" : "#34d399";
+    const owrBg = owrRaw === "Yes" ? "#fef3c7" : "#dcfce7";
+    const owrColor = owrRaw === "Yes" ? "#78350f" : "#14532d";
+    const owrBorder = owrRaw === "Yes" ? "#f59e0b" : "#22c55e";
+    const caBg = caRaw === "Yes" ? "#fee2e2" : "#dcfce7";
+    const caColor = caRaw === "Yes" ? "#7f1d1d" : "#14532d";
+    const caBorder = caRaw === "Yes" ? "#ef4444" : "#22c55e";
 
     const commentsBlock = fd.comments ? `
       <div class="section-title">Σχόλια / Παρατηρήσεις</div>
-      <div class="section-body">
-        <p style="font-size:10pt;color:#1e293b;white-space:pre-wrap">${fd.comments}</p>
+      <div class="section-body" style="page-break-inside:avoid">
+        <p style="font-size:9.5pt;color:#1e293b;white-space:pre-wrap;line-height:1.5">${esc(fd.comments)}</p>
       </div>` : "";
 
-    const win = window.open("", "_blank", "width=900,height=750");
+    const win = window.open("", "_blank", "width=900,height=750,scrollbars=yes");
+    if (!win) return;
     win.document.write(`<!DOCTYPE html>
 <html lang="el">
 <head>
   <meta charset="UTF-8"/>
-  <title>FMPI &amp; Pricing Order</title>
+  <title>FMPI &amp; Pricing Order — ${esc(submission?.form_name || "")}</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
     body {
       font-family: Arial, Helvetica, sans-serif;
-      font-size: 10pt;
+      font-size: 9.5pt;
+      line-height: 1.45;
       color: #1e293b;
       background: #fff;
-      padding: 18mm 15mm 18mm 15mm;
+    }
+    .page-wrap {
+      width: 180mm;
+      margin: 0 auto;
+      padding: 14mm 0 18mm 0;
     }
     /* ── Header ── */
     .doc-header {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: space-between;
       border-bottom: 3px solid #1e3a8a;
       padding-bottom: 8px;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
-    .doc-title { font-size: 16pt; font-weight: 800; color: #1e3a8a; letter-spacing: -0.5px; }
-    .doc-subtitle { font-size: 9pt; color: #64748b; margin-top: 2px; }
-    .doc-meta { text-align: right; font-size: 8.5pt; color: #64748b; line-height: 1.6; }
+    .doc-title { font-size: 15pt; font-weight: 800; color: #1e3a8a; letter-spacing: -0.3px; margin: 0; }
+    .doc-subtitle { font-size: 8.5pt; color: #64748b; margin-top: 2px; }
+    .doc-meta { text-align: right; font-size: 8pt; color: #475569; line-height: 1.6; white-space: nowrap; }
     .status-pill {
-      display: inline-block; padding: 2px 10px;
-      border-radius: 20px; font-size: 8pt; font-weight: 700;
+      display: inline-block; padding: 2px 8px;
+      border-radius: 12px; font-size: 7.5pt; font-weight: 700;
       background: #dbeafe; color: #1d4ed8; border: 1px solid #93c5fd;
     }
     /* ── Sections ── */
+    .section-block { margin-bottom: 9px; page-break-inside: avoid; }
     .section-title {
-      background: #334155; color: #fff;
+      background: #1e3a8a; color: #fff;
       padding: 5px 10px;
-      font-size: 8.5pt; font-weight: 700;
-      text-transform: uppercase; letter-spacing: 0.06em;
+      font-size: 8pt; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.07em;
       border-radius: 3px 3px 0 0;
-      margin-top: 10px;
     }
     .section-body {
-      border: 1px solid #e2e8f0;
+      border: 1px solid #cbd5e1;
       border-top: none;
       border-radius: 0 0 3px 3px;
-      padding: 10px 12px;
-      margin-bottom: 10px;
+      padding: 9px 11px;
       background: #fff;
     }
-    /* ── Grid ── */
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px; }
-    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px 16px; }
+    /* ── Grids ── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 18px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px 14px; }
+    .span-2 { grid-column: span 2; }
     .field-label {
-      font-size: 7.5pt; font-weight: 700; color: #94a3b8;
-      text-transform: uppercase; letter-spacing: 0.05em;
+      font-size: 7pt; font-weight: 700; color: #94a3b8;
+      text-transform: uppercase; letter-spacing: 0.06em;
       margin-bottom: 2px;
     }
     .field-value {
-      font-size: 10pt; font-weight: 500; color: #0f172a;
+      font-size: 9.5pt; font-weight: 500; color: #0f172a;
       border-bottom: 1px solid #e2e8f0;
-      padding-bottom: 2px; min-height: 18px;
+      padding-bottom: 2px; min-height: 16px;
     }
     /* ── Badge ── */
     .badge {
-      display: inline-block; padding: 2px 9px;
-      border-radius: 20px; font-size: 8pt; font-weight: 700;
+      display: inline-block; padding: 2px 8px;
+      border-radius: 10px; font-size: 7.5pt; font-weight: 700;
       border: 1px solid;
     }
     /* ── Table ── */
-    table { width: 100%; border-collapse: collapse; font-size: 9pt; margin-top: 4px; }
+    table { width: 100%; border-collapse: collapse; font-size: 8.5pt; table-layout: fixed; }
     th {
       background: #1e3a8a; color: #fff;
       border: 1px solid #1e3a8a;
-      padding: 6px 8px; text-align: left;
-      font-weight: 700; font-size: 8pt;
+      padding: 5px 7px; text-align: left;
+      font-weight: 700; font-size: 7.5pt;
       text-transform: uppercase; letter-spacing: 0.04em;
+      white-space: nowrap;
     }
-    td { border: 1px solid #e2e8f0; padding: 6px 8px; vertical-align: middle; }
+    td { border: 1px solid #cbd5e1; padding: 5px 7px; vertical-align: middle; }
     .total-row td {
       background: #1e3a8a; color: #fff;
-      font-weight: 700; font-size: 10.5pt;
+      font-weight: 700; font-size: 10pt;
       border: 1px solid #1e3a8a;
+      padding: 7px 9px;
     }
-    /* ── Signature block ── */
+    /* ── Signature ── */
     .sig-label {
-      font-size: 7.5pt; font-weight: 700; color: #94a3b8;
-      text-transform: uppercase; letter-spacing: 0.05em;
-      margin-bottom: 4px;
+      font-size: 7pt; font-weight: 700; color: #94a3b8;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      margin-bottom: 3px;
     }
     .sig-line {
       border-bottom: 1.5px solid #334155;
-      min-height: 22px; padding-top: 4px;
-      font-size: 10pt; font-weight: 500; color: #0f172a;
-    }
-    .sig-empty-box {
-      border: 1px dashed #cbd5e1;
-      min-height: 68px; border-radius: 4px;
-      background: #f8fafc;
+      min-height: 20px; padding-top: 3px;
+      font-size: 9.5pt; font-weight: 500; color: #0f172a;
     }
     .ca-box {
       border: 1px dashed #94a3b8;
-      min-height: 68px;
-      border-radius: 4px;
+      min-height: 60px; border-radius: 3px;
       background: #f8fafc;
     }
     /* ── Footer ── */
     .doc-footer {
       border-top: 1px solid #e2e8f0;
-      margin-top: 14px; padding-top: 6px;
-      font-size: 7.5pt; color: #94a3b8;
+      margin-top: 12px; padding-top: 5px;
+      font-size: 7pt; color: #94a3b8;
       display: flex; justify-content: space-between;
     }
+    /* ── Print rules ── */
     @media print {
-      body { padding: 12mm 12mm; }
-      @page { size: A4 portrait; margin: 12mm; }
+      html, body { margin: 0 !important; padding: 0 !important; }
+      .page-wrap { width: 100%; padding: 0; }
+      @page {
+        size: A4 portrait;
+        margin: 14mm 15mm 16mm 15mm;
+      }
+      .section-block { page-break-inside: avoid; }
+      thead { display: table-header-group; }
+      tfoot { display: table-footer-group; }
+      tr { page-break-inside: avoid; }
+      .no-break { page-break-inside: avoid; }
+      a { text-decoration: none !important; color: inherit !important; }
     }
   </style>
 </head>
 <body>
+<div class="page-wrap">
 
   <!-- Document Header -->
   <div class="doc-header">
@@ -254,162 +270,177 @@ export default function FMPIReadOnlyViewer({ submission, onClose }) {
       <div class="doc-subtitle">Full Management Plan &amp; Invoice Submission</div>
     </div>
     <div class="doc-meta">
-      <span class="status-pill">${submission?.status || ""}</span><br/>
+      <span class="status-pill">${esc(submission?.status || "")}</span><br/>
       Submitted: ${fmtDate(submission?.submitted_at)}<br/>
-      By: ${submission?.submitted_by || "—"}
+      By: ${esc(submission?.submitted_by || "—")}
     </div>
   </div>
 
-  <!-- Section 1: General Info -->
-  <div class="section-title">1. Γενικά Στοιχεία / Incident</div>
-  <div class="section-body">
-    <div class="grid-2">
-      <div>
-        <div class="field-label">Αριθμός Περιστατικού</div>
-        <div class="field-value">${incident?.incident_id || "—"}</div>
-      </div>
-      <div>
-        <div class="field-label">Ημερομηνία Αναφοράς από Α.Α.</div>
-        <div class="field-value">${fmtDate(incident?.reported_date || incident?.first_report_date)}</div>
-      </div>
-      <div>
-        <div class="field-label">Ημερομηνία Outline Management Plan</div>
-        <div class="field-value">${fmtDate(submission?.fmp_outline_date)}</div>
-      </div>
-      <div>
-        <div class="field-label">Ημερομηνία Υποβολής FMPI</div>
-        <div class="field-value">${fmtDate(submission?.submitted_at)}</div>
-      </div>
-      <div>
-        <div class="field-label">Υποβλήθηκε από</div>
-        <div class="field-value">${submission?.submitted_by || "—"}</div>
-      </div>
-      <div>
-        <div class="field-label">Κωδικός Στάσης</div>
-        <div class="field-value">${asset?.active_shelter_id || asset?.asset_id || "—"}</div>
-      </div>
-      <div>
-        <div class="field-label">Τύπος Στεγάστρου</div>
-        <div class="field-value">${asset?.installed_shelter_type || asset?.shelter_type || "—"}</div>
-      </div>
-      <div>
-        <div class="field-label">Επαρχία</div>
-        <div class="field-value">${asset?.city || "—"}</div>
-      </div>
-      <div>
-        <div class="field-label">Δήμος</div>
-        <div class="field-value">${asset?.municipality || "—"}</div>
-      </div>
-      <div style="grid-column:span 2">
-        <div class="field-label">Διεύθυνση</div>
-        <div class="field-value">${asset?.location_address || "—"}</div>
-      </div>
-      <div>
-        <div class="field-label">Επηρεαζόμενο Υποσύστημα</div>
-        <div class="field-value">${subsystem || "—"}</div>
-      </div>
-      <div>
-        <div class="field-label">Υποκατηγορία</div>
-        <div class="field-value">${subcategory || "—"}</div>
-      </div>
-      <div>
-        <div class="field-label">Προέλευση Αναφοράς</div>
-        <div class="field-value">${incident?.incident_source || "—"}</div>
-      </div>
-      <div>
-        <div class="field-label">Αναφέρθηκε από</div>
-        <div class="field-value">${incident?.reported_by_name || "—"}</div>
+  <!-- Section 1: Incident Info -->
+  <div class="section-block">
+    <div class="section-title">1. Γενικά Στοιχεία / Incident</div>
+    <div class="section-body">
+      <div class="grid-2">
+        <div>
+          <div class="field-label">Αριθμός Περιστατικού</div>
+          <div class="field-value">${esc(incident?.incident_id || "—")}</div>
+        </div>
+        <div>
+          <div class="field-label">Ημερομηνία Αναφοράς από Α.Α.</div>
+          <div class="field-value">${fmtDate(incident?.reported_date || incident?.first_report_date)}</div>
+        </div>
+        <div>
+          <div class="field-label">Ημερομηνία Outline Management Plan</div>
+          <div class="field-value">${fmtDate(submission?.fmp_outline_date)}</div>
+        </div>
+        <div>
+          <div class="field-label">Ημερομηνία Υποβολής FMPI</div>
+          <div class="field-value">${fmtDate(submission?.submitted_at)}</div>
+        </div>
+        <div>
+          <div class="field-label">Υποβλήθηκε από</div>
+          <div class="field-value">${esc(submission?.submitted_by || "—")}</div>
+        </div>
+        <div>
+          <div class="field-label">Κωδικός Στάσης</div>
+          <div class="field-value">${esc(asset?.active_shelter_id || asset?.asset_id || "—")}</div>
+        </div>
+        <div>
+          <div class="field-label">Τύπος Στεγάστρου</div>
+          <div class="field-value">${esc(asset?.installed_shelter_type || asset?.shelter_type || "—")}</div>
+        </div>
+        <div>
+          <div class="field-label">Επαρχία</div>
+          <div class="field-value">${esc(asset?.city || "—")}</div>
+        </div>
+        <div>
+          <div class="field-label">Δήμος</div>
+          <div class="field-value">${esc(asset?.municipality || "—")}</div>
+        </div>
+        <div class="span-2">
+          <div class="field-label">Διεύθυνση</div>
+          <div class="field-value">${esc(asset?.location_address || "—")}</div>
+        </div>
+        <div>
+          <div class="field-label">Επηρεαζόμενο Υποσύστημα</div>
+          <div class="field-value">${esc(subsystem || "—")}</div>
+        </div>
+        <div>
+          <div class="field-label">Υποκατηγορία</div>
+          <div class="field-value">${esc(subcategory || "—")}</div>
+        </div>
+        <div>
+          <div class="field-label">Προέλευση Αναφοράς</div>
+          <div class="field-value">${esc(incident?.incident_source || "—")}</div>
+        </div>
+        <div>
+          <div class="field-label">Αναφέρθηκε από</div>
+          <div class="field-value">${esc(incident?.reported_by_name || "—")}</div>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- Section 2: Decision Logic -->
-  <div class="section-title">2. Λογική Απόφασης / Decision Logic</div>
-  <div class="section-body">
-    <div class="grid-2">
-      <div>
-        <div class="field-label">Εκτός Εγγύησης (OWR)</div>
-        <div style="margin-top:4px">
-          <span class="badge" style="background:${owrBg};color:${owrColor};border-color:${owrBorder}">${owrDisplay}</span>
+  <div class="section-block">
+    <div class="section-title">2. Λογική Απόφασης / Decision Logic</div>
+    <div class="section-body">
+      <div class="grid-2">
+        <div>
+          <div class="field-label">Εκτός Εγγύησης (OWR)</div>
+          <div style="margin-top:4px">
+            <span class="badge" style="background:${owrBg};color:${owrColor};border-color:${owrBorder}">${esc(owrDisplay)}</span>
+          </div>
         </div>
-      </div>
-      <div>
-        <div class="field-label">Απαιτείται Έγκριση CA</div>
-        <div style="margin-top:4px">
-          <span class="badge" style="background:${caBg};color:${caColor};border-color:${caBorder}">${caDisplay}</span>
+        <div>
+          <div class="field-label">Απαιτείται Έγκριση CA</div>
+          <div style="margin-top:4px">
+            <span class="badge" style="background:${caBg};color:${caColor};border-color:${caBorder}">${esc(caDisplay)}</span>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
   <!-- Section 3: Work Items -->
-  <div class="section-title">3. Περιγραφή Εργασιών βάσει Συμβολαίου (Work Items)</div>
-  <div class="section-body">
-    <table>
-      <thead>
-        <tr>
-          <th style="min-width:170px">Περιγραφή / Child</th>
-          <th style="width:70px;text-align:center">Ποσότητα</th>
-          <th style="width:110px;text-align:center">Τιμή Μονάδας (€)</th>
-          <th style="width:110px;text-align:center">Ποσό (€)</th>
-          <th style="width:65px;text-align:center">Επιβεβ.</th>
-          <th>Σχόλια</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${rows.length === 0 ? `<tr><td colspan="6" style="text-align:center;color:#94a3b8;font-style:italic;padding:12px">Δεν υπάρχουν εγγραφές</td></tr>` : rowsHtml}
-      </tbody>
-      <tfoot>
-        <tr class="total-row">
-          <td colspan="3" style="text-align:right;padding:8px 10px;font-size:9pt;letter-spacing:0.04em">ΚΟΣΤΟΣ ΕΡΓΑΣΙΩΝ — ΣΥΝΟΛΟ:</td>
-          <td style="text-align:center;font-size:13pt;padding:8px 10px">€ ${totalCost.toFixed(2)}</td>
-          <td colspan="2"></td>
-        </tr>
-      </tfoot>
-    </table>
+  <div class="section-block">
+    <div class="section-title">3. Περιγραφή Εργασιών βάσει Συμβολαίου (Work Items)</div>
+    <div class="section-body" style="padding:8px 10px">
+      <table>
+        <colgroup>
+          <col style="width:35%"/>
+          <col style="width:9%"/>
+          <col style="width:14%"/>
+          <col style="width:14%"/>
+          <col style="width:8%"/>
+          <col style="width:20%"/>
+        </colgroup>
+        <thead>
+          <tr>
+            <th>Περιγραφή / Child</th>
+            <th style="text-align:center">Ποσ/τα</th>
+            <th style="text-align:right">Τιμή Μον. (€)</th>
+            <th style="text-align:right">Ποσό (€)</th>
+            <th style="text-align:center">✓</th>
+            <th>Σχόλια</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.length === 0 ? `<tr><td colspan="6" style="text-align:center;color:#94a3b8;font-style:italic;padding:10px">Δεν υπάρχουν εγγραφές</td></tr>` : rowsHtml}
+        </tbody>
+        <tfoot>
+          <tr class="total-row">
+            <td colspan="3" style="text-align:right;letter-spacing:0.04em">ΚΟΣΤΟΣ ΕΡΓΑΣΙΩΝ — ΣΥΝΟΛΟ:</td>
+            <td style="text-align:right">€ ${totalCost.toFixed(2)}</td>
+            <td colspan="2"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
   </div>
 
   ${commentsBlock}
 
-  <!-- Section: Signatures -->
-  <div class="section-title">Παραλαβή / Υπογραφή — Εκπρόσωπος Αναθέτουσας Αρχής</div>
-  <div class="section-body">
-    <div class="grid-2" style="gap:16px 30px;margin-bottom:14px">
-      <div>
-        <div class="sig-label">Ονοματεπώνυμο</div>
-        <div class="sig-line">${fd.sig_name || ""}</div>
-      </div>
-      <div>
-        <div class="sig-label">Υπηρεσία / Θέση</div>
-        <div class="sig-line">${fd.sig_service || ""}</div>
-      </div>
-      <div>
-        <div class="sig-label">Ημερομηνία Παραλαβής</div>
-        <div class="sig-line">${fd.sig_date ? fmtDate(fd.sig_date) : ""}</div>
-      </div>
-      <div>
-        <div class="sig-label">Υπογραφή Εκπροσώπου</div>
-        <div style="margin-top:4px">${sigImgHtml}</div>
-      </div>
-    </div>
-
-    <!-- CA Decision Block -->
-    <div style="border-top:1.5px solid #e2e8f0;margin-top:14px;padding-top:12px">
-      <div style="font-size:8.5pt;font-weight:700;color:#334155;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px">
-        Απόφαση CA — Contracting Authority
-      </div>
-      <div class="grid-3" style="gap:12px">
+  <!-- Signature -->
+  <div class="section-block no-break">
+    <div class="section-title">Παραλαβή / Υπογραφή — Εκπρόσωπος Αναθέτουσας Αρχής</div>
+    <div class="section-body">
+      <div class="grid-2" style="gap:12px 24px;margin-bottom:12px">
         <div>
-          <div class="sig-label">Απόφαση (Approved / Rejected)</div>
-          <div class="ca-box"></div>
+          <div class="sig-label">Ονοματεπώνυμο</div>
+          <div class="sig-line">${esc(fd.sig_name || "")}</div>
         </div>
         <div>
-          <div class="sig-label">Ονοματεπώνυμο CA</div>
-          <div class="ca-box"></div>
+          <div class="sig-label">Υπηρεσία / Θέση</div>
+          <div class="sig-line">${esc(fd.sig_service || "")}</div>
         </div>
         <div>
-          <div class="sig-label">Υπογραφή CA</div>
-          <div class="ca-box"></div>
+          <div class="sig-label">Ημερομηνία Παραλαβής</div>
+          <div class="sig-line">${fd.sig_date ? fmtDate(fd.sig_date) : ""}</div>
+        </div>
+        <div>
+          <div class="sig-label">Υπογραφή Εκπροσώπου</div>
+          <div style="margin-top:3px">${sigImgHtml}</div>
+        </div>
+      </div>
+      <!-- CA Decision Block -->
+      <div style="border-top:1.5px dashed #cbd5e1;margin-top:10px;padding-top:10px">
+        <div style="font-size:7.5pt;font-weight:700;color:#334155;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px">
+          Απόφαση CA — Contracting Authority
+        </div>
+        <div class="grid-3" style="gap:10px">
+          <div>
+            <div class="sig-label">Απόφαση (Approved / Rejected)</div>
+            <div class="ca-box"></div>
+          </div>
+          <div>
+            <div class="sig-label">Ονοματεπώνυμο CA</div>
+            <div class="ca-box"></div>
+          </div>
+          <div>
+            <div class="sig-label">Υπογραφή CA</div>
+            <div class="ca-box"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -418,14 +449,15 @@ export default function FMPIReadOnlyViewer({ submission, onClose }) {
   <!-- Footer -->
   <div class="doc-footer">
     <span>FMPI &amp; Pricing Order — Confidential</span>
-    <span>Printed: ${fmtDate(new Date().toISOString())}</span>
+    <span>Εκτύπωση: ${fmtDate(new Date().toISOString())}</span>
   </div>
 
+</div><!-- /page-wrap -->
 </body>
 </html>`);
     win.document.close();
     win.focus();
-    setTimeout(() => win.print(), 500);
+    setTimeout(() => { win.print(); }, 600);
   };
 
   return (
