@@ -5,6 +5,7 @@ import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-d
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
+import { base44 } from '@/api/base44Client';
 
 import AppLayout from '@/components/layout/AppLayout';
 import Dashboard from '@/pages/Dashboard.jsx';
@@ -43,7 +44,30 @@ const AuthenticatedApp = () => {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     }
-    // auth_required and other errors: allow through without redirecting
+    if (authError.type === 'auth_required') {
+      // Redirect to login, then come back to the current URL
+      base44.auth.redirectToLogin(window.location.href);
+      return (
+        <div className="fixed inset-0 flex items-center justify-center bg-slate-50">
+          <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
+        </div>
+      );
+    }
+    // Other errors: show a friendly message
+    return (
+      <div className="fixed inset-0 flex flex-col items-center justify-center bg-slate-50 p-6">
+        <div className="max-w-md w-full bg-white rounded-lg shadow border border-slate-200 p-8 text-center">
+          <p className="text-lg font-semibold text-slate-800 mb-2">Unable to load application</p>
+          <p className="text-sm text-slate-500 mb-6">{authError.message || 'An unexpected error occurred. Please try refreshing the page.'}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-slate-800 text-white rounded-md text-sm hover:bg-slate-700"
+          >
+            Refresh
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
