@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { FileText, Clock, Download, Loader2, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
-import PDFPreviewModal from "@/components/shared/PDFPreviewModal";
+
 
 const FORM_TYPE_LABELS = {
   cr_ompi:                          "Confirmation of Receipt + OMPI",
@@ -22,14 +22,27 @@ const STATUS_COLORS = {
   Rejected:   "bg-red-100 text-red-700 border-red-200",
 };
 
-function DownloadPDFButton({ submissionId, formName, onPreview }) {
+function DownloadPDFButton({ submissionId, formName }) {
   const [loading, setLoading] = useState(false);
   const handleClick = async () => {
     setLoading(true);
     try {
       const res = await base44.functions.invoke('generateFormPDF', { submissionId });
       const { html, fileName } = res.data;
-      onPreview(html, fileName);
+      const html2pdf = (await import('html2pdf.js')).default;
+      const container = document.createElement('div');
+      container.innerHTML = html;
+      container.style.position = 'fixed';
+      container.style.left = '-9999px';
+      container.style.top = '0';
+      document.body.appendChild(container);
+      await html2pdf().set({
+        margin: 0,
+        filename: fileName || `${formName || 'form'}.pdf`,
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      }).from(container).save();
+      document.body.removeChild(container);
     }
     catch (err) { alert("PDF Error: " + (err?.message || "Unknown error")); }
     finally { setLoading(false); }
@@ -44,7 +57,6 @@ function DownloadPDFButton({ submissionId, formName, onPreview }) {
 
 export default function IncidentFormSubmissions({ incidentId }) {
   const navigate = useNavigate();
-  const [pdfPreview, setPdfPreview] = useState(null); // { html, fileName }
   const { data: submissions = [], isLoading } = useQuery({
     queryKey: ["formSubmissions", incidentId],
     queryFn: () => base44.entities.FormSubmissions.filter({ incident_id: incidentId }),
@@ -68,14 +80,6 @@ export default function IncidentFormSubmissions({ incidentId }) {
   const sorted = [...submissions].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
 
   return (
-    <>
-    {pdfPreview && (
-      <PDFPreviewModal
-        html={pdfPreview.html}
-        fileName={pdfPreview.fileName}
-        onClose={() => setPdfPreview(null)}
-      />
-    )}
     <div className="space-y-2">
       {sorted.map(sub => (
         <div key={sub.id} className="flex items-start justify-between gap-3 p-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors">
@@ -123,12 +127,10 @@ export default function IncidentFormSubmissions({ incidentId }) {
             <DownloadPDFButton
               submissionId={sub.id}
               formName={FORM_TYPE_LABELS[sub.form_type] || sub.form_name}
-              onPreview={(html, fileName) => setPdfPreview({ html, fileName })}
             />
           </div>
         </div>
       ))}
     </div>
-    </>
   );
 }
