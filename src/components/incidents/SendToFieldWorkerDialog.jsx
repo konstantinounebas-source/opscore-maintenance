@@ -18,7 +18,7 @@ export default function SendToFieldWorkerDialog({ incident, incidentId, onClose 
 
   const handleSend = async () => {
     if (!chatId.trim()) {
-      toast({ title: "Please enter a Telegram Chat ID or username" });
+      toast({ title: "Please enter a Telegram Chat ID" });
       return;
     }
 
@@ -113,15 +113,17 @@ export default function SendToFieldWorkerDialog({ incident, incidentId, onClose 
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Telegram Chat ID or Username *</Label>
+              <Label className="text-xs font-semibold">Telegram Chat ID *</Label>
               <Input
-                placeholder="e.g. 123456789 or @username"
+                placeholder="e.g. 123456789"
                 value={chatId}
                 onChange={e => setChatId(e.target.value)}
                 className="h-9"
               />
               <p className="text-xs text-slate-400">
-                ⚠️ The worker must <strong>open Telegram, find your bot, and send it a message first</strong> before you can send them a link. Then use their numeric Chat ID (preferred) or @username.
+                Must be the <strong>numeric</strong> Chat ID. To find it: have the worker send any message to the bot, then visit{" "}
+                <code className="bg-slate-100 px-1 rounded">api.telegram.org/bot&lt;TOKEN&gt;/getUpdates</code>{" "}
+                and look for <code className="bg-slate-100 px-1 rounded">chat.id</code>.
               </p>
             </div>
 
