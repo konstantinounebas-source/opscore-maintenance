@@ -69,11 +69,82 @@ Deno.serve(async (req) => {
       result = await base44.asServiceRole.entities.FormSubmissions.create(payload);
     }
 
+    // Generate PDF of the submitted form
+    let pdfUrl = null;
+    let pdfFileName = null;
+    
+    if (status === 'Submitted') {
+      try {
+        // Generate PDF using the appropriate backend function
+        const pdfFunctionMap = {
+          make_safe: 'generateMakeSafeChecklistPDF',
+          corrective: 'generateCorrectiveWOChecklistPDF',
+          inspection: 'generateFormPDF',
+        };
+        
+        const pdfFunction = pdfFunctionMap[formType];
+        if (pdfFunction) {
+          const pdfRes = await base44.asServiceRole.functions.invoke(pdfFunction, { 
+            incidentId,
+            submissionId: result.id 
+          });
+          
+          if (pdfRes.data?.html) {
+            // Convert HTML to PDF and upload
+            const html2pdf = (await import('npm:html2pdf.js@0.10.2')).default;
+            
+            // Create a container for PDF generation
+            const container = document.createElement('div');
+            container.innerHTML = pdfRes.data.html;
+            container.style.position = 'fixed';
+            container.style.left = '-9999px';
+            container.style.top = '0';
+            document.body.appendChild(container);
+            
+            const pdf = await html2pdf()
+              .set({
+                margin: 0,
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+              })
+              .from(container)
+              .outputPdf('blob');
+            
+            document.body.removeChild(container);
+            
+            // Upload the PDF blob
+            const pdfBlob = pdf;
+            const pdfFile = new File([pdfBlob], `${dbFormName.replace(/\s+/g, '_')}_${incidentId}.pdf`, { type: 'application/pdf' });
+            
+            const uploadRes = await base44.asServiceRole.integrations.Core.UploadFile({ file: pdfFile });
+            pdfUrl = uploadRes.file_url;
+            pdfFileName = `${dbFormName.replace(/\s+/g, '_')}_${incidentId}.pdf`;
+          }
+        }
+      } catch (pdfError) {
+        console.error('Failed to generate PDF:', pdfError);
+        // Continue without PDF - don't fail the entire submission
+      }
+    }
+
     // Extract file URLs from formData for audit trail
     const fileUrls = [];
     const fileNames = [];
     const fileMetadata = [];
     const user = workerName || 'Field Worker';
+    
+    // Add PDF first if generated
+    if (pdfUrl) {
+      fileUrls.push(pdfUrl);
+      fileNames.push(pdfFileName);
+      fileMetadata.push({
+        url: pdfUrl,
+        name: pdfFileName,
+        author: user,
+        author_name: user,
+        created_at: new Date().toISOString(),
+      });
+    }
     
     // Collect signature URL
     if (formData.signature_url) {
@@ -105,14 +176,15 @@ Deno.serve(async (req) => {
 
     // Save files to IncidentAttachments
     if (status === 'Submitted' && fileUrls.length > 0) {
-      const user = await base44.auth.me();
+      const authUser = await base44.auth.me();
       for (let i = 0; i < fileUrls.length; i++) {
         await base44.asServiceRole.entities.IncidentAttachments.create({
           incident_id: incidentId,
           file_url: fileUrls[i],
           file_name: fileNames[i],
-          file_type: /\.(jpg|jpeg|png|gif|webp)$/i.test(fileNames[i]) ? "Photo" : "Document",
-          uploaded_by: user?.email || 'field-worker',
+          file_type: fileNames[i].toLowerCase().endsWith('.pdf') ? "Document" : 
+                     /\.(jpg|jpeg|png|gif|webp)$/i.test(fileNames[i]) ? "Photo" : "Document",
+          uploaded_by: authUser?.email || 'field-worker',
         });
       }
     }

@@ -122,6 +122,52 @@ export default function MobileMakeSafeForm({ token, incident, asset, existingSub
     localStorage.setItem(storageKey, JSON.stringify(fd));
   }, [fd]);
 
+  const generateAndUploadPDF = async (submissionId, token) => {
+    try {
+      // Generate PDF HTML from backend
+      const pdfRes = await base44.functions.invoke('generateFieldWorkerFormPDF', { submissionId });
+      if (!pdfRes.data?.html) return;
+
+      // Generate PDF client-side
+      const html2pdf = (await import('html2pdf.js')).default;
+      const container = document.createElement('div');
+      container.innerHTML = pdfRes.data.html;
+      container.style.position = 'fixed';
+      container.style.left = '-9999px';
+      container.style.top = '0';
+      document.body.appendChild(container);
+
+      const pdfBlob = await html2pdf()
+        .set({
+          margin: 0,
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+        })
+        .from(container)
+        .outputPdf('blob');
+
+      document.body.removeChild(container);
+
+      // Upload PDF
+      const pdfFile = new File([pdfBlob], pdfRes.data.fileName || 'form.pdf', { type: 'application/pdf' });
+      const uploadRes = await base44.integrations.Core.UploadFile({ file: pdfFile });
+
+      // Attach to incident via backend function
+      const decoded = atob(token);
+      const incidentId = decoded.split(':')[0];
+      
+      await base44.functions.invoke('attachFieldWorkerFormPDF', {
+        incidentId,
+        submissionId,
+        pdfUrl: uploadRes.file_url,
+        pdfName: pdfRes.data.fileName,
+      });
+    } catch (err) {
+      console.error('Failed to generate/upload PDF:', err);
+      // Don't fail the submission - PDF is optional
+    }
+  };
+
   const submit = async (status) => {
     if (status === 'Submitted') setSubmitting(true);
     else setSaving(true);
@@ -142,6 +188,8 @@ export default function MobileMakeSafeForm({ token, incident, asset, existingSub
         setError(res.data.error);
       } else if (status === 'Submitted') {
         localStorage.removeItem(storageKey);
+        // Generate and upload PDF after successful submission
+        await generateAndUploadPDF(res.data.id, token);
         onSubmitted();
       } else {
         setOfflineSaved(true);
