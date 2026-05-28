@@ -35,6 +35,7 @@ export default function IncidentDetail() {
   const fileInputRef = useRef();
 
   const { data: incident } = useQuery({ queryKey: ["incident", incidentId], queryFn: () => base44.entities.Incidents.filter({ id: incidentId }).then(r => r[0]), enabled: !!incidentId });
+  const { data: relatedAsset } = useQuery({ queryKey: ["asset", incident?.related_asset_id], queryFn: () => base44.entities.Assets.filter({ id: incident.related_asset_id }).then(r => r[0]), enabled: !!incident?.related_asset_id });
   const { data: comments = [] } = useQuery({ queryKey: ["incidentComments", incidentId], queryFn: () => base44.entities.IncidentComments.filter({ incident_id: incidentId }), enabled: !!incidentId });
   const { data: auditTrail = [] } = useQuery({ queryKey: ["incidentAudit", incidentId], queryFn: () => base44.entities.IncidentAuditTrail.filter({ incident_id: incidentId }), enabled: !!incidentId });
   const { data: attachments = [] } = useQuery({ queryKey: ["incidentAttachments", incidentId], queryFn: () => base44.entities.IncidentAttachments.filter({ incident_id: incidentId }), enabled: !!incidentId });
@@ -143,6 +144,7 @@ export default function IncidentDetail() {
             <IField label="Related Asset" value={incident.related_asset_name} />
             <IField label="Status"><StatusBadge status={incident.status} /></IField>
             <IField label="Priority">{incident.initial_priority ? <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${incident.initial_priority === "P1" ? "bg-red-100 text-red-700" : "bg-orange-100 text-orange-700"}`}>{incident.initial_priority}</span> : <span className="text-slate-400">—</span>}</IField>
+            <IField label="Shelter Type" value={relatedAsset?.installed_shelter_type} />
             <IField label="Category" value={incident.category} />
             <IField label="Reported Date" value={incident.reported_date} />
             <IField label="Assigned To" value={incident.assigned_to} />
