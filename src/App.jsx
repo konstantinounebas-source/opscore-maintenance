@@ -32,6 +32,15 @@ import FieldWorkerForm from '@/pages/FieldWorkerForm';
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
 
+  // FieldWorkerForm is a public page — no auth required
+  if (window.location.pathname === '/FieldWorkerForm') {
+    return (
+      <Routes>
+        <Route path="/FieldWorkerForm" element={<FieldWorkerForm />} />
+      </Routes>
+    );
+  }
+
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
       <div className="fixed inset-0 flex items-center justify-center">
