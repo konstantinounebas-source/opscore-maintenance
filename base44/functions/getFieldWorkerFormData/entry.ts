@@ -27,7 +27,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Token expired. Please request a new link.' }, { status: 401 });
     }
 
-    // Fetch incident
+    // Use service role — no user auth required for field workers
     const incidents = await base44.asServiceRole.entities.Incidents.filter({ id: incidentId });
     const incident = incidents[0];
     if (!incident) return Response.json({ error: 'Incident not found' }, { status: 404 });
@@ -40,13 +40,12 @@ Deno.serve(async (req) => {
     }
 
     // Fetch existing form submission (draft) if any
-    let existingSubmission = null;
     const submissions = await base44.asServiceRole.entities.FormSubmissions.filter({
       incident_id: incidentId,
       form_type: formType === 'make_safe' ? 'make_safe_checklist' : 'corrective_wo_checklist',
     });
+    let existingSubmission = null;
     if (submissions.length > 0) {
-      // Get the most recent draft
       const drafts = submissions.filter(s => s.status === 'Draft');
       existingSubmission = drafts.length > 0 ? drafts[drafts.length - 1] : null;
     }
