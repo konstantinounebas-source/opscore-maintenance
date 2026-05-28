@@ -585,7 +585,7 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
                       {priority && <PriorityBadge priority={priority} />}
                     </div>
                   </div>
-                  <ReadOnlyField label="Τύπος Στεγάστρου:" value={asset?.shelter_type} />
+                  <ReadOnlyField label="Τύπος Στεγάστρου:" value={asset?.installed_shelter_type || asset?.ordered_shelter_type} />
                   <ReadOnlyField label="Επηρεαζόμενο Υποσύστημα:" value={subsystem} />
                   <ReadOnlyField label="Υποκατηγορία:" value={subcategory} />
                 </div>
