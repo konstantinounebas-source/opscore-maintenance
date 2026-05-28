@@ -37,7 +37,16 @@ export default function SendToFieldWorkerDialog({ incident, incidentId, onClose 
         setGeneratedUrl(res.data.formUrl);
         toast({ title: "Form link sent successfully via Telegram!" });
       } else {
-        toast({ title: "Failed to send", description: res.data?.error || "Unknown error", variant: "destructive" });
+        const errMsg = res.data?.error || "Unknown error";
+        const isChatNotFound = errMsg.toLowerCase().includes("chat not found");
+        toast({
+          title: "Failed to send",
+          description: isChatNotFound
+            ? "Chat not found. The worker must open Telegram, search for your bot, and send it any message first — then try again."
+            : errMsg,
+          variant: "destructive",
+          duration: 8000,
+        });
       }
     } catch (err) {
       toast({ title: "Error", description: err?.message, variant: "destructive" });
@@ -112,7 +121,7 @@ export default function SendToFieldWorkerDialog({ incident, incidentId, onClose 
                 className="h-9"
               />
               <p className="text-xs text-slate-400">
-                The worker must have started a chat with your bot first. Use their numeric Chat ID or @username.
+                ⚠️ The worker must <strong>open Telegram, find your bot, and send it a message first</strong> before you can send them a link. Then use their numeric Chat ID (preferred) or @username.
               </p>
             </div>
 
