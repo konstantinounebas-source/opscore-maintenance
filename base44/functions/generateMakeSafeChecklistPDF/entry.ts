@@ -46,20 +46,27 @@ Deno.serve(async (req) => {
 <meta charset="UTF-8">
 <title>Make-Safe Checklist Πεδίου</title>
 <style>
-  @page { size: A4 landscape; margin: 6mm; }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Arial, Helvetica, sans-serif; font-size: 7.5px; color: #000; background: #fff; }
-  h1 { text-align: center; font-size: 13px; font-weight: bold; text-decoration: underline; color: #c00000; margin-bottom: 2px; }
-  h2 { text-align: center; font-size: 9px; color: #333; margin-bottom: 4px; }
-  table { width: 100%; border-collapse: collapse; }
-  td, th { border: 1px solid #000; padding: 1.5px 3px; vertical-align: middle; font-size: 7px; }
-  th { background: #d9d9d9; font-weight: bold; text-align: center; font-size: 7px; }
-  .section-header { background: #d9d9d9; font-weight: bold; text-align: left; font-size: 7.5px; padding: 2px 4px; }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 7px; color: #000; background: #fff; }
+  h1 { text-align: center; font-size: 12px; font-weight: bold; text-decoration: underline; color: #c00000; margin-bottom: 2px; }
+  h2 { text-align: center; font-size: 8.5px; color: #333; margin-bottom: 4px; }
+  table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  td, th { border: 1px solid #000; padding: 1.5px 3px; vertical-align: middle; font-size: 7px; word-break: break-word; }
+  th { background: #d9d9d9; font-weight: bold; text-align: center; font-size: 7px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .section-header { background: #d9d9d9; font-weight: bold; text-align: left; font-size: 7px; padding: 2px 4px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .label-cell { font-weight: bold; white-space: nowrap; font-size: 7px; }
   .value-cell { font-size: 7px; }
   .center { text-align: center; }
   .bold { font-weight: bold; }
   .red-bold { font-weight: bold; color: #c00000; }
+  @media print {
+    html, body { margin: 0 !important; padding: 0 !important; }
+    @page { size: A4 landscape; margin: 6mm 7mm; }
+    tr { page-break-inside: avoid; }
+    thead { display: table-header-group; }
+    table { page-break-inside: auto; }
+  }
 </style>
 </head>
 <body>

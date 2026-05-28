@@ -58,69 +58,79 @@ Deno.serve(async (req) => {
     }
 
     const html = `<!DOCTYPE html>
-<html>
+<html lang="el">
 <head>
 <meta charset="UTF-8">
+<title>CR+OMPI — ${e(incident.incident_id)}</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: #1a1a2e; background: #fff; padding: 0; }
-  .page { padding: 28px 32px; max-width: 800px; margin: 0 auto; }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 10px; line-height: 1.45; color: #1a1a2e; background: #fff; }
+  .page { width: 180mm; margin: 0 auto; padding: 14mm 0 16mm 0; }
 
   /* Header */
-  .doc-header { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color: white; padding: 20px 24px; border-radius: 8px; margin-bottom: 20px; }
-  .doc-header .logo-line { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-  .doc-header h1 { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
-  .doc-header .sub { font-size: 10px; opacity: 0.82; margin-top: 2px; }
-  .doc-header .badge { background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.3); border-radius: 4px; padding: 3px 10px; font-size: 10px; font-weight: 600; }
+  .doc-header { background: #1e3a8a; color: white; padding: 16px 20px; border-radius: 6px; margin-bottom: 16px; page-break-inside: avoid; }
+  .doc-header .logo-line { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .doc-header h1 { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; margin: 0; }
+  .doc-header .sub { font-size: 9px; opacity: 0.85; margin-top: 2px; }
+  .doc-header .badge { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.35); border-radius: 4px; padding: 2px 8px; font-size: 9px; font-weight: 600; white-space: nowrap; }
 
   /* Meta strip */
-  .meta-strip { display: flex; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
-  .meta-chip { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 5px; padding: 5px 10px; font-size: 10px; color: #475569; }
+  .meta-strip { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .meta-chip { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 4px; padding: 4px 8px; font-size: 9px; color: #475569; }
   .meta-chip strong { color: #1e293b; }
 
   /* Sections */
-  .section { margin-bottom: 16px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
-  .section-header { background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 8px 14px; display: flex; align-items: center; gap: 6px; }
-  .section-header .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
-  .section-header h2 { font-size: 11px; font-weight: 700; color: #334155; text-transform: uppercase; letter-spacing: 0.5px; }
-  .section-body { padding: 12px 14px; }
+  .section { margin-bottom: 12px; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; page-break-inside: avoid; }
+  .section-header { background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 6px 12px; display: flex; align-items: center; gap: 6px; }
+  .section-header .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+  .section-header h2 { font-size: 9.5px; font-weight: 700; color: #334155; text-transform: uppercase; letter-spacing: 0.5px; margin: 0; }
+  .section-body { padding: 10px 12px; }
 
   /* Table */
   table.fields { width: 100%; border-collapse: collapse; }
-  table.fields td { padding: 5px 8px; vertical-align: top; font-size: 11px; }
+  table.fields td { padding: 4px 8px; vertical-align: top; font-size: 10px; }
   table.fields tr:nth-child(even) td { background: #f8fafc; }
-  table.fields td.label { font-weight: 600; color: #64748b; width: 38%; white-space: nowrap; }
-  table.fields td.value { color: #1e293b; }
+  table.fields td.label { font-weight: 600; color: #64748b; width: 38%; }
+  table.fields td.value { color: #1e293b; word-break: break-word; }
 
-  /* Priority / Status badges */
-  .badge-p1 { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; border-radius: 4px; padding: 2px 8px; font-weight: 700; font-size: 10px; display: inline-block; }
-  .badge-p2 { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; border-radius: 4px; padding: 2px 8px; font-weight: 700; font-size: 10px; display: inline-block; }
-  .badge-iw { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; border-radius: 4px; padding: 2px 8px; font-weight: 700; font-size: 10px; display: inline-block; }
-  .badge-owr { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; border-radius: 4px; padding: 2px 8px; font-weight: 700; font-size: 10px; display: inline-block; }
-  .badge-yes { background: #fee2e2; color: #b91c1c; border-radius: 4px; padding: 2px 8px; font-weight: 700; font-size: 10px; display: inline-block; }
-  .badge-no { background: #f0fdf4; color: #166534; border-radius: 4px; padding: 2px 8px; font-weight: 700; font-size: 10px; display: inline-block; }
+  /* Badges */
+  .badge-p1 { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; border-radius: 4px; padding: 1px 7px; font-weight: 700; font-size: 9px; display: inline-block; }
+  .badge-p2 { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; border-radius: 4px; padding: 1px 7px; font-weight: 700; font-size: 9px; display: inline-block; }
+  .badge-iw { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; border-radius: 4px; padding: 1px 7px; font-weight: 700; font-size: 9px; display: inline-block; }
+  .badge-owr { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; border-radius: 4px; padding: 1px 7px; font-weight: 700; font-size: 9px; display: inline-block; }
+  .badge-yes { background: #fee2e2; color: #b91c1c; border-radius: 4px; padding: 1px 7px; font-weight: 700; font-size: 9px; display: inline-block; }
+  .badge-no { background: #f0fdf4; color: #166534; border-radius: 4px; padding: 1px 7px; font-weight: 700; font-size: 9px; display: inline-block; }
 
-  /* Guidance box */
-  .guidance { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 10px 14px; color: #1e40af; font-size: 11px; line-height: 1.6; }
-  .guidance .glabel { font-weight: 700; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; margin-bottom: 5px; color: #1d4ed8; }
+  /* Guidance */
+  .guidance { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 5px; padding: 9px 12px; color: #1e40af; font-size: 10px; line-height: 1.55; }
+  .guidance .glabel { font-weight: 700; text-transform: uppercase; font-size: 9px; letter-spacing: 0.5px; margin-bottom: 4px; color: #1d4ed8; }
 
   /* OMPI Steps */
-  .ompi-steps { margin: 0; padding-left: 18px; line-height: 1.8; }
-  .ompi-steps li { margin-bottom: 4px; }
+  .ompi-steps { margin: 0; padding-left: 16px; line-height: 1.75; font-size: 10px; }
+  .ompi-steps li { margin-bottom: 3px; }
 
   /* Notes block */
-  .notes-block { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 5px; padding: 10px 12px; font-size: 11px; color: #334155; white-space: pre-wrap; min-height: 30px; }
+  .notes-block { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 8px 10px; font-size: 10px; color: #334155; white-space: pre-wrap; min-height: 28px; }
 
   /* Footer */
-  .doc-footer { border-top: 1px solid #e2e8f0; margin-top: 20px; padding-top: 10px; display: flex; justify-content: space-between; font-size: 9px; color: #94a3b8; }
+  .doc-footer { border-top: 1px solid #e2e8f0; margin-top: 16px; padding-top: 6px; display: flex; justify-content: space-between; font-size: 8px; color: #94a3b8; }
 
-  /* Section dot colors */
+  /* Dot colors */
   .dot-blue { background: #3b82f6; }
   .dot-indigo { background: #6366f1; }
   .dot-amber { background: #f59e0b; }
   .dot-green { background: #10b981; }
   .dot-slate { background: #64748b; }
+
+  @media print {
+    html, body { margin: 0 !important; padding: 0 !important; }
+    .page { width: 100%; padding: 0; }
+    @page { size: A4 portrait; margin: 14mm 15mm 16mm 15mm; }
+    .section { page-break-inside: avoid; }
+    .doc-header { page-break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .guidance { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
 </style>
 </head>
 <body>
@@ -234,8 +244,7 @@ Deno.serve(async (req) => {
     <span>Generated: ${new Date().toLocaleString('el-GR')}</span>
   </div>
 
-</div>
-
+</div><!-- /page -->
 </body>
 </html>`;
 

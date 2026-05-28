@@ -45,16 +45,21 @@ Deno.serve(async (req) => {
 <meta charset="UTF-8">
 <title>${e(workOrderType)}</title>
 <style>
-  @page { size: A4 portrait; margin: 12mm; }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: #1a1a2e; background: #fff; }
-  .header { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color: white; padding: 16px 20px; border-radius: 6px; margin-bottom: 16px; }
-  .header h1 { font-size: 16px; font-weight: 700; }
-  .header p { font-size: 6.5px; opacity: 0.85; margin-top: 3px; }
-  .section { margin-bottom: 12px; border: 1px solid #e2e8f0; border-radius: 5px; overflow: hidden; page-break-inside: avoid; }
-  .section-title { background: #f1f5f9; border-bottom: 1px solid #e2e8f0; padding: 5px 10px; font-size: 10px; font-weight: 700; color: #334155; text-transform: uppercase; letter-spacing: 0.4px; }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 10px; line-height: 1.45; color: #1a1a2e; background: #fff; }
+  @media print {
+    html, body { margin: 0 !important; padding: 0 !important; }
+    @page { size: A4 portrait; margin: 14mm 15mm 16mm 15mm; }
+    .section { page-break-inside: avoid; }
+  }
+  .header { background: #1e3a8a; color: white; padding: 14px 18px; border-radius: 5px; margin-bottom: 14px; page-break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .header h1 { font-size: 14px; font-weight: 700; margin: 0; }
+  .header p { font-size: 9px; opacity: 0.85; margin-top: 3px; }
+  .section { margin-bottom: 11px; border: 1px solid #e2e8f0; border-radius: 4px; overflow: hidden; page-break-inside: avoid; }
+  .section-title { background: #f1f5f9; border-bottom: 1px solid #e2e8f0; padding: 5px 10px; font-size: 9.5px; font-weight: 700; color: #334155; text-transform: uppercase; letter-spacing: 0.4px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   table { width: 100%; border-collapse: collapse; }
-  .footer { border-top: 1px solid #e2e8f0; margin-top: 14px; padding-top: 6px; display: flex; justify-content: space-between; font-size: 9px; color: #94a3b8; }
+  .footer { border-top: 1px solid #e2e8f0; margin-top: 12px; padding-top: 5px; display: flex; justify-content: space-between; font-size: 8px; color: #94a3b8; }
 </style>
 </head>
 <body>
