@@ -77,7 +77,8 @@ Deno.serve(async (req) => {
     const rowsHtml = rows.map((row, i) => {
       const amount = (parseFloat(row.unit_price) || 0) * (parseFloat(row.qty) || 0);
       totalCost += amount;
-      const name = row.catalog_name || row.catalog_id || `Item ${i + 1}`;
+      const code = row.catalog_code ? `[${row.catalog_code}] ` : '';
+      const name = row.catalog_name ? `${code}${row.catalog_name}` : (row.catalog_id || `Item ${i + 1}`);
       const bg = i % 2 === 0 ? '#ffffff' : '#f8fafc';
       return `<tr style="background:${bg};page-break-inside:avoid">
         <td style="padding:5px 8px;border:1px solid #cbd5e1;font-size:8.5pt;word-break:break-word">${esc(name)}</td>

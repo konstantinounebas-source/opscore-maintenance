@@ -466,7 +466,11 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
       submitted_at: status === "Submitted" ? getAthensTimestamp() : submission?.submitted_at,
       submitted_by: user?.email || user?.id || "unknown",
       form_data: {
-         rows,
+         rows: rows.map(r => ({
+           ...r,
+           catalog_name: r.catalog_id ? (catalogMap[r.catalog_id]?.display_name || catalogMap[r.catalog_id]?.child_name || "") : "",
+           catalog_code: r.catalog_id ? (catalogMap[r.catalog_id]?.child_code || "") : "",
+         })),
          total_cost: totalCost,
          photos_before: photosBefore,
          comments,
