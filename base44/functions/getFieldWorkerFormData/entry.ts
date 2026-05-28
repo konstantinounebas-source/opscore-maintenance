@@ -40,9 +40,14 @@ Deno.serve(async (req) => {
     }
 
     // Fetch existing form submission (draft) if any
+    const formTypeMap = {
+      'make_safe': 'make_safe_checklist',
+      'inspection': 'inspection_wo_checklist',
+      'corrective': 'corrective_wo_checklist',
+    };
     const submissions = await base44.asServiceRole.entities.FormSubmissions.filter({
       incident_id: incidentId,
-      form_type: formType === 'make_safe' ? 'make_safe_checklist' : 'corrective_wo_checklist',
+      form_type: formTypeMap[formType] || 'corrective_wo_checklist',
     });
     let existingSubmission = null;
     if (submissions.length > 0) {
