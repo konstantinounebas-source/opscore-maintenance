@@ -29,14 +29,14 @@ Deno.serve(async (req) => {
 
     const formLabel = formLabels[formType] || formType;
 
-    const telegramMessage = message || 
-      `📋 *Field Worker Form Request*\n\n` +
+    const telegramMessage = message ||
+      `📋 <b>Field Worker Form Request</b>\n\n` +
       `You have been assigned to complete a form:\n\n` +
-      `*Form:* ${formLabel}\n` +
-      `*Incident:* ${incidentRef || incidentId}\n` +
-      `${assetName ? `*Asset:* ${assetName}\n` : ''}` +
-      `\n🔗 [Open Form](${formUrl})\n\n` +
-      `_This link is valid for 48 hours._`;
+      `<b>Form:</b> ${formLabel}\n` +
+      `<b>Incident:</b> ${incidentRef || incidentId}\n` +
+      `${assetName ? `<b>Asset:</b> ${assetName}\n` : ''}` +
+      `\n🔗 <a href="${formUrl}">Open Form</a>\n\n` +
+      `<i>This link is valid for 48 hours.</i>`;
 
     const telegramRes = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
       method: 'POST',
@@ -44,8 +44,8 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         chat_id: chatId,
         text: telegramMessage,
-        parse_mode: 'Markdown',
-        disable_web_page_preview: false,
+        parse_mode: 'HTML',
+        disable_web_page_preview: true,
       }),
     });
 
