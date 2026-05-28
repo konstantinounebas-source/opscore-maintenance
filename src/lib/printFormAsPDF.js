@@ -2,21 +2,13 @@
  * Opens a pre-built HTML string in a print window for professional A4 PDF output.
  * The HTML must be fully self-contained (inline styles, no external deps).
  */
-export async function openHtmlPrintWindow(html, fileName) {
-  const html2pdf = (await import('html2pdf.js')).default;
-  const container = document.createElement('div');
-  container.innerHTML = html;
-  container.style.position = 'fixed';
-  container.style.left = '-9999px';
-  container.style.top = '0';
-  document.body.appendChild(container);
-  await html2pdf().set({
-    margin: 0,
-    filename: fileName || 'form.pdf',
-    html2canvas: { scale: 2, useCORS: true },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-  }).from(container).save();
-  document.body.removeChild(container);
+export function openHtmlPrintWindow(html, _fileName) {
+  const win = window.open("", "_blank", "width=900,height=750,scrollbars=yes");
+  if (!win) return;
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  setTimeout(() => { win.print(); }, 600);
 }
 
 /**
