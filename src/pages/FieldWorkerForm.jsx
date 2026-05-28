@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Loader2, AlertTriangle, CheckCircle2 } from "lucide-react";
-import MobileMakeSafeForm from "@/components/fieldworker/MobileMakeSafeForm";
-import MobileCorrectiveForm from "@/components/fieldworker/MobileCorrectiveForm";
+import MobileMakeSafeForm from "@/components/fieldworker/MobileMakeSafeForm.jsx";
+import MobileCorrectiveForm from "@/components/fieldworker/MobileCorrectiveForm.jsx";
 
 export default function FieldWorkerForm() {
   const urlParams = new URLSearchParams(window.location.search);

@@ -1,10 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Save, Send, ShieldAlert } from "lucide-react";
+import { Loader2, Save, Send, ShieldAlert, WifiOff } from "lucide-react";
+import SignaturePad from "./SignaturePad";
+import PhotoUpload from "./PhotoUpload";
 
 function Field({ label, children }) {
   return (
@@ -20,11 +22,11 @@ function ChkCard({ checked, onChange, label }) {
     <button
       type="button"
       onClick={() => onChange(!checked)}
-      className={`flex items-center gap-2 w-full px-3 py-2 rounded-lg border text-sm text-left transition-all ${
+      className={`flex items-center gap-2 w-full px-3 py-3 rounded-lg border text-sm text-left transition-all ${
         checked ? "bg-slate-800 border-slate-800 text-white" : "bg-white border-slate-200 text-slate-700"
       }`}
     >
-      <span className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 text-xs font-bold ${
+      <span className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 text-xs font-bold ${
         checked ? "border-white bg-white text-slate-800" : "border-slate-400"
       }`}>{checked ? "✓" : ""}</span>
       {label}
@@ -41,19 +43,34 @@ const defaultData = () => ({
   f1_cover: false, f2_collect: false, f3_stabilize: false, f4_isolate: false,
   doc_photo_before: false, doc_photo_after: false, doc_make_safe_completed: false,
   pending_corrective: "", doc_hd_comments: "", sig_tech: "",
+  photos: [],
+  signature: "",
 });
 
 export default function MobileMakeSafeForm({ token, incident, asset, existingSubmission, onSubmitted }) {
-  const [fd, setFd] = useState(() => ({
-    ...defaultData(),
-    ...(existingSubmission?.form_data || {}),
-  }));
+  const storageKey = `make_safe_draft_${token}`;
+
+  const [fd, setFd] = useState(() => {
+    // Priority: existingSubmission > localStorage offline draft > defaults
+    const offline = (() => { try { return JSON.parse(localStorage.getItem(storageKey)); } catch { return null; } })();
+    return {
+      ...defaultData(),
+      ...(existingSubmission?.form_data || {}),
+      ...(offline || {}),
+    };
+  });
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [offlineSaved, setOfflineSaved] = useState(false);
 
   const set = (key, val) => setFd(prev => ({ ...prev, [key]: val }));
   const isHighRisk = fd.immediate_danger === "yes";
+
+  // Auto-save to localStorage every time form changes
+  useEffect(() => {
+    localStorage.setItem(storageKey, JSON.stringify(fd));
+  }, [fd]);
 
   const submit = async (status) => {
     if (status === 'Submitted') setSubmitting(true);
@@ -69,12 +86,20 @@ export default function MobileMakeSafeForm({ token, incident, asset, existingSub
       if (res.data?.error) {
         setError(res.data.error);
       } else if (status === 'Submitted') {
+        localStorage.removeItem(storageKey);
         onSubmitted();
       } else {
-        alert('Draft saved!');
+        setOfflineSaved(true);
+        setTimeout(() => setOfflineSaved(false), 3000);
       }
     } catch (err) {
-      setError(err?.message);
+      // If network error, data is already saved in localStorage
+      if (status === 'Draft') {
+        setOfflineSaved(true);
+        setTimeout(() => setOfflineSaved(false), 3000);
+      } else {
+        setError("Αποτυχία σύνδεσης. Τα δεδομένα αποθηκεύτηκαν τοπικά και θα υποβληθούν όταν επανέλθει η σύνδεση.");
+      }
     } finally {
       setSaving(false);
       setSubmitting(false);
@@ -90,6 +115,12 @@ export default function MobileMakeSafeForm({ token, incident, asset, existingSub
         </div>
       )}
 
+      {offlineSaved && (
+        <div className="bg-green-50 border border-green-200 text-green-700 rounded-xl p-3 text-sm flex items-center gap-2">
+          <WifiOff className="w-4 h-4" /> Draft αποθηκεύτηκε τοπικά στη συσκευή σας
+        </div>
+      )}
+
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-3 text-sm">{error}</div>
       )}
@@ -98,18 +129,18 @@ export default function MobileMakeSafeForm({ token, incident, asset, existingSub
       <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
         <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wide">A. Στοιχεία</h2>
         <Field label="Τεχνικός">
-          <Input value={fd.technician} onChange={e => set("technician", e.target.value)} placeholder="Ονοματεπώνυμο..." className="h-10" />
+          <Input value={fd.technician} onChange={e => set("technician", e.target.value)} placeholder="Ονοματεπώνυμο..." className="h-11" />
         </Field>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Ημερομηνία">
-            <Input type="date" value={fd.date} onChange={e => set("date", e.target.value)} className="h-10" />
+            <Input type="date" value={fd.date} onChange={e => set("date", e.target.value)} className="h-11" />
           </Field>
           <Field label="Ώρα Έναρξης">
-            <Input type="time" value={fd.time_start} onChange={e => set("time_start", e.target.value)} className="h-10" />
+            <Input type="time" value={fd.time_start} onChange={e => set("time_start", e.target.value)} className="h-11" />
           </Field>
         </div>
         <Field label="Όχημα">
-          <Input value={fd.vehicle} onChange={e => set("vehicle", e.target.value)} placeholder="Αρ. κυκλοφορίας..." className="h-10" />
+          <Input value={fd.vehicle} onChange={e => set("vehicle", e.target.value)} placeholder="Αρ. κυκλοφορίας..." className="h-11" />
         </Field>
       </div>
 
@@ -128,7 +159,7 @@ export default function MobileMakeSafeForm({ token, incident, asset, existingSub
           <div className="flex gap-3">
             {["yes", "no"].map(val => (
               <button key={val} type="button" onClick={() => set("immediate_danger", val)}
-                className={`flex-1 py-2.5 rounded-lg border text-sm font-bold transition-all ${
+                className={`flex-1 py-3 rounded-lg border text-sm font-bold transition-all ${
                   fd.immediate_danger === val
                     ? val === "yes" ? "bg-red-600 text-white border-red-600" : "bg-green-600 text-white border-green-600"
                     : "bg-white text-slate-600 border-slate-200"
@@ -183,6 +214,16 @@ export default function MobileMakeSafeForm({ token, incident, asset, existingSub
         </div>
       </div>
 
+      {/* Photos */}
+      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+        <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wide">G. Φωτογραφίες</h2>
+        <PhotoUpload
+          photos={fd.photos || []}
+          onChange={urls => set("photos", urls)}
+          label="Φωτογραφίες πριν / μετά"
+        />
+      </div>
+
       {/* Pending / Notes */}
       <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
         <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wide">H. Εκκρεμότητες</h2>
@@ -207,8 +248,13 @@ export default function MobileMakeSafeForm({ token, incident, asset, existingSub
       {/* Signature */}
       <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
         <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wide">K. Υπογραφή</h2>
+        <SignaturePad
+          value={fd.signature}
+          onChange={val => set("signature", val)}
+          label="Υπογραφή Τεχνικού"
+        />
         <Field label="Ονοματεπώνυμο Τεχνικού">
-          <Input value={fd.sig_tech} onChange={e => set("sig_tech", e.target.value)} placeholder="Πλήρες όνομα..." className="h-10" />
+          <Input value={fd.sig_tech} onChange={e => set("sig_tech", e.target.value)} placeholder="Πλήρες όνομα..." className="h-11" />
         </Field>
       </div>
 
@@ -216,7 +262,7 @@ export default function MobileMakeSafeForm({ token, incident, asset, existingSub
       <div className="flex gap-3">
         <Button variant="outline" className="flex-1 h-12 gap-2" onClick={() => submit('Draft')} disabled={saving || submitting}>
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          Αποθήκευση Draft
+          Αποθήκευση
         </Button>
         <Button className="flex-1 h-12 gap-2 bg-indigo-600 hover:bg-indigo-700" onClick={() => submit('Submitted')} disabled={saving || submitting}>
           {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}

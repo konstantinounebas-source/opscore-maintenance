@@ -1,10 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Save, Send } from "lucide-react";
+import { Loader2, Save, Send, WifiOff } from "lucide-react";
+import SignaturePad from "./SignaturePad";
+import PhotoUpload from "./PhotoUpload";
 
 function Field({ label, children }) {
   return (
@@ -20,11 +22,11 @@ function ChkCard({ checked, onChange, label }) {
     <button
       type="button"
       onClick={() => onChange(!checked)}
-      className={`flex items-center gap-2 w-full px-3 py-2 rounded-lg border text-sm text-left transition-all ${
+      className={`flex items-center gap-2 w-full px-3 py-3 rounded-lg border text-sm text-left transition-all ${
         checked ? "bg-slate-800 border-slate-800 text-white" : "bg-white border-slate-200 text-slate-700"
       }`}
     >
-      <span className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 text-xs font-bold ${
+      <span className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 text-xs font-bold ${
         checked ? "border-white bg-white text-slate-800" : "border-slate-400"
       }`}>{checked ? "✓" : ""}</span>
       {label}
@@ -42,15 +44,32 @@ const defaultData = {
   general_notes: "", specific_work_1: "", specific_work_2: "", specific_work_3: "",
   incomplete_reason: "", additional_works: "",
   close_wo_yes: false, close_wo_no: false, close_wo_reason: "",
+  photos: [],
+  signature: "",
 };
 
 export default function MobileCorrectiveForm({ token, incident, existingSubmission, onSubmitted }) {
-  const [form, setForm] = useState({ ...defaultData, ...(existingSubmission?.form_data || {}) });
+  const storageKey = `corrective_draft_${token}`;
+
+  const [form, setForm] = useState(() => {
+    const offline = (() => { try { return JSON.parse(localStorage.getItem(storageKey)); } catch { return null; } })();
+    return {
+      ...defaultData,
+      ...(existingSubmission?.form_data || {}),
+      ...(offline || {}),
+    };
+  });
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [offlineSaved, setOfflineSaved] = useState(false);
 
   const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
+
+  // Auto-save to localStorage every time form changes
+  useEffect(() => {
+    localStorage.setItem(storageKey, JSON.stringify(form));
+  }, [form]);
 
   const submit = async (status) => {
     if (status === 'Submitted') setSubmitting(true);
@@ -66,12 +85,19 @@ export default function MobileCorrectiveForm({ token, incident, existingSubmissi
       if (res.data?.error) {
         setError(res.data.error);
       } else if (status === 'Submitted') {
+        localStorage.removeItem(storageKey);
         onSubmitted();
       } else {
-        alert('Draft saved!');
+        setOfflineSaved(true);
+        setTimeout(() => setOfflineSaved(false), 3000);
       }
     } catch (err) {
-      setError(err?.message);
+      if (status === 'Draft') {
+        setOfflineSaved(true);
+        setTimeout(() => setOfflineSaved(false), 3000);
+      } else {
+        setError("Αποτυχία σύνδεσης. Τα δεδομένα αποθηκεύτηκαν τοπικά και θα υποβληθούν όταν επανέλθει η σύνδεση.");
+      }
     } finally {
       setSaving(false);
       setSubmitting(false);
@@ -80,6 +106,12 @@ export default function MobileCorrectiveForm({ token, incident, existingSubmissi
 
   return (
     <div className="space-y-4 pb-10">
+      {offlineSaved && (
+        <div className="bg-green-50 border border-green-200 text-green-700 rounded-xl p-3 text-sm flex items-center gap-2">
+          <WifiOff className="w-4 h-4" /> Draft αποθηκεύτηκε τοπικά στη συσκευή σας
+        </div>
+      )}
+
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-3 text-sm">{error}</div>
       )}
@@ -89,34 +121,34 @@ export default function MobileCorrectiveForm({ token, incident, existingSubmissi
         <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wide">Στοιχεία Εργασίας</h2>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Ημερομηνία">
-            <Input type="date" value={form.date_of_work} onChange={e => set("date_of_work", e.target.value)} className="h-10" />
+            <Input type="date" value={form.date_of_work} onChange={e => set("date_of_work", e.target.value)} className="h-11" />
           </Field>
           <Field label="Συμπληρώθηκε από">
-            <Input value={form.completed_by} onChange={e => set("completed_by", e.target.value)} placeholder="Όνομα..." className="h-10" />
+            <Input value={form.completed_by} onChange={e => set("completed_by", e.target.value)} placeholder="Όνομα..." className="h-11" />
           </Field>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Εργοδηγός">
-            <Input value={form.foreman} onChange={e => set("foreman", e.target.value)} placeholder="Εργοδηγός..." className="h-10" />
+            <Input value={form.foreman} onChange={e => set("foreman", e.target.value)} placeholder="Εργοδηγός..." className="h-11" />
           </Field>
           <Field label="Τεχνίτης 1">
-            <Input value={form.technician1} onChange={e => set("technician1", e.target.value)} placeholder="Τεχνίτης..." className="h-10" />
+            <Input value={form.technician1} onChange={e => set("technician1", e.target.value)} placeholder="Τεχνίτης..." className="h-11" />
           </Field>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Ώρα Έναρξης">
-            <Input type="time" value={form.work_from} onChange={e => set("work_from", e.target.value)} className="h-10" />
+            <Input type="time" value={form.work_from} onChange={e => set("work_from", e.target.value)} className="h-11" />
           </Field>
           <Field label="Ώρα Λήξης">
-            <Input type="time" value={form.work_to} onChange={e => set("work_to", e.target.value)} className="h-10" />
+            <Input type="time" value={form.work_to} onChange={e => set("work_to", e.target.value)} className="h-11" />
           </Field>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Θερμοκρασία (°C)">
-            <Input value={form.temperature} onChange={e => set("temperature", e.target.value)} placeholder="°C" className="h-10" />
+            <Input value={form.temperature} onChange={e => set("temperature", e.target.value)} placeholder="°C" className="h-11" />
           </Field>
           <Field label="Καιρός">
-            <Input value={form.weather} onChange={e => set("weather", e.target.value)} placeholder="π.χ. Ηλιόλουστος" className="h-10" />
+            <Input value={form.weather} onChange={e => set("weather", e.target.value)} placeholder="π.χ. Ηλιόλουστος" className="h-11" />
           </Field>
         </div>
       </div>
@@ -131,7 +163,7 @@ export default function MobileCorrectiveForm({ token, incident, existingSubmissi
           ["deficiencies", "Ελλείψεις / Ανάγκη Επιστροφής"],
         ].map(([key, label]) => (
           <Field key={key} label={label}>
-            <Input value={form[key]} onChange={e => set(key, e.target.value)} placeholder="Ναι / Όχι" className="h-10" />
+            <Input value={form[key]} onChange={e => set(key, e.target.value)} placeholder="Ναι / Όχι" className="h-11" />
           </Field>
         ))}
       </div>
@@ -160,9 +192,19 @@ export default function MobileCorrectiveForm({ token, incident, existingSubmissi
         <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wide">Συγκεκριμένες Εργασίες</h2>
         {[1, 2, 3].map(i => (
           <Field key={i} label={`Εργασία ${i}`}>
-            <Input value={form[`specific_work_${i}`] || ''} onChange={e => set(`specific_work_${i}`, e.target.value)} placeholder="Περιγραφή εργασίας..." className="h-10" />
+            <Input value={form[`specific_work_${i}`] || ''} onChange={e => set(`specific_work_${i}`, e.target.value)} placeholder="Περιγραφή εργασίας..." className="h-11" />
           </Field>
         ))}
+      </div>
+
+      {/* Photos */}
+      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+        <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wide">Φωτογραφίες</h2>
+        <PhotoUpload
+          photos={form.photos || []}
+          onChange={urls => set("photos", urls)}
+          label="Φωτογραφίες εργασίας"
+        />
       </div>
 
       {/* Notes */}
@@ -194,16 +236,26 @@ export default function MobileCorrectiveForm({ token, incident, existingSubmissi
         </div>
         {form.close_wo_no && (
           <Field label="Αιτιολόγηση">
-            <Input value={form.close_wo_reason} onChange={e => set("close_wo_reason", e.target.value)} placeholder="Λόγος..." className="h-10" />
+            <Input value={form.close_wo_reason} onChange={e => set("close_wo_reason", e.target.value)} placeholder="Λόγος..." className="h-11" />
           </Field>
         )}
+      </div>
+
+      {/* Signature */}
+      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+        <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wide">Υπογραφή</h2>
+        <SignaturePad
+          value={form.signature}
+          onChange={val => set("signature", val)}
+          label="Υπογραφή Εργοδηγού"
+        />
       </div>
 
       {/* Action buttons */}
       <div className="flex gap-3">
         <Button variant="outline" className="flex-1 h-12 gap-2" onClick={() => submit('Draft')} disabled={saving || submitting}>
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          Αποθήκευση Draft
+          Αποθήκευση
         </Button>
         <Button className="flex-1 h-12 gap-2 bg-indigo-600 hover:bg-indigo-700" onClick={() => submit('Submitted')} disabled={saving || submitting}>
           {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
