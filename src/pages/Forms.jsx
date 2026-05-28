@@ -13,6 +13,7 @@ import OutlineManagementForm from "@/components/forms/OutlineManagementForm";
 import CombinedFMPIandInvoiceForm from "@/components/forms/CombinedFMPIandInvoiceForm";
 import MakeSafeChecklistForm from "@/components/forms/MakeSafeChecklistForm";
 import IncidentReportForm from "@/components/forms/IncidentReportForm";
+import CorrectiveWOForm from "@/components/forms/CorrectiveWOForm";
 
 const STATUS_BADGE = {
   Draft:     "bg-slate-100 text-slate-600",
@@ -48,6 +49,11 @@ const FORM_TEMPLATES = [
     id: "incident_report",
     name: "Request for Corrective Maintenance – Incident Report",
     description: "Φόρμα Αναφοράς Συμβάντος. Καταγραφή βλαβών, κατάταξη προτεραιότητας, OWR, Make-Safe και εγκρίσεις.",
+  },
+  {
+    id: "corrective_wo_checklist",
+    name: "Corrective Work Order Checklist",
+    description: "Corrective maintenance work order checklist with detailed inspection items, personnel tracking, and closure verification.",
   },
 ];
 
@@ -239,6 +245,17 @@ export default function Forms() {
           assets={assets}
           workOrders={workOrders}
           crews={crews}
+          onClose={handleClose}
+        />
+      );
+    }
+    if (formType === "corrective_wo_checklist") {
+      return (
+        <CorrectiveWOForm
+          submission={editingSubmission}
+          incident={incidentMap[editingSubmission.incident_id]}
+          incidentId={editingSubmission.incident_id}
+          workOrders={workOrders}
           onClose={handleClose}
         />
       );
