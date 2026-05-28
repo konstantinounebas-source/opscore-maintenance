@@ -29,10 +29,12 @@ Deno.serve(async (req) => {
     const formTypeMap = {
       make_safe: 'make_safe_checklist',
       corrective: 'corrective_wo_checklist',
+      inspection: 'inspection_wo_checklist',
     };
     const formNameMap = {
       make_safe: 'MAKE-SAFE CHECKLIST ΠΕΔΙΟΥ',
       corrective: 'Corrective Work Order Checklist',
+      inspection: 'Inspection WO Checklist',
     };
 
     const dbFormType = formTypeMap[formType] || formType;
@@ -112,9 +114,16 @@ Deno.serve(async (req) => {
       attachment_metadata: status === 'Submitted' && fileMetadata.length > 0 ? fileMetadata : undefined,
     });
 
-    // If submitted, update incident make_safe_done flag
-    if (status === 'Submitted' && formType === 'make_safe' && incident) {
-      await base44.asServiceRole.entities.Incidents.update(incident.id, { make_safe_done: true });
+    // If submitted, update incident completion flags
+    if (status === 'Submitted' && incident) {
+      const updates = {};
+      if (formType === 'make_safe') updates.make_safe_done = true;
+      if (formType === 'inspection') updates.inspection_done = true;
+      if (formType === 'corrective') updates.corrective_done = true;
+      
+      if (Object.keys(updates).length > 0) {
+        await base44.asServiceRole.entities.Incidents.update(incident.id, updates);
+      }
     }
 
     return Response.json({ success: true, id: result.id });
