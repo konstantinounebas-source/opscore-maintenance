@@ -8,10 +8,10 @@ import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/use-toast";
 import { Send, Loader2, CheckCircle2, MessageCircle } from "lucide-react";
 
-export default function SendToFieldWorkerDialog({ incident, incidentId, onClose }) {
+export default function SendToFieldWorkerDialog({ incident, incidentId, onClose, defaultFormType }) {
   const { toast } = useToast();
   const [chatId, setChatId] = useState("");
-  const [formType, setFormType] = useState("make_safe");
+  const [formType, setFormType] = useState(defaultFormType || "inspection");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [generatedUrl, setGeneratedUrl] = useState("");

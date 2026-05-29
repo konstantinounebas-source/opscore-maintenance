@@ -771,6 +771,11 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
           incident={incident}
           incidentId={incidentId}
           onClose={() => setShowFieldWorkerDialog(false)}
+          defaultFormType={
+            incident.make_safe_required && !incident.make_safe_done ? "make_safe" :
+            incident.corrective_allowed ? "corrective" :
+            "inspection"
+          }
         />
       )}
 
