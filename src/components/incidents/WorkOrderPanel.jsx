@@ -19,8 +19,9 @@ import WorkOrderDownloadButton from "@/components/shared/WorkOrderDownloadButton
 import FormViewerModal from "@/components/incidents/FormViewerModal";
 import {
   Plus, ChevronDown, ChevronUp, CheckCircle2, Clock,
-  Loader2, Paperclip, StickyNote, XCircle, Lock, FileText, Upload, Printer
+  Loader2, Paperclip, StickyNote, XCircle, Lock, FileText, Upload, Printer, MessageCircle
 } from "lucide-react";
+import SendToFieldWorkerDialog from "@/components/incidents/SendToFieldWorkerDialog";
 import { generateWorkOrderId } from "@/lib/workOrderIdGenerator";
 
 const WO_TYPE_CONFIG = {
@@ -549,6 +550,7 @@ export default function WorkOrderPanel({ woType, incident, incidentId, lockedRea
   const [checklistWO, setChecklistWO] = useState(null);
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [showFormViewer, setShowFormViewer] = useState(false);
+  const [showSendDialog, setShowSendDialog] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: allWOs = [] } = useQuery({
@@ -598,6 +600,12 @@ export default function WorkOrderPanel({ woType, incident, incidentId, lockedRea
                 className="flex items-center gap-1 text-xs font-medium text-violet-600 hover:text-violet-800"
               >
                 <Upload className="w-3.5 h-3.5" /> Upload Form
+              </button>
+              <button
+                onClick={e => { e.stopPropagation(); setShowSendDialog(true); }}
+                className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800"
+              >
+                <MessageCircle className="w-3.5 h-3.5" /> Send
               </button>
             </>
           )}
@@ -658,6 +666,14 @@ export default function WorkOrderPanel({ woType, incident, incidentId, lockedRea
         />
       )}
       {showUploadForm && <UploadFormModal woType={woType} incidentId={incidentId} onClose={() => setShowUploadForm(false)} onDone={() => setShowUploadForm(false)} />}
+      {showSendDialog && (
+        <SendToFieldWorkerDialog
+          incident={incident}
+          incidentId={incidentId}
+          defaultFormType={woType}
+          onClose={() => setShowSendDialog(false)}
+        />
+      )}
       {showFormViewer && (
         <FormViewerModal
           woType={woType}

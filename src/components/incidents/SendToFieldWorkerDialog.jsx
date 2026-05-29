@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,10 @@ export default function SendToFieldWorkerDialog({ incident, incidentId, onClose,
   const { toast } = useToast();
   const [chatId, setChatId] = useState("");
   const [formType, setFormType] = useState(defaultFormType || "inspection");
+
+  useEffect(() => {
+    if (defaultFormType) setFormType(defaultFormType);
+  }, [defaultFormType]);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [generatedUrl, setGeneratedUrl] = useState("");
