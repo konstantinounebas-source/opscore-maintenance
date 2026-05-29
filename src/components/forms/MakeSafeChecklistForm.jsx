@@ -86,32 +86,8 @@ function EditableTextarea({ value, onChange, placeholder, rows = 2, className })
   );
 }
 
-// ── Default state factory ─────────────────────────────────────────────────────
-const defaultData = () => ({
-  date: "", time_start: "", technician: "", vehicle: "", time_arrival: "", time_end: "",
-  check_360: false,
-  danger_electrical: false, danger_glass: false, danger_structural: false, danger_pv: false, danger_other: false, danger_other_text: "",
-  immediate_danger: "", danger_description: "",
-  ppe_vest: false, ppe_helmet: false, ppe_gloves: false, ppe_glasses: false,
-  ppe_shoes: false, ppe_mask: false, ppe_extinguisher: false, ppe_all: false,
-  eq_cones: false, eq_loto_kit: false, eq_all: false, eq_other: false, eq_other_text: "",
-  tmp1: false, tmp2: false, tmp3: false, tmp4: false,
-  tmr1: false, tmr2: false, tmr3: false, tmbs1: false, tmbs2: false,
-  coord_police: false, coord_municipality: false, coord_other: false, coord_other_text: "",
-  loto_ac: false, loto_pv: false, loto_battery: false, loto_other: false, loto_other_text: "",
-  loto_isolation: false, loto_lock_tag: false, loto_lock_tag_name: "", loto_confirm: false, loto_notes: "",
-  f1_cover: false, f1_panel_lock: false,
-  f2_collect: false, f2_stabilize: false, f2_cover: false,
-  f3_stabilize: false, f3_remove: false,
-  f4_isolate: false, f4_thermal: "", f4_evacuate: false, f4_full_removal: false, f5_other: "",
-  vehicle_none: false, vehicle_yes: false,
-  veh_cherry: false, veh_crane: false, veh_other: false, veh_other_text: "", veh_justification: "",
-  pending_corrective: "",
-  doc_photo_before: false, doc_photo_after: false, doc_wm: false,
-  doc_materials: false, doc_materials_text: "", doc_make_safe_completed: false, doc_hd_comments: "",
-  sig_tech: "", sig_tech_upload: null, sig_hd: "", sig_hd_upload: null, sig_date: "",
-  photos_before: [], photos_after: [],
-});
+// ── Default state (imported from shared schema) ───────────────────────────────
+import { makeSafeDefaultData as defaultData } from "@/lib/formSchemas";
 
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function MakeSafeChecklistForm({ submission, incidents, assets, workOrders, onClose, defaultIncidentId }) {

@@ -100,35 +100,8 @@ function TwoColHeader({ leftTitle, rightTitle }) {
   );
 }
 
-// ── Default state ─────────────────────────────────────────────────────────────
-const defaultData = {
-  date_of_work: "", completed_by: "", workorder_no: "", aa_stegastrou: "", typos_stegastrou: "",
-  pez_plakes_pez: "", pez_topothetes_plakes: "", pez_skyrodeema: "", pez_kraspedo_pez: "",
-  pez_plakes_tyflon: "", pez_plakes_tyflon_check: "", pez_alles_plakes: "", pez_geiosi: "",
-  pez_apokatastasi: "",
-  kat_stegaztro_oriz: "", kat_vides: "", kat_kena: "", kat_kathariothta: "",
-  pil_domiki: "", pil_stiriksi: "", pil_steganopoi: "", pil_menteseedes: "", pil_kleidaria: "", pil_vafi: "",
-  porta_domiki: "", porta_stiriksi: "", porta_steganopoi: "", porta_menteseedes: "", porta_kleidaria: "", porta_vafi: "",
-  siman_domiki: "", siman_stiriksi: "", siman_steganopoi: "", siman_menteseedes: "", siman_kleidaria: "", siman_vafi: "",
-  orofi_domiki: "", orofi_kalimmata: "", orofi_steganopoi: "", orofi_pv: "", orofi_vafi: "",
-  pagk_domiki: "", pagk_verniki: "", pagk_pleuriko: "", pagk_vafi: "",
-  lb_domiki: "", lb_acryliki: "", lb_kleidaria: "", lb_menteseedes: "", lb_vafi: "",
-  per_domiki: "", per_vafi: "",
-  auto_topothesi: "",
-  glazz_topothesi: "",
-  kados_egkat: "",
-  vasipod_egkat: "",
-  oriz_topothesi: "", oriz_typos: "",
-  anoigei_incident_nai: false, anoigei_incident_ochi: false,
-  amesi_apokatastasi_nai: false, amesi_apokatastasi_ochi: false,
-  ekkremes_civil: false, ekkremes_hlektrologos: false,
-  kleisimo_nai: false, kleisimo_ochi: false,
-  photo_prin: false, photo_meta: false,
-  eggyhsh_nai: false, eggyhsh_ochi: false,
-  sxolia: "",
-  ergazies_pou_ektelesan: "",
-  epalitheusi_onoma: "", epalitheusi_imerominia: "",
-};
+// ── Default state (imported from shared schema) ───────────────────────────────
+import { inspectionDefaultData as defaultData } from "@/lib/formSchemas";
 
 // ── PDF HTML builder (landscape) ──────────────────────────────────────────────
 function buildPrintHTML(form, inspId, incident, asset) {
