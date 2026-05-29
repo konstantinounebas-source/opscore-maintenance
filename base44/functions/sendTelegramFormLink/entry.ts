@@ -14,13 +14,14 @@ Deno.serve(async (req) => {
     const TELEGRAM_BOT_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN');
     if (!TELEGRAM_BOT_TOKEN) return Response.json({ error: 'Telegram bot token not configured' }, { status: 500 });
 
-    // Generate a short-lived token: base64(incidentId:formType:timestamp)
+    // Generate a short-lived token: url-safe base64(incidentId:formType:timestamp)
     const tokenPayload = `${incidentId}:${formType}:${Date.now()}`;
-    const token = btoa(tokenPayload);
+    // Use URL-safe base64: replace + with -, / with _, strip trailing =
+    const token = btoa(tokenPayload).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 
     // Get the app URL from environment or use a default
     const APP_URL = Deno.env.get('APP_URL') || 'https://app.base44.com';
-    const formUrl = `${APP_URL}/FieldWorkerForm?token=${encodeURIComponent(token)}`;
+    const formUrl = `${APP_URL}/FieldWorkerForm?token=${token}`;
 
     const formLabels = {
       make_safe: '🛡️ Make-Safe Checklist',

@@ -7,10 +7,14 @@ Deno.serve(async (req) => {
 
     if (!token) return Response.json({ error: 'Missing token' }, { status: 400 });
 
-    // Decode token: base64(incidentId:formType:timestamp)
+    // Decode token: url-safe base64(incidentId:formType:timestamp)
     let decoded;
     try {
-      decoded = atob(token);
+      // Restore standard base64 from url-safe variant
+      const standard = token.replace(/-/g, '+').replace(/_/g, '/');
+      // Re-add padding if needed
+      const padded = standard + '=='.slice(0, (4 - standard.length % 4) % 4);
+      decoded = atob(padded);
     } catch {
       return Response.json({ error: 'Invalid token' }, { status: 400 });
     }
