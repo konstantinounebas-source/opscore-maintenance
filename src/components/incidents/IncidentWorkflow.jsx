@@ -362,7 +362,6 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
   const [showManualFMPI, setShowManualFMPI] = useState(false);
   const [showCAModal, setShowCAModal] = useState(false);
   const [showCloseModal, setShowCloseModal] = useState(false);
-  const [showFieldWorkerDialog, setShowFieldWorkerDialog] = useState(false);
   const [downloadingPDF, setDownloadingPDF] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -667,24 +666,7 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
         )}
       </div>
 
-      {/* ── Field Worker ── */}
-      <div className="bg-white rounded-xl border border-slate-200 p-5">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Field Worker</p>
-            <p className="text-xs text-slate-400 mt-0.5">Send a form link via Telegram to a field worker</p>
-          </div>
-          <Button
-            size="sm"
-            variant="outline"
-            className="gap-2 text-xs h-8 border-blue-200 text-blue-700 hover:bg-blue-50"
-            onClick={() => setShowFieldWorkerDialog(true)}
-          >
-            <MessageCircle className="w-3.5 h-3.5" />
-            Send to Field Worker
-          </Button>
-        </div>
-      </div>
+
 
       {/* ── Work Orders ── */}
       <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-3">
@@ -766,18 +748,7 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
         />
       )}
 
-      {showFieldWorkerDialog && (
-        <SendToFieldWorkerDialog
-          incident={incident}
-          incidentId={incidentId}
-          onClose={() => setShowFieldWorkerDialog(false)}
-          defaultFormType={
-            incident.make_safe_required && !incident.make_safe_done ? "make_safe" :
-            incident.corrective_allowed ? "corrective" :
-            "inspection"
-          }
-        />
-      )}
+
 
       {showCloseModal && (
         <CloseIncidentModal
