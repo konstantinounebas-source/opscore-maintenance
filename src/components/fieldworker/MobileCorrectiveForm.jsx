@@ -90,7 +90,7 @@ const defaultData = {
   veh_other_text: "",
   
   // Security equipment
-  sec_generator: false, sec_crusher: false, sec_truck: false, sec_crane: false,
+  sec_generator: false, sec_crusher: false, sec_truck: false, sec_crane: false, security_notes: "",
   
   // Photos
   photo_inspection: false, photo_hs: false, photo_traffic: false,
@@ -278,17 +278,115 @@ export default function MobileCorrectiveForm({ token, incident, existingSubmissi
         )}
       </div>
 
-      {/* Solar, Energy, Elec Panel, Lighting, Software, Extra Equipment, Roof - continue pattern */}
-      {/* For brevity, following same pattern as above... */}
+      {/* Solar */}
+      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+        <h2 className="text-sm font-bold text-slate-800 uppercase">6) Φωτοβολταϊκό Πάνελ</h2>
+        <ChkCard checked={form.solar_na} onChange={v => set("solar_na", v)} label="N/A" />
+        {!form.solar_na && (
+          <>
+            <div className="flex gap-2"><ChkCard checked={form.solar_panel_check} onChange={v => set("solar_panel_check", v)} label="Πάνελ & βάσεις" /><Input value={form.solar_panel_status} onChange={e => set("solar_panel_status", e.target.value)} placeholder="Κατάσταση" /></div>
+            <div className="flex gap-2"><ChkCard checked={form.solar_indicator_check} onChange={v => set("solar_indicator_check", v)} label="Ένδειξη λειτουργίας" /><Input value={form.solar_indicator_status} onChange={e => set("solar_indicator_status", e.target.value)} placeholder="Κατάσταση" /></div>
+            <Field label="Σχόλια"><Textarea value={form.solar_notes} onChange={e => set("solar_notes", e.target.value)} rows={2} /></Field>
+          </>
+        )}
+      </div>
+
+      {/* Energy Storage */}
+      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+        <h2 className="text-sm font-bold text-slate-800 uppercase">7) Αποθήκευση Ενέργειας</h2>
+        <ChkCard checked={form.energy_na} onChange={v => set("energy_na", v)} label="N/A" />
+        {!form.energy_na && (
+          <>
+            <div className="flex gap-2"><ChkCard checked={form.energy_battery_check} onChange={v => set("energy_battery_check", v)} label="Μπαταρίες/θήκη" /><Input value={form.energy_battery_status} onChange={e => set("energy_battery_status", e.target.value)} placeholder="Κατάσταση" /></div>
+            <div className="flex gap-2"><ChkCard checked={form.energy_connections_check} onChange={v => set("energy_connections_check", v)} label="Συνδέσεις/ασφάλεια" /><Input value={form.energy_connections_status} onChange={e => set("energy_connections_status", e.target.value)} placeholder="Κατάσταση" /></div>
+            <div className="flex gap-2"><ChkCard checked={form.energy_replacement_check} onChange={v => set("energy_replacement_check", v)} label="Αντικατάσταση/Κλοπή" /><Input value={form.energy_replacement_status} onChange={e => set("energy_replacement_status", e.target.value)} placeholder="Κατάσταση" /></div>
+            <Field label="Σχόλια"><Textarea value={form.energy_notes} onChange={e => set("energy_notes", e.target.value)} rows={2} /></Field>
+          </>
+        )}
+      </div>
+
+      {/* Electrical Panel */}
+      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+        <h2 className="text-sm font-bold text-slate-800 uppercase">8) Ηλεκτρολογικό Πάνελ</h2>
+        <ChkCard checked={form.elec_panel_na} onChange={v => set("elec_panel_na", v)} label="N/A" />
+        {!form.elec_panel_na && (
+          <>
+            <div className="flex gap-2"><ChkCard checked={form.elec_router_check} onChange={v => set("elec_router_check", v)} label="Router/SIM" /><Input value={form.elec_router_status} onChange={e => set("elec_router_status", e.target.value)} placeholder="Κατάσταση" /></div>
+            <div className="flex gap-2"><ChkCard checked={form.elec_controller_check} onChange={v => set("elec_controller_check", v)} label="Controller" /><Input value={form.elec_controller_status} onChange={e => set("elec_controller_status", e.target.value)} placeholder="Κατάσταση" /></div>
+            <div className="flex gap-2"><ChkCard checked={form.elec_power_check} onChange={v => set("elec_power_check", v)} label="Power Supply" /><Input value={form.elec_power_status} onChange={e => set("elec_power_status", e.target.value)} placeholder="Κατάσταση" /></div>
+            <Field label="Σχόλια"><Textarea value={form.elec_panel_notes} onChange={e => set("elec_panel_notes", e.target.value)} rows={2} /></Field>
+          </>
+        )}
+      </div>
+
+      {/* Lighting */}
+      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+        <h2 className="text-sm font-bold text-slate-800 uppercase">9) Φωτισμός</h2>
+        <ChkCard checked={form.lighting_na} onChange={v => set("lighting_na", v)} label="N/A" />
+        {!form.lighting_na && (
+          <>
+            <div className="flex gap-2"><ChkCard checked={form.lighting_roof_check} onChange={v => set("lighting_roof_check", v)} label="Φωτισμός Στέγης" /><Input value={form.lighting_roof_status} onChange={e => set("lighting_roof_status", e.target.value)} placeholder="Κατάσταση" /></div>
+            <div className="flex gap-2"><ChkCard checked={form.lighting_sign_check} onChange={v => set("lighting_sign_check", v)} label="Υποδομής/Πινακίδας" /><Input value={form.lighting_sign_status} onChange={e => set("lighting_sign_status", e.target.value)} placeholder="Κατάσταση" /></div>
+            <Field label="Σχόλια"><Textarea value={form.lighting_notes} onChange={e => set("lighting_notes", e.target.value)} rows={2} /></Field>
+          </>
+        )}
+      </div>
+
+      {/* Software */}
+      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+        <h2 className="text-sm font-bold text-slate-800 uppercase">10) Λογισμικό Σύστημα</h2>
+        <ChkCard checked={form.software_na} onChange={v => set("software_na", v)} label="N/A" />
+        {!form.software_na && (
+          <>
+            <div className="flex gap-2"><ChkCard checked={form.software_lighting_check} onChange={v => set("software_lighting_check", v)} label="Λειτουργία φωτισμού" /><Input value={form.software_lighting_status} onChange={e => set("software_lighting_status", e.target.value)} placeholder="Κατάσταση" /></div>
+            <div className="flex gap-2"><ChkCard checked={form.software_normal_check} onChange={v => set("software_normal_check", v)} label="Κανονική λειτουργία" /><Input value={form.software_normal_status} onChange={e => set("software_normal_status", e.target.value)} placeholder="Κατάσταση" /></div>
+            <Field label="Σχόλια"><Textarea value={form.software_notes} onChange={e => set("software_notes", e.target.value)} rows={2} /></Field>
+          </>
+        )}
+      </div>
+
+      {/* Extra Equipment */}
+      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+        <h2 className="text-sm font-bold text-slate-800 uppercase">11) Πρόσθετος Εξοπλισμός</h2>
+        <ChkCard checked={form.extra_equip_na} onChange={v => set("extra_equip_na", v)} label="N/A" />
+        {!form.extra_equip_na && (
+          <>
+            <div className="flex gap-2"><ChkCard checked={form.extra_malfunction_check} onChange={v => set("extra_malfunction_check", v)} label="Δυσλειτουργία/έλεγχος" /><Input value={form.extra_malfunction_status} onChange={e => set("extra_malfunction_status", e.target.value)} placeholder="Κατάσταση" /></div>
+            <div className="flex gap-2"><ChkCard checked={form.extra_bin_check} onChange={v => set("extra_bin_check", v)} label="Κάδος/βάσεις ποδηλ." /><Input value={form.extra_bin_status} onChange={e => set("extra_bin_status", e.target.value)} placeholder="Κατάσταση" /></div>
+            <div className="flex gap-2"><ChkCard checked={form.extra_signs_check} onChange={v => set("extra_signs_check", v)} label="Πινακίδες" /><Input value={form.extra_signs_status} onChange={e => set("extra_signs_status", e.target.value)} placeholder="Κατάσταση" /></div>
+            <Field label="Σχόλια"><Textarea value={form.extra_equip_notes} onChange={e => set("extra_equip_notes", e.target.value)} rows={2} /></Field>
+          </>
+        )}
+      </div>
+
+      {/* Roof */}
+      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+        <h2 className="text-sm font-bold text-slate-800 uppercase">12) Στέγη</h2>
+        <ChkCard checked={form.roof_na} onChange={v => set("roof_na", v)} label="N/A" />
+        {!form.roof_na && (
+          <>
+            <div className="flex gap-2"><ChkCard checked={form.roof_lightbox_check} onChange={v => set("roof_lightbox_check", v)} label="Light Box" /><Input value={form.roof_lightbox_status} onChange={e => set("roof_lightbox_status", e.target.value)} placeholder="Κατάσταση" /></div>
+            <div className="flex gap-2"><ChkCard checked={form.roof_panels_check} onChange={v => set("roof_panels_check", v)} label="Πανέλα Καπακιών" /><Input value={form.roof_panels_status} onChange={e => set("roof_panels_status", e.target.value)} placeholder="Κατάσταση" /></div>
+            <Field label="Σχόλια"><Textarea value={form.roof_notes} onChange={e => set("roof_notes", e.target.value)} rows={2} /></Field>
+          </>
+        )}
+      </div>
 
       {/* Vehicles */}
       <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
-        <h2 className="text-sm font-bold text-slate-800 uppercase">Οχήματα</h2>
+        <h2 className="text-sm font-bold text-slate-800 uppercase">Οχήματα & Εξοπλισμός</h2>
         <div className="space-y-2">
+          <p className="text-xs font-semibold text-slate-600">Οχήματα:</p>
           <ChkCard checked={form.veh_personnel} onChange={v => set("veh_personnel", v)} label="Όχημα Μεταφοράς Προσωπικού" />
-          <ChkCard checked={form.veh_materials} onChange={v => set("veh_materials", v)} label="Όχημα Μεταφοράς Υλικών" />
+          <ChkCard checked={form.veh_materials} onChange={v => set("veh_materials", v)} label="Όχημα Μεταφοράς Υλικών και Εξοπλισμού" />
           <ChkCard checked={form.veh_truck} onChange={v => set("veh_truck", v)} label="Φορτηγό Όχημα" />
           <ChkCard checked={form.veh_crane} onChange={v => set("veh_crane", v)} label="Γερανοφόρο Όχημα" />
+          <p className="text-xs font-semibold text-slate-600 mt-2">Εργαλεία/Εξοπλισμός:</p>
+          <ChkCard checked={form.veh_grinder} onChange={v => set("veh_grinder", v)} label="Σμιρίλιο Χεριού" />
+          <ChkCard checked={form.veh_disc} onChange={v => set("veh_disc", v)} label="Διαμαντοδίσκος Κοπής" />
+          <ChkCard checked={form.veh_compressor} onChange={v => set("veh_compressor", v)} label="Συμπιεστήρας" />
+          <ChkCard checked={form.veh_other} onChange={v => set("veh_other", v)} label="Άλλο" />
+          {form.veh_other && <Input value={form.veh_other_text} onChange={e => set("veh_other_text", e.target.value)} placeholder="Περιγραφή..." className="h-10" />}
         </div>
       </div>
 
@@ -298,8 +396,9 @@ export default function MobileCorrectiveForm({ token, incident, existingSubmissi
         <div className="space-y-2">
           <ChkCard checked={form.sec_generator} onChange={v => set("sec_generator", v)} label="Ηλεκτρογεννήτρια" />
           <ChkCard checked={form.sec_crusher} onChange={v => set("sec_crusher", v)} label="Ηλεκτρικός Σπαστήρας" />
-          <ChkCard checked={form.sec_truck} onChange={v => set("sec_truck", v)} label="Φορτηγό" />
-          <ChkCard checked={form.sec_crane} onChange={v => set("sec_crane", v)} label="Γερανοφόρο" />
+          <ChkCard checked={form.sec_truck} onChange={v => set("sec_truck", v)} label="Φορτηγό Όχημα" />
+          <ChkCard checked={form.sec_crane} onChange={v => set("sec_crane", v)} label="Γερανοφόρο Όχημα" />
+          <Field label="Σχόλια Ασφάλειας"><Textarea value={form.security_notes} onChange={e => set("security_notes", e.target.value)} rows={2} /></Field>
         </div>
       </div>
 
