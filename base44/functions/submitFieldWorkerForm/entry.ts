@@ -15,10 +15,14 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Invalid token' }, { status: 400 });
     }
 
-    const parts = decoded.split(':');
-    if (parts.length < 3) return Response.json({ error: 'Invalid token format' }, { status: 400 });
+    // Split from the right so incidentId can contain colons
+    const lastColon = decoded.lastIndexOf(':');
+    const secondLastColon = decoded.lastIndexOf(':', lastColon - 1);
+    if (lastColon === -1 || secondLastColon === -1) return Response.json({ error: 'Invalid token format' }, { status: 400 });
 
-    const [incidentId, formType, timestampStr] = parts;
+    const incidentId = decoded.substring(0, secondLastColon);
+    const formType = decoded.substring(secondLastColon + 1, lastColon);
+    const timestampStr = decoded.substring(lastColon + 1);
     const timestamp = parseInt(timestampStr);
 
     const fortyEightHours = 48 * 60 * 60 * 1000;
