@@ -115,6 +115,8 @@ export default function MobileCorrectiveForm({ token, incident, existingSubmissi
 
   const [form, setForm] = useState(() => {
     const offline = (() => { try { return JSON.parse(localStorage.getItem(storageKey)); } catch { return null; } })();
+    // defaultData always provides the base so new fields are never missing,
+    // then existing submission and offline cache layer on top
     return {
       ...defaultData,
       ...(existingSubmission?.form_data || {}),
