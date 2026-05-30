@@ -48,7 +48,12 @@ Deno.serve(async (req) => {
         chat_id: chatId,
         text: telegramMessage,
         parse_mode: 'HTML',
-        disable_web_page_preview: true,
+        disable_web_page_preview: false,
+        reply_markup: {
+          inline_keyboard: [[
+            { text: "🔗 Open Form", url: formUrl }
+          ]]
+        }
       }),
     });
 
