@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -118,13 +117,18 @@ export default function MobileCorrectiveForm({ token, incident, existingSubmissi
     if (status === 'Submitted') setSubmitting(true); else setSaving(true);
     setError(null);
     try {
-      const res = await base44.functions.invoke('submitFieldWorkerForm', {
-        token,
-        formData: { ...form, signature_url: form.signature, photo_urls: form.photos || [] },
-        status,
-        workerName: form.completed_by || form.foreman || 'Field Worker',
+      const res = await fetch(`${window.location.origin}/functions/submitFieldWorkerForm`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token,
+          formData: { ...form, signature_url: form.signature, photo_urls: form.photos || [] },
+          status,
+          workerName: form.completed_by || form.foreman || 'Field Worker',
+        }),
       });
-      if (res.data?.error) { setError(res.data.error); }
+      const resData = await res.json();
+      if (resData?.error) { setError(resData.error); }
       else if (status === 'Submitted') { localStorage.removeItem(storageKey); onSubmitted(); }
       else { setOfflineSaved(true); setTimeout(() => setOfflineSaved(false), 3000); }
     } catch (err) {

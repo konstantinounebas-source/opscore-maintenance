@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -73,22 +72,36 @@ export default function MobileMakeSafeForm({ token, incident, asset, existingSub
 
   const generateAndUploadPDF = async (submissionId, token) => {
     try {
-      const pdfRes = await base44.functions.invoke('generateFieldWorkerFormPDF', { submissionId });
-      if (!pdfRes.data?.html) return;
+      const pdfRes = await fetch(`${window.location.origin}/functions/generateFieldWorkerFormPDF`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ submissionId }),
+      });
+      const pdfData = await pdfRes.json();
+      if (!pdfData?.html) return;
       const html2pdf = (await import('html2pdf.js')).default;
       const container = document.createElement('div');
-      container.innerHTML = pdfRes.data.html;
+      container.innerHTML = pdfData.html;
       container.style.position = 'fixed';
       container.style.left = '-9999px';
       container.style.top = '0';
       document.body.appendChild(container);
       const pdfBlob = await html2pdf().set({ margin: 0, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } }).from(container).outputPdf('blob');
       document.body.removeChild(container);
-      const pdfFile = new File([pdfBlob], pdfRes.data.fileName || 'form.pdf', { type: 'application/pdf' });
-      const uploadRes = await base44.integrations.Core.UploadFile({ file: pdfFile });
-      const decoded = atob(token);
-      const incidentId = decoded.split(':')[0];
-      await base44.functions.invoke('attachFieldWorkerFormPDF', { incidentId, submissionId, pdfUrl: uploadRes.file_url, pdfName: pdfRes.data.fileName });
+      const pdfFile = new File([pdfBlob], pdfData.fileName || 'form.pdf', { type: 'application/pdf' });
+      const formData = new FormData();
+      formData.append('file', pdfFile);
+      const uploadRes = await fetch(`${window.location.origin}/functions/uploadPublicFile`, { method: 'POST', body: formData });
+      const uploadData = await uploadRes.json();
+      const decoded = atob(token.replace(/-/g, '+').replace(/_/g, '/'));
+      const lastColon = decoded.lastIndexOf(':');
+      const secondLastColon = decoded.lastIndexOf(':', lastColon - 1);
+      const incidentId = decoded.substring(0, secondLastColon);
+      await fetch(`${window.location.origin}/functions/attachFieldWorkerFormPDF`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ incidentId, submissionId, pdfUrl: uploadData.file_url, pdfName: pdfData.fileName }),
+      });
     } catch (err) { console.error('Failed to generate/upload PDF:', err); }
   };
 
@@ -96,16 +109,21 @@ export default function MobileMakeSafeForm({ token, incident, asset, existingSub
     if (status === 'Submitted') setSubmitting(true); else setSaving(true);
     setError(null);
     try {
-      const res = await base44.functions.invoke('submitFieldWorkerForm', {
-        token,
-        formData: { ...fd, signature_url: fd.signature, photo_urls: fd.photos || [] },
-        status,
-        workerName: fd.technician || 'Field Worker',
+      const res = await fetch(`${window.location.origin}/functions/submitFieldWorkerForm`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token,
+          formData: { ...fd, signature_url: fd.signature, photo_urls: fd.photos || [] },
+          status,
+          workerName: fd.technician || 'Field Worker',
+        }),
       });
-      if (res.data?.error) { setError(res.data.error); }
+      const resData = await res.json();
+      if (resData?.error) { setError(resData.error); }
       else if (status === 'Submitted') {
         localStorage.removeItem(storageKey);
-        await generateAndUploadPDF(res.data.id, token);
+        await generateAndUploadPDF(resData.id, token);
         onSubmitted();
       } else { setOfflineSaved(true); setTimeout(() => setOfflineSaved(false), 3000); }
     } catch (err) {

@@ -1,5 +1,4 @@
 import React, { useRef, useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { Camera, X, Loader2 } from "lucide-react";
 
 export default function PhotoUpload({ photos = [], onChange, label = "Φωτογραφίες", maxPhotos = 5 }) {
@@ -12,8 +11,14 @@ export default function PhotoUpload({ photos = [], onChange, label = "Φωτογ
     const urls = [...photos];
     for (const file of Array.from(files)) {
       if (urls.length >= maxPhotos) break;
-      const res = await base44.integrations.Core.UploadFile({ file });
-      if (res?.file_url) urls.push(res.file_url);
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch(`${window.location.origin}/functions/uploadPublicFile`, {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (data?.file_url) urls.push(data.file_url);
     }
     onChange(urls);
     setUploading(false);
