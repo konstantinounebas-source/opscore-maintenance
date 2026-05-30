@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Save, Send, WifiOff } from "lucide-react";
 import SignaturePad from "./SignaturePad";
 import PhotoUpload from "./PhotoUpload";
+import { inspectionDefaultData as defaultData } from "@/lib/formSchemas";
 
 function Field({ label, children }) {
   return (
@@ -17,51 +18,34 @@ function Field({ label, children }) {
   );
 }
 
+// A single inspection row: label + text input for "quality check" value
+function InspRow({ label, fieldKey, fd, set, placeholder = "Κατάσταση" }) {
+  return (
+    <div className="flex items-center gap-2 py-1 border-b border-slate-100 last:border-0">
+      <span className="flex-1 text-xs text-slate-700">{label}</span>
+      <Input
+        value={fd[fieldKey] || ""}
+        onChange={e => set(fieldKey, e.target.value)}
+        placeholder={placeholder}
+        className="h-8 text-xs w-28 flex-shrink-0"
+      />
+    </div>
+  );
+}
+
 function YesNoRow({ label, yesKey, noKey, fd, set }) {
   return (
     <div>
       <Label className="text-xs font-semibold text-slate-700">{label}</Label>
       <div className="flex gap-3 mt-1">
         <button type="button" onClick={() => { set(yesKey, true); set(noKey, false); }}
-          className={`flex-1 py-2.5 rounded-lg border text-sm font-bold transition-colors ${fd[yesKey] ? "bg-green-600 text-white border-green-600" : "bg-white text-slate-700 border-slate-200"}`}>
-          ΝΑΙ
-        </button>
+          className={`flex-1 py-2.5 rounded-lg border text-sm font-bold transition-colors ${fd[yesKey] ? "bg-green-600 text-white border-green-600" : "bg-white text-slate-700 border-slate-200"}`}>ΝΑΙ</button>
         <button type="button" onClick={() => { set(yesKey, false); set(noKey, true); }}
-          className={`flex-1 py-2.5 rounded-lg border text-sm font-bold transition-colors ${fd[noKey] ? "bg-red-600 text-white border-red-600" : "bg-white text-slate-700 border-slate-200"}`}>
-          ΟΧΙ
-        </button>
+          className={`flex-1 py-2.5 rounded-lg border text-sm font-bold transition-colors ${fd[noKey] ? "bg-red-600 text-white border-red-600" : "bg-white text-slate-700 border-slate-200"}`}>ΟΧΙ</button>
       </div>
     </div>
   );
 }
-
-// A row with a label, a check toggle, and an optional text input for status
-function CheckRow({ label, checkKey, statusKey, fd, set }) {
-  return (
-    <div className="flex items-center gap-2">
-      <button
-        type="button"
-        onClick={() => set(checkKey, !fd[checkKey])}
-        className={`flex-shrink-0 w-8 h-8 rounded border-2 flex items-center justify-center text-sm font-bold transition-all ${
-          fd[checkKey] ? "bg-slate-800 border-slate-800 text-white" : "bg-white border-slate-300 text-slate-400"
-        }`}
-      >
-        {fd[checkKey] ? "✓" : ""}
-      </button>
-      <span className="text-xs text-slate-700 flex-1">{label}</span>
-      {statusKey && (
-        <Input
-          value={fd[statusKey] || ""}
-          onChange={e => set(statusKey, e.target.value)}
-          placeholder="Κατάσταση"
-          className="h-8 text-xs w-28 flex-shrink-0"
-        />
-      )}
-    </div>
-  );
-}
-
-import { inspectionDefaultData as defaultData } from "@/lib/formSchemas";
 
 export default function MobileInspectionForm({ token, incident, asset, existingSubmission, onSubmitted }) {
   const storageKey = `inspection_draft_${token}`;
@@ -83,13 +67,10 @@ export default function MobileInspectionForm({ token, incident, asset, existingS
 
   const set = (key, val) => setFd(prev => ({ ...prev, [key]: val }));
 
-  useEffect(() => {
-    localStorage.setItem(storageKey, JSON.stringify(fd));
-  }, [fd]);
+  useEffect(() => { localStorage.setItem(storageKey, JSON.stringify(fd)); }, [fd]);
 
   const submit = async (status) => {
-    if (status === 'Submitted') setSubmitting(true);
-    else setSaving(true);
+    if (status === 'Submitted') setSubmitting(true); else setSaving(true);
     setError(null);
     try {
       const res = await base44.functions.invoke('submitFieldWorkerForm', {
@@ -98,26 +79,13 @@ export default function MobileInspectionForm({ token, incident, asset, existingS
         status,
         workerName: fd.completed_by || fd.epalitheusi_onoma || 'Field Worker',
       });
-      if (res.data?.error) {
-        setError(res.data.error);
-      } else if (status === 'Submitted') {
-        localStorage.removeItem(storageKey);
-        onSubmitted();
-      } else {
-        setOfflineSaved(true);
-        setTimeout(() => setOfflineSaved(false), 3000);
-      }
+      if (res.data?.error) { setError(res.data.error); }
+      else if (status === 'Submitted') { localStorage.removeItem(storageKey); onSubmitted(); }
+      else { setOfflineSaved(true); setTimeout(() => setOfflineSaved(false), 3000); }
     } catch (err) {
-      if (status === 'Draft') {
-        setOfflineSaved(true);
-        setTimeout(() => setOfflineSaved(false), 3000);
-      } else {
-        setError("Αποτυχία σύνδεσης. Τα δεδομένα αποθηκεύτηκαν τοπικά.");
-      }
-    } finally {
-      setSaving(false);
-      setSubmitting(false);
-    }
+      if (status === 'Draft') { setOfflineSaved(true); setTimeout(() => setOfflineSaved(false), 3000); }
+      else { setError("Αποτυχία σύνδεσης. Τα δεδομένα αποθηκεύτηκαν τοπικά."); }
+    } finally { setSaving(false); setSubmitting(false); }
   };
 
   return (
@@ -140,117 +108,118 @@ export default function MobileInspectionForm({ token, incident, asset, existingS
         <Field label="Τύπος Στεγάστρου"><Input value={fd.typos_stegastrou} onChange={e => set("typos_stegastrou", e.target.value)} className="h-11" /></Field>
       </div>
 
-      {/* Πεζοδρόμιο */}
-      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+      {/* ΕΛΕΓΧΟΙ ΠΟΛΙΤΙΚΩΝ ΕΡΓΩΝ — ΠΕΖΟΔΡΟΜΙΟ */}
+      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-2">
         <h2 className="text-sm font-bold text-blue-800 uppercase tracking-wide">Έλεγχοι Πολιτικών Έργων — Πεζοδρόμιο</h2>
-        <Field label="Τοποθέτηση πλακών πεζοδρομίου"><Input value={fd.pez_plakes_pez} onChange={e => set("pez_plakes_pez", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
-        <Field label="Τοποθετημένες πλάκες (m²)"><Input value={fd.pez_topothetes_plakes} onChange={e => set("pez_topothetes_plakes", e.target.value)} placeholder="Ποσότητα" className="h-11" /></Field>
-        <Field label="Σκυρόδεμα/κρασπέδο (m)"><Input value={fd.pez_skyrodeema} onChange={e => set("pez_skyrodeema", e.target.value)} placeholder="Ποσότητα" className="h-11" /></Field>
-        <Field label="Κράσπεδο πεζοδρομίου (m)"><Input value={fd.pez_kraspedo_pez} onChange={e => set("pez_kraspedo_pez", e.target.value)} placeholder="Ποσότητα" className="h-11" /></Field>
-        <Field label="Πλάκες όδευσης τυφλών (m²)"><Input value={fd.pez_plakes_tyflon} onChange={e => set("pez_plakes_tyflon", e.target.value)} placeholder="Ποσότητα" className="h-11" /></Field>
-        <Field label="Πλάκες όδευσης τυφλών σύμφωνα με προδιαγραφές"><Input value={fd.pez_plakes_tyflon_check} onChange={e => set("pez_plakes_tyflon_check", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
-        <Field label="Άλλες πλάκες (m²)"><Input value={fd.pez_alles_plakes} onChange={e => set("pez_alles_plakes", e.target.value)} placeholder="Ποσότητα" className="h-11" /></Field>
-        <Field label="Γείωση (κιβώτιο γείωσης & ράβδος) σωστά εγκατεστημένα"><Input value={fd.pez_geiosi} onChange={e => set("pez_geiosi", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
-        <Field label="Αποκατάσταση πεζοδρομίου και καθαριότητα"><Input value={fd.pez_apokatastasi} onChange={e => set("pez_apokatastasi", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
+        <p className="text-xs text-slate-500 mb-2">Εισάγετε το αποτέλεσμα ελέγχου για κάθε στοιχείο.</p>
+        <InspRow label="Τοποθέτηση πλακών πεζοδρομίου σύμφωνα με απαιτήσεις & ορθές πρακτικές" fieldKey="pez_plakes_pez" fd={fd} set={set} />
+        <InspRow label="Τοποθετημένες πλάκες (m²)" fieldKey="pez_topothetes_plakes" fd={fd} set={set} placeholder="Ποσότητα" />
+        <InspRow label="Σκυρόδεμα/κρασπέδο (m)" fieldKey="pez_skyrodeema" fd={fd} set={set} placeholder="Ποσότητα" />
+        <InspRow label="Κράσπεδο πεζοδρομίου (m)" fieldKey="pez_kraspedo_pez" fd={fd} set={set} placeholder="Ποσότητα" />
+        <InspRow label="Πλάκες όδευσης τυφλών σύμφωνα με προδιαγραφές" fieldKey="pez_plakes_tyflon_check" fd={fd} set={set} />
+        <InspRow label="Πλάκες όδευσης τυφλών (m²)" fieldKey="pez_plakes_tyflon" fd={fd} set={set} placeholder="Ποσότητα" />
+        <InspRow label="Άλλες πλάκες (m²)" fieldKey="pez_alles_plakes" fd={fd} set={set} placeholder="Ποσότητα" />
+        <InspRow label="Γείωση (κιβώτιο γείωσης & ράβδος) σωστά εγκατεστημένα" fieldKey="pez_geiosi" fd={fd} set={set} />
+        <InspRow label="Αποκατάσταση πεζοδρομίου και καθαριότητα" fieldKey="pez_apokatastasi" fd={fd} set={set} />
       </div>
 
       {/* Κύρια Κατασκευή */}
-      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-2">
         <h2 className="text-sm font-bold text-blue-800 uppercase tracking-wide">Έλεγχοι Στεγάστρου — Κύρια Κατασκευή</h2>
-        <Field label="Το στέγαστρο είναι οριζοντιωμένο & ασφαλώς στερεωμένο"><Input value={fd.kat_stegaztro_oriz} onChange={e => set("kat_stegaztro_oriz", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
-        <Field label="Βίδες/κοχλίες βαμμένοι"><Input value={fd.kat_vides} onChange={e => set("kat_vides", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
-        <Field label="Κενά μεταξύ πάνελ ≤ 3 mm (±2 mm)"><Input value={fd.kat_kena} onChange={e => set("kat_kena", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
-        <Field label="Καθαριότητα"><Input value={fd.kat_kathariothta} onChange={e => set("kat_kathariothta", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
+        <InspRow label="Το στέγαστρο είναι οριζοντιωμένο & ασφαλώς στερεωμένο" fieldKey="kat_stegaztro_oriz" fd={fd} set={set} />
+        <InspRow label="Βίδες/κοχλίες βαμμένοι" fieldKey="kat_vides" fd={fd} set={set} />
+        <InspRow label="Κενά μεταξύ πάνελ ≤ 3 mm (±2 mm)" fieldKey="kat_kena" fd={fd} set={set} />
+        <InspRow label="Καθαριότητα" fieldKey="kat_kathariothta" fd={fd} set={set} />
       </div>
 
       {/* Πυλώνας Πόρτας */}
-      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-2">
         <h2 className="text-sm font-bold text-blue-800 uppercase tracking-wide">Πυλώνας Πόρτας</h2>
-        <Field label="Δομική αρτιότητα, χωρίς ενδείξεις ζημιάς"><Input value={fd.pil_domiki} onChange={e => set("pil_domiki", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
-        <Field label="Στήριξη υαλοπίνακα"><Input value={fd.pil_stiriksi} onChange={e => set("pil_stiriksi", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
-        <Field label="Στεγανοποίηση/λάστιχα στήριξης"><Input value={fd.pil_steganopoi} onChange={e => set("pil_steganopoi", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
-        <Field label="Λειτουργία μεντεσέδων OK"><Input value={fd.pil_menteseedes} onChange={e => set("pil_menteseedes", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
-        <Field label="Λειτουργία κλειδαριάς OK"><Input value={fd.pil_kleidaria} onChange={e => set("pil_kleidaria", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
-        <Field label="Ποιότητα βαφής"><Input value={fd.pil_vafi} onChange={e => set("pil_vafi", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
+        <InspRow label="Δομική αρτιότητα, χωρίς ενδείξεις ζημιάς" fieldKey="pil_domiki" fd={fd} set={set} />
+        <InspRow label="Στήριξη υαλοπίνακα" fieldKey="pil_stiriksi" fd={fd} set={set} />
+        <InspRow label="Στεγανοποίηση/λάστιχα στήριξης" fieldKey="pil_steganopoi" fd={fd} set={set} />
+        <InspRow label="Λειτουργία μεντεσέδων OK" fieldKey="pil_menteseedes" fd={fd} set={set} />
+        <InspRow label="Λειτουργία κλειδαριάς OK" fieldKey="pil_kleidaria" fd={fd} set={set} />
+        <InspRow label="Ποιότητα βαφής" fieldKey="pil_vafi" fd={fd} set={set} />
       </div>
 
       {/* Κατασκευή Πόρτας */}
-      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-2">
         <h2 className="text-sm font-bold text-blue-800 uppercase tracking-wide">Κατασκευή Πόρτας</h2>
-        <Field label="Δομική αρτιότητα, χωρίς ενδείξεις ζημιάς"><Input value={fd.porta_domiki} onChange={e => set("porta_domiki", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
-        <Field label="Στήριξη υαλοπίνακα"><Input value={fd.porta_stiriksi} onChange={e => set("porta_stiriksi", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
-        <Field label="Στεγανοποίηση/λάστιχα στήριξης"><Input value={fd.porta_steganopoi} onChange={e => set("porta_steganopoi", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
-        <Field label="Λειτουργία μεντεσέδων OK"><Input value={fd.porta_menteseedes} onChange={e => set("porta_menteseedes", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
-        <Field label="Λειτουργία κλειδαριάς OK"><Input value={fd.porta_kleidaria} onChange={e => set("porta_kleidaria", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
-        <Field label="Ποιότητα βαφής"><Input value={fd.porta_vafi} onChange={e => set("porta_vafi", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
+        <InspRow label="Δομική αρτιότητα, χωρίς ενδείξεις ζημιάς" fieldKey="porta_domiki" fd={fd} set={set} />
+        <InspRow label="Στήριξη υαλοπίνακα" fieldKey="porta_stiriksi" fd={fd} set={set} />
+        <InspRow label="Στεγανοποίηση/λάστιχα στήριξης" fieldKey="porta_steganopoi" fd={fd} set={set} />
+        <InspRow label="Λειτουργία μεντεσέδων OK" fieldKey="porta_menteseedes" fd={fd} set={set} />
+        <InspRow label="Λειτουργία κλειδαριάς OK" fieldKey="porta_kleidaria" fd={fd} set={set} />
+        <InspRow label="Ποιότητα βαφής" fieldKey="porta_vafi" fd={fd} set={set} />
       </div>
 
       {/* Σήμανση Πορτών */}
-      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-2">
         <h2 className="text-sm font-bold text-blue-800 uppercase tracking-wide">Σήμανση Πορτών</h2>
-        <Field label="Δομική αρτιότητα, χωρίς ενδείξεις ζημιάς"><Input value={fd.siman_domiki} onChange={e => set("siman_domiki", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
-        <Field label="Στήριξη υαλοπίνακα"><Input value={fd.siman_stiriksi} onChange={e => set("siman_stiriksi", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
-        <Field label="Στεγανοποίηση/λάστιχα στήριξης"><Input value={fd.siman_steganopoi} onChange={e => set("siman_steganopoi", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
-        <Field label="Λειτουργία μεντεσέδων OK"><Input value={fd.siman_menteseedes} onChange={e => set("siman_menteseedes", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
-        <Field label="Λειτουργία κλειδαριάς OK"><Input value={fd.siman_kleidaria} onChange={e => set("siman_kleidaria", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
-        <Field label="Ποιότητα βαφής"><Input value={fd.siman_vafi} onChange={e => set("siman_vafi", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
+        <InspRow label="Δομική αρτιότητα, χωρίς ενδείξεις ζημιάς" fieldKey="siman_domiki" fd={fd} set={set} />
+        <InspRow label="Στήριξη υαλοπίνακα" fieldKey="siman_stiriksi" fd={fd} set={set} />
+        <InspRow label="Στεγανοποίηση/λάστιχα στήριξης" fieldKey="siman_steganopoi" fd={fd} set={set} />
+        <InspRow label="Λειτουργία μεντεσέδων OK" fieldKey="siman_menteseedes" fd={fd} set={set} />
+        <InspRow label="Λειτουργία κλειδαριάς OK" fieldKey="siman_kleidaria" fd={fd} set={set} />
+        <InspRow label="Ποιότητα βαφής" fieldKey="siman_vafi" fd={fd} set={set} />
       </div>
 
       {/* Οροφή */}
-      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-2">
         <h2 className="text-sm font-bold text-blue-800 uppercase tracking-wide">Οροφή</h2>
-        <Field label="Δομική αρτιότητα, χωρίς ενδείξεις ζημιάς"><Input value={fd.orofi_domiki} onChange={e => set("orofi_domiki", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
-        <Field label="Καλύμματα οροφής τοποθετημένα, χωρίς ζημιές (συμπ. φωτιστικών)"><Input value={fd.orofi_kalimmata} onChange={e => set("orofi_kalimmata", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
-        <Field label="Στεγανοποίηση με σιλικόνη"><Input value={fd.orofi_steganopoi} onChange={e => set("orofi_steganopoi", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
-        <Field label="Φωτοβολταϊκά πάνελ εγκατεστημένα"><Input value={fd.orofi_pv} onChange={e => set("orofi_pv", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
-        <Field label="Ποιότητα βαφής"><Input value={fd.orofi_vafi} onChange={e => set("orofi_vafi", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
+        <InspRow label="Δομική αρτιότητα, χωρίς ενδείξεις ζημιάς" fieldKey="orofi_domiki" fd={fd} set={set} />
+        <InspRow label="Καλύμματα οροφής τοποθετημένα, χωρίς ζημιές (συμπ. φωτιστικών)" fieldKey="orofi_kalimmata" fd={fd} set={set} />
+        <InspRow label="Στεγανοποίηση με σιλικόνη" fieldKey="orofi_steganopoi" fd={fd} set={set} />
+        <InspRow label="Φωτοβολταϊκά πάνελ εγκατεστημένα" fieldKey="orofi_pv" fd={fd} set={set} />
+        <InspRow label="Ποιότητα βαφής" fieldKey="orofi_vafi" fd={fd} set={set} />
       </div>
 
       {/* Παγκάκι */}
-      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-2">
         <h2 className="text-sm font-bold text-blue-800 uppercase tracking-wide">Παγκάκι</h2>
-        <Field label="Δομική αρτιότητα, χωρίς ενδείξεις ζημιάς"><Input value={fd.pagk_domiki} onChange={e => set("pagk_domiki", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
-        <Field label="Βερνίκι και αποστάσεις/αρμοί εξαρτημάτων OK"><Input value={fd.pagk_verniki} onChange={e => set("pagk_verniki", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
-        <Field label="Εγκατάσταση πλευρικού πάνελ"><Input value={fd.pagk_pleuriko} onChange={e => set("pagk_pleuriko", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
-        <Field label="Ποιότητα βαφής"><Input value={fd.pagk_vafi} onChange={e => set("pagk_vafi", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
+        <InspRow label="Δομική αρτιότητα, χωρίς ενδείξεις ζημιάς" fieldKey="pagk_domiki" fd={fd} set={set} />
+        <InspRow label="Βερνίκι και αποστάσεις/αρμοί εξαρτημάτων OK" fieldKey="pagk_verniki" fd={fd} set={set} />
+        <InspRow label="Εγκατάσταση πλευρικού πάνελ" fieldKey="pagk_pleuriko" fd={fd} set={set} />
+        <InspRow label="Ποιότητα βαφής" fieldKey="pagk_vafi" fd={fd} set={set} />
       </div>
 
       {/* Light Box */}
-      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-2">
         <h2 className="text-sm font-bold text-blue-800 uppercase tracking-wide">Light Box</h2>
-        <Field label="Δομική αρτιότητα, χωρίς ενδείξεις ζημιάς"><Input value={fd.lb_domiki} onChange={e => set("lb_domiki", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
-        <Field label="Ακρυλική πινακίδα στη θέση της"><Input value={fd.lb_acryliki} onChange={e => set("lb_acryliki", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
-        <Field label="Λειτουργία κλειδαριάς OK"><Input value={fd.lb_kleidaria} onChange={e => set("lb_kleidaria", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
-        <Field label="Λειτουργία μεντεσέδων OK"><Input value={fd.lb_menteseedes} onChange={e => set("lb_menteseedes", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
-        <Field label="Ποιότητα βαφής"><Input value={fd.lb_vafi} onChange={e => set("lb_vafi", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
+        <InspRow label="Δομική αρτιότητα, χωρίς ενδείξεις ζημιάς" fieldKey="lb_domiki" fd={fd} set={set} />
+        <InspRow label="Ακρυλική πινακίδα στη θέση της" fieldKey="lb_acryliki" fd={fd} set={set} />
+        <InspRow label="Λειτουργία κλειδαριάς OK" fieldKey="lb_kleidaria" fd={fd} set={set} />
+        <InspRow label="Λειτουργία μεντεσέδων OK" fieldKey="lb_menteseedes" fd={fd} set={set} />
+        <InspRow label="Ποιότητα βαφής" fieldKey="lb_vafi" fd={fd} set={set} />
       </div>
 
       {/* Περιμετρικά Πάνελ */}
-      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-2">
         <h2 className="text-sm font-bold text-blue-800 uppercase tracking-wide">Περιμετρικά Πάνελ</h2>
-        <Field label="Δομική αρτιότητα, χωρίς ενδείξεις ζημιάς"><Input value={fd.per_domiki} onChange={e => set("per_domiki", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
-        <Field label="Ποιότητα βαφής"><Input value={fd.per_vafi} onChange={e => set("per_vafi", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
+        <InspRow label="Δομική αρτιότητα, χωρίς ενδείξεις ζημιάς" fieldKey="per_domiki" fd={fd} set={set} />
+        <InspRow label="Ποιότητα βαφής" fieldKey="per_vafi" fd={fd} set={set} />
       </div>
 
       {/* Αυτοκόλλητα & Glazzing */}
-      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-2">
         <h2 className="text-sm font-bold text-blue-800 uppercase tracking-wide">Αυτοκόλλητα & Glazzing</h2>
-        <Field label="Τοποθέτηση αυτοκόλλητων OK"><Input value={fd.auto_topothesi} onChange={e => set("auto_topothesi", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
-        <Field label="Τοποθέτηση υαλοπίνακα με σιλικόνη Sieland"><Input value={fd.glazz_topothesi} onChange={e => set("glazz_topothesi", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
+        <InspRow label="Τοποθέτηση αυτοκόλλητων OK" fieldKey="auto_topothesi" fd={fd} set={set} />
+        <InspRow label="Τοποθέτηση υαλοπίνακα με σιλικόνη Sieland" fieldKey="glazz_topothesi" fd={fd} set={set} />
       </div>
 
       {/* Κάδος & Βάση Ποδηλάτων */}
-      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-2">
         <h2 className="text-sm font-bold text-blue-800 uppercase tracking-wide">Κάδος Απορριμμάτων & Βάση Ποδηλάτων</h2>
-        <Field label="Εγκατάσταση κάδου απορριμμάτων"><Input value={fd.kados_egkat} onChange={e => set("kados_egkat", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
-        <Field label="Εγκατάσταση βάσης ποδηλάτων"><Input value={fd.vasipod_egkat} onChange={e => set("vasipod_egkat", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
+        <InspRow label="Εγκατάσταση κάδου απορριμμάτων" fieldKey="kados_egkat" fd={fd} set={set} />
+        <InspRow label="Εγκατάσταση βάσης ποδηλάτων" fieldKey="vasipod_egkat" fd={fd} set={set} />
       </div>
 
       {/* Οριζόντια Σήμανση */}
-      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
-        <h2 className="text-sm font-bold text-blue-800 uppercase tracking-wide">Οριζόντια Σήμανση</h2>
-        <Field label="Τοποθέτηση οριζόντιας σήμανσης"><Input value={fd.oriz_topothesi} onChange={e => set("oriz_topothesi", e.target.value)} placeholder="Κατάσταση" className="h-11" /></Field>
-        <Field label="Τύπος οριζόντιας σήμανσης"><Input value={fd.oriz_typos} onChange={e => set("oriz_typos", e.target.value)} placeholder="Τύπος" className="h-11" /></Field>
+      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-2">
+        <h2 className="text-sm font-bold text-blue-800 uppercase tracking-wide">Οριζόντια Σήμανση & Λοιπά</h2>
+        <InspRow label="Τοποθέτηση οριζόντιας σήμανσης" fieldKey="oriz_topothesi" fd={fd} set={set} />
+        <InspRow label="Τύπος οριζόντιας σήμανσης" fieldKey="oriz_typos" fd={fd} set={set} placeholder="Δείγμα" />
       </div>
 
       {/* Κατάσταση Περιστατικού */}
@@ -264,13 +233,9 @@ export default function MobileInspectionForm({ token, incident, asset, existingS
           <p className="text-xs text-slate-500 mt-2 mb-1">Εάν εκκρεμεί χρειάζεται:</p>
           <div className="flex gap-2">
             <button type="button" onClick={() => set("ekkremes_civil", !fd.ekkremes_civil)}
-              className={`flex-1 py-2 rounded-lg border text-xs font-semibold transition-colors ${fd.ekkremes_civil ? "bg-slate-800 text-white border-slate-800" : "bg-white text-slate-600 border-slate-200"}`}>
-              Civil
-            </button>
+              className={`flex-1 py-2 rounded-lg border text-xs font-semibold transition-colors ${fd.ekkremes_civil ? "bg-slate-800 text-white border-slate-800" : "bg-white text-slate-600 border-slate-200"}`}>Civil</button>
             <button type="button" onClick={() => set("ekkremes_hlektrologos", !fd.ekkremes_hlektrologos)}
-              className={`flex-1 py-2 rounded-lg border text-xs font-semibold transition-colors ${fd.ekkremes_hlektrologos ? "bg-slate-800 text-white border-slate-800" : "bg-white text-slate-600 border-slate-200"}`}>
-              Ηλεκτρολόγο
-            </button>
+              className={`flex-1 py-2 rounded-lg border text-xs font-semibold transition-colors ${fd.ekkremes_hlektrologos ? "bg-slate-800 text-white border-slate-800" : "bg-white text-slate-600 border-slate-200"}`}>Ηλεκτρολόγο</button>
           </div>
         </div>
 
@@ -279,13 +244,9 @@ export default function MobileInspectionForm({ token, incident, asset, existingS
           <p className="text-xs text-slate-500 mt-2 mb-1">Φωτογραφίες από επιθεώρηση:</p>
           <div className="flex gap-2">
             <button type="button" onClick={() => set("photo_prin", !fd.photo_prin)}
-              className={`flex-1 py-2 rounded-lg border text-xs font-semibold transition-colors ${fd.photo_prin ? "bg-slate-800 text-white border-slate-800" : "bg-white text-slate-600 border-slate-200"}`}>
-              Πριν
-            </button>
+              className={`flex-1 py-2 rounded-lg border text-xs font-semibold transition-colors ${fd.photo_prin ? "bg-slate-800 text-white border-slate-800" : "bg-white text-slate-600 border-slate-200"}`}>Πριν</button>
             <button type="button" onClick={() => set("photo_meta", !fd.photo_meta)}
-              className={`flex-1 py-2 rounded-lg border text-xs font-semibold transition-colors ${fd.photo_meta ? "bg-slate-800 text-white border-slate-800" : "bg-white text-slate-600 border-slate-200"}`}>
-              Μετά
-            </button>
+              className={`flex-1 py-2 rounded-lg border text-xs font-semibold transition-colors ${fd.photo_meta ? "bg-slate-800 text-white border-slate-800" : "bg-white text-slate-600 border-slate-200"}`}>Μετά</button>
           </div>
         </div>
 
