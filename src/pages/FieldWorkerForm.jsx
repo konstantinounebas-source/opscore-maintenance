@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
 import { Loader2, AlertTriangle, CheckCircle2 } from "lucide-react";
 import MobileMakeSafeForm from "@/components/fieldworker/MobileMakeSafeForm.jsx";
 import MobileCorrectiveForm from "@/components/fieldworker/MobileCorrectiveForm.jsx";
@@ -27,11 +26,16 @@ export default function FieldWorkerForm() {
     setLoading(true);
     setError(null);
     try {
-      const res = await base44.functions.invoke('getFieldWorkerFormData', { token });
-      if (res.data?.error) {
-        setError(res.data.error);
+      const res = await fetch(`${window.location.origin}/functions/getFieldWorkerFormData`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      });
+      const data = await res.json();
+      if (!res.ok || data?.error) {
+        setError(data?.error || "Failed to load form data.");
       } else {
-        setFormData(res.data);
+        setFormData(data);
       }
     } catch (err) {
       setError(err?.message || "Failed to load form data.");
