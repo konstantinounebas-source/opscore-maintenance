@@ -566,9 +566,9 @@ export default function WorkOrderPanel({ woType, incident, incidentId, lockedRea
 
   return (
     <div className={`border rounded-lg overflow-hidden ${isCorrectiveLocked ? "border-slate-100 opacity-60" : "border-slate-200"}`}>
-      <button
+      <div
         onClick={() => !isCorrectiveLocked && setExpanded(e => !e)}
-        className={`w-full flex items-center justify-between px-3 py-2.5 bg-white transition-colors ${isCorrectiveLocked ? "cursor-not-allowed" : "hover:bg-slate-50"}`}
+        className={`w-full flex items-center justify-between px-3 py-2.5 bg-white transition-colors ${isCorrectiveLocked ? "cursor-not-allowed" : "hover:bg-slate-50 cursor-pointer"}`}
       >
         <div className="flex items-center gap-2">
           <span className={`text-xs font-semibold px-2 py-0.5 rounded border ${config.color}`}>
@@ -619,7 +619,7 @@ export default function WorkOrderPanel({ woType, incident, incidentId, lockedRea
           )}
           {!isCorrectiveLocked && (expanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />)}
         </div>
-      </button>
+      </div>
 
       {expanded && (
         <div className="border-t border-slate-100 p-2 space-y-1.5 bg-slate-50">
