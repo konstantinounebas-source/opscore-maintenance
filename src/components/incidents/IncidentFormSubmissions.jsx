@@ -1,12 +1,11 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, FileText, Clock, Download, Loader2, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
-
+import FormViewerModal from "@/components/incidents/FormViewerModal";
 
 const FORM_TYPE_LABELS = {
   cr_ompi:                          "Confirmation of Receipt + OMPI",
@@ -16,6 +15,13 @@ const FORM_TYPE_LABELS = {
   corrective_wo_checklist:          "Corrective Work Order Checklist",
   inspection_wo_checklist:          "Inspection WO Checklist",
   work_order_form_f:                "Work Order Invoice",
+};
+
+// Map form_type to the woType expected by FormViewerModal
+const FORM_TYPE_TO_WO_TYPE = {
+  make_safe_checklist:     "make_safe",
+  corrective_wo_checklist: "corrective",
+  inspection_wo_checklist: "inspection",
 };
 
 const STATUS_COLORS = {
@@ -30,18 +36,14 @@ function DownloadPDFButton({ submissionId, formName, formType }) {
   const handleClick = async () => {
     setLoading(true);
     try {
-      // Use specific PDF generator based on form type
       let pdfFunc;
       if (formType === 'make_safe_checklist') {
         pdfFunc = 'generateMakeSafeChecklistPDF';
       } else if (formType === 'corrective_wo_checklist') {
         pdfFunc = 'generateCorrectiveWOChecklistPDF';
-      } else if (formType === 'inspection_wo_checklist') {
-        pdfFunc = 'generateFormPDF'; // Use generic for now
       } else {
         pdfFunc = 'generateFormPDF';
       }
-      
       const res = await base44.functions.invoke(pdfFunc, { submissionId });
       const { html, fileName } = res.data;
       const html2pdf = (await import('html2pdf.js')).default;
@@ -58,9 +60,11 @@ function DownloadPDFButton({ submissionId, formName, formType }) {
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
       }).from(container).save();
       document.body.removeChild(container);
+    } catch (err) {
+      alert("PDF Error: " + (err?.message || "Unknown error"));
+    } finally {
+      setLoading(false);
     }
-    catch (err) { alert("PDF Error: " + (err?.message || "Unknown error")); }
-    finally { setLoading(false); }
   };
   return (
     <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={handleClick} disabled={loading}>
@@ -70,10 +74,11 @@ function DownloadPDFButton({ submissionId, formName, formType }) {
   );
 }
 
-export default function IncidentFormSubmissions({ incidentId, onApprove }) {
-  const navigate = useNavigate();
+export default function IncidentFormSubmissions({ incidentId, incident, onApprove }) {
+  const [viewingSub, setViewingSub] = useState(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
   const { data: submissions = [], isLoading } = useQuery({
     queryKey: ["formSubmissions", incidentId],
     queryFn: () => base44.entities.FormSubmissions.filter({ incident_id: incidentId }),
@@ -83,9 +88,7 @@ export default function IncidentFormSubmissions({ incidentId, onApprove }) {
   const approveMutation = useMutation({
     mutationFn: async (submission) => {
       const user = await base44.auth.me();
-      // Update submission status
       await base44.entities.FormSubmissions.update(submission.id, { status: "Approved" });
-      // Add audit trail entry
       await base44.entities.IncidentAuditTrail.create({
         incident_id: incidentId,
         action: "Form Approved",
@@ -125,6 +128,7 @@ export default function IncidentFormSubmissions({ incidentId, onApprove }) {
   }
 
   const sorted = [...submissions].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+  const woType = viewingSub ? FORM_TYPE_TO_WO_TYPE[viewingSub.form_type] : null;
 
   return (
     <div className="space-y-2">
@@ -179,15 +183,17 @@ export default function IncidentFormSubmissions({ incidentId, onApprove }) {
                 <CheckCircle2 className="w-3 h-3" /> Approved
               </span>
             )}
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 text-xs gap-1"
-              onClick={() => navigate(`/Forms?submission=${sub.id}`)}
-            >
-              <ExternalLink className="w-3 h-3" />
-              View
-            </Button>
+            {FORM_TYPE_TO_WO_TYPE[sub.form_type] && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs gap-1"
+                onClick={() => setViewingSub(sub)}
+              >
+                <ExternalLink className="w-3 h-3" />
+                View
+              </Button>
+            )}
             <DownloadPDFButton
               submissionId={sub.id}
               formName={FORM_TYPE_LABELS[sub.form_type] || sub.form_name}
@@ -196,6 +202,16 @@ export default function IncidentFormSubmissions({ incidentId, onApprove }) {
           </div>
         </div>
       ))}
+
+      {viewingSub && woType && (
+        <FormViewerModal
+          woType={woType}
+          incident={incident}
+          incidentId={incidentId}
+          submission={viewingSub}
+          onClose={() => setViewingSub(null)}
+        />
+      )}
     </div>
   );
 }

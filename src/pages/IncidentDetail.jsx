@@ -252,7 +252,8 @@ export default function IncidentDetail() {
             </TabsContent>
             <TabsContent value="forms">
               <IncidentFormSubmissions 
-                incidentId={incidentId} 
+                incidentId={incidentId}
+                incident={incident}
                 onApprove={(sub) => {
                   // Refresh data after approval
                   queryClient.invalidateQueries({ queryKey: ["formSubmissions", incidentId] });
