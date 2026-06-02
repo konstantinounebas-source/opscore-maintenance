@@ -301,7 +301,7 @@ function generateMakeSafeHTML(inc, asset, resolvedWorkOrderId, fd, today, e, chk
   <tr><td colspan="4" class="section-header">K. ΥΠΟΓΡΑΦΕΣ</td></tr>
   <tr>
     <td style="width:30%;font-weight:bold;">Τεχνικός: ${e(fd.sig_tech || '')}</td>
-    <td style="width:20%;">Υπογρ.: _______________</td>
+    <td style="width:20%;">${fd.signature_url ? `<img src="${fd.signature_url}" style="max-height:28px;max-width:90px;display:block;" />` : 'Υπογρ.: _______________'}</td>
     <td style="width:30%;font-weight:bold;">HD: ${e(fd.sig_hd || '')}</td>
     <td style="width:20%;">Υπογρ.: _______________</td>
   </tr>
@@ -379,7 +379,7 @@ function generateCorrectiveHTML(inc, asset, resolvedWorkOrderId, fd, today, e, c
   <tr><td colspan="3" class="section-header">SIGNATURES</td></tr>
   <tr>
     <td style="width:33%;"><b>Technician:</b> ${e(fd.technician || '')}</td>
-    <td style="width:33%;">Signature: _______________</td>
+    <td style="width:33%;">${fd.signature_url ? `<img src="${fd.signature_url}" style="max-height:28px;max-width:90px;display:block;" />` : 'Signature: _______________'}</td>
     <td style="width:33%;">Date: ${e(fd.date || today)}</td>
   </tr>
 </table>
@@ -450,7 +450,7 @@ function generateInspectionHTML(inc, asset, resolvedWorkOrderId, fd, today, e, c
   <tr><td colspan="3" class="section-header">SIGNATURES</td></tr>
   <tr>
     <td style="width:33%;"><b>Inspector:</b> ${e(fd.inspector || '')}</td>
-    <td style="width:33%;">Signature: _______________</td>
+    <td style="width:33%;">${fd.signature_url ? `<img src="${fd.signature_url}" style="max-height:28px;max-width:90px;display:block;" />` : 'Signature: _______________'}</td>
     <td style="width:33%;">Date: ${e(fd.date || today)}</td>
   </tr>
 </table>
