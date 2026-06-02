@@ -18,7 +18,6 @@ const navItems = [
   { path: "/Planning", label: "Planning Workbench", icon: MapPin, submenu: [
     { path: "/PlanningWorkbenchSettings", label: "Workbench Settings", icon: Settings }
   ]},
-  { path: "/Forms", label: "Forms", icon: FileText },
   { path: "/Configuration", label: "Configuration", icon: Settings },
 ];
 
