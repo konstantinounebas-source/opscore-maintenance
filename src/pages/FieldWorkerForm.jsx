@@ -48,6 +48,18 @@ export default function FieldWorkerForm() {
   };
 
   if (isTelegramBrowser) {
+    const currentUrl = window.location.href;
+    const handleOpenBrowser = () => {
+      // Try intent URI for Android Chrome first, fallback to direct navigation
+      const isAndroid = /android/i.test(navigator.userAgent);
+      if (isAndroid) {
+        const intentUrl = currentUrl.replace(/^https?:\/\//, '');
+        window.location.href = `intent://${intentUrl}#Intent;scheme=https;action=android.intent.action.VIEW;end`;
+      } else {
+        window.location.href = currentUrl;
+      }
+    };
+
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6">
         <div className="max-w-sm w-full bg-white rounded-xl border border-slate-200 p-6 text-center shadow space-y-4">
@@ -56,14 +68,16 @@ export default function FieldWorkerForm() {
           <p className="text-sm text-slate-600">
             For the best experience (especially signing), please open this form in your device's browser.
           </p>
-          <a
-            href={window.location.href}
-            target="_blank"
-            rel="noreferrer"
+          <button
+            onClick={handleOpenBrowser}
             className="block w-full bg-slate-800 text-white text-sm font-semibold rounded-lg py-3 px-4 hover:bg-slate-700 active:bg-slate-900"
           >
             Open in Browser →
-          </a>
+          </button>
+          <p className="text-xs text-slate-400">
+            If the button doesn't work, copy and paste this link into your browser:<br />
+            <span className="break-all text-slate-500">{currentUrl}</span>
+          </p>
         </div>
       </div>
     );
