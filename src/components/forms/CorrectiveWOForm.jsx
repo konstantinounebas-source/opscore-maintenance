@@ -105,7 +105,7 @@ function ChecklistRow({ category, items, notesKey, naKey, form, set }) {
 import { correctiveDefaultData as defaultData } from "@/lib/formSchemas";
 
 // ── Main Component ────────────────────────────────────────────────────────────
-export default function CorrectiveWOForm({ submission, incident, incidentId, workOrders, onClose }) {
+export default function CorrectiveWOForm({ submission, incident, incidentId, workOrders, workOrder, onClose }) {
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -113,15 +113,17 @@ export default function CorrectiveWOForm({ submission, incident, incidentId, wor
 
   const existingData = submission?.form_data || {};
   const [form, setForm] = useState({ ...defaultData, ...existingData });
-  const [corrId, setCorrId] = useState(existingData.corr_id || "");
+  // Use the specific WO's ID if provided, otherwise use existing data or auto-generate
+  const [corrId, setCorrId] = useState(
+    workOrder?.work_order_id || existingData.corr_id || ""
+  );
 
   const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
 
   useEffect(() => {
-    if (!existingData.corr_id) {
+    if (!workOrder?.work_order_id && !existingData.corr_id) {
       generateWorkOrderId("corrective").then(id => setCorrId(id));
     }
-  
   }, []);
 
   const getWorkOrderRef = () => corrId || form.work_order_ref || "";

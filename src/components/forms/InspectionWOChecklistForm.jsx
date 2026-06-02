@@ -314,7 +314,7 @@ ${secHeader("ΚΑΤΑΣΤΑΣΗ ΠΕΡΙΣΤΑΤΙΚΟΥ", false)}
 }
 
 // ── Main Component ────────────────────────────────────────────────────────────
-export default function InspectionWOChecklistForm({ submission, incident, incidentId, workOrders, onClose }) {
+export default function InspectionWOChecklistForm({ submission, incident, incidentId, workOrders, workOrder, onClose }) {
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -322,13 +322,16 @@ export default function InspectionWOChecklistForm({ submission, incident, incide
 
   const existingData = submission?.form_data || {};
   const [form, setForm] = useState({ ...defaultData, ...existingData });
-  const [inspId, setInspId] = useState(existingData.insp_id || "");
+  // Use the specific WO's ID if provided, otherwise use existing data or auto-generate
+  const [inspId, setInspId] = useState(
+    workOrder?.work_order_id || existingData.insp_id || ""
+  );
 
   const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
 
-  // Auto-generate WO ID
+  // Auto-generate WO ID only if no WO or existing ID provided
   useEffect(() => {
-    if (!existingData.insp_id) {
+    if (!workOrder?.work_order_id && !existingData.insp_id) {
       generateWorkOrderId("inspection").then(id => setInspId(id));
     }
   }, []);

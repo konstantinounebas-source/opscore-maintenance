@@ -580,7 +580,7 @@ export default function WorkOrderPanel({ woType, incident, incidentId, lockedRea
   const [closingWO, setClosingWO] = useState(null);
   const [checklistWO, setChecklistWO] = useState(null);
   const [showUploadForm, setShowUploadForm] = useState(false);
-  const [showFormViewer, setShowFormViewer] = useState(false);
+  const [viewingFormContext, setViewingFormContext] = useState(null); // { wo, submission } or null
   const [showSendDialog, setShowSendDialog] = useState(false);
   const queryClient = useQueryClient();
 
@@ -632,7 +632,7 @@ export default function WorkOrderPanel({ woType, incident, incidentId, lockedRea
           {!isCorrectiveLocked && (woType === "make_safe" || woType === "corrective" || woType === "inspection") && (
             <>
               <button
-                onClick={e => { e.stopPropagation(); setShowFormViewer(true); }}
+                onClick={e => { e.stopPropagation(); setViewingFormContext({ wo: wos[0] || null, submission: null }); }}
                 className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800"
               >
                 <Printer className="w-3.5 h-3.5" /> PDF/Print Form
@@ -681,7 +681,7 @@ export default function WorkOrderPanel({ woType, incident, incidentId, lockedRea
                   incidentId={incidentId}
                   woType={woType}
                   fieldSubmission={fieldSubmission}
-                  onViewSubmission={() => setShowFormViewer(true)}
+                  onViewSubmission={() => setViewingFormContext({ wo, submission: fieldSubmission })}
                 />
               );
             })
@@ -723,12 +723,14 @@ export default function WorkOrderPanel({ woType, incident, incidentId, lockedRea
           onClose={() => setShowSendDialog(false)}
         />
       )}
-      {showFormViewer && (
+      {viewingFormContext !== null && (
         <FormViewerModal
           woType={woType}
           incident={incident}
           incidentId={incidentId}
-          onClose={() => setShowFormViewer(false)}
+          workOrder={viewingFormContext.wo}
+          submission={viewingFormContext.submission}
+          onClose={() => setViewingFormContext(null)}
         />
       )}
     </div>
