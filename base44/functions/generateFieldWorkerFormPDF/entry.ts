@@ -3,32 +3,48 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    const { incidentId, submissionId, token } = await req.json();
 
-    const { incidentId, submissionId } = await req.json();
+    // Allow either authenticated user OR valid field-worker token
+    if (token) {
+      try {
+        const standard = token.replace(/-/g, '+').replace(/_/g, '/');
+        const padded = standard + '=='.slice(0, (4 - standard.length % 4) % 4);
+        const decoded = atob(padded);
+        const lastColon = decoded.lastIndexOf(':');
+        const timestamp = parseInt(decoded.substring(lastColon + 1));
+        if (Date.now() - timestamp > 48 * 60 * 60 * 1000) {
+          return Response.json({ error: 'Token expired' }, { status: 401 });
+        }
+      } catch {
+        return Response.json({ error: 'Invalid token' }, { status: 401 });
+      }
+    } else {
+      const user = await base44.auth.me();
+      if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     
     if (!submissionId) return Response.json({ error: 'Missing submissionId' }, { status: 400 });
 
-    // Fetch submission
-    const submission = await base44.entities.FormSubmissions.get(submissionId);
+    // Fetch submission using service role (works for unauthenticated field workers)
+    const submission = await base44.asServiceRole.entities.FormSubmissions.get(submissionId);
     if (!submission) return Response.json({ error: 'Submission not found' }, { status: 404 });
 
     const formData = submission.form_data || {};
     const formType = submission.form_type;
     
     // Fetch incident and asset
-    const incidents = await base44.entities.Incidents.filter({ id: submission.incident_id });
+    const incidents = await base44.asServiceRole.entities.Incidents.filter({ id: submission.incident_id });
     const inc = incidents[0] || {};
     
     let asset = {};
     if (inc.related_asset_id) {
-      const allAssets = await base44.entities.Assets.list('-created_date', 500);
+      const allAssets = await base44.asServiceRole.entities.Assets.list('-created_date', 500);
       asset = allAssets.find(a => a.id === inc.related_asset_id) || {};
     }
 
     // Get work order
-    const workOrders = await base44.entities.WorkOrders.filter({ incident_id: inc.id });
+    const workOrders = await base44.asServiceRole.entities.WorkOrders.filter({ incident_id: inc.id });
     const resolvedWorkOrderId = workOrders.find(w => w.title?.toLowerCase().includes('make safe'))?.work_order_id ||
       workOrders[0]?.work_order_id || '';
 

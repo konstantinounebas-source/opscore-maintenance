@@ -99,7 +99,7 @@ export default function MobileInspectionForm({ token, incident, asset, existingS
     const pdfRes = await fetch(`${window.location.origin}/functions/generateFieldWorkerFormPDF`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ submissionId }),
+      body: JSON.stringify({ submissionId, token }),
     });
     const pdfData = await pdfRes.json();
     if (!pdfData?.html) return;

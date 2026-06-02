@@ -46,6 +46,7 @@ export default function IncidentDetail() {
     queryClient.invalidateQueries({ queryKey: ["incidentAudit", incidentId] });
     queryClient.invalidateQueries({ queryKey: ["incidentComments", incidentId] });
     queryClient.invalidateQueries({ queryKey: ["incidentAttachments", incidentId] });
+    queryClient.invalidateQueries({ queryKey: ["formSubmissions", incidentId] });
   };
 
   const addAuditEntry = async (action, details) => {
