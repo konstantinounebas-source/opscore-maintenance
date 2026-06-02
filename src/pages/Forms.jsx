@@ -14,6 +14,7 @@ import CombinedFMPIandInvoiceForm from "@/components/forms/CombinedFMPIandInvoic
 import MakeSafeChecklistForm from "@/components/forms/MakeSafeChecklistForm";
 import IncidentReportForm from "@/components/forms/IncidentReportForm";
 import CorrectiveWOForm from "@/components/forms/CorrectiveWOForm";
+import InspectionWOChecklistForm from "@/components/forms/InspectionWOChecklistForm";
 
 const STATUS_BADGE = {
   Draft:     "bg-slate-100 text-slate-600",
@@ -255,6 +256,17 @@ export default function Forms() {
           submission={editingSubmission}
           incident={incidentMap[editingSubmission.incident_id]}
           incidentId={editingSubmission.incident_id}
+          workOrders={workOrders}
+          onClose={handleClose}
+        />
+      );
+    }
+    if (formType === "inspection_wo_checklist") {
+      return (
+        <InspectionWOChecklistForm
+          submission={editingSubmission}
+          incident={incidentMap[editingSubmission?.incident_id]}
+          incidentId={editingSubmission?.incident_id}
           workOrders={workOrders}
           onClose={handleClose}
         />
