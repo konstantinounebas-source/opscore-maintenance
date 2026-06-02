@@ -46,34 +46,45 @@ Deno.serve(async (req) => {
     const dbFormType = formTypeMap[formType] || formType;
     const dbFormName = formNameMap[formType] || formType;
 
-    // Check for existing submission
-    const existing = await base44.asServiceRole.entities.FormSubmissions.filter({
-      incident_id: incidentId,
-      form_type: dbFormType,
-    });
+    // Get incident and related work orders in parallel
+    const [incidents, existingForms, allWOs] = await Promise.all([
+      base44.asServiceRole.entities.Incidents.filter({ id: incidentId }),
+      base44.asServiceRole.entities.FormSubmissions.filter({ incident_id: incidentId, form_type: dbFormType }),
+      base44.asServiceRole.entities.WorkOrders.filter({ incident_id: incidentId }),
+    ]);
+    const incident = incidents[0];
+
+    // Find the matching WO for this form type (by label in title)
+    const woLabelMap = {
+      make_safe: 'Make Safe WO',
+      corrective: 'Corrective WO',
+      inspection: 'Inspection WO',
+    };
+    const woLabel = woLabelMap[formType];
+    const matchingWO = allWOs.find(w => w.title?.includes(woLabel) && w.status !== 'Cancelled');
 
     const payload = {
       form_type: dbFormType,
       form_name: dbFormName,
       incident_id: incidentId,
+      work_order_id: matchingWO?.id || undefined,
       status: status || 'Draft',
       form_data: formData,
       submitted_at: status === 'Submitted' ? new Date().toISOString() : undefined,
       submitted_by: workerName || 'Field Worker',
     };
 
-    // Get asset_id from incident
-    const incidents = await base44.asServiceRole.entities.Incidents.filter({ id: incidentId });
-    const incident = incidents[0];
     if (incident?.related_asset_id) payload.asset_id = incident.related_asset_id;
 
     let result;
-    const drafts = existing.filter(s => s.status === 'Draft');
+    const drafts = existingForms.filter(s => s.status === 'Draft');
     if (drafts.length > 0) {
       result = await base44.asServiceRole.entities.FormSubmissions.update(drafts[0].id, payload);
     } else {
       result = await base44.asServiceRole.entities.FormSubmissions.create(payload);
     }
+
+
 
     // Extract file URLs from formData for audit trail
     const fileUrls = [];

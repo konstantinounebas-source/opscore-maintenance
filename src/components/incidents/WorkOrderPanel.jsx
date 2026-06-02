@@ -19,7 +19,7 @@ import WorkOrderDownloadButton from "@/components/shared/WorkOrderDownloadButton
 import FormViewerModal from "@/components/incidents/FormViewerModal";
 import {
   Plus, ChevronDown, ChevronUp, CheckCircle2, Clock,
-  Loader2, Paperclip, StickyNote, XCircle, Lock, FileText, Upload, Printer, MessageCircle
+  Loader2, Paperclip, StickyNote, XCircle, Lock, FileText, Upload, Printer, MessageCircle, Smartphone
 } from "lucide-react";
 import SendToFieldWorkerDialog from "@/components/incidents/SendToFieldWorkerDialog";
 import { generateWorkOrderId } from "@/lib/workOrderIdGenerator";
@@ -30,7 +30,7 @@ const WO_TYPE_CONFIG = {
   corrective:  { label: "Corrective WO",  prefix: "CORR",  priority: "Medium",   color: "text-blue-700 bg-blue-50 border-blue-200" },
 };
 
-function WOCard({ wo, onClose, onSubmitChecklist, incidentId, woType }) {
+function WOCard({ wo, onClose, onSubmitChecklist, incidentId, woType, fieldSubmission, onViewSubmission }) {
   const statusColors = {
     "Open": "bg-amber-50 text-amber-700 border-amber-200",
     "In Progress": "bg-blue-50 text-blue-700 border-blue-200",
@@ -40,31 +40,61 @@ function WOCard({ wo, onClose, onSubmitChecklist, incidentId, woType }) {
   const isCompleted = wo.status === "Completed" || wo.status === "Cancelled";
 
   return (
-    <div className={`rounded-lg border px-3 py-2.5 flex items-start justify-between gap-2 ${isCompleted ? "opacity-70 bg-slate-50" : "bg-white"}`}>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs font-medium text-slate-700 truncate">{wo.work_order_id}</span>
-          <span className={`text-xs px-1.5 py-0 rounded border font-medium ${statusColors[wo.status] || "bg-slate-50 text-slate-500 border-slate-200"}`}>
-            {wo.status}
-          </span>
+    <div className={`rounded-lg border overflow-hidden ${isCompleted ? "opacity-70 bg-slate-50 border-slate-200" : "bg-white border-slate-200"}`}>
+      <div className="px-3 py-2.5 flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs font-medium text-slate-700 truncate">{wo.work_order_id}</span>
+            <span className={`text-xs px-1.5 py-0 rounded border font-medium ${statusColors[wo.status] || "bg-slate-50 text-slate-500 border-slate-200"}`}>
+              {wo.status}
+            </span>
+          </div>
+          {wo.description && (
+            <p className="text-xs text-slate-400 mt-0.5 truncate">{wo.description}</p>
+          )}
         </div>
-        {wo.description && (
-          <p className="text-xs text-slate-400 mt-0.5 truncate">{wo.description}</p>
-        )}
+        <div className="flex gap-1 flex-shrink-0">
+          <WorkOrderDownloadButton workOrderId={wo.id} workOrderType={woType} incidentId={incidentId} />
+          {!isCompleted && (
+            <>
+              <Button size="sm" variant="outline" className="h-7 text-xs px-2" onClick={() => onSubmitChecklist(wo)}>
+                Checklist
+              </Button>
+              <Button size="sm" variant="outline" className="h-7 text-xs px-2 text-green-700 border-green-300 hover:bg-green-50" onClick={() => onClose(wo)}>
+                Close WO
+              </Button>
+            </>
+          )}
+        </div>
       </div>
-      <div className="flex gap-1 flex-shrink-0">
-        <WorkOrderDownloadButton workOrderId={wo.id} workOrderType={woType} incidentId={incidentId} />
-        {!isCompleted && (
-          <>
-            <Button size="sm" variant="outline" className="h-7 text-xs px-2" onClick={() => onSubmitChecklist(wo)}>
-              Checklist
+
+      {/* Field worker submission banner */}
+      {fieldSubmission && (
+        <div className="border-t border-indigo-100 bg-indigo-50 px-3 py-2 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <Smartphone className="w-3.5 h-3.5 text-indigo-500 flex-shrink-0" />
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-indigo-700 truncate">
+                Field Worker Form {fieldSubmission.status === 'Submitted' ? 'Submitted' : 'Draft'}
+              </p>
+              <p className="text-xs text-indigo-500 truncate">
+                by {fieldSubmission.submitted_by || 'Field Worker'}
+                {fieldSubmission.submitted_at ? ` · ${new Date(fieldSubmission.submitted_at).toLocaleDateString()}` : ''}
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-1 flex-shrink-0">
+            <Button size="sm" variant="outline" className="h-7 text-xs px-2 text-indigo-700 border-indigo-300 hover:bg-indigo-100" onClick={onViewSubmission}>
+              <FileText className="w-3 h-3 mr-1" /> View Form
             </Button>
-            <Button size="sm" variant="outline" className="h-7 text-xs px-2 text-green-700 border-green-300 hover:bg-green-50" onClick={() => onClose(wo)}>
-              Close WO
-            </Button>
-          </>
-        )}
-      </div>
+            {fieldSubmission.status === 'Submitted' && !isCompleted && (
+              <Button size="sm" className="h-7 text-xs px-2 bg-green-600 hover:bg-green-700" onClick={() => onClose(wo)}>
+                Close WO
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -274,6 +304,7 @@ function CloseWOModal({ wo, incidentId, onClose, onDone }) {
       queryClient.invalidateQueries({ queryKey: ["workOrders", incidentId] });
       queryClient.invalidateQueries({ queryKey: ["incidentAudit", incidentId] });
       queryClient.invalidateQueries({ queryKey: ["incident", incidentId] });
+      queryClient.invalidateQueries({ queryKey: ["fieldSubmissions", incidentId] });
       toast({ title: "Work Order closed" });
       onDone();
     } catch (err) {
@@ -553,9 +584,20 @@ export default function WorkOrderPanel({ woType, incident, incidentId, lockedRea
   const [showSendDialog, setShowSendDialog] = useState(false);
   const queryClient = useQueryClient();
 
+  const formTypeMap = {
+    make_safe: 'make_safe_checklist',
+    corrective: 'corrective_wo_checklist',
+    inspection: 'inspection_wo_checklist',
+  };
+
   const { data: allWOs = [] } = useQuery({
     queryKey: ["workOrders", incidentId],
     queryFn: () => base44.entities.WorkOrders.filter({ incident_id: incidentId }),
+  });
+
+  const { data: fieldSubmissions = [] } = useQuery({
+    queryKey: ["fieldSubmissions", incidentId, woType],
+    queryFn: () => base44.entities.FormSubmissions.filter({ incident_id: incidentId, form_type: formTypeMap[woType] }),
   });
 
   // Filter by WO type label
@@ -626,16 +668,23 @@ export default function WorkOrderPanel({ woType, incident, incidentId, lockedRea
           {wos.length === 0 ? (
             <p className="text-xs text-slate-400 text-center py-2">No work orders yet.</p>
           ) : (
-            wos.map(wo => (
-              <WOCard
-                key={wo.id}
-                wo={wo}
-                onClose={setClosingWO}
-                onSubmitChecklist={setChecklistWO}
-                incidentId={incidentId}
-                woType={woType}
-              />
-            ))
+            wos.map(wo => {
+              // Find the most recent submitted form linked to this WO, fall back to any draft
+              const woSubmissions = fieldSubmissions.filter(s => s.work_order_id === wo.id);
+              const fieldSubmission = woSubmissions.find(s => s.status === 'Submitted') || woSubmissions[0] || null;
+              return (
+                <WOCard
+                  key={wo.id}
+                  wo={wo}
+                  onClose={setClosingWO}
+                  onSubmitChecklist={setChecklistWO}
+                  incidentId={incidentId}
+                  woType={woType}
+                  fieldSubmission={fieldSubmission}
+                  onViewSubmission={() => setShowFormViewer(true)}
+                />
+              );
+            })
           )}
         </div>
       )}
