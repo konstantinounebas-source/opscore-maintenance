@@ -6,12 +6,15 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/use-toast";
-import { Send, Loader2, CheckCircle2, MessageCircle } from "lucide-react";
+import { Send, Loader2, CheckCircle2, MessageCircle, Pencil, CheckCircle } from "lucide-react";
+import FormViewerModal from "@/components/incidents/FormViewerModal";
 
 export default function SendToFieldWorkerDialog({ incident, incidentId, onClose, defaultFormType }) {
   const { toast } = useToast();
   const [chatId, setChatId] = useState("");
   const [formType, setFormType] = useState(defaultFormType || "inspection");
+  const [showFormEditor, setShowFormEditor] = useState(false);
+  const [formEdited, setFormEdited] = useState(false);
 
   useEffect(() => {
     if (defaultFormType) setFormType(defaultFormType);
@@ -60,6 +63,7 @@ export default function SendToFieldWorkerDialog({ incident, incidentId, onClose,
   };
 
   return (
+  <>
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
@@ -118,6 +122,23 @@ export default function SendToFieldWorkerDialog({ incident, incidentId, onClose,
             </div>
 
             <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Review / Edit Form (optional)</Label>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full gap-2 justify-start"
+                onClick={() => setShowFormEditor(true)}
+              >
+                {formEdited ? (
+                  <><CheckCircle className="w-3.5 h-3.5 text-green-500" /> Form reviewed &amp; ready</>
+                ) : (
+                  <><Pencil className="w-3.5 h-3.5" /> Edit form before sending</>
+                )}
+              </Button>
+              <p className="text-xs text-slate-400">Optionally review or pre-fill form fields before sending the link.</p>
+            </div>
+
+            <div className="space-y-1.5">
               <Label className="text-xs font-semibold">Telegram Chat ID *</Label>
               <Input
                 placeholder="e.g. 123456789"
@@ -148,5 +169,18 @@ export default function SendToFieldWorkerDialog({ incident, incidentId, onClose,
         )}
       </DialogContent>
     </Dialog>
+
+    {showFormEditor && (
+      <FormViewerModal
+        woType={formType}
+        incident={incident}
+        incidentId={incidentId}
+        onClose={() => {
+          setShowFormEditor(false);
+          setFormEdited(true);
+        }}
+      />
+    )}
+  </>
   );
 }
