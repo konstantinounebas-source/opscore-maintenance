@@ -37,8 +37,8 @@ Deno.serve(async (req) => {
       `<b>Form:</b> ${formLabel}\n` +
       `<b>Incident:</b> ${incidentRef || incidentId}\n` +
       `${assetName ? `<b>Asset:</b> ${assetName}\n` : ''}` +
-      `\n👇 <b>Tap the link below to open the form in your browser:</b>\n` +
-      `${formUrl}\n\n` +
+      `\n👇 <b>Click the link below to open the form:</b>\n` +
+      `<a href="${formUrl}">🔗 OPEN FORM</a>\n\n` +
       `<i>This link is valid for 48 hours.</i>`;
 
     const telegramRes = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
@@ -48,7 +48,12 @@ Deno.serve(async (req) => {
         chat_id: chatId,
         text: telegramMessage,
         parse_mode: 'HTML',
-        disable_web_page_preview: true,
+        disable_web_page_preview: false,
+        reply_markup: {
+          inline_keyboard: [[
+            { text: "🔗 Open Form", url: formUrl }
+          ]]
+        }
       }),
     });
 
