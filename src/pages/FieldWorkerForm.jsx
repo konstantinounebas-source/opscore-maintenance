@@ -61,13 +61,11 @@ export default function FieldWorkerForm() {
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6">
         <div className="max-w-sm w-full bg-white rounded-xl border border-slate-200 p-6 text-center shadow space-y-4">
           <div className="text-4xl">📱</div>
-          <h2 className="text-base font-semibold text-slate-800">Open in Your Browser</h2>
+          <h2 className="text-base font-semibold text-slate-800">Open in Browser</h2>
           <p className="text-sm text-slate-600">
-            Tap the <strong>⋮ menu</strong> (top-right in Telegram) and choose <strong>"Open in Browser"</strong>, or copy the link below and paste it in Chrome/Safari.
+            Tap the <strong>⋮ menu</strong> at the top-right of Telegram and select <strong>"Open in Browser"</strong>.
           </p>
-          <div className="bg-slate-100 rounded-lg p-3 text-left">
-            <p className="text-xs text-slate-500 break-all select-all">{currentUrl}</p>
-          </div>
+          <p className="text-sm text-slate-500">Or copy the link and paste it in Chrome/Safari:</p>
           <button
             onClick={handleCopy}
             className="block w-full bg-slate-800 text-white text-sm font-semibold rounded-lg py-3 px-4 hover:bg-slate-700 active:bg-slate-900"
