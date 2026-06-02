@@ -1,0 +1,70 @@
+{
+  "name": "Crews",
+  "type": "object",
+  "properties": {
+    "crew_code": {
+      "type": "string",
+      "description": "Unique crew code (e.g. CR-01)"
+    },
+    "crew_name": {
+      "type": "string",
+      "description": "Display name of the crew"
+    },
+    "crew_type": {
+      "type": "string",
+      "enum": [
+        "Inspection",
+        "Preventive",
+        "Corrective",
+        "Mixed"
+      ],
+      "default": "Mixed"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Active",
+        "Inactive",
+        "On Leave",
+        "Unavailable"
+      ],
+      "default": "Active"
+    },
+    "base_city": {
+      "type": "string"
+    },
+    "capacity_per_day": {
+      "type": "number",
+      "description": "Max tasks per day"
+    },
+    "capacity_per_week": {
+      "type": "number",
+      "description": "Max tasks per week"
+    },
+    "working_days": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Working days (e.g. Mon, Tue...)"
+    },
+    "supervisor_name": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "color_code": {
+      "type": "string",
+      "description": "Hex color for map display"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "crew_code",
+    "crew_name"
+  ]
+}

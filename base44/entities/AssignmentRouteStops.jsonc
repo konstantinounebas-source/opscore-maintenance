@@ -1,0 +1,41 @@
+{
+  "name": "AssignmentRouteStops",
+  "type": "object",
+  "properties": {
+    "assignment_route_id": {
+      "type": "string",
+      "description": "FK \u2192 AssignmentRoutes"
+    },
+    "planning_assignment_id": {
+      "type": "string",
+      "description": "FK \u2192 PlanningAssignments"
+    },
+    "stop_order": {
+      "type": "number"
+    },
+    "estimated_arrival_time": {
+      "type": "string"
+    },
+    "estimated_service_duration_minutes": {
+      "type": "number"
+    },
+    "stop_status": {
+      "type": "string",
+      "enum": [
+        "Pending",
+        "Visited",
+        "Completed",
+        "Skipped"
+      ],
+      "default": "Pending"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "assignment_route_id",
+    "planning_assignment_id",
+    "stop_order"
+  ]
+}

@@ -1,0 +1,130 @@
+{
+  "name": "PlanningAssignments",
+  "type": "object",
+  "properties": {
+    "planning_week_id": {
+      "type": "string",
+      "description": "FK \u2192 PlanningWeeks record ID"
+    },
+    "asset_id": {
+      "type": "string",
+      "description": "FK \u2192 Assets record ID"
+    },
+    "assignment_status": {
+      "type": "string",
+      "enum": [
+        "Planned",
+        "In Progress",
+        "Completed",
+        "Deferred",
+        "Cancelled"
+      ],
+      "default": "Planned",
+      "description": "Current status of the assignment"
+    },
+    "assignment_type": {
+      "type": "string",
+      "enum": [
+        "Inspection",
+        "Preventive",
+        "Corrective",
+        "Review",
+        "Mixed"
+      ],
+      "default": "Inspection",
+      "description": "Type of work assignment"
+    },
+    "priority_bucket": {
+      "type": "string",
+      "enum": [
+        "P1",
+        "P2",
+        "Critical",
+        "High",
+        "Medium",
+        "Low"
+      ],
+      "description": "Priority bucket for scheduling"
+    },
+    "team_name": {
+      "type": "string",
+      "description": "Team assigned (legacy free-text)"
+    },
+    "assigned_to": {
+      "type": "string",
+      "description": "Person assigned (legacy free-text)"
+    },
+    "route_zone": {
+      "type": "string",
+      "description": "Geographic or operational zone"
+    },
+    "pin_color": {
+      "type": "string",
+      "description": "Map pin color"
+    },
+    "display_order": {
+      "type": "number"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "source_incident_id": {
+      "type": "string",
+      "description": "FK \u2192 Incidents (optional)"
+    },
+    "source_work_order_id": {
+      "type": "string",
+      "description": "FK \u2192 WorkOrders (optional)"
+    },
+    "crew_id": {
+      "type": "string",
+      "description": "FK \u2192 Crews (Phase 3)"
+    },
+    "crew_schedule_id": {
+      "type": "string",
+      "description": "FK \u2192 CrewSchedules (Phase 3)"
+    },
+    "planned_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Specific planned execution date"
+    },
+    "estimated_duration_minutes": {
+      "type": "number",
+      "description": "Estimated task duration"
+    },
+    "sla_due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "SLA deadline date"
+    },
+    "sla_risk_level": {
+      "type": "string",
+      "enum": [
+        "Low",
+        "Medium",
+        "High",
+        "Critical"
+      ],
+      "description": "SLA risk level"
+    },
+    "scheduling_score": {
+      "type": "number",
+      "description": "Computed priority scheduling score"
+    },
+    "route_sequence_no": {
+      "type": "number",
+      "description": "Position in route for the week"
+    },
+    "municipality": {
+      "type": "string"
+    },
+    "district_zone": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "planning_week_id",
+    "asset_id"
+  ]
+}

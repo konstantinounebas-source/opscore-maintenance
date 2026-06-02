@@ -1,0 +1,43 @@
+{
+  "name": "AssignmentRoutes",
+  "type": "object",
+  "properties": {
+    "planning_week_id": {
+      "type": "string",
+      "description": "FK \u2192 PlanningWeeks"
+    },
+    "crew_id": {
+      "type": "string",
+      "description": "FK \u2192 Crews (optional)"
+    },
+    "route_name": {
+      "type": "string"
+    },
+    "route_status": {
+      "type": "string",
+      "enum": [
+        "Draft",
+        "Suggested",
+        "Confirmed",
+        "Completed"
+      ],
+      "default": "Draft"
+    },
+    "total_stops": {
+      "type": "number",
+      "default": 0
+    },
+    "total_distance_km": {
+      "type": "number"
+    },
+    "total_estimated_duration_minutes": {
+      "type": "number"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "planning_week_id"
+  ]
+}

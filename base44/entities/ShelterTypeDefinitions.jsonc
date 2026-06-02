@@ -1,0 +1,22 @@
+{
+  "name": "ShelterTypeDefinitions",
+  "type": "object",
+  "properties": {
+    "shelter_type_code": {
+      "type": "string",
+      "description": "Unique code (e.g. A1, B, C1)"
+    },
+    "shelter_type_name": {
+      "type": "string",
+      "description": "Display name"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "shelter_type_code",
+    "shelter_type_name"
+  ]
+}

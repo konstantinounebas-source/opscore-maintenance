@@ -1,0 +1,30 @@
+{
+  "name": "AssetTransactions",
+  "type": "object",
+  "properties": {
+    "asset_id": {
+      "type": "string",
+      "description": "Reference to asset record ID"
+    },
+    "action": {
+      "type": "string",
+      "description": "Action performed"
+    },
+    "details": {
+      "type": "string",
+      "description": "Details including before/after values"
+    },
+    "user": {
+      "type": "string",
+      "description": "User who performed the action"
+    },
+    "note": {
+      "type": "string",
+      "description": "Optional note or comment"
+    }
+  },
+  "required": [
+    "asset_id",
+    "action"
+  ]
+}

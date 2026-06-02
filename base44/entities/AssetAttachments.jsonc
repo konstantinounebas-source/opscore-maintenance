@@ -1,0 +1,45 @@
+{
+  "name": "AssetAttachments",
+  "type": "object",
+  "properties": {
+    "asset_id": {
+      "type": "string",
+      "description": "Reference to asset record ID"
+    },
+    "file_name": {
+      "type": "string",
+      "description": "Original file name"
+    },
+    "file_url": {
+      "type": "string",
+      "description": "URL of the uploaded file"
+    },
+    "file_type": {
+      "type": "string",
+      "enum": [
+        "Document",
+        "Photo",
+        "Other"
+      ],
+      "default": "Document",
+      "description": "Type of attachment"
+    },
+    "doc_label": {
+      "type": "string",
+      "description": "Document category label (e.g. Installation Photos, Signed Install Form)"
+    },
+    "file_size": {
+      "type": "string",
+      "description": "File size"
+    },
+    "uploaded_by": {
+      "type": "string",
+      "description": "User who uploaded the file"
+    }
+  },
+  "required": [
+    "asset_id",
+    "file_url",
+    "file_name"
+  ]
+}

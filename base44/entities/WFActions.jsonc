@@ -1,0 +1,49 @@
+{
+  "name": "WFActions",
+  "type": "object",
+  "properties": {
+    "incident_id": {
+      "type": "string",
+      "description": "FK \u2192 Incidents record ID"
+    },
+    "action_key": {
+      "type": "string",
+      "description": "FK \u2192 WFActionTypes.action_key"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Not Started",
+        "In Progress",
+        "Completed",
+        "Blocked",
+        "Requires Review"
+      ],
+      "default": "Not Started"
+    },
+    "assigned_to": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "sla_due": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "file_url": {
+      "type": "string"
+    },
+    "file_name": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "incident_id",
+    "action_key"
+  ]
+}

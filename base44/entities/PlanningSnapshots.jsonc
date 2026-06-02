@@ -1,0 +1,73 @@
+{
+  "name": "PlanningSnapshots",
+  "type": "object",
+  "properties": {
+    "planning_week_id": {
+      "type": "string",
+      "description": "FK \u2192 PlanningWeeks record ID"
+    },
+    "week_code": {
+      "type": "string",
+      "description": "Denormalized week code for quick display (e.g. W2026-12)"
+    },
+    "week_name": {
+      "type": "string",
+      "description": "Denormalized week name for display"
+    },
+    "total_assets_assigned": {
+      "type": "number",
+      "default": 0
+    },
+    "total_planned": {
+      "type": "number",
+      "default": 0
+    },
+    "total_in_progress": {
+      "type": "number",
+      "default": 0
+    },
+    "total_completed": {
+      "type": "number",
+      "default": 0
+    },
+    "total_deferred": {
+      "type": "number",
+      "default": 0
+    },
+    "total_cancelled": {
+      "type": "number",
+      "default": 0
+    },
+    "total_p1": {
+      "type": "number",
+      "default": 0
+    },
+    "total_p2": {
+      "type": "number",
+      "default": 0
+    },
+    "total_critical": {
+      "type": "number",
+      "default": 0
+    },
+    "total_high": {
+      "type": "number",
+      "default": 0
+    },
+    "total_medium": {
+      "type": "number",
+      "default": 0
+    },
+    "total_low": {
+      "type": "number",
+      "default": 0
+    },
+    "summary_notes": {
+      "type": "string",
+      "description": "Optional notes for this snapshot"
+    }
+  },
+  "required": [
+    "planning_week_id"
+  ]
+}

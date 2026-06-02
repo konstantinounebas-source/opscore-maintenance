@@ -1,0 +1,44 @@
+{
+  "name": "CrewSchedules",
+  "type": "object",
+  "properties": {
+    "planning_week_id": {
+      "type": "string",
+      "description": "FK \u2192 PlanningWeeks"
+    },
+    "crew_id": {
+      "type": "string",
+      "description": "FK \u2192 Crews"
+    },
+    "schedule_status": {
+      "type": "string",
+      "enum": [
+        "Draft",
+        "Confirmed",
+        "In Progress",
+        "Completed",
+        "Locked"
+      ],
+      "default": "Draft"
+    },
+    "total_assigned_tasks": {
+      "type": "number",
+      "default": 0
+    },
+    "total_estimated_workload": {
+      "type": "number",
+      "default": 0,
+      "description": "Total estimated minutes"
+    },
+    "route_zone": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "planning_week_id",
+    "crew_id"
+  ]
+}

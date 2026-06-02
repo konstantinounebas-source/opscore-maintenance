@@ -1,0 +1,60 @@
+{
+  "name": "WorkOrders",
+  "type": "object",
+  "properties": {
+    "work_order_id": {
+      "type": "string",
+      "description": "Unique work order identifier"
+    },
+    "incident_id": {
+      "type": "string",
+      "description": "Reference to incident record ID"
+    },
+    "title": {
+      "type": "string",
+      "description": "Work order title"
+    },
+    "related_asset_id": {
+      "type": "string",
+      "description": "Reference to related asset record ID"
+    },
+    "related_asset_name": {
+      "type": "string",
+      "description": "Name of the related asset"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Open",
+        "In Progress",
+        "Completed",
+        "Cancelled"
+      ],
+      "default": "Open"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "Critical",
+        "High",
+        "Medium",
+        "Low"
+      ],
+      "default": "Medium"
+    },
+    "assigned_to": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": [
+    "work_order_id",
+    "title"
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "name": "TypeTemplates",
+  "type": "object",
+  "properties": {
+    "shelter_type_code": {
+      "type": "string",
+      "description": "Shelter type code (e.g. B, A1)"
+    },
+    "child_catalog_id": {
+      "type": "string",
+      "description": "FK \u2192 ChildCatalog record ID"
+    },
+    "default_included": {
+      "type": "boolean",
+      "default": true,
+      "description": "Pre-checked by default"
+    },
+    "mandatory": {
+      "type": "boolean",
+      "default": false,
+      "description": "Cannot be removed by user"
+    },
+    "display_order": {
+      "type": "number",
+      "default": 0
+    },
+    "active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "shelter_type_code",
+    "child_catalog_id"
+  ]
+}

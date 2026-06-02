@@ -1,0 +1,28 @@
+{
+  "name": "ConfigLists",
+  "type": "object",
+  "properties": {
+    "list_type": {
+      "type": "string",
+      "description": "Type of configuration list"
+    },
+    "value": {
+      "type": "string",
+      "description": "The list item value"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this list item is active"
+    },
+    "sort_order": {
+      "type": "number",
+      "default": 0,
+      "description": "Sort order for display"
+    }
+  },
+  "required": [
+    "list_type",
+    "value"
+  ]
+}

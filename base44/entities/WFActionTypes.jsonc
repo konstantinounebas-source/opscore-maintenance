@@ -1,0 +1,77 @@
+{
+  "name": "WFActionTypes",
+  "type": "object",
+  "properties": {
+    "action_key": {
+      "type": "string",
+      "description": "Unique action key (e.g. create_ompi)"
+    },
+    "label": {
+      "type": "string",
+      "description": "Display label"
+    },
+    "phase": {
+      "type": "string",
+      "enum": [
+        "Response",
+        "Execution",
+        "Finalisation",
+        "Closure"
+      ],
+      "description": "Workflow phase"
+    },
+    "related_entity": {
+      "type": "string",
+      "enum": [
+        "OMPI",
+        "OWR",
+        "FMPI",
+        "Incident",
+        "WorkOrder"
+      ],
+      "description": "Related entity type"
+    },
+    "requires_attachment": {
+      "type": "boolean",
+      "default": false
+    },
+    "requires_note": {
+      "type": "boolean",
+      "default": false
+    },
+    "is_mandatory_for_closure": {
+      "type": "boolean",
+      "default": false
+    },
+    "owr_only": {
+      "type": "boolean",
+      "default": false,
+      "description": "Only show for OWR incidents"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "display_order": {
+      "type": "number",
+      "default": 0
+    },
+    "sla_hours_p1": {
+      "type": "number",
+      "description": "SLA hours for P1"
+    },
+    "sla_hours_p2": {
+      "type": "number",
+      "description": "SLA hours for P2"
+    },
+    "description": {
+      "type": "string",
+      "description": "Internal description of this action"
+    }
+  },
+  "required": [
+    "action_key",
+    "label",
+    "phase"
+  ]
+}

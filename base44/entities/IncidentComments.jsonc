@@ -1,0 +1,31 @@
+{
+  "name": "IncidentComments",
+  "type": "object",
+  "properties": {
+    "incident_id": {
+      "type": "string",
+      "description": "Reference to incident record ID"
+    },
+    "comment_type": {
+      "type": "string",
+      "enum": [
+        "Comment",
+        "Note"
+      ],
+      "default": "Comment",
+      "description": "Type of entry"
+    },
+    "content": {
+      "type": "string",
+      "description": "Comment or note content"
+    },
+    "author": {
+      "type": "string",
+      "description": "Author of the comment"
+    }
+  },
+  "required": [
+    "incident_id",
+    "content"
+  ]
+}

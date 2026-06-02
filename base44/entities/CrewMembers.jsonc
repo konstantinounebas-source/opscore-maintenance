@@ -1,0 +1,34 @@
+{
+  "name": "CrewMembers",
+  "type": "object",
+  "properties": {
+    "crew_id": {
+      "type": "string",
+      "description": "FK \u2192 Crews record ID"
+    },
+    "member_name": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Active",
+        "Inactive"
+      ],
+      "default": "Active"
+    }
+  },
+  "required": [
+    "crew_id",
+    "member_name"
+  ]
+}

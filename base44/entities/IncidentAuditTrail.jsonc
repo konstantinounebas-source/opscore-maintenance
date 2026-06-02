@@ -1,0 +1,91 @@
+{
+  "name": "IncidentAuditTrail",
+  "type": "object",
+  "properties": {
+    "incident_id": {
+      "type": "string",
+      "description": "Reference to incident record ID"
+    },
+    "action": {
+      "type": "string",
+      "description": "Action performed"
+    },
+    "details": {
+      "type": "string",
+      "description": "Details of the action including before/after values"
+    },
+    "user": {
+      "type": "string",
+      "description": "User who performed the action"
+    },
+    "comment": {
+      "type": "string",
+      "description": "Optional comment on this audit entry"
+    },
+    "comments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "author": {
+            "type": "string"
+          },
+          "author_name": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "description": "Multiple timestamped comments with authors"
+    },
+    "attachments": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "File URLs attached to this audit entry"
+    },
+    "attachment_names": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Original file names for the attachments"
+    },
+    "attachment_metadata": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "author": {
+            "type": "string"
+          },
+          "author_name": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "description": "Timestamped attachment metadata with authors"
+    }
+  },
+  "required": [
+    "incident_id",
+    "action"
+  ]
+}

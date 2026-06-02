@@ -1,0 +1,61 @@
+{
+  "name": "SchedulingRecommendations",
+  "type": "object",
+  "properties": {
+    "planning_week_id": {
+      "type": "string",
+      "description": "FK \u2192 PlanningWeeks"
+    },
+    "asset_id": {
+      "type": "string",
+      "description": "FK \u2192 Assets"
+    },
+    "planning_assignment_id": {
+      "type": "string",
+      "description": "FK \u2192 PlanningAssignments (optional)"
+    },
+    "recommended_crew_id": {
+      "type": "string",
+      "description": "FK \u2192 Crews (optional)"
+    },
+    "recommendation_type": {
+      "type": "string",
+      "enum": [
+        "Priority Escalation",
+        "SLA Risk",
+        "Reassign",
+        "Route Optimization",
+        "Capacity Balancing",
+        "Inspection Due"
+      ],
+      "default": "SLA Risk"
+    },
+    "recommendation_score": {
+      "type": "number"
+    },
+    "recommendation_reason": {
+      "type": "string"
+    },
+    "suggested_action": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Open",
+        "Accepted",
+        "Rejected",
+        "Dismissed"
+      ],
+      "default": "Open"
+    },
+    "created_by_engine": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "planning_week_id",
+    "asset_id"
+  ]
+}

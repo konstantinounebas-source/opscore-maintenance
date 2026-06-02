@@ -1,0 +1,44 @@
+{
+  "name": "ChildAssets",
+  "type": "object",
+  "properties": {
+    "child_id": {
+      "type": "string",
+      "description": "Unique child asset identifier"
+    },
+    "parent_asset_id": {
+      "type": "string",
+      "description": "Reference to parent asset record ID"
+    },
+    "category": {
+      "type": "string",
+      "description": "Child asset category"
+    },
+    "serial_number": {
+      "type": "string",
+      "description": "Unique serial number"
+    },
+    "installation_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of installation"
+    },
+    "child_type": {
+      "type": "string",
+      "description": "Type of child asset"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description / name of the work item or component"
+    },
+    "unit_price": {
+      "type": "number",
+      "description": "\u0391\u03bd\u03ac\u03bb\u03c5\u03c3\u03b7 \u03a4\u03b9\u03bc\u03ae\u03c2 \u039c\u03bf\u03bd\u03ac\u03b4\u03b1\u03c2 \u03c7\u03c9\u03c1\u03af\u03c2 \u03a6\u03a0\u0391 (\u0395\u03a5\u03a1\u03a9) \u2013 unit price excl. VAT"
+    }
+  },
+  "required": [
+    "child_id",
+    "parent_asset_id",
+    "serial_number"
+  ]
+}

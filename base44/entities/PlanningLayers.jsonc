@@ -2,33 +2,35 @@
   "name": "PlanningLayers",
   "type": "object",
   "properties": {
-    "name": {
+    "color_by_field": {
       "type": "string",
-      "description": "Layer display name"
+      "description": "Field to match for this color rule (e.g. assignment_status, city)"
     },
-    "description": {
+    "color_by_value": {
       "type": "string",
-      "description": "Optional description"
+      "description": "Value of the field to match (e.g. 'Completed', 'Nicosia')"
     },
-    "color": {
+    "color_hex": {
       "type": "string",
-      "description": "Hex color for map pins"
+      "description": "Hex color for assets matching this rule"
     },
-    "icon": {
+    "label": {
       "type": "string",
-      "description": "Optional icon name"
+      "description": "Display label (auto-generated if empty)"
     },
-    "membership_mode": {
+    "layer_type": {
       "type": "string",
       "enum": [
-        "manual",
-        "rule_based"
+        "rule_based",
+        "manual_override"
       ],
-      "default": "manual"
+      "default": "rule_based",
+      "description": "rule_based = automatic matching; manual_override = explicit asset assignment"
     },
-    "rule_definition_json": {
-      "type": "string",
-      "description": "JSON rule for auto-membership"
+    "default_priority": {
+      "type": "number",
+      "default": 0,
+      "description": "Higher = higher priority when resolving overlapping rules"
     },
     "is_active": {
       "type": "boolean",
@@ -39,6 +41,8 @@
     }
   },
   "required": [
-    "name"
+    "color_by_field",
+    "color_by_value",
+    "color_hex"
   ]
 }

@@ -1,0 +1,59 @@
+{
+  "name": "AssetChilds",
+  "type": "object",
+  "properties": {
+    "asset_id": {
+      "type": "string",
+      "description": "FK \u2192 Assets record ID"
+    },
+    "child_catalog_id": {
+      "type": "string",
+      "description": "FK \u2192 ChildCatalog record ID"
+    },
+    "child_name_snapshot": {
+      "type": "string",
+      "description": "Snapshot of child name at time of assignment"
+    },
+    "child_category_snapshot": {
+      "type": "string",
+      "description": "Snapshot of child category"
+    },
+    "child_type_snapshot": {
+      "type": "string",
+      "description": "Snapshot of child type"
+    },
+    "serial_number": {
+      "type": "string"
+    },
+    "installation_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "warranty_start_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "warranty_end_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Planned",
+        "Installed",
+        "Not Installed",
+        "Removed"
+      ],
+      "default": "Planned"
+    },
+    "mandatory": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "asset_id",
+    "child_catalog_id"
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "name": "Shipments",
+  "type": "object",
+  "properties": {
+    "shipment_id": {
+      "type": "string",
+      "description": "Unique shipment identifier"
+    },
+    "child_asset_id": {
+      "type": "string",
+      "description": "Reference to child asset record ID"
+    },
+    "child_description": {
+      "type": "string",
+      "description": "Snapshot of child description at time of move"
+    },
+    "source_asset_id": {
+      "type": "string",
+      "description": "Asset the child was moved FROM"
+    },
+    "parent_asset_id": {
+      "type": "string",
+      "description": "Asset the child was moved TO (or current parent)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Pending",
+        "In Transit",
+        "Delivered",
+        "Returned"
+      ],
+      "default": "Pending"
+    },
+    "shipment_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "details": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "shipment_id",
+    "child_asset_id"
+  ]
+}
