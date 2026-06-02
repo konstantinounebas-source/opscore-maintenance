@@ -81,7 +81,7 @@ export default function SendToFieldWorkerDialog({ incident, incidentId, onClose,
             {generatedUrl && (
               <div className="p-2 bg-slate-50 rounded border border-slate-200">
                 <p className="text-xs text-slate-500 mb-1">Form URL (for reference):</p>
-                <p className="text-xs text-blue-600 break-all">{generatedUrl}</p>
+                <p className="text-xs text-slate-600 break-all select-all">{generatedUrl}</p>
               </div>
             )}
             <div className="flex justify-end gap-2">
