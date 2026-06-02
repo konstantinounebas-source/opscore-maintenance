@@ -21,6 +21,21 @@ export default function SignaturePad({ value, onChange, label = "Υπογραφ�
     }
   }, []);
 
+  // Attach non-passive touch listeners to fully prevent page scroll while signing
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const prevent = (e) => e.preventDefault();
+    canvas.addEventListener("touchstart", prevent, { passive: false });
+    canvas.addEventListener("touchmove", prevent, { passive: false });
+    canvas.addEventListener("touchend", prevent, { passive: false });
+    return () => {
+      canvas.removeEventListener("touchstart", prevent);
+      canvas.removeEventListener("touchmove", prevent);
+      canvas.removeEventListener("touchend", prevent);
+    };
+  }, []);
+
   const getPos = (e, canvas) => {
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
