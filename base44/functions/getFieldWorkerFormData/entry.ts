@@ -62,7 +62,11 @@ Deno.serve(async (req) => {
     let existingSubmission = null;
     if (submissions.length > 0) {
       const drafts = submissions.filter(s => s.status === 'Draft');
-      existingSubmission = drafts.length > 0 ? drafts[drafts.length - 1] : null;
+      if (drafts.length > 0) {
+        // Sort by updated_date descending to always get the most recently saved draft
+        drafts.sort((a, b) => new Date(b.updated_date) - new Date(a.updated_date));
+        existingSubmission = drafts[0];
+      }
     }
 
     // Fetch work orders for this incident
