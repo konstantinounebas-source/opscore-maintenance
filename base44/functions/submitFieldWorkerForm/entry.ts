@@ -42,7 +42,6 @@ Deno.serve(async (req) => {
       corrective: 'Corrective Work Order Checklist',
       inspection: 'Inspection WO Checklist',
     };
-
     const dbFormType = formTypeMap[formType] || formType;
     const dbFormName = formNameMap[formType] || formType;
 
@@ -84,8 +83,6 @@ Deno.serve(async (req) => {
       result = await base44.asServiceRole.entities.FormSubmissions.create(payload);
     }
 
-
-
     // Extract file URLs from formData for audit trail
     const fileUrls = [];
     const fileNames = [];
@@ -120,17 +117,16 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Save files to IncidentAttachments
+    // Save photos and signatures to IncidentAttachments on submission
     if (status === 'Submitted' && fileUrls.length > 0) {
-      const authUser = await base44.auth.me();
+      const uploadedBy = workerName || 'field-worker';
       for (let i = 0; i < fileUrls.length; i++) {
         await base44.asServiceRole.entities.IncidentAttachments.create({
           incident_id: incidentId,
           file_url: fileUrls[i],
           file_name: fileNames[i],
-          file_type: fileNames[i].toLowerCase().endsWith('.pdf') ? "Document" : 
-                     /\.(jpg|jpeg|png|gif|webp)$/i.test(fileNames[i]) ? "Photo" : "Document",
-          uploaded_by: authUser?.email || 'field-worker',
+          file_type: /\.(jpg|jpeg|png|gif|webp)$/i.test(fileNames[i]) ? "Photo" : "Document",
+          uploaded_by: uploadedBy,
         });
       }
     }

@@ -84,12 +84,48 @@ export default function MobileInspectionForm({ token, incident, asset, existingS
       });
       const resData = await res.json();
       if (resData?.error) { setError(resData.error); }
-      else if (status === 'Submitted') { localStorage.removeItem(storageKey); onSubmitted(); }
-      else { setOfflineSaved(true); setTimeout(() => setOfflineSaved(false), 3000); }
+      else if (status === 'Submitted') {
+        localStorage.removeItem(storageKey);
+        generateAndUploadPDF(resData.id, token).catch(err => console.error('PDF generation failed:', err));
+        onSubmitted();
+      } else { setOfflineSaved(true); setTimeout(() => setOfflineSaved(false), 3000); }
     } catch (err) {
       if (status === 'Draft') { setOfflineSaved(true); setTimeout(() => setOfflineSaved(false), 3000); }
       else { setError("Αποτυχία σύνδεσης. Τα δεδομένα αποθηκεύτηκαν τοπικά."); }
     } finally { setSaving(false); setSubmitting(false); }
+  };
+
+  const generateAndUploadPDF = async (submissionId, token) => {
+    const pdfRes = await fetch(`${window.location.origin}/functions/generateFieldWorkerFormPDF`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ submissionId }),
+    });
+    const pdfData = await pdfRes.json();
+    if (!pdfData?.html) return;
+    const html2pdf = (await import('html2pdf.js')).default;
+    const container = document.createElement('div');
+    container.innerHTML = pdfData.html;
+    container.style.position = 'fixed';
+    container.style.left = '-9999px';
+    container.style.top = '0';
+    document.body.appendChild(container);
+    const pdfBlob = await html2pdf().set({ margin: 0, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } }).from(container).outputPdf('blob');
+    document.body.removeChild(container);
+    const pdfFile = new File([pdfBlob], pdfData.fileName || 'form.pdf', { type: 'application/pdf' });
+    const formDataUpload = new FormData();
+    formDataUpload.append('file', pdfFile);
+    const uploadRes = await fetch(`${window.location.origin}/functions/uploadPublicFile`, { method: 'POST', body: formDataUpload });
+    const uploadData = await uploadRes.json();
+    const decoded = atob(token.replace(/-/g, '+').replace(/_/g, '/'));
+    const lastColon = decoded.lastIndexOf(':');
+    const secondLastColon = decoded.lastIndexOf(':', lastColon - 1);
+    const incidentId = decoded.substring(0, secondLastColon);
+    await fetch(`${window.location.origin}/functions/attachFieldWorkerFormPDF`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ incidentId, submissionId, pdfUrl: uploadData.file_url, pdfName: pdfData.fileName, token }),
+    });
   };
 
   return (

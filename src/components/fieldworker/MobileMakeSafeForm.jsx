@@ -100,7 +100,7 @@ export default function MobileMakeSafeForm({ token, incident, asset, existingSub
       await fetch(`${window.location.origin}/functions/attachFieldWorkerFormPDF`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ incidentId, submissionId, pdfUrl: uploadData.file_url, pdfName: pdfData.fileName }),
+        body: JSON.stringify({ incidentId, submissionId, pdfUrl: uploadData.file_url, pdfName: pdfData.fileName, token }),
       });
     } catch (err) { console.error('Failed to generate/upload PDF:', err); }
   };
