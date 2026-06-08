@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Upload, Loader2, CheckCircle2, XCircle, Search, Filter } from "lucide-react";
+import { Upload, Loader2, CheckCircle2, XCircle, Search, Filter, Trash2 } from "lucide-react";
 
 export default function FMPIContractCatalogueConfig() {
   const queryClient = useQueryClient();
@@ -47,6 +47,21 @@ export default function FMPIContractCatalogueConfig() {
     onError: (err) => {
       alert(`❌ Import failed: ${err.message}`);
       if (fileInputRef.current) fileInputRef.current.value = '';
+    },
+  });
+
+  const removeDuplicatesMutation = useMutation({
+    mutationFn: async () => {
+      const response = await base44.functions.invoke('removeDuplicateFMPIRecords', {});
+      if (response.data?.error) throw new Error(response.data.error);
+      return response.data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['fmpiCatalogue'] });
+      alert(`✅ ${data.message}\nUnique codes: ${data.uniqueCodes}`);
+    },
+    onError: (err) => {
+      alert(`❌ Failed to remove duplicates: ${err.message}`);
     },
   });
 
@@ -168,14 +183,28 @@ export default function FMPIContractCatalogueConfig() {
           </div>
         </div>
 
-        <input ref={fileInputRef} type="file" accept=".xlsx,.xls" onChange={handleFile} className="hidden" />
-        <Button
-          onClick={() => fileInputRef.current?.click()}
-          disabled={importMutation.isPending}
-          className="bg-indigo-600 hover:bg-indigo-700 gap-2 text-sm shadow-sm"
-        >
-          {importMutation.isPending ? <><Loader2 className="w-4 h-4 animate-spin" /> Importing...</> : <><Upload className="w-4 h-4" /> Select Excel File & Import</>}
-        </Button>
+        <div className="flex items-center gap-2">
+          <input ref={fileInputRef} type="file" accept=".xlsx,.xls" onChange={handleFile} className="hidden" />
+          <Button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={importMutation.isPending}
+            className="bg-indigo-600 hover:bg-indigo-700 gap-2 text-sm shadow-sm"
+          >
+            {importMutation.isPending ? <><Loader2 className="w-4 h-4 animate-spin" /> Importing...</> : <><Upload className="w-4 h-4" /> Select Excel File & Import</>}
+          </Button>
+          <Button
+            onClick={() => {
+              if (confirm('Remove duplicate FMPI catalogue records based on child_line_code? This will keep the most recently updated record.')) {
+                removeDuplicatesMutation.mutate();
+              }
+            }}
+            disabled={removeDuplicatesMutation.isPending}
+            variant="outline"
+            className="gap-2 text-sm border-red-200 text-red-700 hover:bg-red-50"
+          >
+            {removeDuplicatesMutation.isPending ? <><Loader2 className="w-4 h-4 animate-spin" /> Removing...</> : <><Trash2 className="w-4 h-4" /> Remove Duplicates</>}
+          </Button>
+        </div>
       </div>
 
       {/* Filters & Search */}

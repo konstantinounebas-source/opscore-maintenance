@@ -45,11 +45,20 @@ export default function ExtraChargeSelector({ charges = [], onAddCharge }) {
       };
     }
 
+    // Fixed FMPI categories
+    const categoryNames = {
+      '58': '58 - Civil Works (Footway)',
+      '59': '59 - Refurbishment (Factory)',
+      '60': '60 - Refurbishment (Site)',
+      '61': '61 - Civil Works (Existing)',
+      '62': '62 - Decommissioning',
+    };
+
     // Group by parent_fmpi_code (58, 59, 60, 61, 62)
     const grouped = filtered.reduce((acc, item) => {
-      const cat = item.parent_fmpi_code || 'Other';
-      const catName = item.parent_description || `FMPI ${cat}`;
-      if (!acc[cat]) acc[cat] = { name: catName, items: [] };
+      const cat = item.parent_fmpi_code;
+      if (!cat || !categoryNames[cat]) return acc; // Skip items without valid category
+      if (!acc[cat]) acc[cat] = { name: categoryNames[cat], items: [] };
       acc[cat].items.push(item);
       return acc;
     }, {});
