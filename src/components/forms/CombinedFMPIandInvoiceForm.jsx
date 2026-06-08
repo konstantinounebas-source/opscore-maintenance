@@ -193,14 +193,6 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
     return [];
   });
 
-  const extraChargesTotal = extraCharges.reduce((sum, ec) => {
-    const qty = parseFloat(ec.quantity) || 0;
-    const rate = parseFloat(ec.unit_rate) || 0;
-    return sum + (qty * rate);
-  }, 0);
-
-  const grandTotal = totalCost + extraChargesTotal;
-
   // ── OWR → CA lock ──
   const caAutoLocked = owrValue === "ΟΧΙ";
   useEffect(() => {
@@ -332,6 +324,16 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
     return up * qty;
   });
   const totalCost = rowAmounts.reduce((s, v) => s + v, 0);
+
+  // Calculate extra charges total
+  const extraChargesTotal = extraCharges.reduce((sum, ec) => {
+    const qty = parseFloat(ec.quantity) || 0;
+    const rate = parseFloat(ec.unit_rate) || 0;
+    return sum + (qty * rate);
+  }, 0);
+
+  // Grand total
+  const grandTotal = totalCost + extraChargesTotal;
 
   // ── Row helpers ──
   const updateRow = (idx, patch) => {
