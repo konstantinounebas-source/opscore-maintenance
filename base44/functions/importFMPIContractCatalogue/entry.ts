@@ -34,14 +34,31 @@ Deno.serve(async (req) => {
       '62': 'Decommissioning of existing shelters',
     };
 
-    // Extra charge rows from the "ΠΡΟΣΘΕΤΕΣ ΕΡΓΑΣΙΕΣ / MAKE SAFE WO" section
-    const EXTRA_CHARGE_DESCRIPTIONS = [
-      'εργατικά κόστη',
-      'χρήση απαιτούμενου οχήματος',
-    ];
+    // Extra Charge parent category
+    const EXTRA_CHARGE_PARENT = {
+      code: 'EC',
+      description: 'Extra Charges / Πρόσθετες Εργασίες',
+    };
 
     // Phrases that indicate "please specify" / open items requiring justification
     const SPECIFY_PHRASES = ['please specify', 'παρακαλώ προσδιορίστε'];
+
+    // Keywords that identify Extra Charge rows (labour, vehicle, emergency, etc.)
+    const EXTRA_CHARGE_KEYWORDS = [
+      'εργατικά κόστη',
+      'labour',
+      'χρήση απαιτούμενου οχήματος',
+      'vehicle usage',
+      'crane',
+      'cherry picker',
+      'special vehicle',
+      'emergency',
+      'make safe',
+      'traffic management',
+      'safety measures',
+      'other relevant expenses',
+      'άλλα συναφή έξοδα',
+    ];
 
     const catalogueItems = [];
     const extraChargeItems = [];
@@ -50,6 +67,7 @@ Deno.serve(async (req) => {
     let currentParentDesc = null;
     let childCounter = 0;
     let inExtraCharges = false;
+    let extraChargeCounter = 0;
 
     for (const row of rows) {
       if (!row || row.every(cell => cell === null || cell === '')) continue;
@@ -60,9 +78,21 @@ Deno.serve(async (req) => {
       const col3 = row[3] !== null ? row[3] : null;
 
       // Detect "ΠΡΟΣΘΕΤΕΣ ΕΡΓΑΣΙΕΣ / MAKE SAFE WO" section header
-      if (col0.includes('ΠΡΟΣΘΕΤΕΣ') || col0.includes('MAKE SAFE WO')) {
+      if (col0.includes('ΠΡΟΣΘΕΤΕΣ') || col0.includes('MAKE SAFE WO') || col0.includes('ΠΡΟΣΘΕΤΕΣ ΕΡΓΑΣΙΕΣ')) {
         inExtraCharges = true;
         // Handle first extra charge item on the same row
+        if (col1) {
+          extraChargeItems.push({
+            description: col1,
+            default_quantity: col2 ? Number(col2) : 1,
+          });
+        }
+        continue;
+      }
+
+      // Detect "Other relevant expenses" section header (also extra charges)
+      if (col0.toLowerCase().includes('other relevant') || col0.toLowerCase().includes('άλλα συναφή')) {
+        inExtraCharges = true;
         if (col1) {
           extraChargeItems.push({
             description: col1,
@@ -96,12 +126,16 @@ Deno.serve(async (req) => {
 
           const descLower = col1.toLowerCase();
           const isSpecify = SPECIFY_PHRASES.some(p => descLower.includes(p));
+          
+          // Check if this row should be classified as Extra Charge
+          const isExtraCharge = inExtraCharges || EXTRA_CHARGE_KEYWORDS.some(keyword => descLower.includes(keyword.toLowerCase()));
 
           const unitOfMeasure = (() => {
             if (/\/m2/.test(col1)) return 'm²';
             if (/linear metre/.test(col1)) return 'linear metre';
             if (/\/m\b/.test(col1)) return 'm';
             if (/hour/.test(descLower) || /εργατοώρ/.test(descLower)) return 'hour';
+            if (/vehicle|crane|cherry|emergency|traffic/.test(descLower)) return 'day';
             return 'item';
           })();
 
@@ -114,11 +148,11 @@ Deno.serve(async (req) => {
             unit_of_measure: unitOfMeasure,
             default_quantity: defQty,
             contract_unit_price: unitPrice,
-            item_category: isSpecify ? 'Specify Required' : 'Contractual',
+            item_category: isExtraCharge ? 'Extra Charge' : (isSpecify ? 'Specify Required' : 'Contractual'),
             allows_manual_quantity: true,
-            allows_manual_price_override: isSpecify,
-            requires_justification: isSpecify,
-            requires_approval: isSpecify,
+            allows_manual_price_override: isExtraCharge || isSpecify,
+            requires_justification: isExtraCharge || isSpecify,
+            requires_approval: isExtraCharge || isSpecify,
             is_active: true,
             contract_version: contractVer,
             effective_date: effectiveDate,
@@ -139,6 +173,57 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Convert extra charge items into FMPIContractCatalogue records with item_category = "Extra Charge"
+    const extraChargeCatalogueItems = extraChargeItems.map((ec, idx) => {
+      extraChargeCounter++;
+      const ecCode = `EC-${String(extraChargeCounter).padStart(3, '0')}`;
+      const descLower = ec.description.toLowerCase();
+      
+      // Determine category based on description keywords
+      let parentDesc = EXTRA_CHARGE_PARENT.description;
+      if (descLower.includes('εργατικά') || descLower.includes('labour') || descLower.includes('worker')) {
+        parentDesc = 'Labour / Εργατικά Κόστη';
+      } else if (descLower.includes('vehicle') || descLower.includes('χρήση οχήματος') || descLower.includes('transport')) {
+        parentDesc = 'Vehicle / Equipment / Μεταφορικά Μέσα';
+      } else if (descLower.includes('crane') || descLower.includes('cherry picker') || descLower.includes('special')) {
+        parentDesc = 'Special Equipment / Ειδικός Εξοπλισμός';
+      } else if (descLower.includes('emergency') || descLower.includes('make safe') || descLower.includes('κατεπείγον')) {
+        parentDesc = 'Emergency / Make Safe / Κατεπείγουσες Εργασίες';
+      } else if (descLower.includes('traffic') || descLower.includes('safety') || descLower.includes('κυκλοφορία')) {
+        parentDesc = 'Traffic Management / Safety Measures';
+      }
+
+      // Determine unit of measure
+      const unitOfMeasure = (() => {
+        if (descLower.includes('hour') || descLower.includes('ώρα')) return 'hour';
+        if (descLower.includes('day') || descLower.includes('ημέρα')) return 'day';
+        if (descLower.includes('vehicle') || descLower.includes('crane')) return 'day';
+        return 'item';
+      })();
+
+      return {
+        parent_fmpi_code: EXTRA_CHARGE_PARENT.code,
+        parent_description: parentDesc,
+        child_line_number: String(extraChargeCounter),
+        child_line_code: ecCode,
+        description: ec.description,
+        unit_of_measure: unitOfMeasure,
+        default_quantity: ec.default_quantity,
+        contract_unit_price: 0, // Extra charges typically have manual pricing
+        item_category: 'Extra Charge',
+        allows_manual_quantity: true,
+        allows_manual_price_override: true,
+        requires_justification: true,
+        requires_approval: true,
+        is_active: true,
+        contract_version: contractVer,
+        effective_date: effectiveDate,
+        expiry_date: expiryDate,
+        source_file_name: sourceFileName,
+        source_import_date: importDate,
+      };
+    });
+
     // Optionally clear existing catalogue
     if (replace_existing) {
       const existing = await base44.asServiceRole.entities.FMPIContractCatalogue.list();
@@ -147,11 +232,18 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Import catalogue items
+    // Import catalogue items (Contractual)
     let catalogueCreated = 0;
     for (const item of catalogueItems) {
       await base44.asServiceRole.entities.FMPIContractCatalogue.create(item);
       catalogueCreated++;
+    }
+
+    // Import extra charge catalogue items (item_category = "Extra Charge")
+    let extraChargeCatalogueCreated = 0;
+    for (const item of extraChargeCatalogueItems) {
+      await base44.asServiceRole.entities.FMPIContractCatalogue.create(item);
+      extraChargeCatalogueCreated++;
     }
 
     // Seed Extra Charge Types if they don't exist yet
@@ -177,8 +269,9 @@ Deno.serve(async (req) => {
 
     return Response.json({
       success: true,
-      message: `Imported ${catalogueCreated} FMPI Contract Catalogue items across ${Object.keys(PARENT_CATEGORIES).length} categories. Created ${ecCreated} new Extra Charge Types.`,
+      message: `Imported ${catalogueCreated} FMPI Contract Catalogue items and ${extraChargeCatalogueCreated} Extra Charge items. Created ${ecCreated} Extra Charge Types.`,
       catalogueCreated,
+      extraChargeCatalogueCreated,
       ecCreated,
       extraChargeRowsDetected: extraChargeItems.length,
     });
