@@ -16,14 +16,6 @@ export default function ExtraChargeSelector({ charges = [], onAddCharge }) {
   const [expanded, setExpanded] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Expand all categories by default when charges load or change
-  useEffect(() => {
-    if (charges.length > 0) {
-      const initialExpanded = Object.keys(groupedByCategory).reduce((acc, key) => ({ ...acc, [key]: true }), {});
-      setExpanded(initialExpanded);
-    }
-  }, [charges, groupedByCategory]);
-
   const groupedByCategory = useMemo(() => {
     const filtered = charges.filter(item => item.is_active !== false);
     
@@ -50,6 +42,14 @@ export default function ExtraChargeSelector({ charges = [], onAddCharge }) {
       return acc;
     }, {});
   }, [charges, searchQuery]);
+
+  // Expand all categories by default when charges load or change
+  useEffect(() => {
+    if (charges.length > 0) {
+      const initialExpanded = Object.keys(groupedByCategory).reduce((acc, key) => ({ ...acc, [key]: true }), {});
+      setExpanded(initialExpanded);
+    }
+  }, [charges, groupedByCategory]);
 
   const toggleCategory = (cat) => {
     setExpanded(prev => ({ ...prev, [cat]: !prev[cat] }));
