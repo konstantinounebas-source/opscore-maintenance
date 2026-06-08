@@ -14,7 +14,7 @@ import {
   Package
 } from "lucide-react";
 
-export default function FMPICalculator({ rows = [], onRowsChange, catalogue = [] }) {
+export default function FMPICalculator({ rows = [], onRowsChange, catalogue = [], childCatalog = [], typeTemplates = [], asset = null }) {
   const [expandedCategories, setExpandedCategories] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -46,7 +46,7 @@ export default function FMPICalculator({ rows = [], onRowsChange, catalogue = []
   }, [catalogue, searchQuery]);
 
   const toggleCategory = (cat) => {
-    setExpandedCategories(prev => ({ ...prev, [cat]: prev[cat] === undefined ? false : !prev[cat] }));
+    setExpandedCategories(prev => ({ ...prev, [cat]: prev[cat] === undefined ? true : !prev[cat] }));
   };
 
   const isExpanded = (cat) => expandedCategories[cat] !== false;
@@ -192,27 +192,74 @@ export default function FMPICalculator({ rows = [], onRowsChange, catalogue = []
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead className="bg-slate-100 text-slate-600">
-                <tr>
-                  <th className="px-3 py-2.5 text-left font-semibold" style={{ minWidth: 250 }}>Service Description</th>
-                  <th className="px-3 py-2.5 text-center font-semibold" style={{ minWidth: 100 }}>Quantity</th>
-                  <th className="px-3 py-2.5 text-center font-semibold" style={{ minWidth: 120 }}>Unit Price (€)</th>
-                  <th className="px-3 py-2.5 text-center font-semibold" style={{ minWidth: 120 }}>Total (€)</th>
-                  <th className="px-3 py-2.5 text-center font-semibold" style={{ minWidth: 80 }}>Confirm</th>
-                  <th className="px-3 py-2.5 text-left font-semibold" style={{ minWidth: 150 }}>Comments</th>
-                  <th className="px-2 py-2.5" style={{ width: 40 }}></th>
-                </tr>
+              <tr>
+              <th className="px-3 py-2.5 text-left font-semibold" style={{ minWidth: 200 }}>Child / Layout</th>
+              <th className="px-3 py-2.5 text-left font-semibold" style={{ minWidth: 250 }}>Service Description</th>
+              <th className="px-3 py-2.5 text-center font-semibold" style={{ minWidth: 100 }}>Quantity</th>
+              <th className="px-3 py-2.5 text-center font-semibold" style={{ minWidth: 120 }}>Unit Price (€)</th>
+              <th className="px-3 py-2.5 text-center font-semibold" style={{ minWidth: 120 }}>Total (€)</th>
+              <th className="px-3 py-2.5 text-center font-semibold" style={{ minWidth: 80 }}>Confirm</th>
+              <th className="px-3 py-2.5 text-left font-semibold" style={{ minWidth: 150 }}>Comments</th>
+              <th className="px-2 py-2.5" style={{ width: 40 }}></th>
+              </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {rows.map((row, idx) => {
-                  const amount = (parseFloat(row.qty) || 0) * (parseFloat(row.unit_price) || 0);
-                  return (
-                    <tr key={row._id} className={`transition-colors ${row.confirmed ? "bg-emerald-50/40" : "bg-white hover:bg-slate-50"}`}>
-                      <td className="px-3 py-2.5">
-                        <div className="flex flex-col">
-                          <span className="font-mono text-xs font-bold text-indigo-600">{row.catalog_code || '—'}</span>
-                          <span className="text-xs text-slate-600 mt-0.5">{row.description || 'Select item...'}</span>
-                        </div>
-                      </td>
+              {rows.map((row, idx) => {
+              const amount = (parseFloat(row.qty) || 0) * (parseFloat(row.unit_price) || 0);
+              // Filter child catalog to only items matching the asset's shelter type
+              const shelterType = asset?.shelter_type || asset?.installed_shelter_type || asset?.ordered_shelter_type;
+              const filteredChildCatalog = (() => {
+                if (!shelterType || !typeTemplates.length) return childCatalog;
+                const normalizeType = (s) => s?.trim().replace(/^type\s+/i, "").toUpperCase();
+                const normalized = normalizeType(shelterType);
+                const templateIds = new Set(
+                  typeTemplates
+                    .filter(t => normalizeType(t.shelter_type_code) === normalized && t.active !== false)
+                    .map(t => t.child_catalog_id)
+                );
+                if (!templateIds.size) return childCatalog;
+                return childCatalog.filter(c => templateIds.has(c.id));
+              })();
+
+              return (
+                <tr key={row._id} className={`transition-colors ${row.confirmed ? "bg-emerald-50/40" : "bg-white hover:bg-slate-50"}`}>
+                  <td className="px-3 py-2.5">
+                    <select
+                      value={row.child_catalog_id || ''}
+                      onChange={(e) => {
+                        const selectedChild = filteredChildCatalog.find(c => c.id === e.target.value);
+                        if (selectedChild) {
+                          onRowsChange(rows.map((r, i) => {
+                            if (i === idx) {
+                              return {
+                                ...r,
+                                child_catalog_id: selectedChild.id,
+                                catalog_id: selectedChild.id,
+                                description: selectedChild.display_name || selectedChild.child_name,
+                                catalog_code: selectedChild.child_code,
+                                unit_price: selectedChild.pricing_type === "Bundle" ? selectedChild.bundle_price : selectedChild.unit_price,
+                              };
+                            }
+                            return r;
+                          }));
+                        }
+                      }}
+                      className="text-xs h-8 w-full border border-slate-300 rounded-md px-2 py-1 bg-white"
+                    >
+                      <option value="">— Select Child —</option>
+                      {filteredChildCatalog.map(child => (
+                        <option key={child.id} value={child.id}>
+                          {child.display_name || child.child_name} ({child.child_code})
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <div className="flex flex-col">
+                      <span className="font-mono text-xs font-bold text-indigo-600">{row.catalog_code || '—'}</span>
+                      <span className="text-xs text-slate-600 mt-0.5">{row.description || 'Select item...'}</span>
+                    </div>
+                  </td>
                       <td className="px-3 py-2.5">
                         <Input
                           type="number"

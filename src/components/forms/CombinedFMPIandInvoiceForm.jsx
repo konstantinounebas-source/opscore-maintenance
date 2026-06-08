@@ -707,6 +707,9 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
                   rows={rows}
                   onRowsChange={setRows}
                   catalogue={fmpiCatalogue}
+                  childCatalog={activeCatalog}
+                  typeTemplates={typeTemplates}
+                  asset={asset}
                 />
               </Section>
 
