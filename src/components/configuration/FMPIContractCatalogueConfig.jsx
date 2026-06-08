@@ -4,71 +4,8 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Upload, ChevronDown, ChevronRight, ToggleLeft, ToggleRight, Loader2, RefreshCw, AlertTriangle } from "lucide-react";
-
-const PARENT_CATEGORIES = [
-  { code: "58", label: "Civil Works for Extended Footway Repair or Construction" },
-  { code: "59", label: "Refurbishment of existing shelters in factory" },
-  { code: "60", label: "Refurbishment of existing shelters on site" },
-  { code: "61", label: "Civil Works for Existing Bus Shelters" },
-  { code: "62", label: "Decommissioning of existing shelters" },
-];
-
-function CategorySection({ category, items, onToggle }) {
-  const [open, setOpen] = useState(false);
-  const catItems = items.filter(i => i.parent_fmpi_code === category.code)
-    .sort((a, b) => Number(a.child_line_number || 0) - Number(b.child_line_number || 0));
-
-  return (
-    <div className="border border-slate-200 rounded-xl overflow-hidden">
-      <button
-        className="w-full flex items-center gap-3 px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors text-left"
-        onClick={() => setOpen(o => !o)}
-      >
-        {open ? <ChevronDown className="w-4 h-4 text-slate-500 shrink-0" /> : <ChevronRight className="w-4 h-4 text-slate-500 shrink-0" />}
-        <span className="font-bold text-slate-800 text-sm">{category.code}</span>
-        <span className="text-sm text-slate-600 flex-1">{category.label}</span>
-        <Badge variant="outline" className="text-xs">{catItems.length} items</Badge>
-        <Badge className={catItems.length > 0 ? "bg-emerald-100 text-emerald-700 text-xs" : "bg-amber-100 text-amber-700 text-xs"}>
-          {catItems.length > 0 ? "Loaded" : "Empty"}
-        </Badge>
-      </button>
-
-      {open && (
-        <div className="divide-y divide-slate-100">
-          {catItems.length === 0 && (
-            <div className="px-4 py-4 text-sm text-slate-400 text-center">No items imported yet. Use the import button above.</div>
-          )}
-          {catItems.map(item => (
-            <div key={item.id} className={`flex items-start gap-3 px-4 py-3 ${!item.is_active ? 'opacity-50 bg-slate-50' : 'bg-white'}`}>
-              <span className="font-mono text-xs text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded mt-0.5 shrink-0">{item.child_line_code}</span>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm text-slate-800">{item.description}</p>
-                <div className="flex items-center gap-3 mt-1 flex-wrap">
-                  <span className="text-xs text-slate-500">UoM: <strong>{item.unit_of_measure || '—'}</strong></span>
-                  <span className="text-xs text-slate-500">Def. Qty: <strong>{item.default_quantity ?? '—'}</strong></span>
-                  <span className="text-xs text-slate-500">Unit Price: <strong>€{item.contract_unit_price ?? '—'}</strong></span>
-                  <span className="text-xs text-slate-500">Version: <strong>{item.contract_version || '—'}</strong></span>
-                  {item.item_category === 'Specify Required' && (
-                    <Badge className="bg-amber-100 text-amber-700 text-xs gap-1"><AlertTriangle className="w-3 h-3" /> Specify Required</Badge>
-                  )}
-                  {item.requires_approval && (
-                    <Badge className="bg-red-50 text-red-600 text-xs">Requires Approval</Badge>
-                  )}
-                </div>
-              </div>
-              <button onClick={() => onToggle(item)} className="shrink-0 mt-0.5 text-slate-400 hover:text-slate-700">
-                {item.is_active
-                  ? <ToggleRight className="w-5 h-5 text-emerald-500" />
-                  : <ToggleLeft className="w-5 h-5 text-slate-400" />}
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
+import { Upload, Loader2, CheckCircle2, XCircle } from "lucide-react";
+import DataTable from "@/components/shared/DataTable";
 
 export default function FMPIContractCatalogueConfig() {
   const queryClient = useQueryClient();
@@ -79,10 +16,11 @@ export default function FMPIContractCatalogueConfig() {
     expiry_date: '2027-12-31',
     replace_existing: false,
   });
+  const [selectedCategory, setSelectedCategory] = useState('all');
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ['fmpiCatalogue'],
-    queryFn: () => base44.entities.FMPIContractCatalogue.list('-created_date', 500),
+    queryFn: () => base44.entities.FMPIContractCatalogue.list('-child_line_code', 500),
   });
 
   const toggleMutation = useMutation({
@@ -125,22 +63,75 @@ export default function FMPIContractCatalogueConfig() {
   const totalItems = items.length;
   const activeItems = items.filter(i => i.is_active).length;
 
+  const filteredItems = selectedCategory === 'all' 
+    ? items 
+    : items.filter(i => i.parent_fmpi_code === selectedCategory);
+
+  const columns = [
+    { key: 'child_line_code', label: 'Code', render: (item) => (
+      <span className="font-mono text-xs font-bold text-indigo-600">{item.child_line_code}</span>
+    )},
+    { key: 'description', label: 'Description', render: (item) => (
+      <div className="max-w-md">
+        <p className="text-sm text-slate-800">{item.description}</p>
+        <p className="text-xs text-slate-500 mt-0.5">{item.parent_fmpi_code} - {item.parent_description}</p>
+      </div>
+    )},
+    { key: 'unit_of_measure', label: 'Unit', render: (item) => (
+      <span className="text-xs text-slate-600">{item.unit_of_measure || '—'}</span>
+    )},
+    { key: 'default_quantity', label: 'Def. Qty', render: (item) => (
+      <span className="text-xs text-slate-600">{item.default_quantity ?? '—'}</span>
+    )},
+    { key: 'contract_unit_price', label: 'Unit Price (€)', render: (item) => (
+      <span className="text-xs font-semibold text-slate-700">€{(item.contract_unit_price ?? 0).toFixed(2)}</span>
+    )},
+    { key: 'item_category', label: 'Category', render: (item) => (
+      <Badge variant="outline" className="text-xs">
+        {item.item_category || 'Contractual'}
+      </Badge>
+    )},
+    { key: 'is_active', label: 'Status', render: (item) => (
+      <Badge className={item.is_active ? "bg-emerald-100 text-emerald-700 text-xs gap-1" : "bg-slate-100 text-slate-600 text-xs gap-1"}>
+        {item.is_active ? <><CheckCircle2 className="w-3 h-3" /> Active</> : <><XCircle className="w-3 h-3" /> Inactive</>}
+      </Badge>
+    )},
+  ];
+
+  const getActions = (item) => [
+    {
+      label: item.is_active ? 'Deactivate' : 'Activate',
+      onClick: () => toggleMutation.mutate({ id: item.id, is_active: !item.is_active }),
+      variant: item.is_active ? 'outline' : 'default',
+      size: 'sm',
+    },
+  ];
+
+  const categories = [
+    { value: 'all', label: 'All Categories' },
+    { value: '58', label: '58 - Civil Works (Footway)' },
+    { value: '59', label: '59 - Refurbishment (Factory)' },
+    { value: '60', label: '60 - Refurbishment (Site)' },
+    { value: '61', label: '61 - Civil Works (Existing)' },
+    { value: '62', label: '62 - Decommissioning' },
+  ];
+
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* Import Panel */}
-      <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-5">
-        <div className="flex items-start justify-between gap-4 mb-4">
+      <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4">
+        <div className="flex items-start justify-between gap-4 mb-3">
           <div>
             <h3 className="text-sm font-bold text-indigo-900">Import from Excel</h3>
-            <p className="text-xs text-indigo-600 mt-0.5">Upload the Services Excel file to populate the FMPI Contract Catalogue. Parent categories 58–62 will be detected automatically.</p>
+            <p className="text-xs text-indigo-600 mt-0.5">Upload Services Excel to populate FMPI Contract Catalogue</p>
           </div>
           <div className="flex items-center gap-2 text-xs text-indigo-700 shrink-0">
-            <span className="bg-white rounded px-2 py-1 border border-indigo-200">{totalItems} items</span>
-            <span className="bg-white rounded px-2 py-1 border border-indigo-200">{activeItems} active</span>
+            <span className="bg-white rounded px-2 py-1 border border-indigo-200 font-semibold">{totalItems} total</span>
+            <span className="bg-emerald-50 rounded px-2 py-1 border border-emerald-200 text-emerald-700 font-semibold">{activeItems} active</span>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
           <div>
             <label className="text-xs font-semibold text-indigo-800 mb-1 block">Contract Version</label>
             <Input
@@ -166,7 +157,7 @@ export default function FMPIContractCatalogueConfig() {
               <input type="checkbox" checked={importOptions.replace_existing}
                 onChange={e => setImportOptions(o => ({ ...o, replace_existing: e.target.checked }))}
                 className="rounded" />
-              <span className="text-xs font-semibold text-indigo-800">Replace existing</span>
+              <span className="text-xs font-semibold text-indigo-800">Replace all</span>
             </label>
           </div>
         </div>
@@ -177,26 +168,40 @@ export default function FMPIContractCatalogueConfig() {
           disabled={importMutation.isPending}
           className="bg-indigo-600 hover:bg-indigo-700 gap-2 text-sm"
         >
-          {importMutation.isPending ? <><Loader2 className="w-4 h-4 animate-spin" /> Importing...</> : <><Upload className="w-4 h-4" /> Upload & Import Services Excel</>}
+          {importMutation.isPending ? <><Loader2 className="w-4 h-4 animate-spin" /> Importing...</> : <><Upload className="w-4 h-4" /> Upload & Import</>}
         </Button>
       </div>
 
-      {/* Catalogue Tree */}
+      {/* Filters */}
+      <div className="flex items-center gap-2">
+        <span className="text-xs font-semibold text-slate-600">Filter:</span>
+        <div className="flex gap-1 flex-wrap">
+          {categories.map(cat => (
+            <Button
+              key={cat.value}
+              variant={selectedCategory === cat.value ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setSelectedCategory(cat.value)}
+              className={`text-xs ${selectedCategory === cat.value ? 'bg-indigo-600 hover:bg-indigo-700' : ''}`}
+            >
+              {cat.label}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      {/* Data Table */}
       {isLoading ? (
         <div className="flex items-center justify-center py-10 text-slate-400 gap-2">
           <Loader2 className="w-4 h-4 animate-spin" /> Loading catalogue...
         </div>
       ) : (
-        <div className="space-y-3">
-          {PARENT_CATEGORIES.map(cat => (
-            <CategorySection
-              key={cat.code}
-              category={cat}
-              items={items}
-              onToggle={(item) => toggleMutation.mutate({ id: item.id, is_active: !item.is_active })}
-            />
-          ))}
-        </div>
+        <DataTable
+          columns={columns}
+          data={filteredItems}
+          actions={getActions}
+          emptyMessage="No catalogue items found. Import the Services Excel file to populate."
+        />
       )}
     </div>
   );
