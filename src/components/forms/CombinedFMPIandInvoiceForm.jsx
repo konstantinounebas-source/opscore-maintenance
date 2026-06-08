@@ -172,11 +172,6 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
     queryFn: () => base44.entities.FMPIContractCatalogue.list('-child_line_code', 500),
   });
 
-  // ── FMPI Extra Charges from Contract Catalogue (item_category = "Extra Charge") ──
-  const extraChargeCatalog = useMemo(() => {
-    return fmpiCatalogue.filter(c => c.item_category === "Extra Charge" && c.is_active !== false);
-  }, [fmpiCatalogue]);
-
   // ── Tab state ──
   const [activeTab, setActiveTab] = useState("fmpi");
 
@@ -720,7 +715,7 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
                   }}
                 />
                 <ExtraChargeSelector
-                  charges={extraChargeCatalog}
+                  charges={fmpiCatalogue}
                   onAddCharge={(charge) => {
                     setRows(prev => [...prev, {
                       ...emptyRow('Extra Charge'),
