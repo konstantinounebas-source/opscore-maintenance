@@ -8,7 +8,6 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { base44 } from '@/api/base44Client';
 
 import AppLayout from '@/components/layout/AppLayout';
-import Dashboard from '@/pages/Dashboard.jsx';
 import Assets from '@/pages/Assets';
 import AssetDetail from '@/pages/AssetDetail';
 import Childs from '@/pages/Childs';
@@ -80,9 +79,8 @@ const AuthenticatedApp = () => {
 
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/Dashboard" replace />} />
+      <Route path="/" element={<Navigate to="/Assets" replace />} />
       <Route element={<AppLayout />}>
-        <Route path="/Dashboard" element={<Dashboard />} />
         <Route path="/Assets" element={<Assets />} />
         <Route path="/AssetDetail" element={<AssetDetail />} />
         <Route path="/Childs" element={<Childs />} />
