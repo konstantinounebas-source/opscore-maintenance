@@ -8,12 +8,12 @@ import { Trash2, Plus, Euro } from "lucide-react";
 export default function ExtraChargesSection({ 
   extraCharges, 
   setExtraCharges, 
-  activeExtraChargeTypes,
+  extraChargeCatalogItems,
   totalCost 
 }) {
   const emptyExtraCharge = () => ({
     _id: Math.random().toString(36).slice(2),
-    extra_charge_type_id: "",
+    catalog_id: "",
     quantity: 1,
     unit_rate: "",
     justification: "",
@@ -50,7 +50,7 @@ export default function ExtraChargesSection({
           </thead>
           <tbody className="divide-y divide-amber-100">
             {extraCharges.map((ec, idx) => {
-              const ecType = activeExtraChargeTypes.find(t => t.id === ec.extra_charge_type_id);
+              const ecItem = extraChargeCatalogItems.find(t => t.id === ec.catalog_id);
               const amount = (parseFloat(ec.quantity) || 0) * (parseFloat(ec.unit_rate) || 0);
               return (
                 <tr
@@ -58,22 +58,22 @@ export default function ExtraChargesSection({
                   className="text-sm transition-colors bg-white hover:bg-amber-50/30"
                 >
                   <td className="px-2 py-1.5">
-                    <Select value={ec.extra_charge_type_id || "_none"} onValueChange={v => updateExtraCharge(idx, { extra_charge_type_id: v === "_none" ? "" : v })}>
-                      <SelectTrigger className={`text-xs h-8 ${!ec.extra_charge_type_id ? "border-amber-300" : ""}`}>
+                    <Select value={ec.catalog_id || "_none"} onValueChange={v => updateExtraCharge(idx, { catalog_id: v === "_none" ? "" : v })}>
+                      <SelectTrigger className={`text-xs h-8 ${!ec.catalog_id ? "border-amber-300" : ""}`}>
                         <SelectValue placeholder="Επιλογή..." />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="_none">— Επιλογή —</SelectItem>
-                        {activeExtraChargeTypes.map(t => (
+                        {extraChargeCatalogItems.map(t => (
                           <SelectItem key={t.id} value={t.id}>
-                            <span className="font-mono text-xs mr-1">{t.extra_charge_code}</span>
-                            {t.display_name}
+                            <span className="font-mono text-xs mr-1">{t.child_line_code}</span>
+                            {t.description}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-                    {ecType?.description && (
-                      <p className="text-xs text-slate-400 mt-0.5 pl-1 truncate">{ecType.description}</p>
+                    {ecItem?.notes && (
+                      <p className="text-xs text-slate-400 mt-0.5 pl-1 truncate">{ecItem.notes}</p>
                     )}
                   </td>
                   <td className="px-2 py-1.5">
@@ -127,6 +127,12 @@ export default function ExtraChargesSection({
           </tbody>
         </table>
       </div>
+
+      {extraCharges.length === 0 && (
+        <div className="text-center py-4 text-sm text-slate-400 italic">
+          No extra charges added. Click the button below to add from the FMPI Contract Catalogue.
+        </div>
+      )}
 
       <div className="flex items-center justify-between">
         <Button size="sm" variant="outline" onClick={addExtraCharge} className="gap-1.5 text-xs h-8">

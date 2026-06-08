@@ -12,7 +12,6 @@ import ChildLogicConfig from "@/components/configuration/ChildLogicConfig";
 import FormsConfig from "@/components/configuration/FormsConfig";
 import PlanningTypesConfig from "@/components/configuration/PlanningTypesConfig";
 import FMPIContractCatalogueConfig from "@/components/configuration/FMPIContractCatalogueConfig";
-import FMPIExtraChargesConfig from "@/components/configuration/FMPIExtraChargesConfig";
 
 const INCIDENT_LIST_TYPES = [
   { key: "incident_person", label: "Confirmed By / Persons" },
@@ -252,18 +251,6 @@ export default function Configuration() {
             Import from the Services Excel file to populate. Contract versions are preserved for audit traceability.
           </p>
           <FMPIContractCatalogueConfig />
-        </div>
-
-        <div className="bg-white rounded-xl border-2 border-orange-200 p-6">
-          <div className="flex items-center gap-3 mb-1">
-            <span className="bg-orange-500 text-white text-xs font-bold px-2 py-0.5 rounded">EC</span>
-            <h2 className="text-sm font-semibold text-slate-900">FMPI Extra Charge Types</h2>
-          </div>
-          <p className="text-xs text-slate-500 mb-6">
-            Configure controlled extra charge codes (EC-001 to EC-006) for labour, vehicles, emergency response, and other approved additional costs.
-            All extra charges require justification and approval before a Pricing Order can be submitted.
-          </p>
-          <FMPIExtraChargesConfig />
         </div>
 
         {/* ═══════════════════════════════════════════════════════════ */}
