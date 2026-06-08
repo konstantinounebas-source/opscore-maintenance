@@ -172,12 +172,10 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
     queryFn: () => base44.entities.FMPIContractCatalogue.list('-child_line_code', 500),
   });
 
-  // ── FMPI Extra Charge Types ──
-  const { data: extraChargeTypes = [] } = useQuery({
-    queryKey: ["extraChargeTypes"],
-    queryFn: () => base44.entities.FMPIExtraChargeTypes.list('-sort_order', 100),
-  });
-  const activeExtraCharges = useMemo(() => extraChargeTypes.filter(c => c.is_active !== false), [extraChargeTypes]);
+  // ── FMPI Extra Charges from Contract Catalogue (item_category = "Extra Charge") ──
+  const extraChargeCatalog = useMemo(() => {
+    return fmpiCatalogue.filter(c => c.item_category === "Extra Charge" && c.is_active !== false);
+  }, [fmpiCatalogue]);
 
   // ── Tab state ──
   const [activeTab, setActiveTab] = useState("fmpi");
@@ -722,14 +720,14 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
                   }}
                 />
                 <ExtraChargeSelector
-                  charges={activeExtraCharges}
+                  charges={extraChargeCatalog}
                   onAddCharge={(charge) => {
                     setRows(prev => [...prev, {
                       ...emptyRow('Extra Charge'),
                       catalog_id: charge.id,
-                      catalog_code: charge.extra_charge_code,
-                      description: charge.display_name,
-                      unit_price: charge.default_rate || 0,
+                      catalog_code: charge.child_line_code,
+                      description: charge.description,
+                      unit_price: charge.contract_unit_price || 0,
                     }]);
                   }}
                 />

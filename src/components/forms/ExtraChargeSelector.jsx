@@ -25,18 +25,19 @@ export default function ExtraChargeSelector({ charges = [], onAddCharge }) {
         search: {
           name: `Search: "${searchQuery}"`,
           items: filtered.filter(item => 
-            item.display_name?.toLowerCase().includes(query) ||
-            item.extra_charge_code?.toLowerCase().includes(query) ||
-            item.description?.toLowerCase().includes(query)
+            item.description?.toLowerCase().includes(query) ||
+            item.child_line_code?.toLowerCase().includes(query) ||
+            item.parent_fmpi_code?.toLowerCase().includes(query)
           )
         }
       };
     }
 
-    // Group by default_unit (type)
+    // Group by parent_fmpi_code (58, 59, 60, 61, 62)
     return filtered.reduce((acc, item) => {
-      const cat = item.default_unit || 'Other';
-      if (!acc[cat]) acc[cat] = { name: cat, items: [] };
+      const cat = item.parent_fmpi_code || 'Other';
+      const catName = item.parent_description || `FMPI ${cat}`;
+      if (!acc[cat]) acc[cat] = { name: catName, items: [] };
       acc[cat].items.push(item);
       return acc;
     }, {});
@@ -89,13 +90,14 @@ export default function ExtraChargeSelector({ charges = [], onAddCharge }) {
                     <div key={charge.id} className="px-3 py-2 flex items-center justify-between hover:bg-amber-50">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-0.5">
-                          <span className="font-mono text-xs font-bold text-amber-600">{charge.extra_charge_code}</span>
+                          <span className="font-mono text-xs font-bold text-amber-600">{charge.child_line_code}</span>
                         </div>
-                        <p className="text-xs text-slate-700 truncate">{charge.display_name}</p>
-                        {charge.description && <p className="text-xs text-slate-500 line-clamp-1">{charge.description}</p>}
+                        <p className="text-xs text-slate-700 truncate">{charge.description}</p>
+                        {charge.notes && <p className="text-xs text-slate-500 line-clamp-1">{charge.notes}</p>}
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className="text-xs text-slate-500">{charge.default_unit}</span>
+                        <span className="text-xs font-semibold text-slate-600">€{charge.contract_unit_price}</span>
+                        <span className="text-xs text-slate-500">/{charge.unit_of_measure}</span>
                         <Button
                           size="sm"
                           variant="outline"
