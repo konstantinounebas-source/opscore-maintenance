@@ -2,63 +2,78 @@ import React, { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   Plus, 
   Trash2, 
-  Euro, 
-  ChevronRight, 
-  ChevronDown, 
   Search,
-  Package
+  Package,
+  Wrench,
+  Euro,
+  ChevronRight,
+  ChevronDown
 } from "lucide-react";
 
 export default function FMPICalculator({ rows = [], onRowsChange, catalogue = [], childCatalog = [], typeTemplates = [], asset = null }) {
   const [expandedCategories, setExpandedCategories] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState('contractual'); // 'contractual' or 'extra'
 
-  // Group catalogue by parent category (only active items)
-  const groupedByCategory = useMemo(() => {
-    const filtered = catalogue.filter(item => item.is_active !== false);
+  // Filter child catalog to only items matching the asset's shelter type
+  const filteredChildCatalog = useMemo(() => {
+    const shelterType = asset?.shelter_type || asset?.installed_shelter_type || asset?.ordered_shelter_type;
+    if (!shelterType || !typeTemplates.length) return childCatalog.filter(c => c.active !== false);
     
+    const normalizeType = (s) => s?.trim().replace(/^type\s+/i, "").toUpperCase();
+    const normalized = normalizeType(shelterType);
+    const templateIds = new Set(
+      typeTemplates
+        .filter(t => normalizeType(t.shelter_type_code) === normalized && t.active !== false)
+        .map(t => t.child_catalog_id)
+    );
+    if (!templateIds.size) return childCatalog.filter(c => c.active !== false);
+    return childCatalog.filter(c => templateIds.has(c.id));
+  }, [childCatalog, typeTemplates, asset]);
+
+  // Group child catalog by category
+  const groupedChildCatalog = useMemo(() => {
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       return {
         search: {
-          name: `Search Results: "${searchQuery}"`,
-          items: filtered.filter(item => 
-            item.description?.toLowerCase().includes(query) ||
-            item.child_line_code?.toLowerCase().includes(query) ||
-            item.parent_description?.toLowerCase().includes(query)
+          name: `Search: "${searchQuery}"`,
+          items: filteredChildCatalog.filter(item => 
+            item.child_name?.toLowerCase().includes(query) ||
+            item.display_name?.toLowerCase().includes(query) ||
+            item.child_code?.toLowerCase().includes(query) ||
+            item.child_category?.toLowerCase().includes(query)
           )
         }
       };
     }
 
-    return filtered.reduce((acc, item) => {
-      const cat = item.parent_fmpi_code || 'Other';
-      const catName = `${cat} - ${item.parent_description || 'Other Services'}`;
-      if (!acc[cat]) acc[cat] = { name: catName, items: [] };
+    return filteredChildCatalog.reduce((acc, item) => {
+      const cat = item.child_category || 'Other';
+      if (!acc[cat]) acc[cat] = { name: cat, items: [] };
       acc[cat].items.push(item);
       return acc;
     }, {});
-  }, [catalogue, searchQuery]);
+  }, [filteredChildCatalog, searchQuery]);
 
   const toggleCategory = (cat) => {
-    setExpandedCategories(prev => ({ ...prev, [cat]: prev[cat] === undefined ? true : !prev[cat] }));
+    setExpandedCategories(prev => ({ ...prev, [cat]: !prev[cat] }));
   };
 
-  const isExpanded = (cat) => expandedCategories[cat] !== false;
-
-  const addRow = (catalogueItem) => {
+  const addChildToRows = (child) => {
     const newRow = {
       _id: Date.now().toString(),
-      catalog_id: catalogueItem.id,
-      catalog_code: catalogueItem.child_line_code,
-      description: catalogueItem.description,
-      qty: catalogueItem.default_quantity || 1,
-      unit_price: catalogueItem.contract_unit_price || 0,
+      item_type: 'Child Component',
+      child_catalog_id: child.id,
+      catalog_id: child.id,
+      catalog_code: child.child_code,
+      description: child.display_name || child.child_name,
+      qty: 1,
+      unit_price: child.pricing_type === "Bundle" ? child.bundle_price : child.unit_price,
       confirmed: false,
       comments: '',
     };
@@ -66,8 +81,7 @@ export default function FMPICalculator({ rows = [], onRowsChange, catalogue = []
   };
 
   const removeRow = (index) => {
-    const newRows = rows.filter((_, i) => i !== index);
-    onRowsChange(newRows);
+    onRowsChange(rows.filter((_, i) => i !== index));
   };
 
   const updateRow = (index, updates) => {
@@ -89,19 +103,18 @@ export default function FMPICalculator({ rows = [], onRowsChange, catalogue = []
     return Number(n).toFixed(2);
   };
 
-  return (
-    <div className="space-y-4">
-      {/* Search Bar */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-        <Input
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search services by code, description..."
-          className="pl-9 h-10 text-sm"
-        />
-      </div>
+  const getItemTypeBadge = (row) => {
+    if (row.item_type === 'Child Component') {
+      return <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-xs">Child</Badge>;
+    }
+    if (row.item_type === 'Extra Charge') {
+      return <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-xs">Extra</Badge>;
+    }
+    return <Badge className="bg-indigo-100 text-indigo-700 border-indigo-200 text-xs">Contract</Badge>;
+  };
 
+  return (
+    <div className="space-y-6">
       {/* Selected Items Summary */}
       {rows.length > 0 && (
         <Card className="bg-gradient-to-r from-indigo-50 to-blue-50 border-indigo-200">
@@ -112,12 +125,12 @@ export default function FMPICalculator({ rows = [], onRowsChange, catalogue = []
                   <Package className="w-5 h-5 text-indigo-600" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-indigo-900">{rows.length} work item{rows.length !== 1 ? 's' : ''} selected</p>
-                  <p className="text-xs text-indigo-600">Based on FMPI Contract Catalogue</p>
+                  <p className="text-sm font-semibold text-indigo-900">{rows.length} item{rows.length !== 1 ? 's' : ''} selected</p>
+                  <p className="text-xs text-indigo-600">Child components + Extra charges</p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-xs text-indigo-600 font-medium">Total Contract Value</p>
+                <p className="text-xs text-indigo-600 font-medium">Total Value</p>
                 <p className="text-2xl font-bold text-indigo-900">€{totalCost.toFixed(2)}</p>
               </div>
             </div>
@@ -125,179 +138,173 @@ export default function FMPICalculator({ rows = [], onRowsChange, catalogue = []
         </Card>
       )}
 
-      {/* Category Groups */}
-      <div className="space-y-3">
-        {Object.entries(groupedByCategory).map(([catKey, category]) => (
-          <div key={catKey} className="border rounded-lg overflow-hidden bg-white">
-            {/* Category Header */}
-            <button
-              onClick={() => toggleCategory(catKey)}
-              className="w-full px-4 py-3 bg-slate-50 border-b flex items-center justify-between hover:bg-slate-100 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                {isExpanded(catKey) ? (
-                  <ChevronDown className="w-4 h-4 text-slate-500" />
-                ) : (
-                  <ChevronRight className="w-4 h-4 text-slate-500" />
-                )}
-                <span className="text-sm font-semibold text-slate-700">{category.name}</span>
-                <Badge variant="outline" className="text-xs">{category.items.length} items</Badge>
+      {/* Add Items Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Child Components */}
+        <Card className="border-emerald-200 bg-emerald-50/30">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Wrench className="w-5 h-5 text-emerald-600" />
+                <div>
+                  <CardTitle className="text-base font-semibold text-emerald-900">Add Child Components</CardTitle>
+                  <p className="text-xs text-emerald-600 mt-0.5">Physical components from catalogue</p>
+                </div>
               </div>
-              <span className="text-xs text-slate-500">Click to {isExpanded(catKey) ? 'collapse' : 'expand'}</span>
-            </button>
+              <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
+                {filteredChildCatalog.length} available
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search components..."
+                className="pl-9 h-9 text-sm bg-white"
+              />
+            </div>
 
-            {/* Category Items */}
-            {isExpanded(catKey) && (
-              <div className="divide-y divide-slate-100">
-                {category.items.map(item => (
-                  <div
-                    key={item.id}
-                    className="px-4 py-3 flex items-center justify-between gap-4 hover:bg-slate-50 transition-colors"
+            <div className="space-y-2 max-h-80 overflow-y-auto">
+              {Object.entries(groupedChildCatalog).map(([catKey, category]) => (
+                <div key={catKey} className="border rounded-lg bg-white">
+                  <button
+                    onClick={() => toggleCategory(catKey)}
+                    className="w-full px-3 py-2 flex items-center justify-between hover:bg-slate-50"
                   >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-mono text-xs font-bold text-indigo-600">{item.child_line_code}</span>
-                        <Badge variant="outline" className="text-xs h-5">{item.unit_of_measure || 'unit'}</Badge>
-                      </div>
-                      <p className="text-sm text-slate-800 truncate">{item.description}</p>
+                    <div className="flex items-center gap-2">
+                      {expandedCategories[catKey] ? (
+                        <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
+                      ) : (
+                        <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
+                      )}
+                      <span className="text-sm font-semibold text-slate-700">{category.name}</span>
+                      <Badge variant="outline" className="text-xs">{category.items.length}</Badge>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <p className="text-xs text-slate-500">Contract unit price</p>
-                        <p className="text-sm font-bold text-slate-700">€{(item.contract_unit_price ?? 0).toFixed(2)}</p>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => addRow(item)}
-                        className="gap-1.5 text-xs h-8"
-                      >
-                        <Plus className="w-3.5 h-3.5" /> Add
-                      </Button>
+                  </button>
+                  {expandedCategories[catKey] && (
+                    <div className="divide-y border-t">
+                      {category.items.map(item => (
+                        <div
+                          key={item.id}
+                          className="px-3 py-2 flex items-center justify-between gap-3 hover:bg-slate-50"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <span className="font-mono text-xs font-bold text-emerald-600">{item.child_code}</span>
+                              <Badge variant="outline" className="text-xs h-4">{item.child_type || 'item'}</Badge>
+                            </div>
+                            <p className="text-xs text-slate-700 truncate">{item.display_name || item.child_name}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="text-right">
+                              <p className="text-xs font-semibold text-slate-700">€{fmtNum(item.pricing_type === "Bundle" ? item.bundle_price : item.unit_price)}</p>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => addChildToRows(item)}
+                              className="h-7 text-xs gap-1"
+                            >
+                              <Plus className="w-3 h-3" /> Add
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  </div>
-                ))}
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Extra Charges */}
+        <Card className="border-amber-200 bg-amber-50/30">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Euro className="w-5 h-5 text-amber-600" />
+                <div>
+                  <CardTitle className="text-base font-semibold text-amber-900">Add Extra Charges</CardTitle>
+                  <p className="text-xs text-amber-600 mt-0.5">Additional charges and fees</p>
+                </div>
               </div>
-            )}
-          </div>
-        ))}
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="text-center py-8 text-slate-400">
+              <Package className="w-8 h-8 mx-auto mb-2 opacity-40" />
+              <p className="text-xs">Extra charges coming soon</p>
+              <p className="text-xs mt-1">Configure in FMPIExtraChargeTypes entity</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Selected Rows Table */}
+      {/* Pricing Table */}
       {rows.length > 0 && (
-        <div className="border rounded-lg overflow-hidden bg-white mt-6">
+        <div className="border rounded-lg overflow-hidden bg-white">
           <div className="px-4 py-3 bg-slate-50 border-b">
-            <h3 className="text-sm font-semibold text-slate-700">Selected Work Items</h3>
+            <h3 className="text-sm font-semibold text-slate-700">Selected Items</h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead className="bg-slate-100 text-slate-600">
-              <tr>
-              <th className="px-3 py-2.5 text-left font-semibold" style={{ minWidth: 200 }}>Child / Layout</th>
-              <th className="px-3 py-2.5 text-left font-semibold" style={{ minWidth: 250 }}>Service Description</th>
-              <th className="px-3 py-2.5 text-center font-semibold" style={{ minWidth: 100 }}>Quantity</th>
-              <th className="px-3 py-2.5 text-center font-semibold" style={{ minWidth: 120 }}>Unit Price (€)</th>
-              <th className="px-3 py-2.5 text-center font-semibold" style={{ minWidth: 120 }}>Total (€)</th>
-              <th className="px-3 py-2.5 text-center font-semibold" style={{ minWidth: 80 }}>Confirm</th>
-              <th className="px-3 py-2.5 text-left font-semibold" style={{ minWidth: 150 }}>Comments</th>
-              <th className="px-2 py-2.5" style={{ width: 40 }}></th>
-              </tr>
+                <tr>
+                  <th className="px-3 py-2.5 text-left font-semibold" style={{ width: 80 }}>Type</th>
+                  <th className="px-3 py-2.5 text-left font-semibold" style={{ width: 80 }}>Code</th>
+                  <th className="px-3 py-2.5 text-left font-semibold">Description</th>
+                  <th className="px-3 py-2.5 text-center font-semibold" style={{ width: 80 }}>Qty</th>
+                  <th className="px-3 py-2.5 text-right font-semibold" style={{ width: 100 }}>Unit Price</th>
+                  <th className="px-3 py-2.5 text-right font-semibold" style={{ width: 100 }}>Total</th>
+                  <th className="px-3 py-2.5 text-left font-semibold">Comments</th>
+                  <th className="px-3 py-2.5 text-center font-semibold" style={{ width: 50 }}>Action</th>
+                </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-              {rows.map((row, idx) => {
-              const amount = (parseFloat(row.qty) || 0) * (parseFloat(row.unit_price) || 0);
-              // Filter child catalog to only items matching the asset's shelter type
-              const shelterType = asset?.shelter_type || asset?.installed_shelter_type || asset?.ordered_shelter_type;
-              const filteredChildCatalog = (() => {
-                if (!shelterType || !typeTemplates.length) return childCatalog;
-                const normalizeType = (s) => s?.trim().replace(/^type\s+/i, "").toUpperCase();
-                const normalized = normalizeType(shelterType);
-                const templateIds = new Set(
-                  typeTemplates
-                    .filter(t => normalizeType(t.shelter_type_code) === normalized && t.active !== false)
-                    .map(t => t.child_catalog_id)
-                );
-                if (!templateIds.size) return childCatalog;
-                return childCatalog.filter(c => templateIds.has(c.id));
-              })();
-
-              return (
-                <tr key={row._id} className={`transition-colors ${row.confirmed ? "bg-emerald-50/40" : "bg-white hover:bg-slate-50"}`}>
-                  <td className="px-3 py-2.5">
-                    <select
-                      value={row.child_catalog_id || ''}
-                      onChange={(e) => {
-                        const selectedChild = filteredChildCatalog.find(c => c.id === e.target.value);
-                        if (selectedChild) {
-                          onRowsChange(rows.map((r, i) => {
-                            if (i === idx) {
-                              return {
-                                ...r,
-                                child_catalog_id: selectedChild.id,
-                                catalog_id: selectedChild.id,
-                                description: selectedChild.display_name || selectedChild.child_name,
-                                catalog_code: selectedChild.child_code,
-                                unit_price: selectedChild.pricing_type === "Bundle" ? selectedChild.bundle_price : selectedChild.unit_price,
-                              };
-                            }
-                            return r;
-                          }));
-                        }
-                      }}
-                      className="text-xs h-8 w-full border border-slate-300 rounded-md px-2 py-1 bg-white"
-                    >
-                      <option value="">— Select Child —</option>
-                      {filteredChildCatalog.map(child => (
-                        <option key={child.id} value={child.id}>
-                          {child.display_name || child.child_name} ({child.child_code})
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td className="px-3 py-2.5">
-                    <div className="flex flex-col">
-                      <span className="font-mono text-xs font-bold text-indigo-600">{row.catalog_code || '—'}</span>
-                      <span className="text-xs text-slate-600 mt-0.5">{row.description || 'Select item...'}</span>
-                    </div>
-                  </td>
+                {rows.map((row, idx) => {
+                  const amount = (parseFloat(row.qty) || 0) * (parseFloat(row.unit_price) || 0);
+                  return (
+                    <tr key={row._id} className={`hover:bg-slate-50 ${row.confirmed ? "bg-emerald-50/30" : ""}`}>
+                      <td className="px-3 py-2.5">{getItemTypeBadge(row)}</td>
+                      <td className="px-3 py-2.5">
+                        <span className="font-mono text-xs font-bold text-slate-600">{row.catalog_code || '—'}</span>
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <p className="text-xs text-slate-700">{row.description || 'No description'}</p>
+                      </td>
                       <td className="px-3 py-2.5">
                         <Input
                           type="number"
-                          min="0"
-                          step="0.01"
                           value={row.qty}
                           onChange={(e) => updateRow(idx, { qty: e.target.value })}
-                          className="text-xs h-8 text-center w-20 mx-auto"
+                          className="h-7 text-xs text-center w-16 mx-auto"
+                          min="0"
                         />
                       </td>
-                      <td className="px-3 py-2.5 text-center">
-                        <span className="text-xs font-medium text-slate-700">€{fmtNum(row.unit_price)}</span>
+                      <td className="px-3 py-2.5 text-right">
+                        <span className="text-xs font-semibold text-slate-700">€{fmtNum(row.unit_price)}</span>
                       </td>
-                      <td className="px-3 py-2.5 text-center">
-                        <Badge className="bg-blue-100 text-blue-800 text-xs font-bold">
+                      <td className="px-3 py-2.5 text-right">
+                        <Badge className="bg-indigo-100 text-indigo-800 text-xs font-bold">
                           €{fmtNum(amount)}
                         </Badge>
                       </td>
-                      <td className="px-3 py-2.5 text-center">
-                        <Checkbox
-                          checked={!!row.confirmed}
-                          onCheckedChange={(v) => updateRow(idx, { confirmed: !!v })}
-                        />
-                      </td>
                       <td className="px-3 py-2.5">
                         <Input
-                          value={row.comments}
+                          value={row.comments || ''}
                           onChange={(e) => updateRow(idx, { comments: e.target.value })}
                           placeholder="Optional..."
-                          className="text-xs h-8"
+                          className="h-7 text-xs"
                         />
                       </td>
-                      <td className="px-2 py-2.5 text-center">
+                      <td className="px-3 py-2.5 text-center">
                         <button
-                          type="button"
                           onClick={() => removeRow(idx)}
-                          disabled={rows.length === 1}
-                          className="w-7 h-7 flex items-center justify-center rounded-md text-slate-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-30 transition-colors"
+                          className="w-7 h-7 flex items-center justify-center rounded text-slate-400 hover:text-red-600 hover:bg-red-50"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -330,8 +337,8 @@ export default function FMPICalculator({ rows = [], onRowsChange, catalogue = []
       {rows.length === 0 && (
         <div className="text-center py-10 text-slate-400">
           <Package className="w-12 h-12 mx-auto mb-3 opacity-50" />
-          <p className="text-sm">No work items selected yet</p>
-          <p className="text-xs mt-1">Click "Add" on services from the catalogue above to build your pricing order</p>
+          <p className="text-sm">No items selected yet</p>
+          <p className="text-xs mt-1">Add child components or extra charges using the sections above</p>
         </div>
       )}
     </div>

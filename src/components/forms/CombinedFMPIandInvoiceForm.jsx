@@ -23,6 +23,8 @@ import FileUploadArea from "@/components/shared/FileUploadArea";
 import OfficialWordingBlock from "@/components/sla/OfficialWordingBlock";
 import FMPIContractCatalogueConfig from "@/components/configuration/FMPIContractCatalogueConfig";
 import FMPICalculator from "@/components/forms/FMPICalculator";
+import ChildCatalogueSelector from "@/components/forms/ChildCatalogueSelector";
+import ExtraChargeSelector from "@/components/forms/ExtraChargeSelector";
 
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -136,6 +138,7 @@ function deriveSubcategory(incident) {
 // ── Empty work row ────────────────────────────────────────────────────────────
 const emptyRow = () => ({
   _id: Math.random().toString(36).slice(2),
+  item_type: 'Child Component',
   catalog_id: "",
   qty: 1,
   unit_price: "",
@@ -696,22 +699,26 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
             </TabsContent>
 
             {/* ── TAB 2: PRICING ORDER ── */}
-            <TabsContent value="pricing" className="space-y-5">
-              {/* FMPI Pricing Calculator */}
-              <Section
-                title="FMPI Pricing Calculator"
-                icon={Euro}
-                accent="border-indigo-200"
-              >
-                <FMPICalculator
-                  rows={rows}
-                  onRowsChange={setRows}
-                  catalogue={fmpiCatalogue}
+            <TabsContent value="pricing" className="space-y-4">
+              {/* Add Items Sections */}
+              <div className="grid grid-cols-2 gap-4">
+                <ChildCatalogueSelector
                   childCatalog={activeCatalog}
                   typeTemplates={typeTemplates}
                   asset={asset}
+                  onAddChild={(childRow) => setRows(prev => [...prev, childRow])}
                 />
-              </Section>
+                <ExtraChargeSelector
+                  charges={[]}
+                  onAddCharge={(chargeRow) => setRows(prev => [...prev, chargeRow])}
+                />
+              </div>
+
+              {/* Pricing Table */}
+              <FMPICalculator
+                rows={rows}
+                onRowsChange={setRows}
+              />
 
               {/* SECTION 4: Photos */}
               <Section title="Φωτογραφικά Αποδεικτικά">
