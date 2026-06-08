@@ -176,6 +176,10 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
     if (submission?.form_data?.rows?.length) return submission.form_data.rows;
     return [emptyRow()];
   });
+  const [extraChargeRows, setExtraChargeRows] = useState(() => {
+    if (submission?.form_data?.extra_charge_rows?.length) return submission.form_data.extra_charge_rows;
+    return [];
+  });
   const [comments, setComments] = useState(submission?.form_data?.comments || "");
   const [sigName, setSigName] = useState(submission?.form_data?.sig_name || "");
   const [sigService, setSigService] = useState(submission?.form_data?.sig_service || "");
@@ -248,6 +252,11 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
     return activeCatalog.filter(c => templateIds.has(c.id));
   }, [activeCatalog, typeTemplates, asset]);
 
+  // Filter catalog to only Extra Charge items
+  const extraChargeCatalog = useMemo(() => {
+    return activeCatalog.filter(c => c.item_category === "Extra Charge");
+  }, [activeCatalog]);
+
   // Priority: prefer OMPI form value, fall back to incident
   const ompiForm = useMemo(() => {
     if (!ompiSubmissions.length) return null;
@@ -314,6 +323,31 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
     return up * qty;
   });
   const totalCost = rowAmounts.reduce((s, v) => s + v, 0);
+
+  // ── Extra Charges helpers ──
+  const updateExtraChargeRow = (idx, patch) => {
+    setExtraChargeRows(prev => prev.map((ec, i) => {
+      if (i !== idx) return ec;
+      const updated = { ...ec, ...patch };
+      if (patch.catalog_id !== undefined) {
+        const item = extraChargeCatalog.find(c => c.id === patch.catalog_id);
+        updated.unit_price = item?.contract_unit_price ?? "";
+        updated.description = item?.description ?? "";
+      }
+      return updated;
+    }));
+  };
+
+  const addExtraChargeRow = () => setExtraChargeRows(prev => [...prev, { catalog_id: "", description: "", qty: 1, unit_price: "", justification: "" }]);
+  const removeExtraChargeRow = (idx) => setExtraChargeRows(prev => prev.filter((_, i) => i !== idx));
+
+  const extraChargeAmounts = extraChargeRows.map(ec => {
+    const up = parseFloat(ec.unit_price) || 0;
+    const qty = parseFloat(ec.qty) || 0;
+    return up * qty;
+  });
+  const extraChargesTotal = extraChargeAmounts.reduce((s, v) => s + v, 0);
+  const grandTotal = totalCost + extraChargesTotal;
 
   // ── Row helpers ──
   const updateRow = (idx, patch) => {
@@ -452,6 +486,10 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
       if (hasEmptyChild) { toast({ title: "Επιλέξτε Child για κάθε γραμμή εργασίας", variant: "destructive" }); return; }
       const hasZeroQty = rows.some(r => !r.qty || Number(r.qty) <= 0);
       if (hasZeroQty) { toast({ title: "Η ποσότητα πρέπει να είναι > 0", variant: "destructive" }); return; }
+      const hasEmptyExtraCharge = extraChargeRows.some(ec => !ec.catalog_id);
+      if (hasEmptyExtraCharge) { toast({ title: "Επιλέξτε Extra Charge για κάθε γραμμή", variant: "destructive" }); return; }
+      const hasMissingJustification = extraChargeRows.some(ec => !ec.justification?.trim());
+      if (hasMissingJustification) { toast({ title: "Συμπληρώστε αιτιολόγηση για κάθε extra charge", variant: "destructive" }); return; }
     }
 
     saveMutation.mutate({
@@ -473,7 +511,11 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
            catalog_name: r.catalog_id ? (catalogMap[r.catalog_id]?.display_name || catalogMap[r.catalog_id]?.child_name || "") : "",
            catalog_code: r.catalog_id ? (catalogMap[r.catalog_id]?.child_code || "") : "",
          })),
-         total_cost: totalCost,
+         extra_charge_rows: extraChargeRows.map(ec => ({
+           ...ec,
+           catalog_name: ec.catalog_id ? (extraChargeCatalog.find(c => c.id === ec.catalog_id)?.description || "") : "",
+           catalog_code: ec.catalog_id ? (extraChargeCatalog.find(c => c.id === ec.catalog_id)?.child_line_code || "") : "",
+         })),
          photos_before: photosBefore,
          comments,
          sig_name: sigName,
@@ -795,6 +837,147 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
                   </div>
                 </div>
               </Section>
+
+              {/* SECTION: Extra Charges */}
+              <Section
+                title="Επιπλέον Χρεώσεις (Extra Charges)"
+                accent="border-amber-200"
+                rightSlot={
+                  <Button size="sm" variant="outline" onClick={addExtraChargeRow} className="gap-1.5 text-xs h-7">
+                    <Plus className="w-3.5 h-3.5" /> Προσθήκη Χρέωσης
+                  </Button>
+                }
+              >
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="bg-amber-50 text-amber-900 uppercase tracking-wide border-b border-amber-200">
+                        <th className="px-3 py-2 text-left font-semibold rounded-tl-md" style={{ minWidth: 200 }}>Τύπος Επιπλέον Χρέωσης</th>
+                        <th className="px-3 py-2 text-center font-semibold" style={{ minWidth: 100 }}>Ποσότητα</th>
+                        <th className="px-3 py-2 text-center font-semibold" style={{ minWidth: 150 }}>Τιμή Μονάδας (€)</th>
+                        <th className="px-3 py-2 text-center font-semibold" style={{ minWidth: 120 }}>Σύνολο (€)</th>
+                        <th className="px-3 py-2 text-left font-semibold" style={{ minWidth: 200 }}>Αιτιολόγηση *</th>
+                        <th className="px-2 py-2 rounded-tr-md" style={{ width: 36 }}></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-amber-100">
+                      {extraChargeRows.map((ec, idx) => {
+                        const catalogItem = extraChargeCatalog.find(c => c.id === ec.catalog_id);
+                        const amount = (parseFloat(ec.unit_price) || 0) * (parseFloat(ec.qty) || 0);
+                        return (
+                          <tr
+                            key={ec._id || idx}
+                            className="text-sm transition-colors bg-white hover:bg-amber-50/30"
+                          >
+                            <td className="px-2 py-1.5">
+                              <Select value={ec.catalog_id || "_none"} onValueChange={v => updateExtraChargeRow(idx, { catalog_id: v === "_none" ? "" : v })}>
+                                <SelectTrigger className={`text-xs h-8 ${!ec.catalog_id ? "border-amber-300" : ""}`}>
+                                  <SelectValue placeholder="Επιλογή..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="_none">— Επιλογή —</SelectItem>
+                                  {extraChargeCatalog.map(c => (
+                                    <SelectItem key={c.id} value={c.id}>
+                                      <span className="font-mono text-xs mr-1">{c.child_line_code}</span>
+                                      {c.description}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              {catalogItem?.parent_fmpi_code && (
+                                <p className="text-xs text-slate-400 mt-0.5 pl-1">FMPI: {catalogItem.parent_fmpi_code}</p>
+                              )}
+                            </td>
+                            <td className="px-2 py-1.5">
+                              <Input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={ec.qty}
+                                onChange={e => updateExtraChargeRow(idx, { qty: e.target.value })}
+                                className="text-xs h-8 text-center"
+                              />
+                            </td>
+                            <td className="px-2 py-1.5">
+                              <div className="flex items-center justify-center gap-1 h-8 px-2 rounded-md bg-slate-50 border border-slate-200 text-xs text-slate-700">
+                                <Lock className="w-3 h-3 text-slate-300" />
+                                <span>{ec.unit_price !== "" ? fmtNum(ec.unit_price) : <span className="text-slate-300 italic">—</span>}</span>
+                              </div>
+                            </td>
+                            <td className="px-2 py-1.5">
+                              <div className="flex items-center justify-center gap-1 h-8 px-2 rounded-md bg-amber-50 border border-amber-200 text-xs font-semibold text-amber-800">
+                                <Lock className="w-3 h-3 text-amber-300" />
+                                <span>{fmtNum(amount)}</span>
+                              </div>
+                            </td>
+                            <td className="px-2 py-1.5">
+                              <Textarea
+                                value={ec.justification}
+                                onChange={e => updateExtraChargeRow(idx, { justification: e.target.value })}
+                                placeholder="Αιτιολόγηση..."
+                                rows={1}
+                                className="text-xs h-8 resize-none"
+                              />
+                            </td>
+                            <td className="px-1 py-1.5 text-center">
+                              <button
+                                type="button"
+                                onClick={() => removeExtraChargeRow(idx)}
+                                className="w-7 h-7 flex items-center justify-center rounded-md text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Extra Charges Total */}
+                {extraChargesTotal > 0 && (
+                  <div className="flex justify-end pt-2 border-t border-amber-100 mt-2">
+                    <div className="bg-amber-600 text-white rounded-xl px-6 py-3 flex items-center gap-3 shadow-sm">
+                      <Euro className="w-5 h-5 text-amber-200" />
+                      <div>
+                        <p className="text-xs text-amber-200 font-medium uppercase tracking-wide">ΣΥΝΟΛΟ ΕΠΙΠΛΕΟΝ ΧΡΕΩΣΕΩΝ €</p>
+                        <p className="text-2xl font-bold tabular-nums">{extraChargesTotal.toFixed(2)}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </Section>
+
+              {/* Grand Total */}
+              {(totalCost > 0 || extraChargesTotal > 0) && (
+                <div className="bg-gradient-to-r from-slate-800 to-slate-700 text-white rounded-xl px-6 py-4 shadow-lg border border-slate-600">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-3">
+                        <Euro className="w-6 h-6 text-slate-300" />
+                        <div>
+                          <p className="text-xs text-slate-300 font-medium uppercase tracking-wide">ΣΥΝΟΛΟ ΕΡΓΑΣΙΩΝ</p>
+                          <p className="text-lg font-bold tabular-nums">{totalCost.toFixed(2)} €</p>
+                        </div>
+                      </div>
+                      {extraChargesTotal > 0 && (
+                        <div className="flex items-center gap-3 pl-9">
+                          <Euro className="w-5 h-5 text-amber-300" />
+                          <div>
+                            <p className="text-xs text-amber-200 font-medium uppercase tracking-wide">ΕΠΙΠΛΕΟΝ ΧΡΕΩΣΕΙΣ</p>
+                            <p className="text-lg font-bold tabular-nums">{extraChargesTotal.toFixed(2)} €</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-slate-300 font-medium uppercase tracking-wide mb-1">ΓΕΝΙΚΟ ΣΥΝΟΛΟ</p>
+                      <p className="text-3xl font-bold tabular-nums text-white">{(totalCost + extraChargesTotal).toFixed(2)} €</p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* SECTION: FMPI Contract Catalogue */}
               <Section
