@@ -1,0 +1,89 @@
+{
+  "name": "PricingOrders",
+  "type": "object",
+  "properties": {
+    "pricing_order_ref": {
+      "type": "string",
+      "description": "Human-readable reference e.g. PO-INC-001-2024"
+    },
+    "incident_id": {
+      "type": "string",
+      "description": "FK \u2192 Incidents record ID"
+    },
+    "work_order_id": {
+      "type": "string",
+      "description": "FK \u2192 WorkOrders record ID"
+    },
+    "form_submission_id": {
+      "type": "string",
+      "description": "FK \u2192 FormSubmissions record ID (source operational form)"
+    },
+    "asset_id": {
+      "type": "string",
+      "description": "FK \u2192 Assets record ID (denormalised for fast filtering)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Draft",
+        "Submitted",
+        "Pending Approval",
+        "Approved",
+        "Rejected"
+      ],
+      "default": "Draft"
+    },
+    "contract_version": {
+      "type": "string",
+      "description": "Contract version used when this Pricing Order was created"
+    },
+    "contractual_total": {
+      "type": "number",
+      "default": 0,
+      "description": "Sum of all Contractual PricingOrderItems totals"
+    },
+    "extra_charges_total": {
+      "type": "number",
+      "default": 0,
+      "description": "Sum of all Extra Charge PricingOrderItems totals"
+    },
+    "grand_total": {
+      "type": "number",
+      "default": 0,
+      "description": "contractual_total + extra_charges_total"
+    },
+    "submitted_by": {
+      "type": "string",
+      "description": "Name of the user who submitted the pricing order"
+    },
+    "submitted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "approved_by": {
+      "type": "string",
+      "description": "Name of the approver"
+    },
+    "approved_by_id": {
+      "type": "string",
+      "description": "FK \u2192 User record ID of approver"
+    },
+    "approved_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "approval_comments": {
+      "type": "string"
+    },
+    "rejected_reason": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "incident_id",
+    "work_order_id"
+  ]
+}

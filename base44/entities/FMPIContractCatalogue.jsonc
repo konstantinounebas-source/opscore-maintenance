@@ -1,0 +1,104 @@
+{
+  "name": "FMPIContractCatalogue",
+  "type": "object",
+  "properties": {
+    "parent_fmpi_code": {
+      "type": "string",
+      "description": "Parent FMPI category code (58, 59, 60, 61, 62)"
+    },
+    "parent_description": {
+      "type": "string",
+      "description": "Parent category full description"
+    },
+    "child_line_number": {
+      "type": "string",
+      "description": "Child line number within parent (1, 2, 3...)"
+    },
+    "child_line_code": {
+      "type": "string",
+      "description": "Combined code e.g. 58-1, 59-3"
+    },
+    "description": {
+      "type": "string",
+      "description": "Full service description (bilingual where available)"
+    },
+    "unit_of_measure": {
+      "type": "string",
+      "description": "Unit of measure (m2, linear metre, item, hour, etc.)"
+    },
+    "default_quantity": {
+      "type": "number",
+      "description": "Default contract quantity"
+    },
+    "contract_unit_price": {
+      "type": "number",
+      "description": "Contract unit price (EUR excl. VAT)"
+    },
+    "item_category": {
+      "type": "string",
+      "enum": [
+        "Contractual",
+        "Extra Charge",
+        "Specify Required"
+      ],
+      "default": "Contractual",
+      "description": "Category of this catalogue item"
+    },
+    "allows_manual_quantity": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether the field worker can enter a different quantity"
+    },
+    "allows_manual_price_override": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether a manual price override is allowed (requires approval)"
+    },
+    "requires_justification": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether a justification text is required"
+    },
+    "requires_approval": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this item requires explicit approval on the Pricing Order"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "contract_version": {
+      "type": "string",
+      "description": "Contract version identifier e.g. v1.0-2024"
+    },
+    "effective_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date from which this item is valid"
+    },
+    "expiry_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date after which this item is no longer valid"
+    },
+    "source_file_name": {
+      "type": "string",
+      "description": "Name of the Excel file this was imported from"
+    },
+    "source_import_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of when this record was imported"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Any additional notes or sub-headings from the contract"
+    }
+  },
+  "required": [
+    "parent_fmpi_code",
+    "child_line_code",
+    "description"
+  ]
+}

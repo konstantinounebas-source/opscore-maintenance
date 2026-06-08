@@ -11,6 +11,8 @@ import WorkflowConfig from "@/components/configuration/WorkflowConfig";
 import ChildLogicConfig from "@/components/configuration/ChildLogicConfig";
 import FormsConfig from "@/components/configuration/FormsConfig";
 import PlanningTypesConfig from "@/components/configuration/PlanningTypesConfig";
+import FMPIContractCatalogueConfig from "@/components/configuration/FMPIContractCatalogueConfig";
+import FMPIExtraChargesConfig from "@/components/configuration/FMPIExtraChargesConfig";
 
 const INCIDENT_LIST_TYPES = [
   { key: "incident_person", label: "Confirmed By / Persons" },
@@ -237,6 +239,36 @@ export default function Configuration() {
     <div>
       <TopHeader title="Configuration" />
       <div className="p-6 space-y-6">
+        {/* ═══════════════════════════════════════════════════════════ */}
+        {/* FMPI PRICING CONFIGURATION                                  */}
+        {/* ═══════════════════════════════════════════════════════════ */}
+        <div className="bg-white rounded-xl border-2 border-indigo-200 p-6">
+          <div className="flex items-center gap-3 mb-1">
+            <span className="bg-indigo-600 text-white text-xs font-bold px-2 py-0.5 rounded">FMPI</span>
+            <h2 className="text-sm font-semibold text-slate-900">FMPI Contract Catalogue</h2>
+          </div>
+          <p className="text-xs text-slate-500 mb-6">
+            Official FMPI Framework Agreement price catalogue (categories 58–62). Every Pricing Order line must reference a valid catalogue item.
+            Import from the Services Excel file to populate. Contract versions are preserved for audit traceability.
+          </p>
+          <FMPIContractCatalogueConfig />
+        </div>
+
+        <div className="bg-white rounded-xl border-2 border-orange-200 p-6">
+          <div className="flex items-center gap-3 mb-1">
+            <span className="bg-orange-500 text-white text-xs font-bold px-2 py-0.5 rounded">EC</span>
+            <h2 className="text-sm font-semibold text-slate-900">FMPI Extra Charge Types</h2>
+          </div>
+          <p className="text-xs text-slate-500 mb-6">
+            Configure controlled extra charge codes (EC-001 to EC-006) for labour, vehicles, emergency response, and other approved additional costs.
+            All extra charges require justification and approval before a Pricing Order can be submitted.
+          </p>
+          <FMPIExtraChargesConfig />
+        </div>
+
+        {/* ═══════════════════════════════════════════════════════════ */}
+        {/* EXISTING CONFIGURATION SECTIONS BELOW                       */}
+        {/* ═══════════════════════════════════════════════════════════ */}
         <div className="bg-white rounded-xl border border-slate-200 p-6">
           <h2 className="text-sm font-semibold text-slate-900 mb-1">Child Catalog Import</h2>
           <p className="text-xs text-slate-500 mb-4">Upload the Excel price list to import ChildCatalog data. This will replace all existing records.</p>

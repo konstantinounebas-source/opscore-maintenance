@@ -1,0 +1,116 @@
+{
+  "name": "PricingOrderItems",
+  "type": "object",
+  "properties": {
+    "pricing_order_id": {
+      "type": "string",
+      "description": "FK \u2192 PricingOrders record ID"
+    },
+    "item_type": {
+      "type": "string",
+      "enum": [
+        "Contractual",
+        "Extra Charge"
+      ],
+      "default": "Contractual",
+      "description": "Whether this is a FMPI contract line or an extra charge"
+    },
+    "parent_fmpi_code": {
+      "type": "string",
+      "description": "Denormalised: parent FMPI code (58\u201362) for audit display"
+    },
+    "child_line_code": {
+      "type": "string",
+      "description": "Denormalised: combined code e.g. 58-1, 59-3"
+    },
+    "contract_catalogue_item_id": {
+      "type": "string",
+      "description": "FK \u2192 FMPIContractCatalogue record ID (required for Contractual items)"
+    },
+    "extra_charge_type_id": {
+      "type": "string",
+      "description": "FK \u2192 FMPIExtraChargeTypes record ID (required for Extra Charge items)"
+    },
+    "extra_charge_code": {
+      "type": "string",
+      "description": "Denormalised: extra charge code e.g. EC-001 for audit display"
+    },
+    "description": {
+      "type": "string",
+      "description": "Snapshot of the service description at time of Pricing Order creation"
+    },
+    "unit_of_measure": {
+      "type": "string"
+    },
+    "default_quantity": {
+      "type": "number",
+      "description": "Default quantity from the contract catalogue"
+    },
+    "actual_quantity": {
+      "type": "number",
+      "description": "Quantity actually used / entered by the user"
+    },
+    "contract_unit_rate": {
+      "type": "number",
+      "description": "Snapshot of the contract unit rate at time of Pricing Order creation (immutable)"
+    },
+    "manual_unit_rate": {
+      "type": "number",
+      "description": "Manual override rate (requires approval)"
+    },
+    "final_unit_rate": {
+      "type": "number",
+      "description": "Effective rate used = manual_unit_rate if approved, else contract_unit_rate"
+    },
+    "total_amount": {
+      "type": "number",
+      "description": "actual_quantity \u00d7 final_unit_rate"
+    },
+    "is_extra_charge": {
+      "type": "boolean",
+      "default": false
+    },
+    "justification": {
+      "type": "string",
+      "description": "Required for extra charges and manual price overrides"
+    },
+    "approval_status": {
+      "type": "string",
+      "enum": [
+        "Not Required",
+        "Pending",
+        "Approved",
+        "Rejected"
+      ],
+      "default": "Not Required"
+    },
+    "approved_by": {
+      "type": "string"
+    },
+    "approved_by_id": {
+      "type": "string",
+      "description": "FK \u2192 User"
+    },
+    "approved_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "contract_version": {
+      "type": "string",
+      "description": "Snapshot of contract version at time of line item creation"
+    },
+    "source_contract_reference": {
+      "type": "string",
+      "description": "Human-readable audit reference e.g. FMPI v1.0-2024 / 58-1"
+    },
+    "sort_order": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "pricing_order_id",
+    "item_type",
+    "description"
+  ]
+}
