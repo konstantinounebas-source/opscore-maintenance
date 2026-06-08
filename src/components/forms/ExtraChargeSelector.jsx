@@ -19,12 +19,21 @@ export default function ExtraChargeSelector({ charges = [], onAddCharge }) {
   const debugInfo = {
     totalLoaded: charges.length,
     extraCharges: charges.filter(c => c.item_category === 'Extra Charge').length,
+    contractualItems: charges.filter(c => c.item_category === 'Contractual').length,
     activeCharges: charges.filter(c => c.is_active !== false).length,
+    byCategory: {
+      '58': charges.filter(c => c.parent_fmpi_code === '58' && c.is_active !== false).length,
+      '59': charges.filter(c => c.parent_fmpi_code === '59' && c.is_active !== false).length,
+      '60': charges.filter(c => c.parent_fmpi_code === '60' && c.is_active !== false).length,
+      '61': charges.filter(c => c.parent_fmpi_code === '61' && c.is_active !== false).length,
+      '62': charges.filter(c => c.parent_fmpi_code === '62' && c.is_active !== false).length,
+    },
     first5Sample: charges.slice(0, 5).map(c => ({
       code: c.child_line_code,
       description: c.description?.substring(0, 50),
       price: c.contract_unit_price,
       category: c.item_category,
+      parent: c.parent_fmpi_code,
     })),
   };
 
@@ -119,7 +128,19 @@ export default function ExtraChargeSelector({ charges = [], onAddCharge }) {
             <div className="grid grid-cols-2 gap-2">
               <div>Total FMPIContractCatalogue loaded: <span className="font-mono font-bold">{debugInfo.totalLoaded}</span></div>
               <div>Records with item_category="Extra Charge": <span className="font-mono font-bold">{debugInfo.extraCharges}</span></div>
+              <div>Records with item_category="Contractual": <span className="font-mono font-bold">{debugInfo.contractualItems}</span></div>
               <div>Active records (is_active !== false): <span className="font-mono font-bold">{debugInfo.activeCharges}</span></div>
+            </div>
+            <div className="pt-2 border-t border-slate-200">
+              <div className="font-semibold text-slate-700 mb-1">Items per FMPI category:</div>
+              <div className="grid grid-cols-5 gap-2">
+                {Object.entries(debugInfo.byCategory).map(([cat, count]) => (
+                  <div key={cat} className="bg-white border border-slate-200 rounded px-2 py-1 text-center">
+                    <div className="font-mono font-bold text-indigo-600">{cat}</div>
+                    <div className="text-slate-700 font-semibold">{count}</div>
+                  </div>
+                ))}
+              </div>
             </div>
             <div className="pt-2 border-t border-slate-200">
               <div className="font-semibold text-slate-700 mb-1">First 5 matching records:</div>
@@ -129,7 +150,7 @@ export default function ExtraChargeSelector({ charges = [], onAddCharge }) {
                     <span className="font-mono text-xs font-bold text-indigo-600">{item.code}</span>
                     <span className="flex-1 truncate">{item.description}</span>
                     <span className="font-semibold text-slate-700">€{item.price}</span>
-                    <span className="text-xs text-slate-500">{item.category}</span>
+                    <span className="text-xs text-slate-500">Cat: {item.category} | FMPI: {item.parent}</span>
                   </div>
                 ))}
               </div>
