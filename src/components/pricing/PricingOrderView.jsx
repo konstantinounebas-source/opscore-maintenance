@@ -54,16 +54,19 @@ export default function PricingOrderView({ pricingOrderId, incidentId, workOrder
   const [newExtra, setNewExtra] = useState({ extra_charge_type_id: '', actual_quantity: 1, manual_unit_rate: '', justification: '' });
 
   // Auto-create pricing order if incidentId and workOrderId provided but no pricingOrderId
+  const shouldFetchOrder = !!pricingOrderId || (!!incidentId && !!workOrderId);
+  
   const { data: order, isLoading: orderLoading } = useQuery({
-    queryKey: ['pricingOrder', pricingOrderId || ['auto', incidentId, workOrderId]],
+    queryKey: ['pricingOrder', pricingOrderId, incidentId, workOrderId],
     queryFn: async () => {
       if (pricingOrderId) {
         const results = await base44.entities.PricingOrders.filter({ id: pricingOrderId });
         return results[0];
-      } else if (incidentId && workOrderId) {
+      }
+      if (incidentId && workOrderId) {
         // Try to find existing or create new
         const existing = await base44.entities.PricingOrders.filter({ incident_id: incidentId, work_order_id: workOrderId });
-        if (existing.length > 0) return existing[0];
+        if (existing && existing.length > 0) return existing[0];
         // Create new
         const ref = `PO-${Date.now().toString(36).toUpperCase()}`;
         const order = await base44.entities.PricingOrders.create({
@@ -76,12 +79,11 @@ export default function PricingOrderView({ pricingOrderId, incidentId, workOrder
           extra_charges_total: 0,
           grand_total: 0,
         });
-        if (onPricingOrderCreated) onPricingOrderCreated(order.id);
         return order;
       }
       return null;
     },
-    enabled: !!pricingOrderId || (!pricingOrderId && incidentId && workOrderId),
+    enabled: shouldFetchOrder,
   });
 
   const { data: items = [], isLoading: itemsLoading } = useQuery({
