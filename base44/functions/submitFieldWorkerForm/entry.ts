@@ -89,13 +89,14 @@ Deno.serve(async (req) => {
     const fileMetadata = [];
     const user = workerName || 'Field Worker';
 
-    // Collect signature URL
-    if (formData.signature_url) {
-      fileUrls.push(formData.signature_url);
+    // Collect signature URL (support both signature_url and signature field names)
+    const sigUrl = formData.signature_url || formData.signature;
+    if (sigUrl) {
+      fileUrls.push(sigUrl);
       fileNames.push(`signature_${formType}.png`);
       fileMetadata.push({
-        url: formData.signature_url,
-        name: `Signature - ${user}`,
+        url: sigUrl,
+        name: `Υπογραφή - ${user}`,
         author: user,
         author_name: user,
         created_at: new Date().toISOString(),
