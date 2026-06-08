@@ -33,12 +33,13 @@ export default function ExtraChargeSelector({ charges = [], onAddCharge }) {
       };
     }
 
-    return {
-      all: {
-        name: "Available Extra Charges",
-        items: filtered
-      }
-    };
+    // Group by default_unit (type)
+    return filtered.reduce((acc, item) => {
+      const cat = item.default_unit || 'Other';
+      if (!acc[cat]) acc[cat] = { name: cat, items: [] };
+      acc[cat].items.push(item);
+      return acc;
+    }, {});
   }, [charges, searchQuery]);
 
   const toggleCategory = (cat) => {
