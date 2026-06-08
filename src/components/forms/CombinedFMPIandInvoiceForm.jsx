@@ -721,6 +721,7 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
                       ...emptyRow('Extra Charge'),
                       catalog_id: charge.id,
                       catalog_code: charge.child_line_code,
+                      catalog_name: `${charge.child_line_code} ${charge.description}`,
                       description: charge.description,
                       unit_price: charge.contract_unit_price || 0,
                     }]);
