@@ -21,7 +21,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/AuthContext";
 import FileUploadArea from "@/components/shared/FileUploadArea";
 import OfficialWordingBlock from "@/components/sla/OfficialWordingBlock";
-import ExtraChargesSection from "@/components/forms/ExtraChargesSection";
+import FMPIContractCatalogueConfig from "@/components/configuration/FMPIContractCatalogueConfig";
 
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -159,7 +159,6 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
   });
   const activeCatalog = useMemo(() => childCatalog.filter(c => c.active !== false), [childCatalog]);
   const catalogMap = useMemo(() => Object.fromEntries(activeCatalog.map(c => [c.id, c])), [activeCatalog]);
-  const extraChargeCatalogItems = useMemo(() => activeCatalog.filter(c => c.item_category === "Extra Charge"), [activeCatalog]);
 
   // ── Tab state ──
   const [activeTab, setActiveTab] = useState("fmpi");
@@ -183,12 +182,6 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
   const [sigDate, setSigDate] = useState(submission?.form_data?.sig_date || "");
   const [sigUpload, setSigUpload] = useState(submission?.form_data?.sig_upload || null);
   const [photosBefore, setPhotosBefore] = useState(submission?.form_data?.photos_before || []);
-  
-  // ── Extra Charges state ──
-  const [extraCharges, setExtraCharges] = useState(() => {
-    if (submission?.form_data?.extra_charges?.length) return submission.form_data.extra_charges;
-    return [];
-  });
 
   // ── OWR → CA lock ──
   const caAutoLocked = owrValue === "ΟΧΙ";
@@ -321,16 +314,6 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
     return up * qty;
   });
   const totalCost = rowAmounts.reduce((s, v) => s + v, 0);
-
-  // Calculate extra charges total
-  const extraChargesTotal = extraCharges.reduce((sum, ec) => {
-    const qty = parseFloat(ec.quantity) || 0;
-    const rate = parseFloat(ec.unit_rate) || 0;
-    return sum + (qty * rate);
-  }, 0);
-
-  // Grand total
-  const grandTotal = totalCost + extraChargesTotal;
 
   // ── Row helpers ──
   const updateRow = (idx, patch) => {
@@ -469,10 +452,6 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
       if (hasEmptyChild) { toast({ title: "Επιλέξτε Child για κάθε γραμμή εργασίας", variant: "destructive" }); return; }
       const hasZeroQty = rows.some(r => !r.qty || Number(r.qty) <= 0);
       if (hasZeroQty) { toast({ title: "Η ποσότητα πρέπει να είναι > 0", variant: "destructive" }); return; }
-      const hasEmptyExtraCharge = extraCharges.some(ec => !ec.extra_charge_type_id);
-      if (hasEmptyExtraCharge) { toast({ title: "Επιλέξτε τύπο για κάθε επιπλέον χρέωση", variant: "destructive" }); return; }
-      const hasMissingJustification = extraCharges.some(ec => !ec.justification?.trim());
-      if (hasMissingJustification) { toast({ title: "Συμπληρώστε αιτιολόγηση για κάθε επιπλέον χρέωση", variant: "destructive" }); return; }
     }
 
     saveMutation.mutate({
@@ -494,17 +473,7 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
            catalog_name: r.catalog_id ? (catalogMap[r.catalog_id]?.display_name || catalogMap[r.catalog_id]?.child_name || "") : "",
            catalog_code: r.catalog_id ? (catalogMap[r.catalog_id]?.child_code || "") : "",
          })),
-         extra_charges: extraCharges.map(ec => {
-           const ecItem = extraChargeCatalogItems.find(t => t.id === ec.catalog_id);
-           return {
-             ...ec,
-             extra_charge_code: ecItem?.child_line_code || "",
-             extra_charge_name: ecItem?.description || "",
-           };
-         }),
          total_cost: totalCost,
-         extra_charges_total: extraChargesTotal,
-         grand_total: grandTotal,
          photos_before: photosBefore,
          comments,
          sig_name: sigName,
@@ -827,18 +796,13 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
                 </div>
               </Section>
 
-              {/* SECTION: Extra Charges */}
+              {/* SECTION: FMPI Contract Catalogue */}
               <Section
-                title="Επιπλέον Χρεώσεις (Extra Charges)"
+                title="FMPI Contract Catalogue"
                 icon={FileText}
-                accent="border-amber-200"
+                accent="border-indigo-200"
               >
-                <ExtraChargesSection
-                  extraCharges={extraCharges}
-                  setExtraCharges={setExtraCharges}
-                  extraChargeCatalogItems={extraChargeCatalogItems}
-                  totalCost={totalCost}
-                />
+                <FMPIContractCatalogueConfig />
               </Section>
 
               {/* SECTION 4: Photos */}
