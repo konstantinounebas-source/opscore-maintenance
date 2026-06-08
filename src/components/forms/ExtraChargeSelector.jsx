@@ -12,8 +12,6 @@ import {
 } from "lucide-react";
 
 export default function ExtraChargeSelector({ charges = [], onAddCharge }) {
-  // Categories default to collapsed
-  const [expanded, setExpanded] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
 
   const groupedByCategory = useMemo(() => {
@@ -34,22 +32,41 @@ export default function ExtraChargeSelector({ charges = [], onAddCharge }) {
     }
 
     // Group by parent_fmpi_code (58, 59, 60, 61, 62)
-    return filtered.reduce((acc, item) => {
+    const grouped = filtered.reduce((acc, item) => {
       const cat = item.parent_fmpi_code || 'Other';
       const catName = item.parent_description || `FMPI ${cat}`;
       if (!acc[cat]) acc[cat] = { name: catName, items: [] };
       acc[cat].items.push(item);
       return acc;
     }, {});
+    
+    return grouped;
   }, [charges, searchQuery]);
 
-  // Expand all categories by default when charges load or change
+  // Initialize all categories as expanded based on charges
+  const [expanded, setExpanded] = useState(() => {
+    if (charges.length === 0) return {};
+    const initialExpanded = {};
+    charges.forEach(item => {
+      const cat = item.parent_fmpi_code || 'Other';
+      initialExpanded[cat] = true;
+    });
+    return initialExpanded;
+  });
+
+  // Keep categories expanded when new charges are added
   useEffect(() => {
     if (charges.length > 0) {
-      const initialExpanded = Object.keys(groupedByCategory).reduce((acc, key) => ({ ...acc, [key]: true }), {});
-      setExpanded(initialExpanded);
+      setExpanded(prev => {
+        const updated = { ...prev };
+        charges.forEach(item => {
+          const cat = item.parent_fmpi_code || 'Other';
+          if (!updated[cat]) updated[cat] = true;
+        });
+        return updated;
+      });
     }
-  }, [charges, groupedByCategory]);
+  }, [charges]);
 
   const toggleCategory = (cat) => {
     setExpanded(prev => ({ ...prev, [cat]: !prev[cat] }));
