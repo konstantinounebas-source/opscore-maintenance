@@ -46,23 +46,48 @@ function validateOrder(items) {
   return errors;
 }
 
-export default function PricingOrderView({ pricingOrderId, incidentId, workOrderId, onClose }) {
+export default function PricingOrderView({ pricingOrderId, incidentId, workOrderId, onPricingOrderCreated }) {
   const queryClient = useQueryClient();
   const [showAddContractual, setShowAddContractual] = useState(false);
   const [showAddExtra, setShowAddExtra] = useState(false);
   const [newContractual, setNewContractual] = useState({ catalogue_id: '', actual_quantity: 1 });
   const [newExtra, setNewExtra] = useState({ extra_charge_type_id: '', actual_quantity: 1, manual_unit_rate: '', justification: '' });
 
+  // Auto-create pricing order if incidentId and workOrderId provided but no pricingOrderId
   const { data: order, isLoading: orderLoading } = useQuery({
-    queryKey: ['pricingOrder', pricingOrderId],
-    queryFn: () => pricingOrderId ? base44.entities.PricingOrders.filter({ id: pricingOrderId }).then(r => r[0]) : null,
-    enabled: !!pricingOrderId,
+    queryKey: ['pricingOrder', pricingOrderId || ['auto', incidentId, workOrderId]],
+    queryFn: async () => {
+      if (pricingOrderId) {
+        const results = await base44.entities.PricingOrders.filter({ id: pricingOrderId });
+        return results[0];
+      } else if (incidentId && workOrderId) {
+        // Try to find existing or create new
+        const existing = await base44.entities.PricingOrders.filter({ incident_id: incidentId, work_order_id: workOrderId });
+        if (existing.length > 0) return existing[0];
+        // Create new
+        const ref = `PO-${Date.now().toString(36).toUpperCase()}`;
+        const order = await base44.entities.PricingOrders.create({
+          pricing_order_ref: ref,
+          incident_id: incidentId,
+          work_order_id: workOrderId,
+          contract_version: 'v1.0-2024',
+          status: 'Draft',
+          contractual_total: 0,
+          extra_charges_total: 0,
+          grand_total: 0,
+        });
+        if (onPricingOrderCreated) onPricingOrderCreated(order.id);
+        return order;
+      }
+      return null;
+    },
+    enabled: !!pricingOrderId || (!pricingOrderId && incidentId && workOrderId),
   });
 
   const { data: items = [], isLoading: itemsLoading } = useQuery({
-    queryKey: ['pricingOrderItems', pricingOrderId],
-    queryFn: () => base44.entities.PricingOrderItems.filter({ pricing_order_id: pricingOrderId }),
-    enabled: !!pricingOrderId,
+    queryKey: ['pricingOrderItems', order?.id || 'pending'],
+    queryFn: () => order?.id ? base44.entities.PricingOrderItems.filter({ pricing_order_id: order.id }) : Promise.resolve([]),
+    enabled: !!order?.id,
   });
 
   const { data: catalogue = [] } = useQuery({
@@ -76,26 +101,28 @@ export default function PricingOrderView({ pricingOrderId, incidentId, workOrder
   });
 
   const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ['pricingOrder', pricingOrderId] });
-    queryClient.invalidateQueries({ queryKey: ['pricingOrderItems', pricingOrderId] });
+    queryClient.invalidateQueries({ queryKey: ['pricingOrder', order?.id] });
+    queryClient.invalidateQueries({ queryKey: ['pricingOrderItems', order?.id] });
   };
 
   const recalcTotals = async (allItems) => {
+    if (!order?.id) return;
     const contractual_total = allItems.filter(i => i.item_type === 'Contractual').reduce((s, i) => s + (i.total_amount || 0), 0);
     const extra_charges_total = allItems.filter(i => i.item_type === 'Extra Charge').reduce((s, i) => s + (i.total_amount || 0), 0);
     const grand_total = contractual_total + extra_charges_total;
-    await base44.entities.PricingOrders.update(pricingOrderId, { contractual_total, extra_charges_total, grand_total });
+    await base44.entities.PricingOrders.update(order.id, { contractual_total, extra_charges_total, grand_total });
   };
 
   const addContractualMutation = useMutation({
     mutationFn: async () => {
+      if (!order?.id) throw new Error('Pricing order not initialized');
       const catItem = catalogue.find(c => c.id === newContractual.catalogue_id);
       if (!catItem) throw new Error('Select a valid catalogue item');
       const finalRate = catItem.contract_unit_price || 0;
       const qty = Number(newContractual.actual_quantity) || 1;
       const total = qty * finalRate;
       const item = await base44.entities.PricingOrderItems.create({
-        pricing_order_id: pricingOrderId,
+        pricing_order_id: order.id,
         item_type: 'Contractual',
         parent_fmpi_code: catItem.parent_fmpi_code,
         child_line_code: catItem.child_line_code,
@@ -121,6 +148,7 @@ export default function PricingOrderView({ pricingOrderId, incidentId, workOrder
 
   const addExtraMutation = useMutation({
     mutationFn: async () => {
+      if (!order?.id) throw new Error('Pricing order not initialized');
       const ecType = extraChargeTypes.find(e => e.id === newExtra.extra_charge_type_id);
       if (!ecType) throw new Error('Select an extra charge type');
       if (!newExtra.justification?.trim()) throw new Error('Justification is required for extra charges');
@@ -128,7 +156,7 @@ export default function PricingOrderView({ pricingOrderId, incidentId, workOrder
       const qty = Number(newExtra.actual_quantity) || 1;
       const total = qty * rate;
       const item = await base44.entities.PricingOrderItems.create({
-        pricing_order_id: pricingOrderId,
+        pricing_order_id: order.id,
         item_type: 'Extra Charge',
         extra_charge_type_id: ecType.id,
         extra_charge_code: ecType.extra_charge_code,
@@ -168,9 +196,10 @@ export default function PricingOrderView({ pricingOrderId, incidentId, workOrder
 
   const submitOrderMutation = useMutation({
     mutationFn: async () => {
+      if (!order?.id) throw new Error('Pricing order not initialized');
       const errors = validateOrder(items);
       if (errors.length > 0) throw new Error(errors.join('\n'));
-      await base44.entities.PricingOrders.update(pricingOrderId, {
+      await base44.entities.PricingOrders.update(order.id, {
         status: 'Submitted',
         submitted_at: new Date().toISOString(),
       });
@@ -180,10 +209,13 @@ export default function PricingOrderView({ pricingOrderId, incidentId, workOrder
   });
 
   const approveOrderMutation = useMutation({
-    mutationFn: (status) => base44.entities.PricingOrders.update(pricingOrderId, {
-      status: status === 'approve' ? 'Approved' : 'Rejected',
-      approved_at: new Date().toISOString(),
-    }),
+    mutationFn: (status) => {
+      if (!order?.id) throw new Error('Pricing order not initialized');
+      return base44.entities.PricingOrders.update(order.id, {
+        status: status === 'approve' ? 'Approved' : 'Rejected',
+        approved_at: new Date().toISOString(),
+      });
+    },
     onSuccess: () => { invalidate(); toast.success('Pricing Order updated'); },
   });
 

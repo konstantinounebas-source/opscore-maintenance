@@ -21,6 +21,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/AuthContext";
 import FileUploadArea from "@/components/shared/FileUploadArea";
 import OfficialWordingBlock from "@/components/sla/OfficialWordingBlock";
+import PricingOrderView from "@/components/pricing/PricingOrderView";
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 function fmtDate(d) {
@@ -341,9 +342,27 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
   // ── Save ──
   const saveMutation = useMutation({
     mutationFn: async (data) => {
+      let pricingOrderId = submission?.pricing_order_id;
+      
+      // Create Pricing Order when FMPI is submitted
+      if (data.status === "Submitted" && !pricingOrderId) {
+        const ref = `PO-${Date.now().toString(36).toUpperCase()}`;
+        const order = await base44.entities.PricingOrders.create({
+          pricing_order_ref: ref,
+          incident_id: data.incident_id,
+          work_order_id: data.work_order_id,
+          contract_version: 'v1.0-2024',
+          status: 'Draft',
+          contractual_total: 0,
+          extra_charges_total: 0,
+          grand_total: 0,
+        });
+        pricingOrderId = order.id;
+      }
+      
       const result = isEditing
-        ? await base44.entities.FormSubmissions.update(submission.id, data)
-        : await base44.entities.FormSubmissions.create(data);
+        ? await base44.entities.FormSubmissions.update(submission.id, { ...data, pricing_order_id: pricingOrderId })
+        : await base44.entities.FormSubmissions.create({ ...data, pricing_order_id: pricingOrderId });
       
       const incId = data.incident_id;
       const timestamp = getAthensTimestamp();
@@ -676,188 +695,12 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
 
             {/* ── TAB 2: PRICING ORDER ── */}
             <TabsContent value="pricing" className="space-y-5">
-              {/* SECTION 3: Work items table */}
-              <Section
-                title="Περιγραφή Εργασιών βάσει Συμβολαίου"
-                accent="border-slate-200"
-                rightSlot={
-                  <Button size="sm" variant="outline" onClick={addRow} className="gap-1.5 text-xs h-7">
-                    <Plus className="w-3.5 h-3.5" /> Προσθήκη Γραμμής
-                  </Button>
-                }
-              >
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs">
-                    <thead>
-                      <tr className="bg-slate-100 text-slate-600 uppercase tracking-wide">
-                        <th className="px-3 py-2 text-left font-semibold rounded-tl-md" style={{ minWidth: 200 }}>Περιγραφή Εργασίας / Child</th>
-                        <th className="px-3 py-2 text-center font-semibold" style={{ minWidth: 100 }}>Ποσότητα που Τοποθετήθηκε</th>
-                        <th className="px-3 py-2 text-center font-semibold" style={{ minWidth: 150 }}>Ανάλυση Τιμής Μονάδας χωρίς ΦΠΑ (€)</th>
-                        <th className="px-3 py-2 text-center font-semibold" style={{ minWidth: 120 }}>Ποσό χωρίς ΦΠΑ (€)</th>
-                        <th className="px-3 py-2 text-center font-semibold" style={{ minWidth: 80 }}>Επιβεβαίωση (√)</th>
-                        <th className="px-3 py-2 text-left font-semibold" style={{ minWidth: 140 }}>Σχόλια</th>
-                        <th className="px-2 py-2 rounded-tr-md" style={{ width: 36 }}></th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {rows.map((row, idx) => {
-                       const catalogItem = catalogMap[row.catalog_id];
-                       const amount = (parseFloat(row.unit_price) || 0) * (parseFloat(row.qty) || 0);
-                        return (
-                          <tr
-                            key={row._id}
-                            className={`text-sm transition-colors ${row.confirmed ? "bg-emerald-50/40" : "bg-white hover:bg-slate-50/60"}`}
-                          >
-                            <td className="px-2 py-1.5">
-                              <Select value={row.catalog_id || "_none"} onValueChange={v => updateRow(idx, { catalog_id: v === "_none" ? "" : v })}>
-                                <SelectTrigger className={`text-xs h-8 ${!row.catalog_id ? "border-amber-300" : ""}`}>
-                                  <SelectValue placeholder="Επιλογή..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="_none">— Επιλογή —</SelectItem>
-                                  {filteredCatalog.map(c => (
-                                    <SelectItem key={c.id} value={c.id}>
-                                      <span className="font-mono text-xs mr-1">{c.child_code}</span>
-                                      {c.display_name || c.child_name}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              {catalogItem?.child_category && (
-                                <p className="text-xs text-slate-400 mt-0.5 pl-1 truncate">{catalogItem.child_category}</p>
-                              )}
-                            </td>
-                            <td className="px-2 py-1.5">
-                              <Input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={row.qty}
-                                onChange={e => updateRow(idx, { qty: e.target.value })}
-                                className="text-xs h-8 text-center"
-                              />
-                            </td>
-                            <td className="px-2 py-1.5">
-                              <div className="flex items-center justify-center gap-1 h-8 px-2 rounded-md bg-slate-50 border border-slate-200 text-xs text-slate-700">
-                                <Lock className="w-3 h-3 text-slate-300" />
-                                <span>{row.unit_price !== "" ? fmtNum(row.unit_price) : <span className="text-slate-300 italic">—</span>}</span>
-                              </div>
-                            </td>
-                            <td className="px-2 py-1.5">
-                              <div className="flex items-center justify-center gap-1 h-8 px-2 rounded-md bg-blue-50 border border-blue-200 text-xs font-semibold text-blue-800">
-                                <Lock className="w-3 h-3 text-blue-300" />
-                                <span>{fmtNum(amount)}</span>
-                              </div>
-                            </td>
-                            <td className="px-2 py-1.5 text-center">
-                              <div className="flex items-center justify-center">
-                                <Checkbox
-                                  checked={!!row.confirmed}
-                                  onCheckedChange={v => updateRow(idx, { confirmed: !!v })}
-                                />
-                              </div>
-                            </td>
-                            <td className="px-2 py-1.5">
-                              <Input
-                                value={row.comments}
-                                onChange={e => updateRow(idx, { comments: e.target.value })}
-                                placeholder="Σχόλια..."
-                                className="text-xs h-8"
-                              />
-                            </td>
-                            <td className="px-1 py-1.5 text-center">
-                              <button
-                                type="button"
-                                onClick={() => removeRow(idx)}
-                                disabled={rows.length === 1}
-                                className="w-7 h-7 flex items-center justify-center rounded-md text-slate-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-30 transition-colors"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Total cost */}
-                <div className="flex justify-end pt-2 border-t border-slate-100 mt-2">
-                  <div className="bg-indigo-600 text-white rounded-xl px-6 py-3 flex items-center gap-3 shadow-sm">
-                    <Euro className="w-5 h-5 text-indigo-200" />
-                    <div>
-                      <p className="text-xs text-indigo-200 font-medium uppercase tracking-wide">ΚΟΣΤΟΣ ΕΡΓΑΣΙΩΝ €</p>
-                      <p className="text-2xl font-bold tabular-nums">{totalCost.toFixed(2)}</p>
-                    </div>
-                  </div>
-                </div>
-              </Section>
-
-              {/* SECTION 4: Photos */}
-              <Section title="Φωτογραφικά Αποδεικτικά">
-                <FileUploadArea
-                  label="ΦΩΤΟΓΡΑΦΙΑ ΑΠΟ ΠΡΟΗΓΟΥΜΕΝΗ ΚΑΤΑΣΤΑΣΗ – 1Η ΕΠΙΘΕΩΡΗΣΗ"
-                  files={photosBefore}
-                  onChange={setPhotosBefore}
-                />
-              </Section>
-
-              {/* SECTION 5: Comments */}
-              <Section title="Σχόλια / Παρατηρήσεις">
-                <div className="space-y-1">
-                  <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
-                    ΣΧΟΛΙΑ-ΠΑΡΑΤΗΡΗΣΕΙΣ ΑΠΟ ΕΠΙΤΡΟΠΗ ΠΑΡΑΛΑΒΗΣ
-                  </Label>
-                  <Textarea
-                    value={comments}
-                    onChange={e => setComments(e.target.value)}
-                    placeholder="Σχόλια / παρατηρήσεις..."
-                    rows={4}
-                    className="text-sm mt-1"
-                  />
-                </div>
-              </Section>
-
-              {/* SECTION 6: Signature */}
-              <Section title="Παραλαβή / Υπογραφή">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">ΟΝΟΜΑΤΕΠΩΝΥΜΟ</Label>
-                    <Input value={sigName} onChange={e => setSigName(e.target.value)} placeholder="Ονοματεπώνυμο..." className="text-sm mt-1" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">ΥΠΗΡΕΣΙΑ-ΘΕΣΗ</Label>
-                    <Input value={sigService} onChange={e => setSigService(e.target.value)} placeholder="Υπηρεσία / Θέση..." className="text-sm mt-1" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">ΗΜΕΡ. ΠΑΡΑΛΑΒΗΣ</Label>
-                    <Input type="date" value={sigDate} onChange={e => setSigDate(e.target.value)} className="text-sm mt-1" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
-                      ΕΚΠΡΟΣΩΠΟΣ ΑΝΑΘΕΤΟΥΣΑΣ ΑΡΧΗΣ ΥΠΟΓΡΑΦΗ
-                    </Label>
-                    {sigUpload ? (
-                      <div className="relative inline-block group">
-                        <img src={sigUpload.url} alt="Υπογραφή" className="h-16 border border-slate-200 rounded-lg object-contain bg-white px-2" />
-                        <button type="button" onClick={() => setSigUpload(null)}
-                          className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ) : (
-                      <div>
-                        <Button type="button" variant="outline" size="sm" className="gap-1.5 text-xs"
-                          onClick={() => sigRef.current?.click()}>
-                          <Upload className="w-3.5 h-3.5" /> Μεταφόρτωση Υπογραφής
-                        </Button>
-                        <input ref={sigRef} type="file" accept="image/*" className="hidden" onChange={handleSigUpload} />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </Section>
+              {/* Integrated FMPI Pricing Order with Extra Charges */}
+              <PricingOrderView
+                pricingOrderId={submission?.pricing_order_id}
+                incidentId={linkedIncidentId}
+                workOrderId={linkedWOId}
+              />
             </TabsContent>
           </Tabs>
 
