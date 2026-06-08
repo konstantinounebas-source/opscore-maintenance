@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 export default function ExtraChargeSelector({ charges = [], onAddCharge }) {
+  // Categories default to collapsed
   const [expanded, setExpanded] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
 

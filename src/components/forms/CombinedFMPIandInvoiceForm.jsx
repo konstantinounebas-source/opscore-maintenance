@@ -53,12 +53,12 @@ function ReadOnlyField({ label, value, children }) {
   );
 }
 
-function Section({ title, icon: SectionIcon, accent, children, rightSlot }) {
+function Section({ title, icon: Icon, accent, children, rightSlot }) {
   return (
     <div className={`bg-white rounded-xl border ${accent || "border-slate-200"} overflow-hidden`}>
       <div className={`flex items-center justify-between gap-2.5 px-5 py-3.5 border-b ${accent ? "border-inherit bg-slate-50/50" : "border-slate-100 bg-slate-50/30"}`}>
         <div className="flex items-center gap-2.5">
-          {SectionIcon && <SectionIcon className="w-4 h-4 text-slate-500" />}
+          {Icon && <Icon className="w-4 h-4 text-slate-500" />}
           <h3 className="text-sm font-semibold text-slate-700">{title}</h3>
         </div>
         {rightSlot}
@@ -136,10 +136,12 @@ function deriveSubcategory(incident) {
 
 
 // ── Empty work row ────────────────────────────────────────────────────────────
-const emptyRow = () => ({
+const emptyRow = (type = 'Contractual') => ({
   _id: Math.random().toString(36).slice(2),
-  item_type: 'Child Component',
+  item_type: type,
   catalog_id: "",
+  catalog_code: "",
+  description: "",
   qty: 1,
   unit_price: "",
   confirmed: false,
@@ -169,6 +171,13 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
     queryKey: ["fmpiCatalogue"],
     queryFn: () => base44.entities.FMPIContractCatalogue.list('-child_line_code', 500),
   });
+
+  // ── FMPI Extra Charge Types ──
+  const { data: extraChargeTypes = [] } = useQuery({
+    queryKey: ["extraChargeTypes"],
+    queryFn: () => base44.entities.FMPIExtraChargeTypes.list('-sort_order', 100),
+  });
+  const activeExtraCharges = useMemo(() => extraChargeTypes.filter(c => c.is_active !== false), [extraChargeTypes]);
 
   // ── Tab state ──
   const [activeTab, setActiveTab] = useState("fmpi");
@@ -258,10 +267,7 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
     return activeCatalog.filter(c => templateIds.has(c.id));
   }, [activeCatalog, typeTemplates, asset]);
 
-  // Filter catalog to only Extra Charge items
-  const extraChargeCatalog = useMemo(() => {
-    return activeCatalog.filter(c => c.item_category === "Extra Charge");
-  }, [activeCatalog]);
+  // Filter catalog to only Extra Charge items (unused - remove)
 
   // Priority: prefer OMPI form value, fall back to incident
   const ompiForm = useMemo(() => {
@@ -703,14 +709,29 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
               {/* Add Items Sections */}
               <div className="grid grid-cols-2 gap-4">
                 <ChildCatalogueSelector
-                  childCatalog={activeCatalog}
-                  typeTemplates={typeTemplates}
-                  asset={asset}
-                  onAddChild={(childRow) => setRows(prev => [...prev, childRow])}
+                  catalogue={filteredCatalog}
+                  onAddChild={(child) => {
+                    const price = child.pricing_type === "Bundle" ? child.bundle_price : child.unit_price;
+                    setRows(prev => [...prev, {
+                      ...emptyRow('Contractual'),
+                      catalog_id: child.id,
+                      catalog_code: child.child_code,
+                      description: child.display_name || child.child_name,
+                      unit_price: price || 0,
+                    }]);
+                  }}
                 />
                 <ExtraChargeSelector
-                  charges={[]}
-                  onAddCharge={(chargeRow) => setRows(prev => [...prev, chargeRow])}
+                  charges={activeExtraCharges}
+                  onAddCharge={(charge) => {
+                    setRows(prev => [...prev, {
+                      ...emptyRow('Extra Charge'),
+                      catalog_id: charge.id,
+                      catalog_code: charge.extra_charge_code,
+                      description: charge.display_name,
+                      unit_price: charge.default_rate || 0,
+                    }]);
+                  }}
                 />
               </div>
 

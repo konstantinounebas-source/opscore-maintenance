@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 export default function ChildCatalogueSelector({ catalogue = [], onAddChild }) {
+  // Categories default to collapsed
   const [expandedCategories, setExpandedCategories] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
 
