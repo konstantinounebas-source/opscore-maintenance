@@ -45,7 +45,7 @@ export default function ExtraChargeSelector({ charges = [], onAddCharge }) {
       };
     }
 
-    // Fixed FMPI categories
+    // Fixed FMPI categories - always show all 5
     const categoryNames = {
       '58': '58 - Civil Works (Footway)',
       '59': '59 - Refurbishment (Factory)',
@@ -54,42 +54,31 @@ export default function ExtraChargeSelector({ charges = [], onAddCharge }) {
       '62': '62 - Decommissioning',
     };
 
-    // Group by parent_fmpi_code (58, 59, 60, 61, 62)
-    const grouped = filtered.reduce((acc, item) => {
+    // Initialize all 5 categories
+    const grouped = {};
+    Object.keys(categoryNames).forEach(cat => {
+      grouped[cat] = { name: categoryNames[cat], items: [] };
+    });
+
+    // Group items by parent_fmpi_code
+    filtered.forEach(item => {
       const cat = item.parent_fmpi_code;
-      if (!cat || !categoryNames[cat]) return acc; // Skip items without valid category
-      if (!acc[cat]) acc[cat] = { name: categoryNames[cat], items: [] };
-      acc[cat].items.push(item);
-      return acc;
-    }, {});
+      if (cat && grouped[cat]) {
+        grouped[cat].items.push(item);
+      }
+    });
     
     return grouped;
   }, [charges, searchQuery]);
 
-  // Initialize all categories as expanded based on charges
-  const [expanded, setExpanded] = useState(() => {
-    if (charges.length === 0) return {};
-    const initialExpanded = {};
-    charges.forEach(item => {
-      const cat = item.parent_fmpi_code || 'Other';
-      initialExpanded[cat] = true;
-    });
-    return initialExpanded;
+  // Initialize all 5 FMPI categories as expanded
+  const [expanded, setExpanded] = useState({
+    '58': true,
+    '59': true,
+    '60': true,
+    '61': true,
+    '62': true,
   });
-
-  // Keep categories expanded when new charges are added
-  useEffect(() => {
-    if (charges.length > 0) {
-      setExpanded(prev => {
-        const updated = { ...prev };
-        charges.forEach(item => {
-          const cat = item.parent_fmpi_code || 'Other';
-          if (!updated[cat]) updated[cat] = true;
-        });
-        return updated;
-      });
-    }
-  }, [charges]);
 
   const toggleCategory = (cat) => {
     setExpanded(prev => ({ ...prev, [cat]: !prev[cat] }));
@@ -168,29 +157,35 @@ export default function ExtraChargeSelector({ charges = [], onAddCharge }) {
 
               {expanded[catKey] && (
                 <div className="divide-y">
-                  {category.items.map(charge => (
-                    <div key={charge.id} className="px-3 py-2 flex items-center justify-between hover:bg-amber-50">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <span className="font-mono text-xs font-bold text-amber-600">{charge.child_line_code}</span>
-                        </div>
-                        <p className="text-xs text-slate-700 truncate">{charge.description}</p>
-                        {charge.notes && <p className="text-xs text-slate-500 line-clamp-1">{charge.notes}</p>}
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs font-semibold text-slate-600">€{charge.contract_unit_price}</span>
-                        <span className="text-xs text-slate-500">/{charge.unit_of_measure}</span>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => onAddCharge(charge)}
-                          className="h-7 text-xs gap-1 bg-amber-50 hover:bg-amber-100 border-amber-200 text-amber-700"
-                        >
-                          <Plus className="w-3 h-3" /> Add
-                        </Button>
-                      </div>
+                  {category.items.length === 0 ? (
+                    <div className="px-3 py-4 text-center text-xs text-slate-400 italic">
+                      No items in this category
                     </div>
-                  ))}
+                  ) : (
+                    category.items.map(charge => (
+                      <div key={charge.id} className="px-3 py-2 flex items-center justify-between hover:bg-amber-50">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <span className="font-mono text-xs font-bold text-amber-600">{charge.child_line_code}</span>
+                          </div>
+                          <p className="text-xs text-slate-700 truncate">{charge.description}</p>
+                          {charge.notes && <p className="text-xs text-slate-500 line-clamp-1">{charge.notes}</p>}
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs font-semibold text-slate-600">€{charge.contract_unit_price}</span>
+                          <span className="text-xs text-slate-500">/{charge.unit_of_measure}</span>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => onAddCharge(charge)}
+                            className="h-7 text-xs gap-1 bg-amber-50 hover:bg-amber-100 border-amber-200 text-amber-700"
+                          >
+                            <Plus className="w-3 h-3" /> Add
+                          </Button>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               )}
             </div>
