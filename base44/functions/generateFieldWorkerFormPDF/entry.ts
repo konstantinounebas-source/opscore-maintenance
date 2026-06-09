@@ -56,19 +56,37 @@ Deno.serve(async (req) => {
     const chk = (val) => val ? '&#9745;' : '&#9744;';
     const today = new Date().toLocaleDateString('el-GR');
 
+    // Normalize field names for PDF generation (support both old and new field names)
+    const normalizedFormData = {
+      // Technician/completed_by
+      technician: formData.technician || formData.completed_by || '',
+      completed_by: formData.completed_by || formData.technician || '',
+      // Signature (support both field names)
+      signature_url: formData.signature_url || formData.signature || '',
+      signature: formData.signature || formData.signature_url || '',
+      // Date fields
+      date: formData.date || formData.sig_date || formData.date_of_work || '',
+      sig_date: formData.sig_date || formData.date || '',
+      // Photo arrays
+      photos: formData.photos || formData.photo_urls || [],
+      photo_urls: formData.photo_urls || formData.photos || [],
+      // Copy all other fields as-is
+      ...formData,
+    };
+
     // Generate HTML based on form type
     let html = '';
     let fileName = '';
     
     if (formType === 'make_safe_checklist') {
       fileName = `MakeSafe_${inc.incident_id || 'form'}_${resolvedWorkOrderId || ''}.pdf`;
-      html = generateMakeSafeHTML(inc, asset, resolvedWorkOrderId, formData, today, e, chk);
+      html = generateMakeSafeHTML(inc, asset, resolvedWorkOrderId, normalizedFormData, today, e, chk);
     } else if (formType === 'corrective_wo_checklist') {
       fileName = `Corrective_${inc.incident_id || 'form'}_${resolvedWorkOrderId || ''}.pdf`;
-      html = generateCorrectiveHTML(inc, asset, resolvedWorkOrderId, formData, today, e, chk);
+      html = generateCorrectiveHTML(inc, asset, resolvedWorkOrderId, normalizedFormData, today, e, chk);
     } else if (formType === 'inspection_wo_checklist') {
       fileName = `Inspection_${inc.incident_id || 'form'}_${resolvedWorkOrderId || ''}.pdf`;
-      html = generateInspectionHTML(inc, asset, resolvedWorkOrderId, formData, today, e, chk);
+      html = generateInspectionHTML(inc, asset, resolvedWorkOrderId, normalizedFormData, today, e, chk);
     } else {
       return Response.json({ error: 'Unknown form type' }, { status: 400 });
     }

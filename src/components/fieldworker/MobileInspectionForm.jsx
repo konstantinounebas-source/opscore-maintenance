@@ -61,6 +61,7 @@ export default function MobileInspectionForm({ token, incident, asset, existingS
   });
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [pdfGenerating, setPdfGenerating] = useState(false);
   const [error, setError] = useState(null);
   const [offlineSaved, setOfflineSaved] = useState(false);
 
@@ -86,7 +87,9 @@ export default function MobileInspectionForm({ token, incident, asset, existingS
       if (resData?.error) { setError(resData.error); }
       else if (status === 'Submitted') {
         localStorage.removeItem(storageKey);
-        generateAndUploadPDF(resData.id, token).catch(err => console.error('PDF generation failed:', err));
+        setPdfGenerating(true);
+        await generateAndUploadPDF(resData.id, token);
+        setPdfGenerating(false);
         onSubmitted();
       } else { setOfflineSaved(true); setTimeout(() => setOfflineSaved(false), 3000); }
     } catch (err) {
@@ -96,36 +99,65 @@ export default function MobileInspectionForm({ token, incident, asset, existingS
   };
 
   const generateAndUploadPDF = async (submissionId, token) => {
-    const pdfRes = await fetch(`${window.location.origin}/functions/generateFieldWorkerFormPDF`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ submissionId, token }),
-    });
-    const pdfData = await pdfRes.json();
-    if (!pdfData?.html) return;
-    const html2pdf = (await import('html2pdf.js')).default;
-    const container = document.createElement('div');
-    container.innerHTML = pdfData.html;
-    container.style.position = 'fixed';
-    container.style.left = '-9999px';
-    container.style.top = '0';
-    document.body.appendChild(container);
-    const pdfBlob = await html2pdf().set({ margin: 0, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } }).from(container).outputPdf('blob');
-    document.body.removeChild(container);
-    const pdfFile = new File([pdfBlob], pdfData.fileName || 'form.pdf', { type: 'application/pdf' });
-    const formDataUpload = new FormData();
-    formDataUpload.append('file', pdfFile);
-    const uploadRes = await fetch(`${window.location.origin}/functions/uploadPublicFile`, { method: 'POST', body: formDataUpload });
-    const uploadData = await uploadRes.json();
-    const decoded = atob(token.replace(/-/g, '+').replace(/_/g, '/'));
-    const lastColon = decoded.lastIndexOf(':');
-    const secondLastColon = decoded.lastIndexOf(':', lastColon - 1);
-    const incidentId = decoded.substring(0, secondLastColon);
-    await fetch(`${window.location.origin}/functions/attachFieldWorkerFormPDF`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ incidentId, submissionId, pdfUrl: uploadData.file_url, pdfName: pdfData.fileName, token }),
-    });
+    try {
+      // Retry PDF generation (up to 3 attempts)
+      let pdfData = null;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          const pdfRes = await fetch(`${window.location.origin}/functions/generateFieldWorkerFormPDF`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ submissionId, token }),
+          });
+          pdfData = await pdfRes.json();
+          if (pdfData?.html) break;
+        } catch (e) {
+          if (attempt === 3) throw e;
+          await new Promise(r => setTimeout(r, 500 * attempt));
+        }
+      }
+      if (!pdfData?.html) {
+        console.warn('PDF generation returned no HTML - skipping');
+        return;
+      }
+      const html2pdf = (await import('html2pdf.js')).default;
+      const container = document.createElement('div');
+      container.innerHTML = pdfData.html;
+      container.style.position = 'fixed';
+      container.style.left = '-9999px';
+      container.style.top = '0';
+      document.body.appendChild(container);
+      const pdfBlob = await html2pdf().set({ margin: 0, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } }).from(container).outputPdf('blob');
+      document.body.removeChild(container);
+      const pdfFile = new File([pdfBlob], pdfData.fileName || 'form.pdf', { type: 'application/pdf' });
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', pdfFile);
+      // Retry upload
+      let uploadData = null;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          const uploadRes = await fetch(`${window.location.origin}/functions/uploadPublicFile`, { method: 'POST', body: uploadFormData });
+          uploadData = await uploadRes.json();
+          if (uploadData?.file_url) break;
+        } catch (e) {
+          if (attempt === 3) throw e;
+          await new Promise(r => setTimeout(r, 500 * attempt));
+        }
+      }
+      if (!uploadData?.file_url) {
+        console.warn('PDF upload failed - skipping attachment');
+        return;
+      }
+      const decoded = atob(token.replace(/-/g, '+').replace(/_/g, '/'));
+      const lastColon = decoded.lastIndexOf(':');
+      const secondLastColon = decoded.lastIndexOf(':', lastColon - 1);
+      const incidentId = decoded.substring(0, secondLastColon);
+      await fetch(`${window.location.origin}/functions/attachFieldWorkerFormPDF`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ incidentId, submissionId, pdfUrl: uploadData.file_url, pdfName: pdfData.fileName, token }),
+      });
+    } catch (err) { console.error('PDF generation/upload failed (non-blocking):', err); }
   };
 
   return (
@@ -133,6 +165,11 @@ export default function MobileInspectionForm({ token, incident, asset, existingS
       {offlineSaved && (
         <div className="bg-green-50 border border-green-200 text-green-700 rounded-xl p-3 text-sm flex items-center gap-2">
           <WifiOff className="w-4 h-4" /> Draft αποθηκεύτηκε τοπικά
+        </div>
+      )}
+      {pdfGenerating && (
+        <div className="bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-xl p-3 text-sm flex items-center gap-2">
+          <Loader2 className="w-4 h-4 animate-spin" /> Δημιουργία PDF...
         </div>
       )}
       {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-3 text-sm">{error}</div>}
@@ -321,8 +358,8 @@ export default function MobileInspectionForm({ token, incident, asset, existingS
         <Button variant="outline" className="flex-1 h-12 gap-2" onClick={() => submit('Draft')} disabled={saving || submitting}>
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Αποθήκευση
         </Button>
-        <Button className="flex-1 h-12 gap-2 bg-blue-700 hover:bg-blue-800" onClick={() => submit('Submitted')} disabled={saving || submitting}>
-          {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} Υποβολή
+        <Button className="flex-1 h-12 gap-2 bg-blue-700 hover:bg-blue-800" onClick={() => submit('Submitted')} disabled={saving || submitting || pdfGenerating}>
+          {pdfGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : submitting ? <Send className="w-4 h-4" /> : <Send className="w-4 h-4" />} {pdfGenerating ? 'Δημιουργία PDF...' : 'Υποβολή'}
         </Button>
       </div>
     </div>
