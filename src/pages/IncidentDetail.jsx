@@ -17,7 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import IncidentDocuments from "@/components/incidents/IncidentDocuments";
 import ResetIncidentDialog from "@/components/incidents/ResetIncidentDialog";
 import IncidentFormSubmissions from "@/components/incidents/IncidentFormSubmissions";
-import IncidentAttachmentsPreview from "@/components/incidents/IncidentAttachmentsPreview";
+import IncidentEvidenceSection from "@/components/incidents/IncidentEvidenceSection";
 
 export default function IncidentDetail() {
   const params = new URLSearchParams(window.location.search);
@@ -191,8 +191,8 @@ export default function IncidentDetail() {
             </div>
           )}
 
-          {/* Incident Evidence — all attachments with image thumbnails */}
-          <IncidentAttachmentsPreview 
+          {/* Incident Evidence — organized by type */}
+          <IncidentEvidenceSection 
             attachments={attachments} 
             auditTrail={auditTrail} 
             evidenceFiles={incident.evidence_files || []}
