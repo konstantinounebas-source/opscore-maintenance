@@ -698,38 +698,8 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
             </TabsContent>
 
             {/* ── TAB 2: PRICING ORDER ── */}
-            <TabsContent value="pricing" className="space-y-4">
-              {/* Add Items Sections */}
-              <div className="grid grid-cols-2 gap-4">
-                <ChildCatalogueSelector
-                  catalogue={filteredCatalog}
-                  onAddChild={(child) => {
-                    const price = child.pricing_type === "Bundle" ? child.bundle_price : child.unit_price;
-                    setRows(prev => [...prev, {
-                      ...emptyRow('Contractual'),
-                      catalog_id: child.id,
-                      catalog_code: child.child_code,
-                      description: child.display_name || child.child_name,
-                      unit_price: price || 0,
-                    }]);
-                  }}
-                />
-                <ExtraChargeSelector
-                  charges={fmpiCatalogue}
-                  onAddCharge={(charge) => {
-                    setRows(prev => [...prev, {
-                      ...emptyRow('Extra Charge'),
-                      catalog_id: charge.id,
-                      catalog_code: charge.child_line_code,
-                      catalog_name: `${charge.child_line_code} ${charge.description}`,
-                      description: charge.description,
-                      unit_price: charge.contract_unit_price || 0,
-                    }]);
-                  }}
-                />
-              </div>
-
-              {/* Pricing Table with Auto-Calculated Total */}
+             <TabsContent value="pricing" className="space-y-4">
+               {/* Pricing Table with Auto-Calculated Total */}
               <FMPICalculator
                 rows={rows}
                 onRowsChange={setRows}
