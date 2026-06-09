@@ -729,11 +729,32 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
                 />
               </div>
 
-              {/* Pricing Table */}
+              {/* Pricing Table with Auto-Calculated Total */}
               <FMPICalculator
                 rows={rows}
                 onRowsChange={setRows}
               />
+              
+              {/* Total Cost Summary */}
+              <div className="bg-gradient-to-r from-emerald-50 to-indigo-50 border-2 border-indigo-200 rounded-xl p-5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-lg bg-indigo-100 flex items-center justify-center">
+                      <Euro className="w-6 h-6 text-indigo-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-indigo-900">Total Contract Value</p>
+                      <p className="text-xs text-indigo-600">Sum of all child items and extra charges</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-3xl font-bold text-indigo-900">€{totalCost.toFixed(2)}</p>
+                    <p className="text-xs text-indigo-600 font-medium mt-0.5">
+                      {rows.length} item{rows.length !== 1 ? 's' : ''} • {rows.filter(r => r.item_type === 'Extra Charge').length} extra charges
+                    </p>
+                  </div>
+                </div>
+              </div>
 
               {/* SECTION 4: Photos */}
               <Section title="Φωτογραφικά Αποδεικτικά">
