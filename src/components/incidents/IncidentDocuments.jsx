@@ -38,9 +38,11 @@ export default function IncidentDocuments({ attachments = [], auditTrail = [] })
   // Collect all docs: from IncidentAttachments (initial uploads only) + from audit trail attachment_metadata + legacy attachments
   const allDocs = [];
 
-  // Direct attachments (all)
+  // Direct attachments (skip base64 data URIs — they can't be viewed as links)
   attachments.forEach(a => {
-    allDocs.push({ url: a.file_url, name: a.file_name, uploadedBy: a.uploaded_by, date: a.created_date, source: "Attachment" });
+    if (a.file_url && !a.file_url.startsWith('data:')) {
+      allDocs.push({ url: a.file_url, name: a.file_name, uploadedBy: a.uploaded_by, date: a.created_date, source: "Attachment" });
+    }
   });
 
   // Audit trail attachment_metadata
@@ -51,9 +53,8 @@ export default function IncidentDocuments({ attachments = [], auditTrail = [] })
     // Legacy audit attachments
     (entry.attachments || []).forEach((url, i) => {
       const name = entry.attachment_names?.[i];
-      // Avoid duplicates (if already in metadata)
       const alreadyAdded = allDocs.some(d => d.url === url);
-      if (!alreadyAdded) {
+      if (!alreadyAdded && url && !url.startsWith('data:')) {
         allDocs.push({ url, name, uploadedBy: entry.user, date: entry.created_date, source: entry.action });
       }
     });

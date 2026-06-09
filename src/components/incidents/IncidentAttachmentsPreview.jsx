@@ -116,7 +116,7 @@ export default function IncidentAttachmentsPreview({ attachments = [], auditTrai
 
   // Include evidence_files stored directly on the incident (uploaded at creation time)
   evidenceFiles.forEach(url => {
-    if (url && !seen.has(url)) {
+    if (url && !url.startsWith('data:') && !seen.has(url)) {
       seen.add(url);
       const name = url.split("/").pop() || "attachment";
       allDocs.push({ url, name });
@@ -124,7 +124,7 @@ export default function IncidentAttachmentsPreview({ attachments = [], auditTrai
   });
 
   attachments.forEach(a => {
-    if (!seen.has(a.file_url)) {
+    if (a.file_url && !a.file_url.startsWith('data:') && !seen.has(a.file_url)) {
       seen.add(a.file_url);
       allDocs.push({ url: a.file_url, name: a.file_name, uploadedBy: a.uploaded_by, date: a.created_date });
     }
@@ -132,13 +132,13 @@ export default function IncidentAttachmentsPreview({ attachments = [], auditTrai
 
   auditTrail.forEach(entry => {
     (entry.attachment_metadata || []).forEach(meta => {
-      if (!seen.has(meta.url)) {
+      if (meta.url && !meta.url.startsWith('data:') && !seen.has(meta.url)) {
         seen.add(meta.url);
         allDocs.push({ url: meta.url, name: meta.name, uploadedBy: meta.author_name || meta.author, date: meta.created_at });
       }
     });
     (entry.attachments || []).forEach((url, i) => {
-      if (!seen.has(url)) {
+      if (url && !url.startsWith('data:') && !seen.has(url)) {
         seen.add(url);
         allDocs.push({ url, name: entry.attachment_names?.[i], uploadedBy: entry.user, date: entry.created_date });
       }

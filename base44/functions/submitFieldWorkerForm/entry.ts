@@ -89,9 +89,9 @@ Deno.serve(async (req) => {
     const fileMetadata = [];
     const user = workerName || 'Field Worker';
 
-    // Collect signature URL (support both signature_url and signature field names)
+    // Collect signature URL — only if it's a real URL (not a base64 data URI)
     const sigUrl = formData.signature_url || formData.signature;
-    if (sigUrl) {
+    if (sigUrl && !sigUrl.startsWith('data:')) {
       fileUrls.push(sigUrl);
       fileNames.push(`signature_${formType}.png`);
       fileMetadata.push({
