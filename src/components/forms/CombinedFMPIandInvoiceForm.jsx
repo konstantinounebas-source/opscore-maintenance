@@ -248,16 +248,38 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
   // Filter catalog to only items matching the linked asset's shelter type
   const filteredCatalog = useMemo(() => {
     const shelterType = asset?.shelter_type || asset?.installed_shelter_type || asset?.ordered_shelter_type;
-    if (!shelterType || !typeTemplates.length) return activeCatalog;
+    if (!shelterType) return activeCatalog;
+
     const normalizeType = (s) => s?.trim().replace(/^type\s+/i, "").toUpperCase();
-    const normalized = normalizeType(shelterType);
-    const templateIds = new Set(
-      typeTemplates
-        .filter(t => normalizeType(t.shelter_type_code) === normalized && t.active !== false)
-        .map(t => t.child_catalog_id)
-    );
-    if (!templateIds.size) return activeCatalog;
-    return activeCatalog.filter(c => templateIds.has(c.id));
+    const normalized = normalizeType(shelterType); // e.g. "A", "B", "C1", "C"
+
+    // 1. Try TypeTemplates first
+    if (typeTemplates.length) {
+      const templateIds = new Set(
+        typeTemplates
+          .filter(t => normalizeType(t.shelter_type_code) === normalized && t.active !== false)
+          .map(t => t.child_catalog_id)
+      );
+      if (templateIds.size) return activeCatalog.filter(c => templateIds.has(c.id));
+    }
+
+    // 2. Fallback: filter by child_type field on ChildCatalog
+    // Build a set of matching child_type values from the shelter type
+    // e.g. shelter "A" → child_type "A"; "B" → "B"; "C1" → "C","C1","C1/C2"; "C2" → "C","C1/C2"
+    const matchingTypes = new Set();
+    matchingTypes.add(normalized); // exact match
+    if (normalized === 'C1' || normalized === 'C2') {
+      matchingTypes.add('C');       // shared C items
+      matchingTypes.add('C1/C2');   // shared C1/C2 items
+    }
+    if (normalized === 'C1') matchingTypes.add('C1');
+    if (normalized === 'C2') matchingTypes.add('C1/C2');
+
+    const byType = activeCatalog.filter(c => c.child_type && matchingTypes.has(c.child_type.trim().toUpperCase()));
+    if (byType.length) return byType;
+
+    // 3. Last resort: return everything
+    return activeCatalog;
   }, [activeCatalog, typeTemplates, asset]);
 
   // Filter catalog to only Extra Charge items (unused - remove)
