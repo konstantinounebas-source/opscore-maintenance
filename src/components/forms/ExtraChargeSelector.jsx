@@ -57,9 +57,9 @@ export default function ExtraChargeSelector({ charges = [], onAddCharge }) {
     return grouped;
   }, [charges, searchQuery]);
 
-  // Initialize all 5 FMPI categories as collapsed
+  // Initialize first FMPI category as expanded
   const [expanded, setExpanded] = useState({
-    '58': false,
+    '58': true,
     '59': false,
     '60': false,
     '61': false,

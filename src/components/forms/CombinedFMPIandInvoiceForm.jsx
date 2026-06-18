@@ -257,7 +257,9 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
         .map(t => t.child_catalog_id)
     );
     if (!templateIds.size) return activeCatalog;
-    return activeCatalog.filter(c => templateIds.has(c.id));
+    const filtered = activeCatalog.filter(c => templateIds.has(c.id));
+    // Always return at least the full catalog if filtered is empty
+    return filtered.length > 0 ? filtered : activeCatalog;
   }, [activeCatalog, typeTemplates, asset]);
 
   // Filter catalog to only Extra Charge items (unused - remove)

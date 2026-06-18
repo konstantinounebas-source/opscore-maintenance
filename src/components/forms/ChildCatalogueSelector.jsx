@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -12,9 +12,18 @@ import {
 } from "lucide-react";
 
 export default function ChildCatalogueSelector({ catalogue = [], onAddChild }) {
-  // Categories default to collapsed
+  // First category expanded by default
   const [expandedCategories, setExpandedCategories] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Auto-expand first category on load
+  React.useEffect(() => {
+    const filtered = catalogue.filter(item => item.active !== false);
+    if (filtered.length > 0 && Object.keys(expandedCategories).length === 0) {
+      const firstCat = filtered[0].child_category || 'Other';
+      setExpandedCategories({ [firstCat]: true });
+    }
+  }, [catalogue]);
 
   const groupedByCategory = useMemo(() => {
     const filtered = catalogue.filter(item => item.active !== false);
