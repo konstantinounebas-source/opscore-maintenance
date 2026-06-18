@@ -23,7 +23,6 @@ import FileUploadArea from "@/components/shared/FileUploadArea";
 import OfficialWordingBlock from "@/components/sla/OfficialWordingBlock";
 import FMPIContractCatalogueConfig from "@/components/configuration/FMPIContractCatalogueConfig";
 import FMPICalculator from "@/components/forms/FMPICalculator";
-import ChildCatalogueSelector from "@/components/forms/ChildCatalogueSelector";
 import ExtraChargeSelector from "@/components/forms/ExtraChargeSelector";
 
 
@@ -704,147 +703,116 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
 
             {/* ── TAB 2: PRICING ORDER ── */}
              <TabsContent value="pricing" className="space-y-4">
-               {/* Add Items Sections */}
-               <div className="grid grid-cols-2 gap-4">
-                 <ChildCatalogueSelector
-                   catalogue={filteredCatalog}
-                   onAddChild={(child) => {
-                     const price = child.pricing_type === "Bundle" ? child.bundle_price : child.unit_price;
-                     setRows(prev => [...prev, {
-                       ...emptyRow('Contractual'),
-                       catalog_id: child.id,
-                       catalog_code: child.child_code,
-                       description: child.display_name || child.child_name,
-                       unit_price: price || 0,
-                       excel_contract_number: child.excel_contract_number || '',
-                       contract_type: child.contract_type || '',
-                     }]);
-                   }}
-                 />
-                 <ExtraChargeSelector
-                   charges={fmpiCatalogue}
-                   onAddCharge={(charge) => {
-                     setRows(prev => [...prev, {
-                       ...emptyRow('Extra Charge'),
-                       catalog_id: charge.id,
-                       catalog_code: charge.child_line_code,
-                       catalog_name: `${charge.child_line_code} ${charge.description}`,
-                       description: charge.description,
-                       unit_price: charge.contract_unit_price || 0,
-                       excel_contract_number: charge.excel_contract_number || '',
-                       contract_type: charge.contract_type || '',
-                     }]);
-                   }}
-                 />
+               {/* Pricing Calculator with integrated child catalog selector */}
+               <FMPICalculator
+                 rows={rows}
+                 onRowsChange={setRows}
+                 childCatalog={activeCatalog}
+                 typeTemplates={typeTemplates}
+                 asset={asset}
+               />
+               
+               {/* Total Cost Summary */}
+               <div className="bg-gradient-to-r from-emerald-50 to-indigo-50 border-2 border-indigo-200 rounded-xl p-5">
+                 <div className="flex items-center justify-between">
+                   <div className="flex items-center gap-3">
+                     <div className="w-12 h-12 rounded-lg bg-indigo-100 flex items-center justify-center">
+                       <Euro className="w-6 h-6 text-indigo-600" />
+                     </div>
+                     <div>
+                       <p className="text-sm font-semibold text-indigo-900">Total Contract Value</p>
+                       <p className="text-xs text-indigo-600">Sum of all child items and extra charges</p>
+                     </div>
+                   </div>
+                   <div className="text-right">
+                     <p className="text-3xl font-bold text-indigo-900">€{totalCost.toFixed(2)}</p>
+                     <p className="text-xs text-indigo-600 font-medium mt-0.5">
+                       {rows.length} item{rows.length !== 1 ? 's' : ''} • {rows.filter(r => r.item_type === 'Extra Charge').length} extra charges
+                     </p>
+                   </div>
+                 </div>
                </div>
 
-               {/* Pricing Table with Auto-Calculated Total */}
-               <FMPICalculator
-                rows={rows}
-                onRowsChange={setRows}
-              />
-              
-              {/* Total Cost Summary */}
-              <div className="bg-gradient-to-r from-emerald-50 to-indigo-50 border-2 border-indigo-200 rounded-xl p-5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-lg bg-indigo-100 flex items-center justify-center">
-                      <Euro className="w-6 h-6 text-indigo-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-indigo-900">Total Contract Value</p>
-                      <p className="text-xs text-indigo-600">Sum of all child items and extra charges</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-3xl font-bold text-indigo-900">€{totalCost.toFixed(2)}</p>
-                    <p className="text-xs text-indigo-600 font-medium mt-0.5">
-                      {rows.length} item{rows.length !== 1 ? 's' : ''} • {rows.filter(r => r.item_type === 'Extra Charge').length} extra charges
-                    </p>
-                  </div>
-                </div>
-              </div>
+               {/* SECTION 4: Photos */}
+               <Section title="Φωτογραφικά Αποδεικτικά">
+                 <FileUploadArea
+                   label="ΦΩΤΟΓΡΑΦΙΑ ΑΠΟ ΠΡΟΗΓΟΥΜΕΝΗ ΚΑΤΑΣΤΑΣΗ – 1Η ΕΠΙΘΕΩΡΗΣΗ"
+                   files={photosBefore}
+                   onChange={setPhotosBefore}
+                 />
+               </Section>
 
-              {/* SECTION 4: Photos */}
-              <Section title="Φωτογραφικά Αποδεικτικά">
-                <FileUploadArea
-                  label="ΦΩΤΟΓΡΑΦΙΑ ΑΠΟ ΠΡΟΗΓΟΥΜΕΝΗ ΚΑΤΑΣΤΑΣΗ – 1Η ΕΠΙΘΕΩΡΗΣΗ"
-                  files={photosBefore}
-                  onChange={setPhotosBefore}
-                />
-              </Section>
+               {/* SECTION 5: Comments */}
+               <Section title="Σχόλια / Παρατηρήσεις">
+                 <div className="space-y-1">
+                   <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                     ΣΧΟΛΙΑ-ΠΑΡΑΤΗΡΗΣΕΙΣ ΑΠΟ ΕΠΙΤΡΟΠΗ ΠΑΡΑΛΑΒΗΣ
+                   </Label>
+                   <Textarea
+                     value={comments}
+                     onChange={e => setComments(e.target.value)}
+                     placeholder="Σχόλια / παρατηρήσεις..."
+                     rows={4}
+                     className="text-sm mt-1"
+                   />
+                 </div>
+               </Section>
 
-              {/* SECTION 5: Comments */}
-              <Section title="Σχόλια / Παρατηρήσεις">
-                <div className="space-y-1">
-                  <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
-                    ΣΧΟΛΙΑ-ΠΑΡΑΤΗΡΗΣΕΙΣ ΑΠΟ ΕΠΙΤΡΟΠΗ ΠΑΡΑΛΑΒΗΣ
-                  </Label>
-                  <Textarea
-                    value={comments}
-                    onChange={e => setComments(e.target.value)}
-                    placeholder="Σχόλια / παρατηρήσεις..."
-                    rows={4}
-                    className="text-sm mt-1"
-                  />
-                </div>
-              </Section>
+               {/* SECTION 6: Signature */}
+               <Section title="Παραλαβή / Υπογραφή">
+                 <div className="grid grid-cols-2 gap-4">
+                   <div className="space-y-1">
+                     <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">ΟΝΟΜΑΤΕΠΩΝΥΜΟ</Label>
+                     <Input value={sigName} onChange={e => setSigName(e.target.value)} placeholder="Ονοματεπώνυμο..." className="text-sm mt-1" />
+                   </div>
+                   <div className="space-y-1">
+                     <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">ΥΠΗΡΕΣΙΑ-ΘΕΣΗ</Label>
+                     <Input value={sigService} onChange={e => setSigService(e.target.value)} placeholder="Υπηρεσία / Θέση..." className="text-sm mt-1" />
+                   </div>
+                   <div className="space-y-1">
+                     <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">ΗΜΕΡ. ΠΑΡΑΛΑΒΗΣ</Label>
+                     <Input type="date" value={sigDate} onChange={e => setSigDate(e.target.value)} className="text-sm mt-1" />
+                   </div>
+                   <div className="space-y-2">
+                     <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                       ΕΚΠΡΟΣΩΠΟΣ ΑΝΑΘΕΤΟΥΣΑΣ ΑΡΧΗΣ ΥΠΟΓΡΑΦΗ
+                     </Label>
+                     {sigUpload ? (
+                       <div className="relative inline-block group">
+                         <img src={sigUpload.url} alt="Υπογραφή" className="h-16 border border-slate-200 rounded-lg object-contain bg-white px-2" />
+                         <button type="button" onClick={() => setSigUpload(null)}
+                           className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                           <X className="w-3 h-3" />
+                         </button>
+                       </div>
+                     ) : (
+                       <div>
+                         <Button type="button" variant="outline" size="sm" className="gap-1.5 text-xs"
+                           onClick={() => sigRef.current?.click()}>
+                           <Upload className="w-3.5 h-3.5" /> Μεταφόρτωση Υπογραφής
+                         </Button>
+                         <input ref={sigRef} type="file" accept="image/*" className="hidden" onChange={handleSigUpload} />
+                       </div>
+                     )}
+                   </div>
+                 </div>
+               </Section>
+             </TabsContent>
+           </Tabs>
 
-              {/* SECTION 6: Signature */}
-              <Section title="Παραλαβή / Υπογραφή">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">ΟΝΟΜΑΤΕΠΩΝΥΜΟ</Label>
-                    <Input value={sigName} onChange={e => setSigName(e.target.value)} placeholder="Ονοματεπώνυμο..." className="text-sm mt-1" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">ΥΠΗΡΕΣΙΑ-ΘΕΣΗ</Label>
-                    <Input value={sigService} onChange={e => setSigService(e.target.value)} placeholder="Υπηρεσία / Θέση..." className="text-sm mt-1" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">ΗΜΕΡ. ΠΑΡΑΛΑΒΗΣ</Label>
-                    <Input type="date" value={sigDate} onChange={e => setSigDate(e.target.value)} className="text-sm mt-1" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
-                      ΕΚΠΡΟΣΩΠΟΣ ΑΝΑΘΕΤΟΥΣΑΣ ΑΡΧΗΣ ΥΠΟΓΡΑΦΗ
-                    </Label>
-                    {sigUpload ? (
-                      <div className="relative inline-block group">
-                        <img src={sigUpload.url} alt="Υπογραφή" className="h-16 border border-slate-200 rounded-lg object-contain bg-white px-2" />
-                        <button type="button" onClick={() => setSigUpload(null)}
-                          className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ) : (
-                      <div>
-                        <Button type="button" variant="outline" size="sm" className="gap-1.5 text-xs"
-                          onClick={() => sigRef.current?.click()}>
-                          <Upload className="w-3.5 h-3.5" /> Μεταφόρτωση Υπογραφής
-                        </Button>
-                        <input ref={sigRef} type="file" accept="image/*" className="hidden" onChange={handleSigUpload} />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </Section>
-            </TabsContent>
-          </Tabs>
-
-          {/* Bottom actions */}
-          <div className="flex justify-end gap-3 pt-2 pb-8">
-            <Button variant="outline" onClick={onClose}>Άκυρο</Button>
-            <Button variant="outline" onClick={() => handleSave("Draft")} disabled={saveMutation.isPending} className="gap-1.5">
-              <Save className="w-4 h-4" /> Αποθήκευση Draft
-            </Button>
-            <Button onClick={() => handleSave("Submitted")} disabled={saveMutation.isPending}
-              className="bg-indigo-600 hover:bg-indigo-700 gap-1.5">
-              <Send className="w-4 h-4" /> Υποβολή Φόρμας
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+           {/* Bottom actions */}
+           <div className="flex justify-end gap-3 pt-2 pb-8">
+             <Button variant="outline" onClick={onClose}>Άκυρο</Button>
+             <Button variant="outline" onClick={() => handleSave("Draft")} disabled={saveMutation.isPending} className="gap-1.5">
+               <Save className="w-4 h-4" /> Αποθήκευση Draft
+             </Button>
+             <Button onClick={() => handleSave("Submitted")} disabled={saveMutation.isPending}
+               className="bg-indigo-600 hover:bg-indigo-700 gap-1.5">
+               <Send className="w-4 h-4" /> Υποβολή Φόρμας
+             </Button>
+           </div>
+         </div>
+       </div>
+     </div>
+   );
 }
