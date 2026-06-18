@@ -42,11 +42,10 @@ Deno.serve(async (req) => {
 
         // Parse the Excel format:
         // Col 0: No. (child_code)
-        // Col 1: Contract Number
-        // Col 2: Shelter Type (child_type e.g. A, B, C1)
-        // Col 3: Type (Greek component type name - used as display_name/type descriptor)
-        // Col 4: Description (child_name - full English description)
-        // Col 5: Total Price (unit_price)
+        // Col 1: Shelter Type (child_type e.g. A, B, C1)
+        // Col 2: Type (Greek component type name - used as display_name/type descriptor)
+        // Col 3: Description (child_name - full English description)
+        // Col 4: Total Price (unit_price)
         // Category header rows: col 0 empty, col 1 empty, col 3 has the category name (e.g. "Structural", "Panels")
 
         const parseSheet = (sheet, sheetShelterType) => {
@@ -66,22 +65,13 @@ Deno.serve(async (req) => {
 
             const results = [];
             let currentCategory = '';
-            let contractType = ''; // Track contract type from sheet name
-
-            // Determine contract type from sheet name
-            if (sheetName.toLowerCase().includes('type a')) contractType = 'Type A';
-            else if (sheetName.toLowerCase().includes('type b')) contractType = 'Type B';
-            else if (sheetName.toLowerCase().includes('type c')) contractType = 'Type C';
-            else if (sheetName.toLowerCase().includes('c1')) contractType = 'Type C1';
-            else if (sheetName.toLowerCase().includes('c2')) contractType = 'Type C2';
 
             for (const row of rawRows.slice(headerRowIdx + 1)) {
                 const colNo = String(row[0] || '').trim();       // No. / child_code
-                const colContractNum = String(row[1] || '').trim(); // Contract Number
-                const colShelterType = String(row[2] || '').trim(); // Shelter Type
-                const colType = String(row[3] || '').trim();      // Type (Greek descriptor)
-                const colDesc = String(row[4] || '').trim();      // Description (English name)
-                const colPrice = row[5];                           // Total Price
+                const colShelterType = String(row[1] || '').trim(); // Shelter Type
+                const colType = String(row[2] || '').trim();      // Type (Greek descriptor)
+                const colDesc = String(row[3] || '').trim();      // Description (English name)
+                const colPrice = row[4];                           // Total Price
 
                 // Skip empty rows
                 if (!colNo && !colDesc) continue;
@@ -110,8 +100,6 @@ Deno.serve(async (req) => {
                         display_name: colType || null,  // Greek/short type name as display
                         child_type: shelterType,
                         child_category: currentCategory,
-                        contract_type: contractType,
-                        excel_contract_number: colContractNum || null,
                         unit_price: validPrice ? Math.round(price * 100) / 100 : null,
                         pricing_type: 'Individual',
                         active: true,
@@ -131,7 +119,7 @@ Deno.serve(async (req) => {
             }
             const sheetShelterType = extractShelterTypeFromSheet(sheetName);
             const sheet = workbook.Sheets[sheetName];
-            const rows = parseSheet(sheet, sheetShelterType, sheetName);
+            const rows = parseSheet(sheet, sheetShelterType);
             console.log(`Sheet "${sheetName}" (type: ${sheetShelterType}): ${rows.length} records`);
             allRecords.push(...rows);
         }

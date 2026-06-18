@@ -342,19 +342,15 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
           updated.unit_price = fmpiItem.contract_unit_price ?? 0;
           updated.description = fmpiItem.description;
           updated.catalog_code = fmpiItem.child_line_code;
-          updated.excel_contract_number = fmpiItem.excel_contract_number || '';
-          updated.contract_type = fmpiItem.contract_type || '';
         } else if (childItem) {
           updated.unit_price = (childItem?.pricing_type === "Bundle" ? childItem?.bundle_price : childItem?.unit_price) ?? "";
-          updated.excel_contract_number = childItem.excel_contract_number || '';
-          updated.contract_type = childItem.contract_type || '';
         }
       }
       return updated;
     }));
   };
 
-  const addRow = (itemType = 'Contractual') => setRows(prev => [...prev, emptyRow(itemType)]);
+  const addRow = () => setRows(prev => [...prev, emptyRow()]);
   const removeRow = (idx) => setRows(prev => prev.filter((_, i) => i !== idx));
 
   // ── Signature upload ──
@@ -497,8 +493,6 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
            ...r,
            catalog_name: r.catalog_id ? (catalogMap[r.catalog_id]?.display_name || catalogMap[r.catalog_id]?.child_name || "") : "",
            catalog_code: r.catalog_id ? (catalogMap[r.catalog_id]?.child_code || "") : "",
-           contract_type: r.contract_type || (r.catalog_id ? (catalogMap[r.catalog_id]?.contract_type || "") : ""),
-           excel_contract_number: r.excel_contract_number || (r.catalog_id ? (catalogMap[r.catalog_id]?.excel_contract_number || "") : ""),
          })),
          photos_before: photosBefore,
          comments,
@@ -716,8 +710,6 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
                        catalog_code: child.child_code,
                        description: child.display_name || child.child_name,
                        unit_price: price || 0,
-                       excel_contract_number: child.excel_contract_number || '',
-                       contract_type: child.contract_type || '',
                      }]);
                    }}
                  />
@@ -731,8 +723,6 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
                        catalog_name: `${charge.child_line_code} ${charge.description}`,
                        description: charge.description,
                        unit_price: charge.contract_unit_price || 0,
-                       excel_contract_number: charge.excel_contract_number || '',
-                       contract_type: charge.contract_type || '',
                      }]);
                    }}
                  />

@@ -76,8 +76,6 @@ export default function FMPICalculator({ rows = [], onRowsChange, catalogue = []
       unit_price: child.pricing_type === "Bundle" ? child.bundle_price : child.unit_price,
       confirmed: false,
       comments: '',
-      excel_contract_number: child.excel_contract_number || '',
-      contract_type: child.contract_type || '',
     };
     onRowsChange([...rows, newRow]);
   };
@@ -153,7 +151,6 @@ export default function FMPICalculator({ rows = [], onRowsChange, catalogue = []
                   <th className="px-3 py-2.5 text-left font-semibold" style={{ width: 80 }}>Type</th>
                   <th className="px-3 py-2.5 text-left font-semibold" style={{ width: 80 }}>Code</th>
                   <th className="px-3 py-2.5 text-left font-semibold">Description</th>
-                  <th className="px-3 py-2.5 text-left font-semibold" style={{ width: 100 }}>Contract No.</th>
                   <th className="px-3 py-2.5 text-center font-semibold" style={{ width: 80 }}>Qty</th>
                   <th className="px-3 py-2.5 text-right font-semibold" style={{ width: 100 }}>Unit Price</th>
                   <th className="px-3 py-2.5 text-right font-semibold" style={{ width: 100 }}>Total</th>
@@ -172,16 +169,6 @@ export default function FMPICalculator({ rows = [], onRowsChange, catalogue = []
                       </td>
                       <td className="px-3 py-2.5">
                         <p className="text-xs text-slate-700">{row.description || 'No description'}</p>
-                      </td>
-                      <td className="px-3 py-2.5">
-                        <div className="space-y-1">
-                          <p className="text-xs font-mono font-semibold text-indigo-700">{row.excel_contract_number || '—'}</p>
-                          {row.contract_type && (
-                            <Badge className="bg-slate-100 text-slate-700 border-slate-200 text-[10px] px-1 py-0">
-                              {row.contract_type}
-                            </Badge>
-                          )}
-                        </div>
                       </td>
                       <td className="px-3 py-2.5">
                         <Input

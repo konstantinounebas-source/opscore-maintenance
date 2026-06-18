@@ -94,7 +94,7 @@ function ChildCatalogTab({ catalog, queryClient }) {
         <table className="w-full text-xs">
           <thead className="bg-slate-800 text-white">
             <tr>
-              {["No.", "Contract No.", "Type", "Contract Type", "Description", "Total Price", "Active", ""].map(h => (
+              {["No.", "Shelter Type", "Type", "Description", "Total Price", "Active", ""].map(h => (
                 <th key={h} className="px-3 py-2 text-left font-semibold text-xs">{h}</th>
               ))}
             </tr>
@@ -130,19 +130,7 @@ function ChildCatalogTab({ catalog, queryClient }) {
                     ) : (
                       <tr className={`hover:bg-slate-50 border-b border-slate-100 ${!item.active ? "opacity-40" : ""}`}>
                         <td className="px-3 py-1.5 font-mono text-slate-600 text-xs w-16">{item.child_code || "—"}</td>
-                        <td className="px-3 py-1.5 font-mono text-xs w-24">
-                          <span className="text-indigo-700 font-semibold">{item.excel_contract_number || "—"}</span>
-                        </td>
                         <td className="px-3 py-1.5 text-slate-600 text-xs w-24">{item.child_type || "—"}</td>
-                        <td className="px-3 py-1.5 w-24">
-                          {item.contract_type ? (
-                            <Badge className="bg-slate-100 text-slate-700 border-slate-200 text-[10px] px-1 py-0">
-                              {item.contract_type}
-                            </Badge>
-                          ) : (
-                            <span className="text-slate-400 text-xs">—</span>
-                          )}
-                        </td>
                         <td className="px-3 py-1.5 text-slate-500 text-xs w-40 max-w-[160px] truncate" title={item.display_name}>{item.display_name || "—"}</td>
                         <td className="px-3 py-1.5 text-slate-800 text-xs">
                           <div>{item.child_name}</div>
@@ -366,7 +354,7 @@ function TypeTemplatesTab({ templates, catalog, shelterTypeDefs, queryClient }) 
         <table className="w-full text-xs">
           <thead className="bg-slate-800 text-white">
             <tr>
-              {["No.", "Contract No.", "Contract Type", "Shelter Type", "Type", "Description", "Total Price", "Default", "Mandatory", "Active", ""].map(h => (
+              {["No.", "Shelter Type", "Type", "Description", "Total Price", "Default", "Mandatory", "Active", ""].map(h => (
                 <th key={h} className="px-3 py-2 text-left font-semibold text-xs">{h}</th>
               ))}
             </tr>
@@ -397,18 +385,6 @@ function TypeTemplatesTab({ templates, catalog, shelterTypeDefs, queryClient }) 
                     return (
                       <tr key={row.id} className={`hover:bg-slate-50 border-b border-slate-100 ${!row.active ? "opacity-40" : ""}`}>
                         <td className="px-3 py-1.5 font-mono text-slate-600 text-xs w-16">{child?.child_code || "—"}</td>
-                        <td className="px-3 py-1.5 font-mono text-xs w-24">
-                          <span className="text-indigo-700 font-semibold">{child?.excel_contract_number || "—"}</span>
-                        </td>
-                        <td className="px-3 py-1.5 w-24">
-                          {child?.contract_type ? (
-                            <Badge className="bg-slate-100 text-slate-700 border-slate-200 text-[10px] px-1 py-0">
-                              {child.contract_type}
-                            </Badge>
-                          ) : (
-                            <span className="text-slate-400 text-xs">—</span>
-                          )}
-                        </td>
                         <td className="px-3 py-1.5 text-slate-600 text-xs w-24">{child?.child_type || "—"}</td>
                         <td className="px-3 py-1.5 text-slate-500 text-xs w-40 max-w-[160px] truncate" title={child?.display_name}>{child?.display_name || "—"}</td>
                         <td className="px-3 py-1.5 text-slate-800 text-xs">
