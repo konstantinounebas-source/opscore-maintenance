@@ -1,6 +1,12 @@
 {
   "name": "WorkOrders",
   "type": "object",
+  "access_control": {
+    "read": "all",
+    "create": "all",
+    "update": "all",
+    "delete": "admin"
+  },
   "properties": {
     "work_order_id": {
       "type": "string",

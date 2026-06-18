@@ -1,6 +1,12 @@
 {
   "name": "Assets",
   "type": "object",
+  "access_control": {
+    "read": "all",
+    "create": "admin",
+    "update": "all",
+    "delete": "admin"
+  },
   "properties": {
     "asset_id": {
       "type": "string",

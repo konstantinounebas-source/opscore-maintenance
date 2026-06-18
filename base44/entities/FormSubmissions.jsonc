@@ -1,6 +1,12 @@
 {
   "name": "FormSubmissions",
   "type": "object",
+  "access_control": {
+    "read": "all",
+    "create": "all",
+    "update": "all",
+    "delete": "admin"
+  },
   "properties": {
     "form_type": {
       "type": "string",

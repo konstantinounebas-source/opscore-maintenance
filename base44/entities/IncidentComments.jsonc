@@ -1,6 +1,12 @@
 {
   "name": "IncidentComments",
   "type": "object",
+  "access_control": {
+    "read": "all",
+    "create": "all",
+    "update": "all",
+    "delete": "admin"
+  },
   "properties": {
     "incident_id": {
       "type": "string",
