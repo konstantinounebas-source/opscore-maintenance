@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, Pencil, Check, X, ToggleLeft, ToggleRight, Upload, Download } from "lucide-react";
 import ChildCatalogForm from "./ChildCatalogForm";
 
-const SHELTER_TYPES = ["A1","A2","Refurbished","B","C","C1","C2","C3","D1","D2","Bicycle racks"];
+const SHELTER_TYPES = ["A1","A2","Refurbished","B","C1","C2","C3","D1","D2","Bicycle racks"];
 const WARRANTY_START_RULES = [
   { value: "asset_delivery_date", label: "Asset Delivery Date" },
   { value: "child_installation_date", label: "Child Installation Date" },
