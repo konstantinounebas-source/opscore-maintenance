@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
         // Col 5: Total Price (unit_price)
         // Category header rows: col 0 empty, col 1 empty, col 3 has the category name (e.g. "Structural", "Panels")
 
-        const parseSheet = (sheet, sheetShelterType, sheetName) => {
+        const parseSheet = (sheet, sheetShelterType) => {
             const rawRows = utils.sheet_to_json(sheet, { header: 1 });
 
             // Find the header row (contains 'No.' in first cell)
@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
 
             for (const row of rawRows.slice(headerRowIdx + 1)) {
                 const colNo = String(row[0] || '').trim();       // No. / child_code
-                let colContractNum = row[1];                      // Contract Number
+                const colContractNum = String(row[1] || '').trim(); // Contract Number
                 const colShelterType = String(row[2] || '').trim(); // Shelter Type
                 const colType = String(row[3] || '').trim();      // Type (Greek descriptor)
                 const colDesc = String(row[4] || '').trim();      // Description (English name)
@@ -100,15 +100,8 @@ Deno.serve(async (req) => {
                 const price = typeof colPrice === 'number' ? colPrice : parseFloat(colPrice);
                 const validPrice = !isNaN(price) && price > 0;
 
-                // Determine shelter type: prefer col2 value, fallback to sheet-derived
+                // Determine shelter type: prefer col1 value, fallback to sheet-derived
                 const shelterType = colShelterType || sheetShelterType;
-
-                // Normalize contract number - convert to string, handle empty/null/numbers
-                let contractNumber = null;
-                if (colContractNum != null && colContractNum !== '') {
-                    contractNumber = String(colContractNum).trim();
-                    if (contractNumber === '') contractNumber = null;
-                }
 
                 if (colNo || colDesc) {
                     results.push({
@@ -118,7 +111,7 @@ Deno.serve(async (req) => {
                         child_type: shelterType,
                         child_category: currentCategory,
                         contract_type: contractType,
-                        excel_contract_number: contractNumber,
+                        excel_contract_number: colContractNum || null,
                         unit_price: validPrice ? Math.round(price * 100) / 100 : null,
                         pricing_type: 'Individual',
                         active: true,

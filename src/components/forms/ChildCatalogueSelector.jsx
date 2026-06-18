@@ -16,12 +16,8 @@ export default function ChildCatalogueSelector({ catalogue = [], onAddChild }) {
   const [expandedCategories, setExpandedCategories] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Debug logging
-  console.log('[ChildCatalogueSelector] catalogue count:', catalogue.length, 'sample:', catalogue.slice(0, 2));
-
   const groupedByCategory = useMemo(() => {
     const filtered = catalogue.filter(item => item.active !== false);
-    console.log('[ChildCatalogueSelector] filtered count:', filtered.length);
     
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
@@ -38,19 +34,12 @@ export default function ChildCatalogueSelector({ catalogue = [], onAddChild }) {
       };
     }
 
-    const grouped = filtered.reduce((acc, item) => {
+    return filtered.reduce((acc, item) => {
       const cat = item.child_category || 'Other';
       if (!acc[cat]) acc[cat] = { name: cat, items: [] };
       acc[cat].items.push(item);
       return acc;
     }, {});
-    
-    // Auto-expand all categories when not searching
-    if (!searchQuery.trim() && Object.keys(grouped).length > 0) {
-      setExpandedCategories(Object.fromEntries(Object.keys(grouped).map(k => [k, true])));
-    }
-    
-    return grouped;
   }, [catalogue, searchQuery]);
 
   const toggleCategory = (cat) => {
@@ -77,67 +66,59 @@ export default function ChildCatalogueSelector({ catalogue = [], onAddChild }) {
         </div>
 
         <div className="space-y-2 max-h-96 overflow-y-auto">
-          {Object.keys(groupedByCategory).length === 0 ? (
-            <div className="text-center py-8 text-slate-400">
-              <Package className="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p className="text-xs">No components available</p>
-              {searchQuery && <p className="text-xs mt-1">Try a different search term</p>}
-            </div>
-          ) : (
-            Object.entries(groupedByCategory).map(([catKey, category]) => (
-              <div key={catKey} className="border rounded-lg overflow-hidden">
-                <button
-                  onClick={() => toggleCategory(catKey)}
-                  className="w-full px-3 py-2 bg-slate-50 border-b flex items-center justify-between hover:bg-slate-100"
-                >
-                  <div className="flex items-center gap-2">
-                    {expandedCategories[catKey] ? (
-                      <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
-                    ) : (
-                      <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
-                    )}
-                    <span className="text-xs font-semibold text-slate-700">{category.name}</span>
-                    <Badge variant="outline" className="h-5 text-xs">{category.items.length}</Badge>
-                  </div>
-                </button>
+          {Object.entries(groupedByCategory).map(([catKey, category]) => (
+            <div key={catKey} className="border rounded-lg overflow-hidden">
+              <button
+                onClick={() => toggleCategory(catKey)}
+                className="w-full px-3 py-2 bg-slate-50 border-b flex items-center justify-between hover:bg-slate-100"
+              >
+                <div className="flex items-center gap-2">
+                  {expandedCategories[catKey] ? (
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
+                  ) : (
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
+                  )}
+                  <span className="text-xs font-semibold text-slate-700">{category.name}</span>
+                  <Badge variant="outline" className="h-5 text-xs">{category.items.length}</Badge>
+                </div>
+              </button>
 
-                {expandedCategories[catKey] && (
-                  <div className="divide-y">
-                    {category.items.map(child => {
-                      const price = child.pricing_type === "Bundle" ? child.bundle_price : child.unit_price;
-                      return (
-                        <div key={child.id} className="px-3 py-2 flex items-center justify-between hover:bg-emerald-50">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <span className="font-mono text-xs font-bold text-emerald-600">{child.child_code}</span>
-                              {child.pricing_type === "Bundle" && (
-                                <Badge variant="outline" className="h-5 text-xs bg-amber-50 text-amber-700 border-amber-200">
-                                  Bundle
-                                </Badge>
-                              )}
-                            </div>
-                            <p className="text-xs text-slate-700 truncate">{child.display_name || child.child_name}</p>
-                            {child.child_type && <p className="text-xs text-slate-500">{child.child_type}</p>}
+              {expandedCategories[catKey] && (
+                <div className="divide-y">
+                  {category.items.map(child => {
+                    const price = child.pricing_type === "Bundle" ? child.bundle_price : child.unit_price;
+                    return (
+                      <div key={child.id} className="px-3 py-2 flex items-center justify-between hover:bg-emerald-50">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <span className="font-mono text-xs font-bold text-emerald-600">{child.child_code}</span>
+                            {child.pricing_type === "Bundle" && (
+                              <Badge variant="outline" className="h-5 text-xs bg-amber-50 text-amber-700 border-amber-200">
+                                Bundle
+                              </Badge>
+                            )}
                           </div>
-                          <div className="flex items-center gap-3">
-                            <span className="text-xs font-bold text-slate-700">€{price}</span>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => onAddChild(child)}
-                              className="h-7 text-xs gap-1 bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-700"
-                            >
-                              <Plus className="w-3 h-3" /> Add
-                            </Button>
-                          </div>
+                          <p className="text-xs text-slate-700 truncate">{child.display_name || child.child_name}</p>
+                          {child.child_type && <p className="text-xs text-slate-500">{child.child_type}</p>}
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            ))
-          )}
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs font-bold text-slate-700">€{price}</span>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => onAddChild(child)}
+                            className="h-7 text-xs gap-1 bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-700"
+                          >
+                            <Plus className="w-3 h-3" /> Add
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       </CardContent>
     </Card>
