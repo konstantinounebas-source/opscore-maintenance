@@ -186,7 +186,7 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
   // ── Invoice state ──
   const [rows, setRows] = useState(() => {
     if (submission?.form_data?.rows?.length) return submission.form_data.rows;
-    return [emptyRow()];
+    return [];
   });
   const [comments, setComments] = useState(submission?.form_data?.comments || "");
   const [sigName, setSigName] = useState(submission?.form_data?.sig_name || "");
@@ -470,9 +470,8 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
 
       if (!outlineDate) { toast({ title: "Συμπληρώστε: Ημερομηνία Outline management plan", variant: "destructive" }); return; }
       if (!owrValue) { toast({ title: "Επιλέξτε: Εκτός Εγγύησης (OWR)", variant: "destructive" }); return; }
-      const hasEmptyChild = rows.some(r => !r.catalog_id);
-      if (hasEmptyChild) { toast({ title: "Επιλέξτε Child για κάθε γραμμή εργασίας", variant: "destructive" }); return; }
-      const hasZeroQty = rows.some(r => !r.qty || Number(r.qty) <= 0);
+      const validRows = rows.filter(r => r.catalog_id);
+      const hasZeroQty = validRows.some(r => !r.qty || Number(r.qty) <= 0);
       if (hasZeroQty) { toast({ title: "Η ποσότητα πρέπει να είναι > 0", variant: "destructive" }); return; }
     }
 
