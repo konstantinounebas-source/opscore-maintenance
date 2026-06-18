@@ -155,7 +155,7 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
   const isEditing = !!submission;
 
   // ── Child Catalog from Configuration ──
-  const { data: childCatalog = [] } = useQuery({
+  const { data: childCatalog = [], isLoading: isLoadingCatalog } = useQuery({
     queryKey: ["childCatalog"],
     queryFn: () => base44.entities.ChildCatalog.list(),
   });
@@ -165,6 +165,8 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
   });
   const activeCatalog = useMemo(() => childCatalog.filter(c => c.active !== false), [childCatalog]);
   const catalogMap = useMemo(() => Object.fromEntries(activeCatalog.map(c => [c.id, c])), [activeCatalog]);
+  
+  console.log('[CombinedFMPI] childCatalog count:', childCatalog.length, 'activeCatalog count:', activeCatalog.length);
 
   // ── FMPI Contract Catalogue ──
   const { data: fmpiCatalogue = [] } = useQuery({
@@ -248,7 +250,10 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
   // Filter catalog to only items matching the linked asset's shelter type
   const filteredCatalog = useMemo(() => {
     const shelterType = asset?.shelter_type || asset?.installed_shelter_type || asset?.ordered_shelter_type;
-    if (!shelterType || !typeTemplates.length) return activeCatalog;
+    if (!shelterType || !typeTemplates.length) {
+      console.log('[CombinedFMPI] No shelter type or templates, returning all activeCatalog');
+      return activeCatalog;
+    }
     const normalizeType = (s) => s?.trim().replace(/^type\s+/i, "").toUpperCase();
     const normalized = normalizeType(shelterType);
     const templateIds = new Set(
@@ -256,6 +261,7 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
         .filter(t => normalizeType(t.shelter_type_code) === normalized && t.active !== false)
         .map(t => t.child_catalog_id)
     );
+    console.log('[CombinedFMPI] shelterType:', shelterType, 'templateIds count:', templateIds.size);
     if (!templateIds.size) return activeCatalog;
     return activeCatalog.filter(c => templateIds.has(c.id));
   }, [activeCatalog, typeTemplates, asset]);
@@ -705,37 +711,41 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
             {/* ── TAB 2: PRICING ORDER ── */}
              <TabsContent value="pricing" className="space-y-4">
                {/* Add Items Sections */}
-               <div className="grid grid-cols-2 gap-4">
-                 <ChildCatalogueSelector
-                   catalogue={filteredCatalog}
-                   onAddChild={(child) => {
-                     const price = child.pricing_type === "Bundle" ? child.bundle_price : child.unit_price;
-                     setRows(prev => [...prev, {
-                       ...emptyRow('Contractual'),
-                       catalog_id: child.id,
-                       catalog_code: child.child_code,
-                       description: child.display_name || child.child_name,
-                       unit_price: price || 0,
-                       excel_contract_number: child.excel_contract_number || '',
-                       contract_type: child.contract_type || '',
-                     }]);
-                   }}
-                 />
-                 <ExtraChargeSelector
-                   charges={fmpiCatalogue}
-                   onAddCharge={(charge) => {
-                     setRows(prev => [...prev, {
-                       ...emptyRow('Extra Charge'),
-                       catalog_id: charge.id,
-                       catalog_code: charge.child_line_code,
-                       catalog_name: `${charge.child_line_code} ${charge.description}`,
-                       description: charge.description,
-                       unit_price: charge.contract_unit_price || 0,
-                       excel_contract_number: charge.excel_contract_number || '',
-                       contract_type: charge.contract_type || '',
-                     }]);
-                   }}
-                 />
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 <div className="min-h-[400px]">
+                   <ChildCatalogueSelector
+                     catalogue={filteredCatalog}
+                     onAddChild={(child) => {
+                       const price = child.pricing_type === "Bundle" ? child.bundle_price : child.unit_price;
+                       setRows(prev => [...prev, {
+                         ...emptyRow('Contractual'),
+                         catalog_id: child.id,
+                         catalog_code: child.child_code,
+                         description: child.display_name || child.child_name,
+                         unit_price: price || 0,
+                         excel_contract_number: child.excel_contract_number || '',
+                         contract_type: child.contract_type || '',
+                       }]);
+                     }}
+                   />
+                 </div>
+                 <div className="min-h-[400px]">
+                   <ExtraChargeSelector
+                     charges={fmpiCatalogue}
+                     onAddCharge={(charge) => {
+                       setRows(prev => [...prev, {
+                         ...emptyRow('Extra Charge'),
+                         catalog_id: charge.id,
+                         catalog_code: charge.child_line_code,
+                         catalog_name: `${charge.child_line_code} ${charge.description}`,
+                         description: charge.description,
+                         unit_price: charge.contract_unit_price || 0,
+                         excel_contract_number: charge.excel_contract_number || '',
+                         contract_type: charge.contract_type || '',
+                       }]);
+                     }}
+                   />
+                 </div>
                </div>
 
                {/* Pricing Table with Auto-Calculated Total */}
