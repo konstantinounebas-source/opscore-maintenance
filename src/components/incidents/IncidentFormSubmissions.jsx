@@ -33,6 +33,7 @@ const STATUS_COLORS = {
 
 function DownloadPDFButton({ submissionId, formName, formType }) {
   const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
   const handleClick = async () => {
     setLoading(true);
     try {
@@ -46,22 +47,10 @@ function DownloadPDFButton({ submissionId, formName, formType }) {
       }
       const res = await base44.functions.invoke(pdfFunc, { submissionId });
       const { html, fileName } = res.data;
-      const html2pdf = (await import('html2pdf.js')).default;
-      const container = document.createElement('div');
-      container.innerHTML = html;
-      container.style.position = 'fixed';
-      container.style.left = '-9999px';
-      container.style.top = '0';
-      document.body.appendChild(container);
-      await html2pdf().set({
-        margin: 0,
-        filename: fileName || `${formName || 'form'}.pdf`,
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
-      }).from(container).save();
-      document.body.removeChild(container);
+      const { generatePDFFromHtml } = await import("@/lib/generatePDFFromHtml");
+      await generatePDFFromHtml(html, fileName || `${formName || 'form'}.pdf`);
     } catch (err) {
-      alert("PDF Error: " + (err?.message || "Unknown error"));
+      toast({ title: "PDF Error", description: err?.message || "Unknown error", variant: "destructive" });
     } finally {
       setLoading(false);
     }
