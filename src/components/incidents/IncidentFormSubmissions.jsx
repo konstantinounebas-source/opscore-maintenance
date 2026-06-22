@@ -2,10 +2,19 @@ import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, FileText, Clock, Download, Loader2, ExternalLink } from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { CheckCircle2, FileText, Clock, Download, Loader2, ExternalLink, Pencil, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/lib/AuthContext";
 import FormViewerModal from "@/components/incidents/FormViewerModal";
+import CROMPIForm from "@/components/incidents/CROMPIForm";
+import CombinedFMPIandInvoiceForm from "@/components/forms/CombinedFMPIandInvoiceForm";
+import WorkOrderFormF from "@/components/forms/WorkOrderFormF";
 
 const FORM_TYPE_LABELS = {
   cr_ompi:                          "Confirmation of Receipt + OMPI",
@@ -23,6 +32,16 @@ const FORM_TYPE_TO_WO_TYPE = {
   corrective_wo_checklist: "corrective",
   inspection_wo_checklist: "inspection",
 };
+
+// Form types that support in-app editing
+const EDITABLE_FORM_TYPES = new Set([
+  "cr_ompi",
+  "combined_fmpi_invoice",
+  "work_order_form_f",
+  "make_safe_checklist",
+  "corrective_wo_checklist",
+  "inspection_wo_checklist",
+]);
 
 const STATUS_COLORS = {
   Draft:      "bg-slate-100 text-slate-600 border-slate-200",
@@ -65,13 +84,55 @@ function DownloadPDFButton({ submissionId, formName, formType }) {
 
 export default function IncidentFormSubmissions({ incidentId, incident, onApprove }) {
   const [viewingSub, setViewingSub] = useState(null);
+  const [editingSub, setEditingSub] = useState(null);
+  const [deletingSub, setDeletingSub] = useState(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const { data: submissions = [], isLoading } = useQuery({
     queryKey: ["formSubmissions", incidentId],
     queryFn: () => base44.entities.FormSubmissions.filter({ incident_id: incidentId }),
     enabled: !!incidentId,
+  });
+
+  // Fetch data needed by edit forms (only when editing)
+  const { data: allIncidents = [] } = useQuery({
+    queryKey: ["incidents"],
+    queryFn: () => base44.entities.Incidents.list(),
+    enabled: !!editingSub,
+  });
+  const { data: allAssets = [] } = useQuery({
+    queryKey: ["assets"],
+    queryFn: () => base44.entities.Assets.list(),
+    enabled: !!editingSub,
+  });
+  const { data: allWorkOrders = [] } = useQuery({
+    queryKey: ["allWorkOrders"],
+    queryFn: () => base44.entities.WorkOrders.list(),
+    enabled: !!editingSub,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (sub) => {
+      await base44.entities.FormSubmissions.delete(sub.id);
+      await base44.entities.IncidentAuditTrail.create({
+        incident_id: incidentId,
+        action: "Form Deleted",
+        details: `${sub.form_name || sub.form_type} deleted by ${user?.email || "user"}`,
+        user: user?.email,
+      });
+      return sub;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["formSubmissions", incidentId] });
+      queryClient.invalidateQueries({ queryKey: ["incidentAudit", incidentId] });
+      toast({ title: "Form deleted" });
+      setDeletingSub(null);
+    },
+    onError: (err) => {
+      toast({ title: "Delete failed", description: err?.message, variant: "destructive" });
+    },
   });
 
   const approveMutation = useMutation({
@@ -183,11 +244,28 @@ export default function IncidentFormSubmissions({ incidentId, incident, onApprov
                 View
               </Button>
             )}
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs gap-1"
+              onClick={() => setEditingSub(sub)}
+            >
+              <Pencil className="w-3 h-3" />
+              Edit
+            </Button>
             <DownloadPDFButton
               submissionId={sub.id}
               formName={FORM_TYPE_LABELS[sub.form_type] || sub.form_name}
               formType={sub.form_type}
             />
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs gap-1 text-red-600 border-red-200 hover:bg-red-50"
+              onClick={() => setDeletingSub(sub)}
+            >
+              <Trash2 className="w-3 h-3" />
+            </Button>
           </div>
         </div>
       ))}
@@ -201,6 +279,86 @@ export default function IncidentFormSubmissions({ incidentId, incident, onApprov
           onClose={() => setViewingSub(null)}
         />
       )}
+
+      {/* Edit modals */}
+      {editingSub?.form_type === "cr_ompi" && (
+        <Dialog open onOpenChange={() => setEditingSub(null)}>
+          <DialogContent className="max-w-5xl w-full max-h-[95vh] overflow-y-auto p-0">
+            <CROMPIForm
+              incident={incident}
+              incidentId={incidentId}
+              onClose={() => setEditingSub(null)}
+              onDone={() => { setEditingSub(null); queryClient.invalidateQueries({ queryKey: ["formSubmissions", incidentId] }); }}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {editingSub?.form_type === "combined_fmpi_invoice" && (
+        <Dialog open onOpenChange={() => setEditingSub(null)}>
+          <DialogContent className="max-w-5xl w-full max-h-[95vh] overflow-y-auto p-0">
+            <CombinedFMPIandInvoiceForm
+              submission={editingSub}
+              incidents={allIncidents}
+              assets={allAssets}
+              workOrders={allWorkOrders}
+              crews={[]}
+              onClose={() => setEditingSub(null)}
+              defaultIncidentId={incidentId}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {editingSub?.form_type === "work_order_form_f" && (
+        <Dialog open onOpenChange={() => setEditingSub(null)}>
+          <DialogContent className="max-w-5xl w-full max-h-[95vh] overflow-y-auto p-0">
+            <WorkOrderFormF
+              submission={editingSub}
+              incidents={allIncidents}
+              assets={allAssets}
+              workOrders={allWorkOrders}
+              crews={[]}
+              onClose={() => setEditingSub(null)}
+              defaultIncidentId={incidentId}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {editingSub && FORM_TYPE_TO_WO_TYPE[editingSub.form_type] && (
+        <FormViewerModal
+          woType={FORM_TYPE_TO_WO_TYPE[editingSub.form_type]}
+          incident={incident}
+          incidentId={incidentId}
+          submission={editingSub}
+          onClose={() => setEditingSub(null)}
+        />
+      )}
+
+      {/* Delete confirmation */}
+      <AlertDialog open={!!deletingSub} onOpenChange={(open) => !open && setDeletingSub(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete form submission?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete "{deletingSub && (FORM_TYPE_LABELS[deletingSub.form_type] || deletingSub.form_name || deletingSub.form_type)}".
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => deletingSub && deleteMutation.mutate(deletingSub)}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : null}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
