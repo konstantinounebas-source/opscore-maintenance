@@ -177,7 +177,7 @@ export default function IncidentFormSubmissions({ incidentId, incident, onApprov
     );
   }
 
-  const sorted = [...submissions].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+  const sorted = [...submissions].sort((a, b) => new Date(b.submitted_at || b.created_date) - new Date(a.submitted_at || a.created_date));
   const woType = viewingSub ? FORM_TYPE_TO_WO_TYPE[viewingSub.form_type] : null;
 
   return (
@@ -204,7 +204,7 @@ export default function IncidentFormSubmissions({ incidentId, incident, onApprov
                 )}
                 {sub.submitted_at && sub.status === "Submitted" && (
                   <span className="text-xs text-slate-400">
-                    Submitted: {format(new Date(sub.submitted_at), "dd/MM/yyyy")}
+                    Submitted: {format(new Date(sub.submitted_at), "dd/MM/yyyy, HH:mm")}
                   </span>
                 )}
               </div>
