@@ -57,6 +57,17 @@
         "CA_Rejected",
         "Approved_For_Corrective",
         "Corrective_In_Progress",
+        "Awaiting_CA_Initiation_Approval",
+        "CA_Initiation_Rejected",
+        "CA_Initiation_Approved",
+        "Works_In_Progress",
+        "Additional_Issues_Identified",
+        "Revised_FMPI_Required",
+        "Revised_FMPI_Sent_to_CA",
+        "Works_Completed",
+        "Awaiting_CA_Completion_Approval",
+        "CA_Completion_Rejected",
+        "CA_Completion_Approved",
         "Awaiting_Closure",
         "Closed",
         "Cancelled"
@@ -131,7 +142,7 @@
     "ca_decision_at": {
       "type": "string",
       "format": "date-time",
-      "description": "Timestamp of CA decision"
+      "description": "Timestamp of CA decision (legacy)"
     },
     "ca_decision": {
       "type": "string",
@@ -139,11 +150,63 @@
         "Approved",
         "Rejected"
       ],
-      "description": "CA approval decision"
+      "description": "CA approval decision (legacy)"
     },
     "ca_decision_comment": {
       "type": "string",
-      "description": "CA decision comment"
+      "description": "CA decision comment (legacy)"
+    },
+    "ca_initiation_decision": {
+      "type": "string",
+      "enum": [
+        "Approved",
+        "Rejected"
+      ],
+      "description": "CA initiation approval decision"
+    },
+    "ca_initiation_decision_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Initiation approval date/time"
+    },
+    "ca_initiation_decision_by": {
+      "type": "string",
+      "description": "Initiation approved by"
+    },
+    "ca_initiation_decision_comment": {
+      "type": "string",
+      "description": "CA initiation decision comment / rejection reason"
+    },
+    "ca_completion_decision": {
+      "type": "string",
+      "enum": [
+        "Approved",
+        "Rejected"
+      ],
+      "description": "CA completion approval decision"
+    },
+    "ca_completion_decision_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Completion approval date/time"
+    },
+    "ca_completion_decision_by": {
+      "type": "string",
+      "description": "Completion approved by"
+    },
+    "ca_completion_decision_comment": {
+      "type": "string",
+      "description": "CA completion decision comment / rejection reason"
+    },
+    "works_started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of works start (after CA initiation approval)"
+    },
+    "works_completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of works completion"
     },
     "corrective_started_at": {
       "type": "string",

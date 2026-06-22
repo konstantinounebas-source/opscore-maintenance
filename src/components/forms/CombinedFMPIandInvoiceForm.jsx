@@ -443,7 +443,17 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
         // Normalise both fields — handleSave converts ΝΑΙ→Yes, but guard against raw Greek values too
         const normalise = v => (v === "ΝΑΙ" || v === "YES" || v === "Yes") ? "Yes" : v;
         const fmpiApprovalNeeded = normalise(data.apaiteitai_eggkrisi_ca) === "Yes" || normalise(data.ektos_eggyhshs) === "Yes";
-        const nextWorkflowState = fmpiApprovalNeeded ? "Awaiting_CA_Approval" : "FMPI_Submitted";
+        let nextWorkflowState;
+        if (!fmpiApprovalNeeded) {
+          nextWorkflowState = "FMPI_Submitted";
+        } else {
+          const currentState = incident?.workflow_state;
+          if (currentState === "Additional_Issues_Identified" || currentState === "Revised_FMPI_Required") {
+            nextWorkflowState = "Revised_FMPI_Sent_to_CA";
+          } else {
+            nextWorkflowState = "Awaiting_CA_Initiation_Approval";
+          }
+        }
         await base44.entities.Incidents.update(incId, {
           workflow_state: nextWorkflowState,
           fmpi_submitted_at: nowTs,

@@ -56,10 +56,22 @@ const STATE_META = {
   Awaiting_Closure:        { label: "Awaiting Closure",             color: "bg-pink-100 text-pink-700 border-pink-200" },
   Closed:                  { label: "Closed",                       color: "bg-green-100 text-green-700 border-green-200" },
   Cancelled:               { label: "Cancelled",                    color: "bg-slate-100 text-slate-500 border-slate-200" },
+  // ── Two-stage CA approval states ──
+  Awaiting_CA_Initiation_Approval: { label: "Pending CA Approval for Initiation",       color: "bg-amber-100 text-amber-700 border-amber-200" },
+  CA_Initiation_Rejected:          { label: "CA Initiation Rejected – Revise FMPI",    color: "bg-red-100 text-red-700 border-red-200" },
+  CA_Initiation_Approved:           { label: "CA Approved Initiation",                   color: "bg-emerald-100 text-emerald-700 border-emerald-200" },
+  Works_In_Progress:                { label: "Works in Progress",                         color: "bg-cyan-100 text-cyan-700 border-cyan-200" },
+  Additional_Issues_Identified:     { label: "Additional Issues Identified",             color: "bg-orange-100 text-orange-700 border-orange-200" },
+  Revised_FMPI_Required:            { label: "Revised FMPI / Pricing Order Required",    color: "bg-purple-100 text-purple-700 border-purple-200" },
+  Revised_FMPI_Sent_to_CA:          { label: "Revised FMPI Sent to CA",                  color: "bg-amber-100 text-amber-700 border-amber-200" },
+  Works_Completed:                  { label: "Works Completed",                           color: "bg-blue-100 text-blue-700 border-blue-200" },
+  Awaiting_CA_Completion_Approval: { label: "Pending CA Approval After Work Completion", color: "bg-amber-100 text-amber-700 border-amber-200" },
+  CA_Completion_Rejected:           { label: "CA Completion Rejected – Revise Works",    color: "bg-red-100 text-red-700 border-red-200" },
+  CA_Completion_Approved:           { label: "CA Approved Completion",                   color: "bg-emerald-100 text-emerald-700 border-emerald-200" },
 };
 
 // ── CA Approval Modal ────────────────────────────────────────────────────────
-function CAApprovalModal({ incident, incidentId, onClose, onDone }) {
+function CAApprovalModal({ incident, incidentId, onClose, onDone, approvalStage = "initiation" }) {
    const { toast } = useToast();
    const { user } = useAuth();
    const queryClient = useQueryClient();
@@ -80,25 +92,34 @@ function CAApprovalModal({ incident, incidentId, onClose, onDone }) {
     try {
       const now = getAthensTimestamp();
 
-      let nextState, corrective_allowed, newSLAUpdates = {};
+      let nextState, updateData;
 
-      if (decision === "Approved") {
-         nextState = "Approved_For_Corrective";
-         corrective_allowed = true;
+      if (approvalStage === "completion") {
+        nextState = decision === "Approved" ? "CA_Completion_Approved" : "CA_Completion_Rejected";
+        updateData = {
+          workflow_state: nextState,
+          ca_completion_decision: decision,
+          ca_completion_decision_at: now,
+          ca_completion_decision_by: user?.email,
+          ca_completion_decision_comment: comment || null,
+          ca_decision: decision, ca_decision_at: now, ca_decision_comment: comment || null,
+          ca_status: decision === "Approved" ? "Approved" : "Not Approved",
+        };
       } else {
-        nextState = "CA_Rejected";
-        corrective_allowed = false;
+        nextState = decision === "Approved" ? "CA_Initiation_Approved" : "CA_Initiation_Rejected";
+        updateData = {
+          workflow_state: nextState,
+          ca_initiation_decision: decision,
+          ca_initiation_decision_at: now,
+          ca_initiation_decision_by: user?.email,
+          ca_initiation_decision_comment: comment || null,
+          corrective_allowed: decision === "Approved",
+          ca_decision: decision, ca_decision_at: now, ca_decision_comment: comment || null,
+          ca_status: decision === "Approved" ? "Approved" : "Not Approved",
+        };
       }
 
-      await base44.entities.Incidents.update(incidentId, {
-        workflow_state: nextState,
-        ca_decision: decision,
-        ca_decision_at: now,
-        ca_decision_comment: comment || null,
-        corrective_allowed,
-        // Legacy compat
-        ca_status: decision === "Approved" ? "Approved" : "Not Approved",
-      });
+      await base44.entities.Incidents.update(incidentId, updateData);
 
       // Upload CA files
       for (const f of files) {
@@ -113,7 +134,7 @@ function CAApprovalModal({ incident, incidentId, onClose, onDone }) {
 
       await base44.entities.IncidentAuditTrail.create({
         incident_id: incidentId,
-        action: `CA ${decision}`,
+        action: `CA ${decision} — ${approvalStage === "completion" ? "Completion" : "Initiation"}`,
         details: `CA decision: ${decision}${comment ? ` — ${comment}` : ""}`,
         user: user?.email,
         ...(files.length > 0 ? {
@@ -139,7 +160,7 @@ function CAApprovalModal({ incident, incidentId, onClose, onDone }) {
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>CA Approval Decision</DialogTitle>
+          <DialogTitle>{approvalStage === "completion" ? "CA Approval — Work Completion" : "CA Approval — Initiation of Works"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 mt-2">
           {fmpiSubmissions.length > 0 && (
@@ -200,7 +221,7 @@ function CAApprovalModal({ incident, incidentId, onClose, onDone }) {
             </div>
             {decision === "Rejected" && (
               <p className="text-xs text-red-600 flex items-center gap-1">
-                <AlertTriangle className="w-3 h-3" /> Workflow will return to FMPI revision state.
+                <AlertTriangle className="w-3 h-3" /> {approvalStage === "completion" ? "Workflow will return to Works in Progress for correction." : "Workflow will return to FMPI revision state."}
               </p>
             )}
           </div>
@@ -361,6 +382,7 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
   const [showFMPIForm, setShowFMPIForm] = useState(false);
   const [showManualFMPI, setShowManualFMPI] = useState(false);
   const [showCAModal, setShowCAModal] = useState(false);
+  const [caModalStage, setCaModalStage] = useState("initiation");
   const [showCloseModal, setShowCloseModal] = useState(false);
   const [downloadingPDF, setDownloadingPDF] = useState(false);
   const { toast } = useToast();
@@ -383,6 +405,14 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
 
   // Derive operational workflow state
    const workflowState = incident.workflow_state || "Awaiting_CR_OMPI";
+   // Normalize legacy workflow states to new two-stage CA approval states
+   const ws = workflowState;
+   const normalizedWorkflowState =
+     ws === "Awaiting_CA_Approval" ? "Awaiting_CA_Initiation_Approval"
+     : ws === "CA_Rejected" ? "CA_Initiation_Rejected"
+     : ws === "Approved_For_Corrective" ? "CA_Initiation_Approved"
+     : ws === "Corrective_In_Progress" ? "Works_In_Progress"
+     : ws;
    const warrantyStatus = incident.warranty_status
      || (incident.is_owr === true ? "OWR" : incident.is_owr === false ? "In Warranty" : null);
    const fmpiApprovalRequired = incident.fmpi_approval_required ?? (warrantyStatus === "OWR");
@@ -582,37 +612,41 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
           </div>
         )}
 
-        {/* CA Approval — only shown when required */}
-        {fmpiApprovalRequired && workflowState !== "Awaiting_CR_OMPI" && (
+        {/* CA Initiation Approval — only shown when required */}
+        {fmpiApprovalRequired && normalizedWorkflowState !== "Awaiting_CR_OMPI" && (
           <div className={`rounded-lg border p-3 flex items-center justify-between gap-3 ${
-            incident.ca_decision === "Approved"
+            incident.ca_initiation_decision === "Approved"
               ? "bg-green-50 border-green-200"
-              : incident.ca_decision === "Rejected"
+              : incident.ca_initiation_decision === "Rejected"
                 ? "bg-red-50 border-red-200"
                 : hasFMPISubmitted
                   ? "bg-white border-slate-200"
                   : "bg-slate-50 border-slate-100 opacity-60"
           }`}>
             <div className="flex items-center gap-2">
-              {incident.ca_decision === "Approved"
+              {incident.ca_initiation_decision === "Approved"
                 ? <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
-                : incident.ca_decision === "Rejected"
+                : incident.ca_initiation_decision === "Rejected"
                   ? <XCircle className="w-4 h-4 text-red-500 shrink-0" />
                   : hasFMPISubmitted
                     ? <Circle className="w-4 h-4 text-slate-300 shrink-0" />
                     : <Lock className="w-4 h-4 text-slate-300 shrink-0" />
               }
               <div>
-                <p className={`text-sm font-medium ${incident.ca_decision ? "text-slate-600" : "text-slate-800"}`}>
-                  CA Approval
+                <p className={`text-sm font-medium ${incident.ca_initiation_decision ? "text-slate-600" : "text-slate-800"}`}>
+                  CA Approval — Initiation of Works
                 </p>
-                {incident.ca_decision && (
-                  <p className={`text-xs font-semibold ${incident.ca_decision === "Approved" ? "text-green-700" : "text-red-700"}`}>
-                    {incident.ca_decision === "Approved" ? "✓ Approved" : "✗ Rejected"}
-                    {incident.ca_decision_at ? ` — ${format(new Date(incident.ca_decision_at), "dd/MM/yyyy HH:mm")}` : ""}
+                {incident.ca_initiation_decision && (
+                  <p className={`text-xs font-semibold ${incident.ca_initiation_decision === "Approved" ? "text-green-700" : "text-red-700"}`}>
+                    {incident.ca_initiation_decision === "Approved" ? "✓ Approved" : "✗ Rejected"}
+                    {incident.ca_initiation_decision_at ? ` — ${format(new Date(incident.ca_initiation_decision_at), "dd/MM/yyyy HH:mm")}` : ""}
+                    {incident.ca_initiation_decision_by ? ` by ${incident.ca_initiation_decision_by}` : ""}
                   </p>
                 )}
-                {!hasFMPISubmitted && !incident.ca_decision && (
+                {incident.ca_initiation_decision === "Rejected" && incident.ca_initiation_decision_comment && (
+                  <p className="text-xs text-red-600 mt-0.5">&ldquo;{incident.ca_initiation_decision_comment}&rdquo;</p>
+                )}
+                {!hasFMPISubmitted && !incident.ca_initiation_decision && (
                   <p className="text-xs text-slate-400">Submit FMPI first</p>
                 )}
               </div>
@@ -621,11 +655,192 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
               size="sm"
               variant="outline"
               className="text-xs h-8"
-              disabled={!hasFMPISubmitted && !incident.ca_decision}
-              onClick={() => setShowCAModal(true)}
+              disabled={!hasFMPISubmitted && !incident.ca_initiation_decision}
+              onClick={() => { setCaModalStage("initiation"); setShowCAModal(true); }}
             >
-              {incident.ca_decision ? "Update Decision" : "Set CA Decision"}
+              {incident.ca_initiation_decision ? "Update Decision" : "Set CA Decision"}
             </Button>
+          </div>
+        )}
+
+        {/* Start Works — after CA Initiation Approved */}
+        {fmpiApprovalRequired && normalizedWorkflowState === "CA_Initiation_Approved" && (
+          <div className="rounded-lg border border-cyan-200 bg-cyan-50 p-3 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-slate-800">Start Works</p>
+                <p className="text-xs text-slate-500">CA approved initiation — crew may proceed with maintenance works.</p>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              className="text-xs h-8 bg-cyan-600 hover:bg-cyan-700"
+              onClick={async () => {
+                try {
+                  await base44.entities.Incidents.update(incidentId, {
+                    workflow_state: "Works_In_Progress",
+                    works_started_at: getAthensTimestamp(),
+                    corrective_started_at: getAthensTimestamp(),
+                  });
+                  await base44.entities.IncidentAuditTrail.create({
+                    incident_id: incidentId, action: "Works Started", details: "Works started after CA initiation approval", user: user?.email,
+                  });
+                  queryClient.invalidateQueries({ queryKey: ["incident", incidentId] });
+                  queryClient.invalidateQueries({ queryKey: ["incidentAudit", incidentId] });
+                  onRefresh();
+                } catch (err) { toast({ title: "Error", description: err?.message }); }
+              }}
+            >
+              Start Works
+            </Button>
+          </div>
+        )}
+
+        {/* Works In Progress — mark completed or identify additional issues */}
+        {fmpiApprovalRequired && (normalizedWorkflowState === "Works_In_Progress" || normalizedWorkflowState === "CA_Completion_Rejected") && (
+          <div className="rounded-lg border border-cyan-200 bg-cyan-50 p-3 space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Loader2 className="w-4 h-4 text-cyan-500 shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-slate-800">Works in Progress</p>
+                  <p className="text-xs text-slate-500">
+                    Started: {incident.works_started_at ? format(new Date(incident.works_started_at), "dd/MM/yyyy HH:mm") : "—"}
+                    {normalizedWorkflowState === "CA_Completion_Rejected" && (
+                      <span className="text-red-600 font-semibold"> — CA rejected completion, please revise and resubmit</span>
+                    )}
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-xs h-8 border-orange-300 text-orange-700 hover:bg-orange-50"
+                  onClick={async () => {
+                    try {
+                      await base44.entities.Incidents.update(incidentId, { workflow_state: "Additional_Issues_Identified" });
+                      await base44.entities.IncidentAuditTrail.create({
+                        incident_id: incidentId, action: "Additional Issues Identified", details: "Crew identified additional issues during works — FMPI revision required", user: user?.email,
+                      });
+                      queryClient.invalidateQueries({ queryKey: ["incident", incidentId] });
+                      queryClient.invalidateQueries({ queryKey: ["incidentAudit", incidentId] });
+                      onRefresh();
+                    } catch (err) { toast({ title: "Error", description: err?.message }); }
+                  }}
+                >
+                  <AlertTriangle className="w-3 h-3 mr-1" /> Additional Issues
+                </Button>
+                <Button
+                  size="sm"
+                  className="text-xs h-8 bg-blue-600 hover:bg-blue-700"
+                  onClick={async () => {
+                    try {
+                      await base44.entities.Incidents.update(incidentId, {
+                        workflow_state: "Works_Completed",
+                        works_completed_at: getAthensTimestamp(),
+                        corrective_completed_at: getAthensTimestamp(),
+                      });
+                      await base44.entities.IncidentAuditTrail.create({
+                        incident_id: incidentId, action: "Works Completed", details: "All works completed — awaiting CA completion approval", user: user?.email,
+                      });
+                      queryClient.invalidateQueries({ queryKey: ["incident", incidentId] });
+                      queryClient.invalidateQueries({ queryKey: ["incidentAudit", incidentId] });
+                      onRefresh();
+                    } catch (err) { toast({ title: "Error", description: err?.message }); }
+                  }}
+                >
+                  Mark Works Completed
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Additional Issues Identified — revise FMPI */}
+        {fmpiApprovalRequired && (normalizedWorkflowState === "Additional_Issues_Identified" || normalizedWorkflowState === "Revised_FMPI_Required") && (
+          <div className="rounded-lg border border-purple-200 bg-purple-50 p-3 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-purple-500 shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-slate-800">Revised FMPI / Pricing Order Required</p>
+                <p className="text-xs text-slate-500">Additional issues identified during works — revise the FMPI and Pricing Order, then resubmit for CA approval.</p>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              className="text-xs h-8 bg-purple-600 hover:bg-purple-700"
+              onClick={() => setShowFMPIForm(true)}
+            >
+              <FileText className="w-3 h-3 mr-1" /> Revise FMPI
+            </Button>
+          </div>
+        )}
+
+        {/* Revised FMPI Sent to CA — pending approval */}
+        {fmpiApprovalRequired && normalizedWorkflowState === "Revised_FMPI_Sent_to_CA" && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Loader2 className="w-4 h-4 text-amber-500 shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-slate-800">Revised FMPI Sent to CA</p>
+                <p className="text-xs text-slate-500">Awaiting CA approval of revised FMPI for initiation.</p>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-xs h-8"
+              onClick={() => { setCaModalStage("initiation"); setShowCAModal(true); }}
+            >
+              Set CA Decision
+            </Button>
+          </div>
+        )}
+
+        {/* CA Completion Approval — after works completed */}
+        {fmpiApprovalRequired && (normalizedWorkflowState === "Works_Completed" || normalizedWorkflowState === "Awaiting_CA_Completion_Approval" || normalizedWorkflowState === "CA_Completion_Approved" || normalizedWorkflowState === "CA_Completion_Rejected") && (
+          <div className={`rounded-lg border p-3 flex items-center justify-between gap-3 ${
+            incident.ca_completion_decision === "Approved"
+              ? "bg-green-50 border-green-200"
+              : incident.ca_completion_decision === "Rejected"
+                ? "bg-red-50 border-red-200"
+                : "bg-white border-slate-200"
+          }`}>
+            <div className="flex items-center gap-2">
+              {incident.ca_completion_decision === "Approved"
+                ? <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+                : incident.ca_completion_decision === "Rejected"
+                  ? <XCircle className="w-4 h-4 text-red-500 shrink-0" />
+                  : <Circle className="w-4 h-4 text-slate-300 shrink-0" />
+              }
+              <div>
+                <p className={`text-sm font-medium ${incident.ca_completion_decision ? "text-slate-600" : "text-slate-800"}`}>
+                  CA Approval — After Work Completion
+                </p>
+                {incident.ca_completion_decision && (
+                  <p className={`text-xs font-semibold ${incident.ca_completion_decision === "Approved" ? "text-green-700" : "text-red-700"}`}>
+                    {incident.ca_completion_decision === "Approved" ? "✓ Approved" : "✗ Rejected"}
+                    {incident.ca_completion_decision_at ? ` — ${format(new Date(incident.ca_completion_decision_at), "dd/MM/yyyy HH:mm")}` : ""}
+                    {incident.ca_completion_decision_by ? ` by ${incident.ca_completion_decision_by}` : ""}
+                  </p>
+                )}
+                {incident.ca_completion_decision === "Rejected" && incident.ca_completion_decision_comment && (
+                  <p className="text-xs text-red-600 mt-0.5">&ldquo;{incident.ca_completion_decision_comment}&rdquo;</p>
+                )}
+              </div>
+            </div>
+            {normalizedWorkflowState !== "CA_Completion_Approved" && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-xs h-8"
+                onClick={() => { setCaModalStage("completion"); setShowCAModal(true); }}
+              >
+                {incident.ca_completion_decision ? "Update Decision" : "Set CA Decision"}
+              </Button>
+            )}
           </div>
         )}
 
@@ -641,7 +856,7 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
                 <p className="text-sm font-medium text-slate-800">Close Incident</p>
                 <p className="text-xs text-slate-400">
                   Requires: all relevant WOs completed
-                  {fmpiApprovalRequired ? ", CA Approved" : ""}
+                  {fmpiApprovalRequired ? ", CA Completion Approved" : ""}
                 </p>
               </div>
             </div>
@@ -649,6 +864,7 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
               size="sm"
               variant="outline"
               className="text-xs h-8 text-red-600 border-red-200 hover:bg-red-50"
+              disabled={fmpiApprovalRequired && normalizedWorkflowState !== "CA_Completion_Approved"}
               onClick={advanceToClosureCheck}
             >
               Close Incident
@@ -681,8 +897,8 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
               const crOmpiDone = workflowState !== "Awaiting_CR_OMPI";
               if (!crOmpiDone) {
                 lockedReason = "Submit CR+OMPI first";
-              } else if (fmpiApprovalRequired && incident.ca_decision !== "Approved") {
-                lockedReason = "CA Approval required before corrective work";
+              } else if (fmpiApprovalRequired && normalizedWorkflowState !== "CA_Initiation_Approved" && normalizedWorkflowState !== "Works_In_Progress" && normalizedWorkflowState !== "Works_Completed" && normalizedWorkflowState !== "Awaiting_CA_Completion_Approval" && normalizedWorkflowState !== "CA_Completion_Approved" && incident.ca_initiation_decision !== "Approved") {
+                lockedReason = "CA Initiation Approval required before corrective work";
               } else if (!fmpiApprovalRequired && !hasFMPISubmitted) {
                 lockedReason = "Submit FMPI before corrective work";
               }
@@ -743,6 +959,7 @@ export default function IncidentWorkflow({ incident, incidentId, onRefresh }) {
         <CAApprovalModal
           incident={incident}
           incidentId={incidentId}
+          approvalStage={caModalStage}
           onClose={() => setShowCAModal(false)}
           onDone={() => { setShowCAModal(false); onRefresh(); }}
         />
