@@ -13,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ArrowLeft, Save, Send, Lock, Plus, Trash2, AlertTriangle,
-  CheckCircle2, Upload, X, Info, Euro, Calendar, Wrench, Clock, FileText
+  CheckCircle2, Upload, X, Info, Euro, Calendar, Wrench, Clock, FileText, Loader2
 } from "lucide-react";
 import { format } from "date-fns";
 import { computeFMPISLA, computeCROMPISLA, formatDeadline } from "@/lib/slaEngine";
@@ -398,35 +398,36 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
        }
 
       if (data.status === "Submitted" && incId) {
-        // Generate PDF client-side, upload, attach to incident + audit trail
-        const submissionRecordId = isEditing ? submission.id : result?.id;
-        let pdfAttachment = null;
-        try {
-          const pdfResp = await base44.functions.invoke("generateFormPDF", { submissionId: submissionRecordId });
-          const { html: pdfHtml, fileName: pdfFileName } = pdfResp?.data || {};
-          if (pdfHtml) {
-            const { generatePDFFromHtml } = await import("@/lib/generatePDFFromHtml");
-            const pdfBlob = await generatePDFFromHtml(pdfHtml, pdfFileName);
-            const pdfFile = new File([pdfBlob], pdfFileName, { type: "application/pdf" });
-            const { file_url: pdfUrl } = await base44.integrations.Core.UploadFile({ file: pdfFile });
-            await base44.entities.IncidentAttachments.create({
-              incident_id: incId,
-              file_url: pdfUrl,
-              file_name: pdfFileName,
-              file_type: "Document",
-              uploaded_by: user?.email,
-            });
-            pdfAttachment = { url: pdfUrl, name: pdfFileName };
-          }
-        } catch (pdfErr) {
-          console.warn("PDF generation failed (non-blocking):", pdfErr);
-        }
+         // Generate PDF client-side, upload, attach to incident + audit trail (mandatory)
+         const submissionRecordId = isEditing ? submission.id : result?.id;
 
-        // Audit trail — include PDF if generated
-        const auditAttachments = [...buildAttachmentMetadata(allFiles)];
-        if (pdfAttachment) auditAttachments.push({ url: pdfAttachment.url, name: pdfAttachment.name });
-        await logFormSubmission(incId, data.form_type, data.form_name, auditAttachments, data.work_order_id);
-      } else if (data.status !== "Submitted") {
+         const pdfResp = await base44.functions.invoke("generateFormPDF", { submissionId: submissionRecordId });
+         const { html: pdfHtml, fileName: pdfFileName } = pdfResp?.data || {};
+         if (!pdfHtml) throw new Error("PDF generation returned no HTML");
+
+         const { generatePDFFromHtml } = await import("@/lib/generatePDFFromHtml");
+         const pdfBlob = await generatePDFFromHtml(pdfHtml, pdfFileName, { autoSave: false });
+         const pdfFile = new File([pdfBlob], pdfFileName, { type: "application/pdf" });
+         const { file_url: pdfUrl } = await base44.integrations.Core.UploadFile({ file: pdfFile });
+
+         // Duplicate protection: skip if a PDF with the same name is already attached
+         const existingAtts = await base44.entities.IncidentAttachments.filter({ incident_id: incId });
+         const alreadyAttached = existingAtts.some(a => a.file_name === pdfFileName);
+         if (!alreadyAttached) {
+           await base44.entities.IncidentAttachments.create({
+             incident_id: incId,
+             file_url: pdfUrl,
+             file_name: pdfFileName,
+             file_type: "Document",
+             uploaded_by: user?.email,
+           });
+         }
+
+         // Audit trail — include PDF
+         const auditAttachments = [...buildAttachmentMetadata(allFiles)];
+         auditAttachments.push({ url: pdfUrl, name: pdfFileName });
+         await logFormSubmission(incId, data.form_type, data.form_name, auditAttachments, data.work_order_id);
+       } else if (data.status !== "Submitted") {
         // Draft save
         await base44.entities.IncidentAuditTrail.create({
           incident_id: incId,
@@ -519,7 +520,8 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
             </Button>
             <Button size="sm" onClick={() => handleSave("Submitted")} disabled={saveMutation.isPending}
               className="bg-indigo-600 hover:bg-indigo-700 gap-1.5 text-xs">
-              <Send className="w-3.5 h-3.5" /> Υποβολή
+              {saveMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+              {saveMutation.isPending ? "Saving FMPI and generating PDF…" : "Υποβολή"}
             </Button>
           </div>
         }
@@ -829,7 +831,8 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
             </Button>
             <Button onClick={() => handleSave("Submitted")} disabled={saveMutation.isPending}
               className="bg-indigo-600 hover:bg-indigo-700 gap-1.5">
-              <Send className="w-4 h-4" /> Υποβολή Φόρμας
+              {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              {saveMutation.isPending ? "Saving FMPI and generating PDF…" : "Υποβολή Φόρμας"}
             </Button>
           </div>
         </div>
