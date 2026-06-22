@@ -1,7 +1,71 @@
 import React, { useState } from "react";
 import { format } from "date-fns";
-import { FileText, ImageIcon, Eye, Download, Paperclip, Loader2, X } from "lucide-react";
+import { FileText, ImageIcon, Eye, Download, Paperclip, Loader2, X, FileCheck2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { useToast } from "@/components/ui/use-toast";
+
+const FORM_TYPE_LABELS = {
+  cr_ompi:                          "Confirmation of Receipt + OMPI",
+  outline_management_incident_plan: "Outline Management Incident Plan (Legacy)",
+  combined_fmpi_invoice:            "FMPI & Pricing Order",
+  make_safe_checklist:              "MAKE-SAFE CHECKLIST ΠΕΔΙΟΥ",
+  corrective_wo_checklist:          "Corrective Work Order Checklist",
+  inspection_wo_checklist:          "Inspection WO Checklist",
+  work_order_form_f:                "Work Order Invoice",
+};
+
+function getPDFFunc(formType) {
+  if (formType === "make_safe_checklist") return "generateMakeSafeChecklistPDF";
+  if (formType === "corrective_wo_checklist") return "generateCorrectiveWOChecklistPDF";
+  return "generateFormPDF";
+}
+
+function FormDocItem({ sub }) {
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+  const name = FORM_TYPE_LABELS[sub.form_type] || sub.form_name || sub.form_type;
+  const date = sub.submitted_at || sub.created_date;
+
+  const handlePDF = async () => {
+    setLoading(true);
+    try {
+      const res = await base44.functions.invoke(getPDFFunc(sub.form_type), { submissionId: sub.id });
+      const { html, fileName } = res.data;
+      const { generatePDFFromHtml } = await import("@/lib/generatePDFFromHtml");
+      await generatePDFFromHtml(html, fileName || `${name}.pdf`);
+    } catch (err) {
+      toast({ title: "PDF Error", description: err?.message || "Unknown error", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-3 px-4 py-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors">
+      <div className="h-8 w-8 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
+        <FileCheck2 className="h-4 w-4 text-emerald-500" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-slate-800 truncate">{name}</p>
+        <p className="text-xs text-slate-400">
+          <span className="text-emerald-600 font-medium">Form</span>
+          {sub.status && <span> · {sub.status}</span>}
+          {date && <span> · {format(new Date(date), "MMM d, yyyy HH:mm")}</span>}
+        </p>
+      </div>
+      <div className="flex items-center gap-1 shrink-0">
+        <button
+          onClick={handlePDF}
+          disabled={loading}
+          title="Download PDF"
+          className="p-1.5 rounded hover:bg-emerald-100 text-slate-400 hover:text-emerald-600 transition-colors disabled:opacity-50"
+        >
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+        </button>
+      </div>
+    </div>
+  );
+}
 
 function DocItem({ url, name, uploadedBy, date }) {
   const isImage = /\.(png|jpg|jpeg|gif|webp)$/i.test(name || url);
@@ -105,7 +169,7 @@ function DocItem({ url, name, uploadedBy, date }) {
   );
 }
 
-export default function IncidentDocuments({ attachments = [], auditTrail = [] }) {
+export default function IncidentDocuments({ attachments = [], auditTrail = [], formSubmissions = [] }) {
   const allDocs = [];
   const seen = new Set();
 
@@ -124,6 +188,11 @@ export default function IncidentDocuments({ attachments = [], auditTrail = [] })
     (entry.attachments || []).forEach((url, i) => addDoc(url, entry.attachment_names?.[i], entry.user, entry.created_date));
   });
 
+  // Form submissions (rendered as form document entries)
+  formSubmissions.forEach(sub => {
+    allDocs.push({ isForm: true, sub, date: sub.submitted_at || sub.created_date });
+  });
+
   // Sort newest first
   allDocs.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
 
@@ -139,7 +208,9 @@ export default function IncidentDocuments({ attachments = [], auditTrail = [] })
   return (
     <div className="max-h-[500px] overflow-y-auto space-y-2 pr-1">
       {allDocs.map((doc, i) => (
-        <DocItem key={i} url={doc.url} name={doc.name} uploadedBy={doc.uploadedBy} date={doc.date} />
+        doc.isForm
+          ? <FormDocItem key={`form-${doc.sub.id}`} sub={doc.sub} />
+          : <DocItem key={i} url={doc.url} name={doc.name} uploadedBy={doc.uploadedBy} date={doc.date} />
       ))}
     </div>
   );

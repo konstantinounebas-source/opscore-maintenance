@@ -123,7 +123,7 @@ export default function IncidentDetail() {
     (entry.attachment_metadata || []).forEach(meta => uniqueDocUrls.add(meta.url));
     (entry.attachments || []).forEach(url => uniqueDocUrls.add(url));
   });
-  const uniqueDocCount = uniqueDocUrls.size;
+  const uniqueDocCount = uniqueDocUrls.size + formSubmissions.length;
 
   return (
     <div>
@@ -249,7 +249,7 @@ export default function IncidentDetail() {
             </TabsContent>
 
             <TabsContent value="documents">
-              <IncidentDocuments attachments={attachments} auditTrail={auditTrail} />
+              <IncidentDocuments attachments={attachments} auditTrail={auditTrail} formSubmissions={formSubmissions} />
             </TabsContent>
             <TabsContent value="forms">
               <IncidentFormSubmissions 
