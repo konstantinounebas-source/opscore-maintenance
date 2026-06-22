@@ -25,7 +25,6 @@ import {
   ArrowLeft, Save, Send, AlertTriangle, CheckCircle2,
   Lock, Paperclip, Info, FileText, ClipboardCheck, Download
 } from "lucide-react";
-import html2pdf from "html2pdf.js";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/AuthContext";
 import FileUploadArea from "@/components/shared/FileUploadArea";
@@ -105,17 +104,8 @@ export default function CROMPIForm({ incident, incidentId, onClose, onDone }) {
     try {
       const pdfRes = await base44.functions.invoke('generateCROMPIPDF', { incidentId });
       const { html, fileName } = pdfRes.data;
-      const container = document.createElement("div");
-      container.innerHTML = html;
-      document.body.appendChild(container);
-      await html2pdf().set({
-        margin: 10,
-        filename: fileName,
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-      }).from(container).save();
-      document.body.removeChild(container);
+      const { generatePDFFromHtml } = await import("@/lib/generatePDFFromHtml");
+      await generatePDFFromHtml(html, fileName);
     } catch (err) {
       toast({ title: "PDF Error", description: err?.message || "Failed to generate PDF" });
     } finally {
@@ -270,17 +260,8 @@ export default function CROMPIForm({ incident, incidentId, onClose, onDone }) {
       try {
         const pdfRes = await base44.functions.invoke('generateCROMPIPDF', { incidentId });
         const { html, fileName } = pdfRes.data;
-        const container = document.createElement("div");
-        container.innerHTML = html;
-        document.body.appendChild(container);
-        const pdfBlob = await html2pdf().set({
-          margin: 10,
-          filename: fileName,
-          image: { type: "jpeg", quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true },
-          jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-        }).from(container).outputPdf("blob");
-        document.body.removeChild(container);
+        const { generatePDFFromHtml } = await import("@/lib/generatePDFFromHtml");
+        const pdfBlob = await generatePDFFromHtml(html, fileName, { autoSave: false });
         const file = new File([pdfBlob], fileName, { type: "application/pdf" });
         const { file_url } = await base44.integrations.Core.UploadFile({ file });
         await base44.entities.IncidentAttachments.create({

@@ -405,11 +405,8 @@ export default function CombinedFMPIandInvoiceForm({ submission, incidents, asse
           const pdfResp = await base44.functions.invoke("generateFormPDF", { submissionId: submissionRecordId });
           const { html: pdfHtml, fileName: pdfFileName } = pdfResp?.data || {};
           if (pdfHtml) {
-            const html2pdf = (await import("html2pdf.js")).default;
-            const pdfBlob = await html2pdf()
-              .set({ margin: 10, filename: pdfFileName, html2canvas: { scale: 2 }, jsPDF: { unit: "mm", format: "a4" } })
-              .from(pdfHtml)
-              .outputPdf("blob");
+            const { generatePDFFromHtml } = await import("@/lib/generatePDFFromHtml");
+            const pdfBlob = await generatePDFFromHtml(pdfHtml, pdfFileName);
             const pdfFile = new File([pdfBlob], pdfFileName, { type: "application/pdf" });
             const { file_url: pdfUrl } = await base44.integrations.Core.UploadFile({ file: pdfFile });
             await base44.entities.IncidentAttachments.create({
