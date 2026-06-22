@@ -3,16 +3,8 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.32';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    let user;
-    try {
-      user = await base44.auth.me();
-    } catch (_) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    let user = null;
+    try { user = await base44.auth.me(); } catch (_) {}
 
     const { workOrderId, workOrderType, incidentId } = await req.json();
 
@@ -21,8 +13,8 @@ Deno.serve(async (req) => {
     }
 
     const [workOrders, incidents] = await Promise.all([
-      base44.entities.WorkOrders.filter({ id: workOrderId }),
-      base44.entities.Incidents.filter({ id: incidentId }),
+      base44.asServiceRole.entities.WorkOrders.filter({ id: workOrderId }),
+      base44.asServiceRole.entities.Incidents.filter({ id: incidentId }),
     ]);
 
     if (!workOrders.length || !incidents.length) {

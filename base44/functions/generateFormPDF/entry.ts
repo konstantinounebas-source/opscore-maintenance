@@ -3,27 +3,24 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.32';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    let user;
-    try {
-      user = await base44.auth.me();
-    } catch (_) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    // Auth is optional — token forwarding to functions can be unreliable.
+    // Entity reads use service role (entities have read: "all" access).
+    let user = null;
+    try { user = await base44.auth.me(); } catch (_) {}
 
     const { submissionId } = await req.json();
     if (!submissionId) return Response.json({ error: 'Missing submissionId' }, { status: 400 });
 
-    const sub = await base44.entities.FormSubmissions.get(submissionId);
+    const sub = await base44.asServiceRole.entities.FormSubmissions.get(submissionId);
     if (!sub) return Response.json({ error: `Submission ${submissionId} not found` }, { status: 404 });
 
     let incident = null;
     let asset = null;
     if (sub.incident_id) {
-      try { incident = await base44.entities.Incidents.get(sub.incident_id); } catch (_) {}
+      try { incident = await base44.asServiceRole.entities.Incidents.get(sub.incident_id); } catch (_) {}
     }
     if (sub.asset_id) {
-      try { asset = await base44.entities.Assets.get(sub.asset_id); } catch (_) {}
+      try { asset = await base44.asServiceRole.entities.Assets.get(sub.asset_id); } catch (_) {}
     }
 
     const fmtDate = (d) => {

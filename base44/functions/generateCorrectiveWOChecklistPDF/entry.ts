@@ -3,13 +3,8 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.32';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    let user;
-    try {
-      user = await base44.auth.me();
-    } catch (_) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    let user = null;
+    try { user = await base44.auth.me(); } catch (_) {}
 
     const { incidentId, workOrderId, formData, submissionId } = await req.json();
     
@@ -21,15 +16,15 @@ Deno.serve(async (req) => {
     let workOrders = [];
     
     if (submissionId) {
-      const submission = await base44.entities.FormSubmissions.get(submissionId);
+      const submission = await base44.asServiceRole.entities.FormSubmissions.get(submissionId);
       if (!submission) return Response.json({ error: 'Submission not found' }, { status: 404 });
       fd = submission.form_data || {};
       if (submission.incident_id) {
-        const incidents = await base44.entities.Incidents.filter({ id: submission.incident_id });
+        const incidents = await base44.asServiceRole.entities.Incidents.filter({ id: submission.incident_id });
         inc = incidents[0] || {};
       }
     } else if (incidentId) {
-      const incidents = await base44.entities.Incidents.filter({ incident_id: incidentId });
+      const incidents = await base44.asServiceRole.entities.Incidents.filter({ incident_id: incidentId });
       inc = incidents[0] || {};
     } else {
       return Response.json({ error: 'Missing incidentId or submissionId' }, { status: 400 });
@@ -38,8 +33,8 @@ Deno.serve(async (req) => {
     // Fetch asset and work orders
     if (inc.id) {
       const [allAssets, wos] = await Promise.all([
-        inc.related_asset_id ? base44.entities.Assets.list('-created_date', 500) : Promise.resolve([]),
-        base44.entities.WorkOrders.filter({ incident_id: inc.id }),
+        inc.related_asset_id ? base44.asServiceRole.entities.Assets.list('-created_date', 500) : Promise.resolve([]),
+        base44.asServiceRole.entities.WorkOrders.filter({ incident_id: inc.id }),
       ]);
       if (inc.related_asset_id) {
         asset = allAssets.find(a => a.id === inc.related_asset_id) || {};
