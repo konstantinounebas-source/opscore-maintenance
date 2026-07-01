@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
-import { openHtmlPrintWindow } from '@/lib/printFormAsPDF';
+import { generatePDFFromHtml } from '@/lib/generatePDFFromHtml';
 
 export default function WorkOrderDownloadButton({ workOrderId, workOrderType, incidentId }) {
   const [loading, setLoading] = useState(false);
@@ -24,7 +24,7 @@ export default function WorkOrderDownloadButton({ workOrderId, workOrderType, in
         return;
       }
 
-      openHtmlPrintWindow(html, fileName);
+      await generatePDFFromHtml(html, fileName);
     } catch (error) {
       toast({ title: 'Error', description: error.message });
     } finally {
