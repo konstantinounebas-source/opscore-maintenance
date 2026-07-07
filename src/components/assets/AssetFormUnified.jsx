@@ -250,7 +250,7 @@ export default function AssetFormUnified({ open, onOpenChange, onSave, asset }) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] !flex !flex-col !p-0 !gap-0 overflow-hidden">
         <DialogHeader className="flex-shrink-0 px-6 pt-6">
           <DialogTitle>{isEdit ? "Edit Asset" : "Add New Asset"}</DialogTitle>
         </DialogHeader>
