@@ -74,6 +74,8 @@ export default function AssetDetail() {
       const changes = Object.entries(data).filter(([key, val]) => asset[key] !== val).map(([key, val]) => `${key}: ${asset[key]} → ${val}`).join(", ");
       await base44.entities.AssetTransactions.create({ asset_id: assetId, action: "Asset Updated", details: changes || "Asset information modified", user: user?.email });
       queryClient.invalidateQueries({ queryKey: ["asset", assetId] });
+      queryClient.invalidateQueries({ queryKey: ["assets"] });
+      queryClient.invalidateQueries({ queryKey: ["allAssets"] });
       queryClient.invalidateQueries({ queryKey: ["assetAttachments", assetId] });
       queryClient.invalidateQueries({ queryKey: ["assetTransactions", assetId] });
       queryClient.invalidateQueries({ queryKey: ["childAssets", assetId] });
