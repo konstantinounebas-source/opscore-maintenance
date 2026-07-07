@@ -3,7 +3,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useNavigate } from "react-router-dom";
 import IncidentFormDialog from "@/components/incidents/IncidentFormDialog";
+import PageErrorBoundary from "@/components/shared/PageErrorBoundary";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { ArrowLeft } from "lucide-react";
 
 export default function IncidentForm() {
   const params = new URLSearchParams(window.location.search);
@@ -53,11 +56,21 @@ export default function IncidentForm() {
   });
 
   return (
-    <IncidentFormDialog
-      open={true}
-      onOpenChange={(open) => { if (!open) navigate(-1); }}
-      defaultAssetId={assetId}
-      onSave={(data, pendingFiles) => createMutation.mutate({ data, pendingFiles })}
-    />
+    <PageErrorBoundary>
+      <div className="p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+            <ArrowLeft className="w-3.5 h-3.5 mr-1.5" />Back
+          </Button>
+          <h1 className="text-lg font-semibold text-slate-800">New Incident</h1>
+        </div>
+        <IncidentFormDialog
+          open={true}
+          onOpenChange={(open) => { if (!open) navigate(-1); }}
+          defaultAssetId={assetId}
+          onSave={(data, pendingFiles) => createMutation.mutate({ data, pendingFiles })}
+        />
+      </div>
+    </PageErrorBoundary>
   );
 }

@@ -119,7 +119,7 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
     }
     setErrors({});
     setPendingFiles([]);
-  }, [incident, open, defaultAssetId, allIncidents.length]);
+  }, [incident, open, defaultAssetId, allIncidents.length, assets.length]);
 
   const set = (key, value) => setForm(f => ({ ...f, [key]: value }));
 
