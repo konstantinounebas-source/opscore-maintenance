@@ -266,7 +266,7 @@ export default function AssetFormUnified({ open, onOpenChange, onSave, asset }) 
           <SectionHeader title="Asset Identity" color="indigo" />
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-xs">Αριθμός Στάσης (Shelter ID)</Label>
+              <Label className="text-xs">Αριθμός Στάσης (Shelter ID) <span className="text-red-500">*</span></Label>
               <Input value={form.asset_id || ""} onChange={e => set("asset_id", e.target.value)} placeholder="π.χ. SH-001" />
             </div>
             <div className="space-y-1.5">
@@ -431,7 +431,7 @@ export default function AssetFormUnified({ open, onOpenChange, onSave, asset }) 
             ))}
           </div>
 
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex justify-end gap-2 sticky bottom-0 -mx-6 px-6 py-3 -mb-6 bg-white border-t border-slate-200 mt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
             <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700">
               {isEdit ? "Save Changes" : "Create Asset"}
