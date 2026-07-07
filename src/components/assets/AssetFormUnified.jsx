@@ -250,11 +250,12 @@ export default function AssetFormUnified({ open, onOpenChange, onSave, asset }) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden">
+        <DialogHeader className="flex-shrink-0 px-6 pt-6">
           <DialogTitle>{isEdit ? "Edit Asset" : "Add New Asset"}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-5 mt-2">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden min-h-0">
+          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5 min-h-0">
 
           {Object.keys(errors).length > 0 && (
             <div className="bg-red-50 border border-red-200 rounded-md px-3 py-2 text-xs text-red-600">
@@ -335,8 +336,6 @@ export default function AssetFormUnified({ open, onOpenChange, onSave, asset }) 
               </Select>
             </div>
           </div>
-
-
 
           {/* ── 4. Condition / Existing Site Details ── */}
           <SectionHeader title="Condition / Existing Site" color="amber" />
@@ -430,8 +429,8 @@ export default function AssetFormUnified({ open, onOpenChange, onSave, asset }) 
               />
             ))}
           </div>
-
-          <div className="flex justify-end gap-2 sticky bottom-0 -mx-6 px-6 py-3 -mb-6 bg-white border-t border-slate-200 mt-2">
+          </div>
+          <div className="flex-shrink-0 flex justify-end gap-2 px-6 py-4 border-t border-slate-200 bg-white">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
             <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700">
               {isEdit ? "Save Changes" : "Create Asset"}
