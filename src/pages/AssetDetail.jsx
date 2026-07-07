@@ -11,6 +11,7 @@ import AssetFormUnified from "@/components/assets/AssetFormUnified";
 import ChildFormDialog from "@/components/assets/ChildFormDialog";
 import AddChildFromTemplateDialog from "@/components/assets/AddChildFromTemplateDialog";
 import MoveChildDialog from "@/components/childs/MoveChildDialog";
+import IncidentFormDialog from "@/components/incidents/IncidentFormDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -31,6 +32,7 @@ export default function AssetDetail() {
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [childToMove, setChildToMove] = useState(null);
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
+  const [incidentFormOpen, setIncidentFormOpen] = useState(false);
 
   const { data: asset } = useQuery({ queryKey: ["asset", assetId], queryFn: () => base44.entities.Assets.filter({ id: assetId }).then(r => r[0]), enabled: !!assetId });
   const { data: children = [] } = useQuery({ queryKey: ["childAssets", assetId], queryFn: () => base44.entities.ChildAssets.filter({ parent_asset_id: assetId }), enabled: !!assetId });
@@ -150,6 +152,40 @@ export default function AssetDetail() {
       createChild.mutate(data);
     }
   };
+
+  const createIncident = useMutation({
+    mutationFn: async ({ data, pendingFiles }) => {
+      const existing = await base44.entities.Incidents.filter({ incident_id: data.incident_id });
+      if (existing.length > 0) {
+        throw new Error(`Incident ID ${data.incident_id} already exists. Please try again.`);
+      }
+      const inc = await base44.entities.Incidents.create(data);
+      const user = await base44.auth.me();
+      await base44.entities.IncidentAuditTrail.create({ incident_id: inc.id, action: "Incident Created", details: `Incident ${data.incident_id} created`, user: user?.email });
+      await base44.entities.AssetTransactions.create({ asset_id: assetId, action: "Incident Opened", details: `Incident ${data.incident_id}: ${data.title}`, user: user?.email });
+      if (pendingFiles?.length > 0) {
+        for (const file of pendingFiles) {
+          await base44.entities.IncidentAttachments.create({
+            incident_id: inc.id,
+            file_name: file.name,
+            file_url: file.url,
+            file_type: file.type,
+            uploaded_by: user?.email,
+            is_initial_upload: true,
+          });
+        }
+      }
+      return inc;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["incidents"] });
+      queryClient.invalidateQueries({ queryKey: ["assetIncidents", assetId] });
+      queryClient.invalidateQueries({ queryKey: ["assetTransactions", assetId] });
+      queryClient.invalidateQueries({ queryKey: ["incidentAttachments", assetId] });
+      setIncidentFormOpen(false);
+      toast({ title: "Incident created" });
+    },
+  });
 
   const handleMoveChild = async (child, destinationAssetId) => {
     const user = await base44.auth.me();
@@ -272,7 +308,7 @@ export default function AssetDetail() {
             <Button variant="outline" size="sm" onClick={() => navigate("/Assets")}><ArrowLeft className="w-3.5 h-3.5 mr-1.5" />Back</Button>
             <Button variant="outline" size="sm" onClick={exportAssetDetails}><Download className="w-3.5 h-3.5 mr-1.5" />Export</Button>
             <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}><Pencil className="w-3.5 h-3.5 mr-1.5" />Edit</Button>
-            <Button size="sm" className="bg-red-600 hover:bg-red-700 gap-1.5" onClick={() => navigate(`/IncidentForm?asset_id=${assetId}`)}><AlertTriangle className="w-3.5 h-3.5" />Open Incident</Button>
+            <Button size="sm" className="bg-red-600 hover:bg-red-700 gap-1.5" onClick={() => setIncidentFormOpen(true)}><AlertTriangle className="w-3.5 h-3.5" />Open Incident</Button>
           </div>
         }
       />
@@ -446,6 +482,12 @@ export default function AssetDetail() {
       <ChildFormDialog open={childFormOpen} onOpenChange={setChildFormOpen} child={editingChild} parentAssetId={assetId} onSave={handleChildSave} />
       <MoveChildDialog open={moveDialogOpen} onOpenChange={setMoveDialogOpen} child={childToMove} assets={allAssets} currentAssetId={assetId} onMove={handleMoveChild} />
       <AddChildFromTemplateDialog open={templateDialogOpen} onOpenChange={setTemplateDialogOpen} asset={asset} onSave={(data) => base44.entities.ChildAssets.create(data).then(async (newChild) => { const user = await base44.auth.me(); await base44.entities.AssetTransactions.create({ asset_id: assetId, action: "Child Added", details: `Added child "${newChild.description || newChild.child_id}" from template`, user: user?.email }); queryClient.invalidateQueries({ queryKey: ["childAssets", assetId] }); queryClient.invalidateQueries({ queryKey: ["assetTransactions", assetId] }); })} />
+      <IncidentFormDialog
+        open={incidentFormOpen}
+        onOpenChange={setIncidentFormOpen}
+        defaultAssetId={assetId}
+        onSave={(data, pendingFiles) => createIncident.mutate({ data, pendingFiles })}
+      />
     </div>
   );
 }
