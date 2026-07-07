@@ -566,7 +566,7 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
             </Field>
           </div>
 
-          <div className="flex justify-end gap-2 pt-2 border-t">
+          <div className="sticky bottom-0 flex justify-end gap-2 pt-3 pb-3 px-1 border-t border-slate-200 bg-white z-10 -mx-1">
             <Button type="button" variant="outline" onClick={() => setConfirmClose(true)}>Ακύρωση</Button>
             <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700">
               {incident ? "Ενημέρωση" : "Δημιουργία"}
