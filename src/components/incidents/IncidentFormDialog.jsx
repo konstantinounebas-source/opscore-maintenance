@@ -69,7 +69,7 @@ const emptyForm = () => ({
   approval_date: "", authority_representative: ""
 });
 
-export default function IncidentFormDialog({ open, onOpenChange, incident, onSave, defaultAssetId }) {
+export default function IncidentFormDialog({ open, onOpenChange, incident, onSave, defaultAssetId, asset: propAsset }) {
   const fileRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [pendingFiles, setPendingFiles] = useState([]); // {name, url, type, preview}
@@ -104,7 +104,7 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
       f.incident_id = generateIncidentId(allIncidents);
       if (defaultAssetId) {
       f.related_asset_id = defaultAssetId;
-      const asset = assets.find(a => a.id === defaultAssetId);
+      const asset = propAsset || assets.find(a => a.id === defaultAssetId);
       if (asset) {
         f.related_asset_name = asset.asset_id || "";
         f.active_shelter_id = asset.asset_id || "";
@@ -119,7 +119,7 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
     }
     setErrors({});
     setPendingFiles([]);
-  }, [incident, open, defaultAssetId, allIncidents.length, assets.length]);
+  }, [incident, open, defaultAssetId, allIncidents.length, assets.length, propAsset]);
 
   const set = (key, value) => setForm(f => ({ ...f, [key]: value }));
 
@@ -180,7 +180,7 @@ export default function IncidentFormDialog({ open, onOpenChange, incident, onSav
   };
 
   // #3 — Validate that selected asset has minimum required data
-  const selectedAsset = assets.find(a => a.id === form.related_asset_id);
+  const selectedAsset = (propAsset && form.related_asset_id === defaultAssetId) ? propAsset : assets.find(a => a.id === form.related_asset_id);
   const assetValidationError = form.related_asset_id && selectedAsset && (
     !selectedAsset.city || (!selectedAsset.shelter_type && !selectedAsset.installed_shelter_type && !selectedAsset.ordered_shelter_type)
   ) ? "Η επιλεγμένη στάση δεν διαθέτει επαρκή δεδομένα (απαιτείται Πόλη & Τύπος Στεγάστρου). Παρακαλώ ενημερώστε πρώτα το asset." : null;

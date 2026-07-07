@@ -488,6 +488,7 @@ export default function AssetDetail() {
         open={incidentFormOpen}
         onOpenChange={setIncidentFormOpen}
         defaultAssetId={assetId}
+        asset={asset}
         onSave={(data, pendingFiles) => createIncident.mutate({ data, pendingFiles })}
       />
     </div>
