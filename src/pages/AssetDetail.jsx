@@ -51,13 +51,13 @@ export default function AssetDetail() {
 
   const updateAsset = useMutation({
     mutationFn: ({ data }) => base44.entities.Assets.update(assetId, data),
-    onSuccess: async (updatedAsset, { data, attachments = [] }) => {
-      // Immediately sync the cache with the API response so downstream
+    onSuccess: async (_, { data, attachments = [] }) => {
+      // Immediately sync the cache with the submitted payload so downstream
       // components (e.g. IncidentFormDialog) see fresh data without waiting
       // for the background refetch triggered by invalidateQueries.
-      queryClient.setQueryData(["asset", assetId], (old) => ({ ...old, ...updatedAsset }));
-      queryClient.setQueryData(["assets"], (old = []) => old.map(a => a.id === assetId ? { ...a, ...updatedAsset } : a));
-      queryClient.setQueryData(["allAssets"], (old = []) => old.map(a => a.id === assetId ? { ...a, ...updatedAsset } : a));
+      queryClient.setQueryData(["asset", assetId], (old) => ({ ...old, ...data }));
+      queryClient.setQueryData(["assets"], (old = []) => old.map(a => a.id === assetId ? { ...a, ...data } : a));
+      queryClient.setQueryData(["allAssets"], (old = []) => old.map(a => a.id === assetId ? { ...a, ...data } : a));
       const user = await base44.auth.me();
       // Save any new attachments added in the edit form
       for (const file of attachments) {
