@@ -7,8 +7,10 @@ import StatusBadge from "@/components/shared/StatusBadge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function WorkOrders() {
+  const navigate = useNavigate();
   const [filterStatus, setFilterStatus] = useState("all");
   const { data: allWorkOrders = [] } = useQuery({ queryKey: ["workOrders"], queryFn: () => base44.entities.WorkOrders.list() });
 
@@ -32,7 +34,7 @@ export default function WorkOrders() {
   };
 
   const columns = [
-    { key: "work_order_id", label: "ID" },
+    { key: "work_order_id", label: "ID", render: (r) => r.incident_id ? <button onClick={() => navigate(`/IncidentDetail?id=${r.incident_id}`)} className="text-indigo-600 hover:text-indigo-800 hover:underline font-medium cursor-pointer">{r.work_order_id}</button> : <span>{r.work_order_id}</span> },
     { key: "title", label: "Title" },
     { key: "related_asset_name", label: "Asset" },
     { key: "status", label: "Status", render: (r) => <StatusBadge status={r.status} /> },
