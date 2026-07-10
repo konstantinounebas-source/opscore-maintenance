@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 
 export default function WorkOrders() {
-  const [filterStatus, setFilterStatus] = useState("active");
+  const [filterStatus, setFilterStatus] = useState("all");
   const { data: allWorkOrders = [] } = useQuery({ queryKey: ["workOrders"], queryFn: () => base44.entities.WorkOrders.list() });
 
   const ALLOWED_PREFIXES = ["CORR-", "MSAFE-", "INSP-"];
