@@ -1,5 +1,5 @@
 import React from "react";
-import html2pdf from "html2pdf.js";
+import { generatePDFFromHtml } from "@/lib/generatePDFFromHtml";
 import TopHeader from "@/components/layout/TopHeader";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
@@ -199,35 +199,14 @@ const PDF_HTML = `
 export default function WorkflowDiagram() {
   const [downloading, setDownloading] = React.useState(false);
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     setDownloading(true);
-    const container = document.createElement("div");
-    container.innerHTML = PDF_HTML;
-    container.style.position = "fixed";
-    container.style.left = "-9999px";
-    container.style.top = "0";
-    container.style.width = "800px";
-    document.body.appendChild(container);
-
-    html2pdf()
-      .set({
-        margin: [10, 10, 10, 10],
-        filename: "Bus_Shelter_Workflow_Documentation.pdf",
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-        pagebreak: { mode: ["avoid-all", "css", "legacy"] },
-      })
-      .from(container)
-      .save()
-      .then(() => {
-        document.body.removeChild(container);
-        setDownloading(false);
-      })
-      .catch(() => {
-        document.body.removeChild(container);
-        setDownloading(false);
-      });
+    try {
+      const fullDoc = `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>${PDF_HTML}</body></html>`;
+      await generatePDFFromHtml(fullDoc, "Bus_Shelter_Workflow_Documentation");
+    } finally {
+      setDownloading(false);
+    }
   };
 
   return (
