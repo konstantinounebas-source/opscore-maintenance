@@ -1,5 +1,5 @@
 import React from "react";
-import { generatePDFFromHtml } from "@/lib/generatePDFFromHtml";
+import { generateWorkflowPDF } from "@/lib/generateWorkflowPDF";
 import TopHeader from "@/components/layout/TopHeader";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
@@ -202,8 +202,7 @@ export default function WorkflowDiagram() {
   const handleDownload = async () => {
     setDownloading(true);
     try {
-      const fullDoc = `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>${PDF_HTML}</body></html>`;
-      await generatePDFFromHtml(fullDoc, "Bus_Shelter_Workflow_Documentation");
+      await generateWorkflowPDF();
     } finally {
       setDownloading(false);
     }
