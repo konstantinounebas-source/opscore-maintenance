@@ -19,6 +19,7 @@ const navItems = [
     { path: "/PlanningWorkbenchSettings", label: "Workbench Settings", icon: Settings }
   ]},
   { path: "/Configuration", label: "Configuration", icon: Settings },
+  { path: "/WorkflowDiagram", label: "Workflow Docs", icon: FileText },
 ];
 
 export default function Sidebar({ collapsed, onToggle }) {

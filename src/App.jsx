@@ -26,6 +26,7 @@ import BusStopLogs from '@/pages/BusStopLogs';
 import StationLogSettings from '@/pages/StationLogSettings';
 import PlanningWorkbenchSettings from '@/pages/PlanningWorkbenchSettings';
 import FieldWorkerForm from '@/pages/FieldWorkerForm';
+import WorkflowDiagram from '@/pages/WorkflowDiagram';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -98,6 +99,7 @@ const AuthenticatedApp = () => {
         <Route path="/BusStopLogs" element={<BusStopLogs />} />
         <Route path="/StationLogSettings" element={<StationLogSettings />} />
         <Route path="/PlanningWorkbenchSettings" element={<PlanningWorkbenchSettings />} />
+        <Route path="/WorkflowDiagram" element={<WorkflowDiagram />} />
       </Route>
       <Route path="/FieldWorkerForm" element={<FieldWorkerForm />} />
       <Route path="*" element={<PageNotFound />} />
