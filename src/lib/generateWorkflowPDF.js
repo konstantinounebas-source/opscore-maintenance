@@ -98,16 +98,27 @@ export async function generateWorkflowPDF() {
   }
 
   function preBlock(text) {
-    const fontSize = 8;
-    const lineH = 4.0;
+    // Replace Unicode box/arrow chars with safe ASCII equivalents
+    const safe = text
+      .replace(/→/g, "->")
+      .replace(/←/g, "<-")
+      .replace(/│/g, "|")
+      .replace(/├/g, "+")
+      .replace(/└/g, "\\")
+      .replace(/─/g, "-")
+      .replace(/</g, "<")
+      .replace(/>/g, ">");
+
+    const fontSize = 8.5;
+    const lineH = 4.4;
     const padTop = 4;
-    const padBot = 3;
-    const innerPad = 3;
-    doc.setFont("courier", "normal");
+    const padBot = 4;
+    const innerPad = 4;
+    doc.setFont("helvetica", "normal");
     doc.setFontSize(fontSize);
-    const rawLines = text.split("\n");
+    const rawLines = safe.split("\n");
     const innerW = contentW - innerPad * 2;
-    // Pre-wrap all lines to compute actual height
+    // Pre-wrap to compute actual height
     const rendered = [];
     for (const line of rawLines) {
       const wrapped = doc.splitTextToSize(line, innerW);
@@ -123,7 +134,7 @@ export async function generateWorkflowPDF() {
     doc.setFillColor(248, 250, 252);
     doc.setDrawColor(226, 232, 240);
     doc.roundedRect(leftX, y, contentW, blockH, 2, 2, "FD");
-    doc.setFont("courier", "normal");
+    doc.setFont("helvetica", "normal");
     doc.setFontSize(fontSize);
     doc.setTextColor(51, 65, 85);
     let py = y + padTop + fontSize * 0.35;
@@ -191,7 +202,7 @@ export async function generateWorkflowPDF() {
   doc.setFillColor(79, 70, 229);
   doc.rect(0, 0, pageW, 4, "F");
   textBlock("Bus Shelter Management", { size: 18, bold: true, color: [79, 70, 229], indent: 0, gapAfter: 1 });
-  textBlock("Complete Workflow — Assets → Incidents → Work Orders", { size: 11, color: [100, 116, 139], gapAfter: 0 });
+  textBlock("Complete Workflow: Assets -> Incidents -> Work Orders", { size: 11, color: [100, 116, 139], gapAfter: 0 });
   textBlock("Generated: 2026-07-24", { size: 8, color: [148, 163, 184], gapAfter: 4 });
   divider();
 
@@ -205,20 +216,20 @@ export async function generateWorkflowPDF() {
   // === 2. ENTITY RELATIONSHIPS ===
   heading("2. Entity Relationships");
   preBlock(`Asset (Bus Shelter)
-  │
-  ├──< Incident (Issue reported)
-  │        │
-  │        ├──< Work Order (Make Safe — auto for P2)
-  │        ├──< Work Order (Corrective — after CA approval)
-  │        ├──< Work Order (Inspection — during assessment)
-  │        │
-  │        ├──< Form Submissions (CR+OMPI, FMPI, Checklists)
-  │        ├──< Attachments (Evidence photos, documents)
-  │        └──< Audit Trail (Full state transition history)
-  │
-  ├──< Child Assets (Components: glass, seating, lighting)
-  ├──< Asset Attachments (Install photos, signed forms)
-  └──< Asset Transactions (Lifecycle history)`);
+  |
+  +--< Incident (Issue reported)
+  |        |
+  |        +--< Work Order (Make Safe - auto for P2)
+  |        +--< Work Order (Corrective - after CA approval)
+  |        +--< Work Order (Inspection - during assessment)
+  |        |
+  |        +--< Form Submissions (CR+OMPI, FMPI, Checklists)
+  |        +--< Attachments (Evidence photos, documents)
+  |        \\--< Audit Trail (Full state transition history)
+  |
+  +--< Child Assets (Components: glass, seating, lighting)
+  +--< Asset Attachments (Install photos, signed forms)
+  \\--< Asset Transactions (Lifecycle history)`);
 
   // === 3. WORKFLOW STATES ===
   heading("3. Incident Workflow States (Full Lifecycle)");
@@ -254,18 +265,18 @@ export async function generateWorkflowPDF() {
     ["Corrective", "CORR-", "CA Initiation approved", "Manual/Auto"],
     ["Inspection", "INSP-", "Inspection stage", "Manual"],
   ]);
-  textBlock("Work Order States: Open → In Progress → Completed · Cancelled (at any point)", { bold: true });
+  textBlock("Work Order States: Open -> In Progress -> Completed | Cancelled (at any point)", { bold: true });
 
   // === 5. LIFECYCLE ===
   heading("5. Work Order Lifecycle");
   preBlock(`[Incident Created]
-       │
-       ├──(P2)──────────> [Make Safe WO Auto] ──> Open → Completed
-       │
-       ├──(Inspection)───> [Inspection WO] ─────> Open → Completed
-       │
-       └──(CA Approved)──> [Corrective WO] ─────> Open → In Progress → Completed
-                                                              │
+       |
+       +--(P2)----------> [Make Safe WO Auto] --> Open -> Completed
+       |
+       +--(Inspection)---> [Inspection WO] -----> Open -> Completed
+       |
+       \\--(CA Approved)--> [Corrective WO] -----> Open -> In Progress -> Completed
+                                                              |
                                                     (feeds back to Incident)`);
 
   // === 6. SLA ===
@@ -277,7 +288,7 @@ export async function generateWorkflowPDF() {
   bullet("SLA clock starts at incident creation (incident_created_at).");
   bullet("Acknowledgement deadline computed from priority.");
   bullet("Make Safe deadline: 24h for P2 incidents.");
-  bullet("SLA status tracked: On Track → At Risk → Breached.");
+  bullet("SLA status tracked: On Track -> At Risk -> Breached.");
 
   // === 7. AUTOMATIONS ===
   heading("7. Key Automations");
@@ -290,19 +301,19 @@ export async function generateWorkflowPDF() {
   // === 8. NAVIGATION ===
   heading("8. Navigation Flow");
   preBlock(`Assets Page
-  │
-  ├──> Click Asset ──> Asset Detail
-  │                      ├──> Tab: Incidents (create/view)
-  │                      ├──> Tab: Work Orders
-  │                      ├──> Tab: Child Assets
-  │                      ├──> Tab: Documents
-  │                      └──> Tab: Audit History
-  │
-  ├──> Incidents Page
-  │       └──> Click Incident ──> Incident Detail
-  │
-  └──> Work Orders Page
-          └──> Click WO ID ──> Linked Incident Detail`);
+  |
+  +--> Click Asset --> Asset Detail
+  |                      +--> Tab: Incidents (create/view)
+  |                      +--> Tab: Work Orders
+  |                      +--> Tab: Child Assets
+  |                      +--> Tab: Documents
+  |                      \\--> Tab: Audit History
+  |
+  +--> Incidents Page
+  |       \\--> Click Incident --> Incident Detail
+  |
+  \\--> Work Orders Page
+          \\--> Click WO ID --> Linked Incident Detail`);
 
   // === 9. DATA MODEL ===
   heading("9. Data Model Summary");
