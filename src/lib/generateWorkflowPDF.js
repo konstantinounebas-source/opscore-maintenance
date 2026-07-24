@@ -12,7 +12,9 @@ export async function generateWorkflowPDF() {
   const marginX = 18;
   const marginTop = 20;
   const marginBottom = 18;
-  const contentW = pageW - marginX * 2;
+  const leftX = marginX;
+  const rightX = pageW - marginX;
+  const contentW = rightX - leftX;
   let y = marginTop;
 
   function ensureSpace(needed) {
@@ -27,11 +29,14 @@ export async function generateWorkflowPDF() {
     doc.setFont("helvetica", bold ? "bold" : "normal");
     doc.setFontSize(size);
     doc.setTextColor(...color);
-    const lines = doc.splitTextToSize(text, contentW - indent);
+    const textStartX = leftX + indent;
+    const maxWidth = rightX - textStartX;
+    const lines = doc.splitTextToSize(text, maxWidth);
+    const lineH = size * 0.42 + 1;
     for (const line of lines) {
-      ensureSpace(size * 0.45 + 1);
-      doc.text(line, marginX + indent, y);
-      y += size * 0.45 + 1;
+      ensureSpace(lineH);
+      doc.text(line, textStartX, y);
+      y += lineH;
     }
     y += gapAfter;
   }
@@ -40,117 +45,152 @@ export async function generateWorkflowPDF() {
     const sizes = { 1: 16, 2: 13, 3: 11 };
     const colors = { 1: [79, 70, 229], 2: [79, 70, 229], 3: [49, 46, 129] };
     y += 3;
-    ensureSpace(8);
     if (level === 2) {
+      ensureSpace(6);
       doc.setDrawColor(226, 232, 240);
-      doc.line(marginX, y - 1, marginX + contentW, y - 1);
-      y += 2;
+      doc.line(leftX, y, rightX, y);
+      y += 3;
+    } else {
+      ensureSpace(5);
     }
     textBlock(text, { size: sizes[level], bold: true, color: colors[level], gapAfter: 3 });
   }
 
   function bullet(text, indent = 6) {
-    ensureSpace(6);
+    const bulletX = leftX + indent;
+    const textStartX = bulletX + 4;
+    const maxWidth = rightX - textStartX;
+    const lineH = 4.6;
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.setTextColor(30, 41, 59);
-    doc.text("•", marginX + indent - 3, y);
-    const lines = doc.splitTextToSize(text, contentW - indent - 3);
+    const lines = doc.splitTextToSize(text, maxWidth);
+    const totalH = lines.length * lineH + 1;
+    ensureSpace(Math.min(totalH, lineH));
+    doc.text("•", bulletX, y);
     for (let i = 0; i < lines.length; i++) {
-      ensureSpace(5);
-      doc.text(lines[i], marginX + indent + 2, y);
-      y += 5;
+      ensureSpace(lineH);
+      doc.text(lines[i], textStartX, y);
+      y += lineH;
     }
     y += 1;
   }
 
-  function numbered(n, text, indent = 6) {
-    ensureSpace(6);
+  function numbered(n, text, indent = 8) {
+    const numText = `${n}.`;
+    const numX = leftX + indent;
+    const textStartX = numX + 6;
+    const maxWidth = rightX - textStartX;
+    const lineH = 4.6;
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.setTextColor(30, 41, 59);
-    doc.text(`${n}.`, marginX + indent - 5, y);
-    const lines = doc.splitTextToSize(text, contentW - indent - 5);
+    const lines = doc.splitTextToSize(text, maxWidth);
+    const totalH = lines.length * lineH + 1;
+    ensureSpace(Math.min(totalH, lineH));
+    doc.text(numText, numX, y);
     for (let i = 0; i < lines.length; i++) {
-      ensureSpace(5);
-      doc.text(lines[i], marginX + indent + 2, y);
-      y += 5;
+      ensureSpace(lineH);
+      doc.text(lines[i], textStartX, y);
+      y += lineH;
     }
     y += 1;
   }
 
   function preBlock(text) {
-    const lines = text.split("\n");
+    const fontSize = 8;
+    const lineH = 4.0;
+    const padTop = 4;
+    const padBot = 3;
+    const innerPad = 3;
+    doc.setFont("courier", "normal");
+    doc.setFontSize(fontSize);
+    const rawLines = text.split("\n");
+    const innerW = contentW - innerPad * 2;
+    // Pre-wrap all lines to compute actual height
+    const rendered = [];
+    for (const line of rawLines) {
+      const wrapped = doc.splitTextToSize(line, innerW);
+      for (const wl of wrapped) rendered.push(wl);
+    }
+    const blockH = rendered.length * lineH + padTop + padBot;
+
     y += 2;
-    ensureSpace(6);
-    const blockH = lines.length * 4.5 + 4;
     if (y + blockH > pageH - marginBottom) {
       doc.addPage();
       y = marginTop;
     }
     doc.setFillColor(248, 250, 252);
     doc.setDrawColor(226, 232, 240);
-    doc.roundedRect(marginX, y, contentW, blockH, 2, 2, "FD");
+    doc.roundedRect(leftX, y, contentW, blockH, 2, 2, "FD");
     doc.setFont("courier", "normal");
-    doc.setFontSize(8.5);
+    doc.setFontSize(fontSize);
     doc.setTextColor(51, 65, 85);
-    let py = y + 4;
-    for (const line of lines) {
-      const wrapped = doc.splitTextToSize(line, contentW - 6);
-      for (const wl of wrapped) {
-        doc.text(wl, marginX + 3, py);
-        py += 4.2;
-      }
+    let py = y + padTop + fontSize * 0.35;
+    for (const wl of rendered) {
+      doc.text(wl, leftX + innerPad, py);
+      py += lineH;
     }
-    y = py + 3;
+    y = y + blockH + 2;
   }
 
   function table(headers, rows) {
     const colCount = headers.length;
     const colW = contentW / colCount;
-    ensureSpace(10);
+    const cellPad = 2;
+    const rowH = 7;
+    const headerH = 7;
+
+    // Header row
+    ensureSpace(headerH + rowH * rows.length);
     doc.setFillColor(79, 70, 229);
-    doc.rect(marginX, y, contentW, 7, "F");
+    doc.rect(leftX, y, contentW, headerH, "F");
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.setTextColor(255, 255, 255);
     for (let i = 0; i < headers.length; i++) {
-      doc.text(headers[i], marginX + colW * i + 2, y + 5);
+      const cellX = leftX + colW * i + cellPad;
+      const cellLines = doc.splitTextToSize(headers[i], colW - cellPad * 2);
+      doc.text(cellLines[0] || "", cellX, y + 5);
     }
-    y += 7;
+    y += headerH;
+
+    // Data rows
     doc.setFont("helvetica", "normal");
     doc.setTextColor(30, 41, 59);
     for (let r = 0; r < rows.length; r++) {
-      ensureSpace(7);
+      ensureSpace(rowH);
       if (r % 2 === 1) {
         doc.setFillColor(248, 250, 252);
-        doc.rect(marginX, y, contentW, 6, "F");
+        doc.rect(leftX, y, contentW, rowH, "F");
       }
       doc.setDrawColor(203, 213, 225);
+      // Cell borders
       for (let i = 0; i < colCount; i++) {
-        doc.line(marginX + colW * i, y, marginX + colW * i, y + 6);
-        const cellLines = doc.splitTextToSize(rows[r][i] || "", colW - 4);
-        doc.text(cellLines[0] || "", marginX + colW * i + 2, y + 4.5);
+        doc.line(leftX + colW * i, y, leftX + colW * i, y + rowH);
+        const cellX = leftX + colW * i + cellPad;
+        const cellLines = doc.splitTextToSize(rows[r][i] || "", colW - cellPad * 2);
+        doc.text(cellLines[0] || "", cellX, y + 5);
       }
-      doc.line(marginX + contentW, y, marginX + contentW, y + 6);
-      y += 6;
+      doc.line(leftX + contentW, y, leftX + contentW, y + rowH);
+      doc.line(leftX, y + rowH, leftX + contentW, y + rowH);
+      y += rowH;
     }
-    doc.line(marginX, y, marginX + contentW, y);
-    y += 4;
+    y += 3;
   }
 
   function divider() {
     y += 2;
     ensureSpace(4);
     doc.setDrawColor(226, 232, 240);
-    doc.line(marginX, y, marginX + contentW, y);
+    doc.line(leftX, y, rightX, y);
     y += 4;
   }
 
   // === HEADER ===
   doc.setFillColor(79, 70, 229);
   doc.rect(0, 0, pageW, 4, "F");
-  textBlock("Bus Shelter Management", { size: 18, bold: true, color: [79, 70, 229], gapAfter: 1 });
+  textBlock("Bus Shelter Management", { size: 18, bold: true, color: [79, 70, 229], indent: 0, gapAfter: 1 });
   textBlock("Complete Workflow — Assets → Incidents → Work Orders", { size: 11, color: [100, 116, 139], gapAfter: 0 });
   textBlock("Generated: 2026-07-24", { size: 8, color: [148, 163, 184], gapAfter: 4 });
   divider();
@@ -306,12 +346,12 @@ export async function generateWorkflowPDF() {
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
     doc.setDrawColor(226, 232, 240);
-    doc.line(marginX, pageH - 12, pageW - marginX, pageH - 12);
+    doc.line(leftX, pageH - 12, rightX, pageH - 12);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     doc.setTextColor(148, 163, 184);
-    doc.text("Bus Shelter Maintenance Platform — Workflow Documentation", marginX, pageH - 8);
-    doc.text(`Page ${i} of ${pageCount}`, pageW - marginX, pageH - 8, { align: "right" });
+    doc.text("Bus Shelter Maintenance Platform — Workflow Documentation", leftX, pageH - 8);
+    doc.text(`Page ${i} of ${pageCount}`, rightX, pageH - 8, { align: "right" });
   }
 
   doc.save("Bus_Shelter_Workflow_Documentation.pdf");
